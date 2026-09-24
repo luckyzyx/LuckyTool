@@ -16,7 +16,11 @@ object RemoveFlashlightOpenNotification : Hooker {
             "com.oplus.systemui.statusbar.notification.flashlight.FlashlightNotification", //C14
             "com.oplus.systemui.notification.flashlight.FlashlightNotification" //C15.0.1
         ).toClass().resolve().apply {
-            firstMethod { name = "sendNotification";parameterCount = 1 }.hook {
+            firstMethod {
+                // ColorOS 17 的 R8 将 boolean 入口重命名，保留旧系统入口。
+                name { it == "sendNotification" || it == "sendNotification\$1" }
+                parameters(Boolean::class)
+            }.hook {
                 intercept()
             }
         }

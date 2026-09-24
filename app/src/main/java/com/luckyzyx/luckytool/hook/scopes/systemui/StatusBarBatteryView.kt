@@ -7,6 +7,7 @@ import com.highcapable.kavaref.KavaRef.Companion.resolve
 import com.highcapable.kavaref.extension.toClass
 import com.luckyzyx.luckytool.hook.core.Hooker
 import com.luckyzyx.luckytool.hook.core.hook
+import com.luckyzyx.luckytool.hook.core.hookAll
 import com.luckyzyx.luckytool.utils.ModulePrefs
 import com.luckyzyx.luckytool.utils.getOSVersionCode
 import com.luckyzyx.luckytool.utils.safeOfNull
@@ -34,56 +35,21 @@ object StatusBarBatteryView : Hooker {
 
             //Source BatteryViewBinder
             "com.oplus.systemui.statusbar.pipeline.battery.ui.binder.BatteryViewBinder".toClass()
-                .resolve().apply {
-                    firstMethodOrNull { name = "bind\$initView" }?.hook {
-                        after {
-                            args.filterIsInstance<TextView>().forEachIndexed { _, view ->
-                                view.handBatteryTextView(
-                                    removePercent,
-                                    userTypeface,
-                                    useBoldFont,
-                                    customFontSize,
-                                    applyToIcon
-                                )
-                            }
-                        }
-                    }
-                    firstMethodOrNull { name = "updateText" }?.hook {
-                        after {
-                            val view = args().first().cast<TextView>() ?: return@after
-                            view.handBatteryTextView(
-                                removePercent,
-                                userTypeface,
-                                useBoldFont,
-                                customFontSize,
-                                applyToIcon
+                .resolve().optional(true).apply {
+                    // ColorOS 17 在各电池样式的更新入口中写入文本。
+                    method {
+                        name {
+                            it in setOf(
+                                "bind\$initView", "updateText", "bind\$updateOldHorizontal",
+                                "bind\$updateOldHorizontalViewContent", "bind\$updatePercentOutView",
+                                "bind\$updateBatteryIconStyle"
                             )
                         }
-                    }
-
-                    firstMethodOrNull { name = "bind\$updateOldHorizontal" }?.hook {
+                    }.hookAll {
                         after {
-                            args.filterIsInstance<TextView>().forEachIndexed { _, view ->
+                            args.filterIsInstance<TextView>().forEach { view ->
                                 view.handBatteryTextView(
-                                    removePercent,
-                                    userTypeface,
-                                    useBoldFont,
-                                    customFontSize,
-                                    applyToIcon
-                                )
-                            }
-                        }
-                    }
-
-                    firstMethodOrNull { name = "bind\$updatePercentOutView" }?.hook {
-                        after {
-                            args.filterIsInstance<TextView>().forEachIndexed { _, view ->
-                                view.handBatteryTextView(
-                                    removePercent,
-                                    userTypeface,
-                                    useBoldFont,
-                                    customFontSize,
-                                    applyToIcon
+                                    removePercent, userTypeface, useBoldFont, customFontSize, applyToIcon
                                 )
                             }
                         }
@@ -92,7 +58,7 @@ object StatusBarBatteryView : Hooker {
 
             //Source StatBatteryMeterView
             "com.oplus.systemui.statusbar.pipeline.battery.ui.view.StatBatteryMeterView".toClass()
-                .resolve().apply {
+                .resolve().optional(true).apply {
                     (firstMethodOrNull { name = "setTextTypeface" }
                         ?: firstMethod { name = "setFontTypeface" }).hook {
                         if (userTypeface) intercept()
@@ -114,7 +80,7 @@ object StatusBarBatteryView : Hooker {
                 prefs(ModulePrefs).getBoolean("statusbar_power_apply_to_battery_icon", false)
 
             //Source StatBatteryMeterView
-            "com.oplusos.systemui.statusbar.widget.StatBatteryMeterView".toClass().resolve().apply {
+            "com.oplusos.systemui.statusbar.widget.StatBatteryMeterView".toClass().resolve().optional(true).apply {
                 firstMethod { name = "onConfigChanged" }.hook {
                     after {
                         firstMethod { name = "updatePercentText" }.of(instance).invoke()

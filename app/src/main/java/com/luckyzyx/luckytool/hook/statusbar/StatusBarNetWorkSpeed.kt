@@ -46,14 +46,33 @@ object StatusBarNetWorkSpeed : Hooker {
                 "com.oplusos.systemui.statusbar.controller.NetworkSpeedController",
                 "com.oplus.systemui.statusbar.phone.netspeed.OplusNetworkSpeedControllExImpl", //C13
                 "com.oplus.systemui.statusbar.phone.netspeed.OplusNetworkSpeedControllerExImpl" //C14 C15
-            ).toClass().resolve().apply {
+            ).toClass().resolve().optional(true).apply {
+                val updateNetworkSpeed = firstMethodOrNull { name = "updateNetworkSpeed" }
+                if (updateNetworkSpeed == null) {
+                    // ColorOS 17 将更新逻辑合入静态 access$updateNetworkSpeed。
+                    // 只调整调度间隔，保留系统新增的暂停、挂起与销售模式判断。
+                    val schedule = firstMethodOrNull {
+                        name = "postUpdateNetworkSpeedDelay"
+                        parameters(Long::class)
+                    }
+                    if (schedule != null) {
+                        schedule.hook {
+                            before {
+                                if (networkSpeed && args(0).long() > 1000L) args(0).set(1000L)
+                            }
+                        }
+                        return@apply
+                    }
+                }
+
                 val bgHandler = firstField { name = "bgHandler" }
                 val uiHandler = firstField { name = "uiHandler" }
                 val lastTime = firstField { name = "lastTime" }
                 val lastTotalBytes = firstField { name = "lastTotalBytes" }
 
-                (firstMethodOrNull { name = "updateNetworkSpeed" }
-                    ?: firstMethod { name { it.contains("updateNetworkSpeed") } }).hook {
+                (updateNetworkSpeed ?: firstMethod {
+                    name { it.contains("updateNetworkSpeed") }
+                }).hook {
                     before {
                         if (!networkSpeed) return@before
                         val instance = instanceOrNull ?: args().first().any()
@@ -147,7 +166,7 @@ object StatusBarNetWorkSpeed : Hooker {
             VariousClass(
                 "com.oplusos.systemui.statusbar.widget.NetworkSpeedView",
                 "com.oplus.systemui.statusbar.phone.netspeed.widget.NetworkSpeedView" //C14 C15
-            ).toClass().resolve().apply {
+            ).toClass().resolve().optional(true).apply {
                 val mState = firstField { type = NetworkSpeedIconState }
                 val mBlocked = firstFieldOrNull { name = "mBlocked" }
                 val mSpeed = firstField { name = "mSpeed" }

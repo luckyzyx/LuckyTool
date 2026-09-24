@@ -2,7 +2,6 @@ package com.luckyzyx.luckytool.hook.scopes.systemui
 
 import android.content.Context
 import android.graphics.BitmapFactory
-import android.graphics.drawable.Drawable
 import android.widget.ImageView
 import androidx.core.graphics.drawable.toDrawable
 import com.highcapable.kavaref.KavaRef.Companion.asResolver
@@ -26,10 +25,6 @@ object FingerPrintIconAnim : Hooker {
         "com.oplus.systemui.biometrics.finger.udfps.OnScreenFingerprintIcon" //C14 C15
     )
 
-    private val animationDrawable = VariousClass(
-        "com.oplus.systemui.keyguard.view.OplusAnimationDrawable" //C16
-    )
-
     override fun onHook() {
         val removeMode = prefs(ModulePrefs).getString("remove_fingerprint_icon_mode", "0")
         val isReplaceIcon = prefs(ModulePrefs).getBoolean("replace_fingerprint_icon_switch", false)
@@ -41,7 +36,7 @@ object FingerPrintIconAnim : Hooker {
             "com.oplus.systemui.keyguard.finger.onscreenfingerprint.OnScreenFingerprintUiMech", //C13
             "com.oplus.systemui.biometrics.finger.udfps.OnScreenFingerprintUiMach", //C14
             "com.oplus.systemui.biometrics.finger.udfps.OnScreenFingerprintUiMech"  //C15
-        ).toClass().resolve().apply {
+        ).toClass().resolve().optional(true).apply {
             firstMethod { name = "loadAnimDrawables" }.hook {
                 if (removeMode == "3") intercept()
                 else after {
@@ -95,13 +90,9 @@ object FingerPrintIconAnim : Hooker {
                 name = "updateFpColor"
                 parameters(Int::class)
             }.hook {
-                after {
-                    val imMobileDrawable =
-                        firstField { name = "imMobileDrawable" }.of(instance).get<Drawable>()
-                    imMobileDrawable?.clearColorFilter()
-                    val imMobileDrawableDark =
-                        firstField { name = "imMobileDrawableDark" }.of(instance).get<Drawable>()
-                    imMobileDrawableDark?.clearColorFilter()
+                before {
+                    // 新系统异步给 Drawable 着色；after 清除会被排队的任务覆盖。
+                    if (isReplaceIcon) resultNull()
                 }
             }
         }
@@ -109,38 +100,37 @@ object FingerPrintIconAnim : Hooker {
 
     /** 归零淡入淡出动画字段（含暗色变体与 AlphaAnimation 冻路） */
     private fun Any.removeFadeAnim() {
-        asResolver().apply {
-            field { type = animationDrawable.toClass() }.forEach {
-                it.set(null)
-            }
-            firstField { name = "fadeInAlphaAnimation" }.set(null)
-            firstField { name = "fadeOutAlphaAnimation" }.set(null)
+        asResolver().optional(true).apply {
+            // 按名称区分 fade 与 pressed，模式 1 不能连按压动画一起清空。
+            field {
+                name { fieldName ->
+                    listOf("fadeInAnimDrawable", "fadeOutAnimDrawable", "fadeInAlphaAnimation", "fadeOutAlphaAnimation")
+                        .any { fieldName.endsWith(it, ignoreCase = true) }
+                }
+            }.forEach { it.set(null) }
         }
     }
 
     private fun Any.setCustomDrawable(iconPath: String?, update: Boolean) {
-        asResolver().apply {
+        asResolver().optional(true).apply {
             val context = firstField { type = Context::class }.get<Context>() ?: return
             val drawable = if (iconPath.isNullOrBlank()) null
-            else BitmapFactory.decodeFile(iconPath).toDrawable(context.resources)
+            else (BitmapFactory.decodeFile(iconPath) ?: return).toDrawable(context.resources)
             if (drawable == null) {
                 firstField { name { it.contains("fadeInAnimDrawable", true) } }.set(null)
                 firstField { name { it.contains("adeOutAnimDrawable", true) } }.set(null)
-            } else {
-                //C16：宿主所有的恢复/静态写点（RunnableC32041 case0/1、case21 fadeIn 链等）
-                //最终都 setImageDrawable(imMobileDrawable/Dark)，把自定义图注入这些原生字段，
-                //让一切恢复链写回的都是自定义图，无需逐点对抗
-                firstField { name = "imMobileDrawable" }.set(drawable)
-                firstFieldOrNull { name = "imMobileDrawableDark" }?.set(drawable)
-                firstFieldOrNull { name = "imMobileDrawableHY" }?.set(drawable)
             }
+            // 同步更新宿主字段，避免排队中的恢复任务覆盖自定义图或重新显示已隐藏图标。
+            firstField { name = "imMobileDrawable" }.set(drawable)
+            firstFieldOrNull { name = "imMobileDrawableDark" }?.set(drawable)
+            firstFieldOrNull { name = "imMobileDrawableHY" }?.set(drawable)
             firstField { type = fpIconType.toClass() }.get<ImageView>()?.setImageDrawable(drawable)
             if (update) firstMethod { name = "updateFpIconColor"; emptyParameters() }.invoke()
         }
     }
 
     private fun Any.removePressAnim() {
-        asResolver().firstField { name { it.contains("PressedAnimDrawable", true) } }.set(null)
-        asResolver().firstField { name { it.contains("PressedAnimDrawableTmp", true) } }.set(null)
+        asResolver().firstField { name { it.endsWith("PressedAnimDrawable", true) } }.set(null)
+        asResolver().firstField { name { it.endsWith("PressedAnimDrawableTmp", true) } }.set(null)
     }
 }

@@ -14,11 +14,12 @@ object RemoveStatusBarSecurePayment : Hooker {
         //Source SecurePaymentController
         VariousClass(
             "com.oplus.systemui.statusbar.phone.securepay.SecurePaymentControllerExImpl", //C12 C13
-            "com.oplus.systemui.statusbar.phone.dynamic.SecurePaymentController" //C14
+            "com.oplus.systemui.statusbar.phone.dynamic.SecurePaymentController", //C14
+            "com.oplus.systemui.common.manager.OplusSystemUiManagerExImpl" //C17
         ).toClass().resolve().apply {
             firstMethod {
-                name = "handlePaymentDetectionMessage"
-                parameters(Message::class)
+                name { it == "handlePaymentDetectionMessage" || it == "access\$handlePaymentDetectionMessage" }
+                parameters { it.lastOrNull() == Message::class.java && it.size in 1..2 }
             }.hook {
                 intercept()
             }

@@ -49,6 +49,7 @@
         <item>com.oplus.mediacontroller</item>
         <item>com.oplus.exsystemservice</item>
         <item>com.oplus.keyguard.clock.base</item>
+        <item>com.oplus.keyguard.personality.clocks</item>
         <item>com.oplus.beaconlink</item>
         <item>com.heytap.speechassist</item>
         <item>com.oplus.wirelesssettings</item>

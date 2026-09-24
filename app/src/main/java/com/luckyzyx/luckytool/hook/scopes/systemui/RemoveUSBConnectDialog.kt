@@ -16,7 +16,7 @@ object RemoveUSBConnectDialog : Hooker {
             "com.coloros.systemui.notification.usb.UsbService", //A11
             "com.oplusos.systemui.notification.usb.UsbService",
             "com.oplus.systemui.usb.UsbService" //C14 C15
-        ).toClass().resolve().apply {
+        ).toClass().resolve().optional(true).apply {
             (firstMethodOrNull { name = "onUsbConnected" }
                 ?: firstMethod { name { it.contains("onUsbConnected") } }).hook {
                 before {

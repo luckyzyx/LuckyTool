@@ -66,7 +66,7 @@ class HookSystemUIFeature(val dexKitBridge: DexKitBridge) : Hooker {
                 prefs(ModulePrefs).getBoolean("force_display_clock_style_options", false)
 
             //Source FeatureOption
-            "com.oplusos.systemui.common.feature.FeatureOption".toClass().resolve().apply {
+            "com.oplusos.systemui.common.feature.FeatureOption".toClass().resolve().optional(true).apply {
                 //C13 C14
                 firstMethodOrNull { name = "isOplusVolumeKeyInRight" }?.hook {
                     before {
@@ -148,7 +148,7 @@ class HookSystemUIFeature(val dexKitBridge: DexKitBridge) : Hooker {
             }
 
             //Source FlavorOneFeatureOption
-            "com.oplusos.systemui.common.feature.FlavorOneFeatureOption".toClass().resolve().apply {
+            "com.oplusos.systemui.common.feature.FlavorOneFeatureOption".toClass().resolve().optional(true).apply {
                 firstMethodOrNull { name = "isSupportSearch" }?.hook {
                     before {
                         when (searchBtnMode) {
@@ -180,9 +180,15 @@ class HookSystemUIFeature(val dexKitBridge: DexKitBridge) : Hooker {
             }
 
             //Source VolumeFeatureOption
-            "com.oplusos.systemui.common.feature.VolumeFeatureOption".toClass().resolve().apply {
+            "com.oplusos.systemui.common.feature.VolumeFeatureOption".toClass().resolve().optional(true).apply {
                 firstMethodOrNull { name = "isVolumeBlurDisabled" }?.hook {
                     if (volumeBlur > -1) replaceToFalse()
+                }
+                // ColorOS 17 的独立应用音量开关已迁入 VolumeFeatureOption。
+                firstMethodOrNull { name = "getSFlavorOneMultiMediaDevice" }?.hook {
+                    if (prefs(ModulePrefs).getBoolean("enable_app_specific_media_volume", false)) {
+                        replaceToTrue()
+                    }
                 }
             }
         }
@@ -196,7 +202,7 @@ class HookSystemUIFeature(val dexKitBridge: DexKitBridge) : Hooker {
                 prefs(ModulePrefs).getString("set_control_center_volume_seekbar_mode", "0")
 
             //Source QSFeatureOption
-            "com.oplusos.systemui.common.feature.QSFeatureOption".toClass().resolve().apply {
+            "com.oplusos.systemui.common.feature.QSFeatureOption".toClass().resolve().optional(true).apply {
                 firstMethodOrNull { name = "isSupportVolumeSeekBar" }?.hook {
                     when (volumnSeekbarMode) {
                         "1" -> replaceToTrue()

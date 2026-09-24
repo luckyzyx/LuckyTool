@@ -25,6 +25,7 @@ import com.highcapable.kavaref.extension.toClass
 import com.luckyzyx.luckytool.hook.core.Hooker
 import com.luckyzyx.luckytool.hook.core.hook
 import com.luckyzyx.luckytool.hook.core.hookAll
+import com.luckyzyx.luckytool.hook.core.hookMethod
 import com.luckyzyx.luckytool.hook.core.instance
 import com.luckyzyx.luckytool.hook.core.toClass
 import com.luckyzyx.luckytool.hook.utils.sysui.ClockSwitchHelper
@@ -32,6 +33,7 @@ import com.luckyzyx.luckytool.hook.utils.sysui.WeatherInfoParseHelper
 import com.luckyzyx.luckytool.utils.A14
 import com.luckyzyx.luckytool.utils.A15
 import com.luckyzyx.luckytool.utils.ModulePrefs
+import com.luckyzyx.luckytool.utils.DexkitUtils
 import com.luckyzyx.luckytool.utils.SDK
 import com.luckyzyx.luckytool.utils.dp
 import com.luckyzyx.luckytool.utils.safeOf
@@ -127,7 +129,7 @@ object LockScreenClock : Hooker {
             VariousClass(
                 "com.oplusos.systemui.keyguard.clock.SingleClockView", //C13
                 "com.oplus.systemui.shared.clocks.SingleClockView" //C14
-            ).toClass().resolve().apply {
+            ).toClass().resolve().optional(true).apply {
                 firstMethod { name = "onFinishInflate" }.hook {
                     after {
                         if (!isCenter && !userTypeface) return@after
@@ -164,10 +166,11 @@ object LockScreenClock : Hooker {
                 }
             }
             //Source DualClockView kgd_dual_clock
-            VariousClass(
+            val dualClockClass = VariousClass(
                 "com.oplusos.systemui.keyguard.clock.DualClockView", //C13
                 "com.oplus.systemui.shared.clocks.DualClockView" //C14
-            ).toClass().resolve().apply {
+            ).toClass()
+            dualClockClass.resolve().optional(true).apply {
                 firstMethod { name = "onFinishInflate" }.hook {
                     after {
                         if (!userTypeface) return@after
@@ -176,6 +179,44 @@ object LockScreenClock : Hooker {
                                 (view as TextView).typeface = Typeface.DEFAULT
                             }
                     }
+                }
+                if (firstFieldOrNull { name = "locatedTimeHour" } != null) {
+                    // C17 在主线程 Runnable 中更新双时钟；旧天气方法已被内联。
+                    // 按小时视图访问器的调用关系定位，避免依赖合成 Runnable 的类名。
+                    DexkitUtils.create(appInfo.sourceDir) { bridge ->
+                        val updates = listOf(
+                            "access\$getLocatedTimeHour\$p", "access\$getResidentTimeHour\$p"
+                        ).flatMap { getterName ->
+                            bridge.findMethod {
+                                matcher {
+                                    name("run")
+                                    paramCount(0)
+                                    returnType(Void.TYPE)
+                                    addInvoke {
+                                        declaredClass(dualClockClass)
+                                        name(getterName)
+                                    }
+                                }
+                            }
+                        }.map { it.getMethodInstance(appClassLoader) }.distinct()
+                        check(updates.isNotEmpty()) { "DualClockView time update callbacks not found" }
+                        updates.forEach { update ->
+                            update.hookMethod {
+                                after {
+                                    if (!dualClock || redMode == "0") return@after
+                                    val view = instance.asResolver().firstField {
+                                        type = dualClockClass
+                                    }.get() ?: return@after
+                                    listOf("locatedTimeHour", "residentTimeHour").forEach hourView@ { fieldName ->
+                                        val hour = firstField { name = fieldName }.of(view)
+                                            .get<TextView>() ?: return@hourView
+                                        hour.setClockRed(hour.text.toString(), redMode)
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    return@apply
                 }
                 method { parameters { it.contains(weatherInfoClazz) } }.hookAll {
                     after {
@@ -230,11 +271,12 @@ object LockScreenClock : Hooker {
                             firstField { name = "mShouldRunTicker" }.of(instance).get<Boolean>()
                                 ?: false
                         if (!mShouldRunTicker) return@after
-                        val format = firstField { name = "format" }.of(instance).get<String>()
+                        val format = firstField { name = "format" }.of(instance)
+                            .get<CharSequence>() ?: return@after
                         val mTime = firstField { name = "mTime" }.of(instance).get<Calendar>()
                             ?: return@after
                         val mTimeHour = instance<TextView>()
-                        val mHour = DateFormat.format(format, mTime) as String
+                        val mHour = DateFormat.format(format, mTime).toString()
                         mTimeHour.setClockRed(mHour, redMode)
                     }
                 }
@@ -243,7 +285,7 @@ object LockScreenClock : Hooker {
             VariousClass(
                 "com.oplusos.systemui.keyguard.clock.RedHorizontalSingleClockView", //C13
                 "com.oplus.systemui.shared.clocks.RedHorizontalSingleClockView" //C14
-            ).toClass().resolve().apply {
+            ).toClass().resolve().optional(true).apply {
                 firstMethod { name = "onFinishInflate" }.hook {
                     after {
                         if (!isCenter && !userTypeface) return@after
@@ -270,7 +312,7 @@ object LockScreenClock : Hooker {
             VariousClass(
                 "com.oplusos.systemui.keyguard.clock.RedHorizontalDualClockView", //C13
                 "com.oplus.systemui.shared.clocks.RedHorizontalDualClockView" //C14
-            ).loadOrNull()?.resolve()?.apply {
+            ).loadOrNull()?.resolve()?.optional(true)?.apply {
                 firstMethod { name = "onFinishInflate" }.hook {
                     after {
                         if (!userTypeface) return@after

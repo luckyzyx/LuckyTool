@@ -72,6 +72,7 @@ object HookRouterInit {
 
         //经典主题 Clock
         HookRouter.app("com.oplus.keyguard.clock.base", HookKeyguardClock)
+        HookRouter.app("com.oplus.keyguard.personality.clocks", HookKeyguardClock)
 
         //通知管理
         HookRouter.app("com.oplus.notificationmanager", HookNotificationManager)

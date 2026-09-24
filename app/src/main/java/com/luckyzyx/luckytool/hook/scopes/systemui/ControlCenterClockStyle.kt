@@ -13,6 +13,7 @@ import com.highcapable.kavaref.extension.toClass
 import com.highcapable.kavaref.extension.toClassOrNull
 import com.luckyzyx.luckytool.hook.core.Hooker
 import com.luckyzyx.luckytool.hook.core.hook
+import com.luckyzyx.luckytool.hook.core.hookAll
 import com.luckyzyx.luckytool.hook.core.instance
 import com.luckyzyx.luckytool.hook.core.toClass
 import com.luckyzyx.luckytool.utils.A11
@@ -43,14 +44,14 @@ object ControlCenterClockStyle : Hooker {
         override fun onHook() {
             val newQsClock =
                 "com.oplus.systemui.plugins.qs.quickentrance.OplusQSQuickEntranceComponent"
-                    .toClassOrNull()?.resolve()
+                    .toClassOrNull()?.resolve()?.optional(true)
                     ?.method { name = "updateClockViewLayoutByOrientation" }
                     ?.isEmpty() == false
 
             if (newQsClock) {
                 //Source OplusQSQuickEntranceComponent
                 "com.oplus.systemui.plugins.qs.quickentrance.OplusQSQuickEntranceComponent".toClass()
-                    .resolve().apply {
+                    .resolve().optional(true).apply {
                         firstMethod { name = "updateClockViewLayoutByOrientation" }.hook {
                             before {
                                 firstField { name = "clockView" }.of(instance).get<View>()
@@ -58,10 +59,25 @@ object ControlCenterClockStyle : Hooker {
                             }
                         }
                     }
+            } else if ("com.oplus.systemui.plugins.qs.quickentrance.OplusQSQuickEntranceComponent"
+                    .toClassOrNull() != null
+            ) {
+                // ColorOS 17 的快捷入口组件不再持有 clockView，直接处理时钟视图。
+                "com.android.systemui.statusbar.policy.Clock".toClass().resolve().method {
+                    name { it == "onAttachedToWindow" || it == "updateClock" }
+                }.hookAll {
+                    after {
+                        val view = instance<TextView>()
+                        val name = safeOfNull { view.resources.getResourceEntryName(view.id) }
+                        if (name == "oplus_qs_clock" || name == "qs_footer_clock") {
+                            view.isVisible = false
+                        }
+                    }
+                }
             } else {
                 //Source OplusSeparateQSQuickEntranceManager QSQuickEntranceImpl
                 "com.oplus.systemui.separate.OplusSeparateQSQuickEntranceManager\$QSQuickEntranceImpl"
-                    .toClass().resolve().apply {
+                    .toClass().resolve().optional(true).apply {
                         firstMethod {
                             name = "getClockView"
                             returnType = TextView::class
@@ -90,8 +106,9 @@ object ControlCenterClockStyle : Hooker {
             }
 
             //Source Clock
-            "com.android.systemui.statusbar.policy.Clock".toClass().resolve().apply {
-                firstMethod { name = "setShowSecondsAndUpdate" }.hook {
+            "com.android.systemui.statusbar.policy.Clock".toClass().resolve().optional(true).apply {
+                (firstMethodOrNull { name = "setShowSecondsAndUpdate" }
+                    ?: firstMethod { name = "updateShowSeconds"; emptyParameters() }).hook {
                     before {
                         val view = instance<TextView>()
                         val clockName = safeOfNull {
@@ -102,7 +119,10 @@ object ControlCenterClockStyle : Hooker {
                             "oplus_qs_clock" -> {}  //分离模式时钟
                             else -> return@before
                         }
-                        if (showSecond) args().first().setTrue()
+                        if (showSecond) {
+                            if (args.isNotEmpty()) args().first().setTrue()
+                            else firstField { name = "mShowSeconds" }.of(instance).set(true)
+                        }
                     }
                 }
             }
@@ -111,10 +131,10 @@ object ControlCenterClockStyle : Hooker {
             VariousClass(
                 "com.oplusos.systemui.ext.BaseClockExt", //C13
                 "com.oplus.systemui.common.clock.OplusClockExImpl" //C14
-            ).toClass().resolve().apply {
+            ).toClass().resolve().optional(true).apply {
                 firstMethod {
                     name = "setTextWithRedOneStyle"
-                    parameterCount = 2
+                    parameterCount { it in 2..3 }
                 }.hook {
                     after {
                         if (redOneMode == "0" && colonStyle == "0") return@after
@@ -127,7 +147,7 @@ object ControlCenterClockStyle : Hooker {
                             "oplus_qs_clock" -> {}  //分离模式时钟
                             else -> return@after
                         }
-                        val char = args().last().cast<CharSequence>() ?: return@after
+                        val char = args(1).cast<CharSequence>() ?: return@after
                         if (char.isBlank()) return@after
                         setStyle(view, char, colonStyle, redOneMode)
                     }
@@ -195,7 +215,7 @@ object ControlCenterClockStyle : Hooker {
             }
 
             //Source Clock
-            "com.android.systemui.statusbar.policy.Clock".toClass().resolve().apply {
+            "com.android.systemui.statusbar.policy.Clock".toClass().resolve().optional(true).apply {
                 firstMethod { name = "setShowSecondsAndUpdate" }.hook {
                     before {
                         val view = instance<TextView>()

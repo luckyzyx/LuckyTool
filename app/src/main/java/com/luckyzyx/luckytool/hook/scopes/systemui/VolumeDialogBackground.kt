@@ -63,7 +63,7 @@ class VolumeDialogBackground(val dexKitBridge: DexKitBridge) : Hooker {
             }
 
             //Source OplusVolumeSeekBar
-            "com.oplus.systemui.volume.OplusVolumeSeekBar".toClassOrNull()?.resolve()?.apply {
+            "com.oplus.systemui.volume.OplusVolumeSeekBar".toClassOrNull()?.resolve()?.optional(true)?.apply {
                 constructor {}.hookAll {
                     after {
                         if (customAlpha < 0) return@after
@@ -82,7 +82,7 @@ class VolumeDialogBackground(val dexKitBridge: DexKitBridge) : Hooker {
             }
 
             //Source VolumeBlurManager
-            "com.oplus.systemui.volume.utils.VolumeBlurManager".toClassOrNull()?.resolve()?.apply {
+            "com.oplus.systemui.volume.utils.VolumeBlurManager".toClassOrNull()?.resolve()?.optional(true)?.apply {
                 firstMethodOrNull { name = "getBackgroundBlurDrawable" }?.hook {
                     after {
                         if (customAlpha < 0) return@after
