@@ -99,7 +99,7 @@ abstract class BaseScopePreferenceFeagment : PreferenceFragmentCompat(), MenuPro
 
     fun getAllPrefsItem(context: Context): ArrayList<PrefsItem> {
         return ArrayList<PrefsItem>().apply {
-            if (scopes.size == 1 && !context.checkPackName(scopes.first())) return@apply
+            if (scopes.size == 1 && scopes.first() != "system" && !context.checkPackName(scopes.first())) return@apply
             val rootPreference = context.loadRootPreference()
             context.loadPreferences().forEachIndexed { index, preference ->
                 if (preference is PreferenceCategory) return@forEachIndexed
@@ -218,7 +218,7 @@ abstract class BaseScopePreferenceFeagment : PreferenceFragmentCompat(), MenuPro
 
     override fun onMenuItemSelected(menuItem: MenuItem): Boolean {
         when (menuItem.itemId) {
-            1 -> RestartMenuUtils.showRestartScopeDialog(requireActivity(), scopes)
+            1 -> RestartMenuUtils.showRestartScopeDialog(requireActivity(), scopes, true)
             2 -> callOpenMenu()
         }
         return true

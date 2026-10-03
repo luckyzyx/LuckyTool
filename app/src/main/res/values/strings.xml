@@ -98,10 +98,12 @@
     <string name="menu_search">Search menu</string>
     <string name="menu_settings">Set menu</string>
     <string name="restart_scope">Restart scoped processes</string>
+    <string name="reload_hooker">Reload processes hooker</string>
     <string name="re_optimize_dex">Re-optimize Dex</string>
     <string name="need_restart_scope">Need to restart scope</string>
     <string name="need_restart_system">Need to restart system</string>
     <string name="restart_scope_message">Are you sure you want to restart all scoped processes except the system framework?\nUse this if the module isn\'t working!\nMake sure all the relevant scopes are checked!</string>
+    <string name="reload_hooker_message">Are you sure you want to reload all scoped processes? It can be used after the module is updated!</string>
     <string name="re_optimize_dex_message">Re-optimize all scope Dex?</string>
     <string name="re_optimize_dex_completed">Optimization completed, it is recommended to restart the scope or system</string>
     <string name="re_optimize_dex_failed">Optimization failed</string>
@@ -110,6 +112,7 @@
     <string name="optimize_dex_after_system_update">Dex must be optimized after system update</string>
     <string name="optimize_only_this_page_scope">Optimize only this page scope</string>
     <string name="restart_only_this_page_scope">Restart only this page scope</string>
+    <string name="reload_only_this_page_hooker">Reload only this page hooker</string>
     <string name="reboot">Restart System</string>
     <string name="fast_reboot">Fast reboot</string>
     <string name="menu_versioninfo">Version Information</string>
@@ -654,7 +657,7 @@
     <string name="enable_custom_app_language">Enable custom app language</string>
     <string name="disable_app_archiving">Auto release app space off by default</string>
     <string name="disable_app_archiving_summary">All apps are opted out of auto-archiving (uninstall app but keep data when storage is low) by default</string>
-
+    
     <!--FloatingWindowDialogRelated-->
     <string name="FloatingWindowDialogRelated">Floating Window / Dialog Related</string>
     <string name="disable_duplicate_floating_window">Disable Duplicate Window</string>
@@ -1368,7 +1371,6 @@
     <string name="apk_details_min_sdk">Minimum SDK</string>
     <string name="apk_details_target_sdk">Target SDK</string>
     <string name="apk_details_unknown">Unavailable</string>
-    
 
 
 </resources>

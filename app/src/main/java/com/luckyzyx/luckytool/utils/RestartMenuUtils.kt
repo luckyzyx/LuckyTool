@@ -11,14 +11,17 @@ import androidx.collection.arrayMapOf
 import com.drake.net.utils.scope
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.highcapable.betterandroid.ui.extension.view.layoutInflater
+import com.highcapable.betterandroid.ui.extension.view.toast
 import com.luckyzyx.luckytool.IPackageServiceController
 import com.luckyzyx.luckytool.R
 import com.luckyzyx.luckytool.databinding.DialogReoptimizeDexLayoutBinding
 import com.luckyzyx.luckytool.service.ActivityManagerService
 import com.luckyzyx.luckytool.service.PackagesService
 import com.luckyzyx.luckytool.service.PowerService
+import com.luckyzyx.luckytool.ui.service.XposedServiceBridge
 import com.topjohnwu.superuser.Shell
 import com.topjohnwu.superuser.ShellUtils
+import io.github.libxposed.service.HotReloadResult
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -28,6 +31,8 @@ import org.lsposed.lsparanoid.Obfuscate
 
 @Obfuscate
 object RestartMenuUtils {
+
+    private val TAG = "RestartMenuUtils"
 
     private val coroutineScope = CoroutineScope(Dispatchers.Main + SupervisorJob())
 
@@ -39,6 +44,7 @@ object RestartMenuUtils {
         val list = arrayOf(
             context.getString(R.string.restart_scope),
             context.getString(R.string.re_optimize_dex),
+            context.getString(R.string.reload_hooker),
             context.getString(R.string.reboot),
             context.getString(R.string.fast_reboot)
         )
@@ -48,13 +54,14 @@ object RestartMenuUtils {
                 when (i) {
                     0 -> showRestartAllScopeDialog(context)
                     1 -> showOptimizeAllDexDialog(context)
-                    2 -> {
+                    2 -> showRestartAllHookerDialog(context)
+                    3 -> {
                         PowerService.get(context) { controller ->
                             controller?.reboot(false, null, false)
                         }
                     }
 
-                    3 -> ShellUtils.fastCmd(CommandUtils.killzygote)
+                    4 -> ShellUtils.fastCmd(CommandUtils.killzygote)
                 }
             }
             show()
@@ -66,21 +73,39 @@ object RestartMenuUtils {
      * @receiver Context
      * @param scopes Array<String>
      */
-    fun showRestartScopeDialog(context: Context, scopes: Array<String>) {
+    fun showRestartScopeDialog(context: Context, scopes: Array<String>, isSystem: Boolean = false) {
         if (scopes.isEmpty()) return
-        val list = arrayOf(
-            context.getString(R.string.restart_scope),
-            context.getString(R.string.re_optimize_dex),
-            context.getString(R.string.restart_only_this_page_scope),
-            context.getString(R.string.optimize_only_this_page_scope),
-        )
+        val list = if (isSystem && scopes.first() == "system") {
+            arrayOf(
+                context.getString(R.string.reload_hooker),
+                context.getString(R.string.reload_only_this_page_hooker),
+            )
+        } else {
+            arrayOf(
+                context.getString(R.string.restart_scope),
+                context.getString(R.string.re_optimize_dex),
+                context.getString(R.string.reload_hooker),
+                context.getString(R.string.restart_only_this_page_scope),
+                context.getString(R.string.optimize_only_this_page_scope),
+                context.getString(R.string.reload_only_this_page_hooker),
+            )
+        }
         MaterialAlertDialogBuilder(context, dialogCentered).apply {
             setItems(list) { _, which ->
-                when (which) {
-                    0 -> showRestartAllScopeDialog(context)
-                    1 -> showOptimizeAllDexDialog(context)
-                    2 -> restartScope(context, scopes)
-                    3 -> optimizeScope(context, scopes)
+                if (isSystem && scopes.first() == "system") {
+                    when (which) {
+                        0 -> showRestartAllHookerDialog(context)
+                        1 -> restartHooker(context, scopes)
+                    }
+                } else {
+                    when (which) {
+                        0 -> showRestartAllScopeDialog(context)
+                        1 -> showOptimizeAllDexDialog(context)
+                        2 -> showRestartAllHookerDialog(context)
+                        3 -> restartScope(context, scopes)
+                        4 -> optimizeScope(context, scopes)
+                        5 -> restartHooker(context, scopes)
+                    }
                 }
             }
             show()
@@ -106,6 +131,22 @@ object RestartMenuUtils {
     }
 
     /**
+     * 重载全部作用域Hooker
+     * @receiver Context
+     */
+    private fun showRestartAllHookerDialog(context: Context) {
+        val xposedScope = context.resources.getStringArray(R.array.xposed_scope)
+        MaterialAlertDialogBuilder(context).apply {
+            setMessage(context.getString(R.string.reload_hooker_message))
+            setPositiveButton(context.getString(android.R.string.ok)) { _: DialogInterface?, _: Int ->
+                restartHooker(context, xposedScope)
+            }
+            setNeutralButton(context.getString(android.R.string.cancel), null)
+            show()
+        }
+    }
+
+    /**
      * 重启部分作用域
      * @receiver Context
      * @param scopes Array<String>
@@ -123,6 +164,29 @@ object RestartMenuUtils {
         if (killSystemUI) ShellUtils.fastCmd(CommandUtils.killSysui)
     }
 
+    /**
+     * 重载部分Hooker
+     * @receiver Context
+     * @param scopes Array<String>
+     */
+    private fun restartHooker(context: Context, scopes: Array<String>) {
+        val base = XposedServiceBridge.xposedService ?: return
+        base.runningTargets.filter {
+            scopes.contains(it.processName.substringBefore(":"))
+        }.forEach {
+            base.hotReloadModule(it, null) { target, result ->
+                LogUtils.d(
+                    "restartHooker",
+                    target.processName,
+                    "${result.status} | ${result.message}",
+                    true
+                )
+                if (result.status != HotReloadResult.Status.SUCCEEDED) {
+                    context.toast("${target.processName}: ${result.message}")
+                }
+            }
+        }
+    }
 
     /**
      * 重启选项

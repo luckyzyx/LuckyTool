@@ -22,6 +22,9 @@ import org.lsposed.lsparanoid.Obfuscate
 
 @Obfuscate
 class AndroidRelated : BaseScopePreferenceFeagment() {
+    override val scopes = arrayOf("system")
+
+    override val isEnableRestartMenu: Boolean = true
 
     override val currentPrefsName: String = ModulePrefs
 

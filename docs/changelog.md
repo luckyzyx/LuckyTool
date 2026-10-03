@@ -51,6 +51,7 @@ in [TG Channel’s associated groups](https://t.me/LuckyTool)**
 - [适配] 锁屏时钟红一样式 C17
 - [适配] 移除通知中心时钟 C17
 - [适配] 移除左下角旋转屏幕按钮 C17
+- [添加] 支持手动热重载作用域进程
 
 ### 1.3.4
 

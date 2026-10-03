@@ -87,10 +87,12 @@
     <string name="menu_search">搜索菜单</string>
     <string name="menu_settings">设置菜单</string>
     <string name="restart_scope">重启作用域</string>
+    <string name="reload_hooker">重载进程Hooker</string>
     <string name="re_optimize_dex">重新优化Dex</string>
     <string name="need_restart_scope">需要重启作用域</string>
     <string name="need_restart_system">需要重启系统</string>
     <string name="restart_scope_message">确定要重启除系统框架以外的所有作用域？\n模块不生效时使用！\n请确保已勾选所有对应作用域！</string>
+    <string name="reload_hooker_message">确定要重载所有作用域Hooker？ 模块不生效时使用！</string>
     <string name="re_optimize_dex_message">重新优化所有作用域Dex？</string>
     <string name="re_optimize_dex_completed">优化完成，建议重启作用域或系统</string>
     <string name="re_optimize_dex_failed">优化失败</string>
@@ -99,6 +101,7 @@
     <string name="optimize_dex_after_system_update">系统更新后必须优化Dex</string>
     <string name="optimize_only_this_page_scope">仅优化此页作用域Dex</string>
     <string name="restart_only_this_page_scope">仅重启此页作用域</string>
+    <string name="reload_only_this_page_hooker">仅重载此页Hooker</string>
     <string name="reboot">重启系统</string>
     <string name="fast_reboot">快速重启</string>
     <string name="menu_versioninfo">版本信息</string>
