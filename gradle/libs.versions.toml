@@ -12,7 +12,7 @@ libsu = "6.0.0"
 glide = "5.0.9"
 markwon = "4.6.2"
 lsparanoid = "0.6.0"
-yukihook = "1.5.0-beta.7"
+yukihook = "1.5.0-beta.8"
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
