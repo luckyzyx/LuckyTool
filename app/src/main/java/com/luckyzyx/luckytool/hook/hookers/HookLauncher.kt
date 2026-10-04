@@ -55,6 +55,11 @@ object HookLauncher : YukiBaseHooker() {
 
             //应用徽章
             if (SDK >= A13) loadHooker(HookAppBadge(dexKitBridge))
+
+            //解锁后台任务锁定限制
+            if (preferences(ModulePrefs).getBoolean("unlock_task_locks", false)) {
+                loadHooker(UnlockTaskLocks(dexKitBridge))
+            }
         }
 
         //HookLauncherFeatureFlags
@@ -104,10 +109,6 @@ object HookLauncher : YukiBaseHooker() {
         //强制启用Docker背景模糊
         if (preferences(ModulePrefs).getBoolean("force_enable_docker_background_blur", false)) {
             if (osCode >= 37) loadHooker(ForceEnableDockerBackgroundBlur)
-        }
-        //解锁后台任务锁定限制
-        if (preferences(ModulePrefs).getBoolean("unlock_task_locks", false)) {
-            loadHooker(UnlockTaskLocks)
         }
         //允许锁定或解锁已排除活动
         if (preferences(ModulePrefs).getBoolean("allow_locking_unlocking_of_excluded_activity", false)) {
