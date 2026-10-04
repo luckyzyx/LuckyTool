@@ -40,8 +40,7 @@ class UnlockTaskLocks(val dexKitBridge: DexKitBridge) : YukiBaseHooker() {
             }
         }.apply {
             checkDataList("UnlockTaskLocks AppLockDataHandler")
-            if (isNullOrEmpty()) return
-            val appLockModel = single()
+
             findField {
                 matcher {
                     type(classOf<Int>())
@@ -49,19 +48,18 @@ class UnlockTaskLocks(val dexKitBridge: DexKitBridge) : YukiBaseHooker() {
                 }
             }.apply {
                 checkDataList("UnlockTaskLocks noDefaultLockAppLimit")
-                if (isNullOrEmpty()) return
-                val limitField = single()
-                appLockModel.name.toClass().resolve().apply {
+
+                single().className.toClass().resolve().apply {
                     firstMethod { name = "initData"; emptyParameters() }.hook {
                         after {
-                            firstField { name = limitField.fieldName }.of(instance).set(999)
+                            firstField { name = single().fieldName }.of(instance).set(999)
                         }
                     }
                     firstMethod {
                         name = "updateNoDefaultLockAppLimit"; parameters(Int::class)
                     }.hook {
                         after {
-                            firstField { name = limitField.fieldName }.of(instance).set(999)
+                            firstField { name = single().fieldName }.of(instance).set(999)
                         }
                     }
                 }
