@@ -1,6 +1,5 @@
 package com.luckyzyx.luckytool.hook.scopes.pictorial
 
-import android.content.Context
 import android.graphics.Bitmap
 import android.os.Handler
 import com.highcapable.kavaref.KavaRef.Companion.resolve
@@ -27,16 +26,14 @@ class RemoveImageSaveWaterMark(val dexKitBridge: DexKitBridge) : YukiBaseHooker(
                     addForType(classOf<String>())
                 }
                 methods {
-                add { returnType(classOf<Handler>()) }
                     add { returnType(classOf<Bitmap>()) }
-                    add { returnType(classOf<Boolean>()) }
-                    add { paramTypes(classOf<Context>()) }
-                    add { paramCount(5);returnType(classOf<Bitmap>()) }
+                    add { paramCount(5); returnType(classOf<Bitmap>()) }
                     add { paramTypes("com.heytap.pictorial.core.bean.BasePictorialData") }
                 }
+                usingStrings("ImageSaveManager")
             }
         }.apply {
-            checkDataList("RemoveImageSaveWaterMark")
+            checkDataList("ImageSaveManager")
             single().name.toClass().resolve().apply {
                 firstMethod {
                     parameters(Boolean::class, VagueType, Bitmap::class, Boolean::class)
