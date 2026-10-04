@@ -986,6 +986,7 @@
     <string name="remove_market_splash_page_app_recommend">Mağaza (Market) açılış sayfasındaki uygulama önerilerini (splash page) kaldır</string>
     <string name="remove_market_update_download_page_app_recommend">Uygulama güncelleme/indirme sayfasındaki uygulama önerilerini kaldır</string>
     <string name="remove_market_mine_page_app_recommend">Mağazada Profilim hesap  \(Benim) sayfasındaki uygulama önerilerini kaldır</string>
+    <string name="default_expand_update_list">Expand update list by default</string>
     
     <!--OplusWeather-->
     <string name="disable_weather_jump_browser">Hava durumu uygulamasındaki bazı bölümlerin Tarayıcıya yönlendirmesini devre dışı bırak</string>

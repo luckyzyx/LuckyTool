@@ -835,6 +835,7 @@
     <string name="remove_market_splash_page_app_recommend">Xóa đề xuất ứng dụng khỏi trang khởi chạy cửa hàng</string>
     <string name="remove_market_update_download_page_app_recommend">Xóa đề xuất ứng dụng khỏi trang tải xuống bản cập nhật cửa hàng</string>
     <string name="remove_market_mine_page_app_recommend">Xóa đề xuất ứng dụng Lưu trữ trang của tôi</string>
+    <string name="default_expand_update_list">Expand update list by default</string>
     <!--OplusWeather-->
     <string name="disable_weather_jump_browser">Tắt trình duyệt chuyển hướng sang ứng dụng thời tiết</string>
     <string name="remove_weather_some_page_bottom_ads">Xóa quảng cáo ở cuối trang phần thời tiết</string>

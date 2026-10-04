@@ -903,6 +903,7 @@
     <string name="remove_market_splash_page_app_recommend">移除商店启动页应用推荐</string>
     <string name="remove_market_update_download_page_app_recommend">移除商店更新下载页应用推荐</string>
     <string name="remove_market_mine_page_app_recommend">移除商店我的页面应用推荐</string>
+    <string name="default_expand_update_list">默认展开更新列表</string>
     <!--OplusWeather-->
     <string name="disable_weather_jump_browser">禁用天气跳转浏览器</string>
     <string name="remove_weather_some_page_bottom_ads">移除天气部分页面底部广告</string>

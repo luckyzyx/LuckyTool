@@ -834,6 +834,7 @@
     <string name="remove_market_splash_page_app_recommend">Удалить рекомендации приложений с заставки в магазине</string>
     <string name="remove_market_update_download_page_app_recommend">Удалить рекомендации приложений со страницы загрузки обновлений магазина</string>
     <string name="remove_market_mine_page_app_recommend">Удалить рекомендации приложений со страницы обновления магазина</string>
+    <string name="default_expand_update_list">Expand update list by default</string>
     <!--OplusWeather-->
     <string name="disable_weather_jump_browser">Отключить переадресацию в браузер из погоды</string>
     <string name="remove_weather_some_page_bottom_ads">Удалить рекламу в нижней части страницы погоды</string>

@@ -832,6 +832,7 @@
     <string name="remove_market_splash_page_app_recommend">App Market のスプラッシュページからおすすめアプリを削除</string>
     <string name="remove_market_update_download_page_app_recommend">Remove app recommendations from market update download page</string>
     <string name="remove_market_mine_page_app_recommend">App Market のマイアプリページからおすすめアプリを削除</string>
+    <string name="default_expand_update_list">Expand update list by default</string>
     <!--OplusWeather-->
     <string name="disable_weather_jump_browser">天気のブラウザーリダイレクトを無効化</string>
     <string name="remove_weather_some_page_bottom_ads">天気セクションページの下部にある広告を削除</string>
