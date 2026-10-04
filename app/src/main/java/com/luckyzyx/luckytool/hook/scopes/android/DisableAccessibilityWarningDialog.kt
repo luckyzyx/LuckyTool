@@ -10,12 +10,22 @@ object DisableAccessibilityWarningDialog : YukiBaseHooker() {
     override fun onHook() {
         //Source FraudBehaviorDetectManager
         "com.android.server.am.FraudBehaviorDetectManager".toClass().resolve().apply {
-            firstMethod {
+            firstMethodOrNull {
                 name = "updateGlobalCloseConfigToXmlFile"
                 parameters(Boolean::class, Int::class)
-            }.hook {
+            }?.hook {
                 after {
                     val mConfig = firstField { name = "mConfig" }.of(instance).get() ?: return@after
+                    mConfig.asResolver().firstField { name = "enabled" }.set(false)
+                }
+            }
+            firstMethodOrNull {
+                name = "handleChangedApps"
+                parameterCount = 3
+            }?.hook {
+                before {
+                    val mConfig =
+                        firstField { name = "mConfig" }.of(instance).get() ?: return@before
                     mConfig.asResolver().firstField { name = "enabled" }.set(false)
                 }
             }
