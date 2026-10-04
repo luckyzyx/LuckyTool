@@ -73,7 +73,7 @@ import java.io.File
     entryClassName = "Entry",
     minApiVersion = 102,
     targetApiVersion = 102,
-    hotReload = YukiHookLibXposedEntry.HotReload.AUTO,
+    hotReload = YukiHookLibXposedEntry.HotReload.MANUAL,
     scope = [
         "system",
         "com.android.systemui",
