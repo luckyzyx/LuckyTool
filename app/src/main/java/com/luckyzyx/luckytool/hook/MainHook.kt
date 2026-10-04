@@ -49,7 +49,6 @@ import com.luckyzyx.luckytool.hook.hookers.HookPictorial
 import com.luckyzyx.luckytool.hook.hookers.HookQuickSearchBox
 import com.luckyzyx.luckytool.hook.hookers.HookSafeCenter
 import com.luckyzyx.luckytool.hook.hookers.HookScreenshot
-import com.luckyzyx.luckytool.hook.hookers.HookSecurePay
 import com.luckyzyx.luckytool.hook.hookers.HookSecuritypPermission
 import com.luckyzyx.luckytool.hook.hookers.HookSettings
 import com.luckyzyx.luckytool.hook.hookers.HookSmartSidebar
@@ -92,7 +91,6 @@ import java.io.File
         "com.coloros.phonemanager",
         "com.oplus.aod",
         "com.oplus.uiengine",
-        "com.coloros.securepay",
         "com.heytap.themestore",
         "com.oplus.games",
         "com.oplus.cosa",
@@ -299,9 +297,6 @@ class MainHook : YukiHookXposedModule {
 
         //手机管家
         loadApp("com.coloros.phonemanager", HookPhoneManager)
-
-        //支付保护
-        loadApp("com.coloros.securepay", HookSecurePay)
 
         //应用分身
         loadApp("com.oplus.multiapp", HookMultiApp)
