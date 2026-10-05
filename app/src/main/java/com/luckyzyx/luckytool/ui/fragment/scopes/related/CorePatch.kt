@@ -21,7 +21,7 @@ class CorePatch : BaseScopePreferenceFeagment() {
     override fun Context.loadRootPreference(): Preference {
         return Preference(this).apply {
             title = getString(R.string.corepatch)
-            summary = getString(R.string.corepatch_summary, "11-16")
+            summary = getString(R.string.corepatch_summary, "11-17")
             key = "CorePatch"
             isIconSpaceReserved = false
         }
