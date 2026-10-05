@@ -265,7 +265,7 @@ object LockScreenClock : YukiBaseHooker() {
             VariousClass(
                 "com.oplusos.systemui.keyguard.clock.RedHorizontalDualClockView", //C13
                 "com.oplus.systemui.shared.clocks.RedHorizontalDualClockView" //C14
-            ).loadOrNull()?.resolve()?.apply {
+            ).loadOrNull(hostClassLoader)?.resolve()?.apply {
                 firstMethod { name = "onFinishInflate" }.hook {
                     after {
                         if (!userTypeface) return@after
