@@ -1,6 +1,7 @@
 package com.luckyzyx.luckytool.hook.scopes.systemui
 
 import android.content.Context
+import android.content.Intent
 import android.graphics.Typeface
 import android.view.Gravity
 import android.view.View
@@ -23,6 +24,7 @@ import com.luckyzyx.luckytool.utils.getIntProperty
 import com.luckyzyx.luckytool.utils.getOSVersionCode
 import org.lsposed.lsparanoid.Obfuscate
 import java.io.StringReader
+import java.lang.ref.WeakReference
 import java.util.Properties
 
 @Suppress("MayBeConstant")
@@ -53,6 +55,15 @@ object LockScreenChargingComponent : YukiBaseHooker() {
 
         private var oplusCharger: Any? = null
 
+        //OplusBatteryService 广播缓存: updateChargeAnim 有时拿不到 getChargeWattageOrigin, 用监听器兜底
+        private var cachedCpaWattage = -1
+        private var cachedWattage = -1
+
+        //广播兜底刷新: 记录当前动画瓦数视图与最近一次实时数据, 广播更新时直接推送文本
+        private var currentWattageView = WeakReference<TextView?>(null)
+        private var lastCpaWattage = 0
+        private var lastWattage: Int? = null
+
         override fun onHook() {
             var userTypeface =
                 preferences(ModulePrefs).getBoolean("lock_screen_charging_use_user_typeface", false)
@@ -62,18 +73,21 @@ object LockScreenChargingComponent : YukiBaseHooker() {
             var textLogo =
                 preferences(ModulePrefs).getString("set_lock_screen_charging_text_logo_style", "0")
             dataChannel.wait<String>("set_lock_screen_charging_text_logo_style") { textLogo = it }
-            var showRealTech =
-                preferences(ModulePrefs).getBoolean("lock_screen_show_real_charging_technology", false)
+            var showRealTech = preferences(ModulePrefs).getBoolean(
+                "lock_screen_show_real_charging_technology", false
+            )
             dataChannel.wait<Boolean>("lock_screen_show_real_charging_technology") {
                 showRealTech = it
             }
-            var showWattage =
-                preferences(ModulePrefs).getBoolean("force_lock_screen_charging_show_wattage", false)
+            var showWattage = preferences(ModulePrefs).getBoolean(
+                "force_lock_screen_charging_show_wattage", false
+            )
             dataChannel.wait<Boolean>("force_lock_screen_charging_show_wattage") {
                 showWattage = it
             }
-            var drawTechnology =
-                preferences(ModulePrefs).getBoolean("replace_charging_technology_drawing_style", false)
+            var drawTechnology = preferences(ModulePrefs).getBoolean(
+                "replace_charging_technology_drawing_style", false
+            )
             dataChannel.wait<Boolean>("replace_charging_technology_drawing_style") {
                 drawTechnology = it
             }
@@ -93,6 +107,16 @@ object LockScreenChargingComponent : YukiBaseHooker() {
             val hasUpdateChargeTechImage = ChargeLevelAndLogoView.resolve().firstMethodOrNull {
                 name = "updateChargeTechImage"
             } != null
+
+            //OplusBatteryService: 注册监听器缓存瓦数, 与 StatusBarBatteryInfoNotify 一致
+            //该广播在 C15 C16 C17 框架中均携带 chargewattage/cpa_charge_wattage
+            registerAppLifecycle {
+                onCreate {
+                    registerReceiver("android.intent.action.ADDITIONAL_BATTERY_CHANGED") { _: Context, intent: Intent ->
+                        onWattageBroadcast(intent)
+                    }
+                }
+            }
 
             //Source ChargingLevelAndLogoView
             ChargeLevelAndLogoView.resolve().apply {
@@ -137,7 +161,6 @@ object LockScreenChargingComponent : YukiBaseHooker() {
                         val oplusChargeInfo = args.firstOrNull {
                             it?.javaClass?.simpleName == "OplusChargeInfo"
                         } ?: return@after
-
                         if (showWattage || drawTechnology) {
                             firstField { name = "techWattageLayout" }.of(instance)
                                 .get<View>()?.isVisible = true
@@ -153,18 +176,16 @@ object LockScreenChargingComponent : YukiBaseHooker() {
                                     }
                             val cpaWattage = oplusChargeInfo.asResolver().firstMethod {
                                 name = "getChargeWattageOrigin"
-                            }.invoke<Int>()
+                            }.invoke<Int>() ?: 0
                             val wattage = oplusChargeInfo.asResolver().firstMethod {
                                 name = "getChargeWattage"
                             }.invoke<String>()?.toIntOrNull()
-                            chargeWattageView?.text = when (wattage) {
-                                0 if cpaWattage == 0 -> ""
-                                0 if cpaWattage != 0 -> "${cpaWattage}W"
-                                else -> "${wattage}W"
-                            }
 
-//                            YLog.debug("ChargeLevelAndLogoView chargeWattage -> ${chargeWattageView?.isVisible}")
-//                            YLog.debug("ChargeLevelAndLogoView $cpaWattage | $wattage")
+                            //缓存当前视图与实时数据, 供广播兜底直接推送
+                            currentWattageView = WeakReference(chargeWattageView)
+                            lastCpaWattage = cpaWattage
+                            lastWattage = wattage
+                            chargeWattageView?.text = resolveWattageText(cpaWattage, wattage)
                         }
 
                         if (drawTechnology && !hasUpdateChargeTechImage) {
@@ -258,15 +279,12 @@ object LockScreenChargingComponent : YukiBaseHooker() {
                             val wattage = oplusChargeInfo.asResolver().firstMethod {
                                 name = "getChargeWattage"
                             }.invoke<String>()?.toIntOrNull()
+                            //缓存当前视图与实时数据, 供广播兜底直接推送
+                            currentWattageView = WeakReference(chargeWattageView)
+                            lastCpaWattage = cpaWattage
+                            lastWattage = wattage
                             chargeWattageView?.isVisible = true
-                            chargeWattageView?.text = when (wattage) {
-                                0 if cpaWattage == 0 -> ""
-                                0 if true -> "${cpaWattage}W"
-                                else -> "${wattage}W"
-                            }
-//                            YLog.debug("FrameChargeLevelAndLogoView chargeWattage -> ${chargeWattageView?.isVisible}")
-//                            YLog.debug("FrameChargeLevelAndLogoView $cpaWattage | $wattage")
-
+                            chargeWattageView?.text = resolveWattageText(cpaWattage, wattage)
                         }
                     }
                 }
@@ -290,15 +308,8 @@ object LockScreenChargingComponent : YukiBaseHooker() {
                         before {
                             if (!showWattage) return@before
                             val cpaWattage = firstArg().get<Int>() ?: 0
-                            val wattage = arg(1).get<String>() ?: "".toIntOrNull() ?: return@before
-//                        val wattage = arg(1).get<String>() ?: ""
-//                        val isWireless = lastArg().get<Boolean>() ?: false
-//                        YLog.debug("ChargeUtil getShowWattage -> $origin | $wattage | $isWireless")
-                            result = when (wattage) {
-                                0 if cpaWattage == 0 -> ""
-                                0 if true -> "${cpaWattage}W"
-                                else -> "${wattage}W"
-                            }
+                            val wattage = arg(1).get<String>()?.toIntOrNull()
+                            result = resolveWattageText(cpaWattage, wattage)
                         }
                     }
                 }
@@ -310,12 +321,8 @@ object LockScreenChargingComponent : YukiBaseHooker() {
                         before {
                             if (!showWattage) return@before
                             val cpaWattage = firstArg().get<Int>() ?: 0
-                            val wattage = arg(1).get<String>() ?: "".toIntOrNull() ?: return@before
-                            result = when (wattage) {
-                                0 if cpaWattage == 0 -> ""
-                                0 if true -> "${cpaWattage}W"
-                                else -> "${wattage}W"
-                            }
+                            val wattage = arg(1).get<String>()?.toIntOrNull()
+                            result = resolveWattageText(cpaWattage, wattage)
                         }
                     }
                 }
@@ -341,6 +348,36 @@ object LockScreenChargingComponent : YukiBaseHooker() {
                     }
                 }
             }
+        }
+
+        /**
+         * 广播瓦数更新: 刷新缓存并直接推送到当前动画视图
+         * 系统不保证每次广播都会再次回调 updateChargeAnim, 只能自行刷新
+         */
+        private fun onWattageBroadcast(intent: Intent) {
+            cachedCpaWattage = intent.getIntExtra("cpa_charge_wattage", -1)
+            cachedWattage = intent.getIntExtra("chargewattage", -1)
+//            YLog.debug(msg = "onWattageBroadcast -> cpa: $cachedCpaWattage | wattage: $cachedWattage")
+            currentWattageView.get()?.takeIf { it.isAttachedToWindow }?.apply {
+                val text = resolveWattageText(lastCpaWattage, lastWattage)
+                if (text.isNotEmpty()) isVisible = true
+                setText(text)
+            }
+        }
+
+        /**
+         * 瓦数文案: 优先取 updateChargeAnim 传入的实时值,
+         * 为0/缺失时回退到 ADDITIONAL_BATTERY_CHANGED 广播缓存的 chargewattage/cpa_charge_wattage
+         * @param cpaWattage Int getChargeWattageOrigin
+         * @param wattage Int? getChargeWattage
+         * @return String
+         */
+        private fun resolveWattageText(cpaWattage: Int, wattage: Int?): String {
+            val watt =
+                if (wattage != null && wattage > 0) wattage else cachedWattage.takeIf { it > 0 }
+            if (watt != null) return "${watt}W"
+            val cpa = if (cpaWattage > 0) cpaWattage else cachedCpaWattage.takeIf { it > 0 }
+            return if (cpa != null) "${cpa}W" else ""
         }
 
         private fun getChargeInfo(): Properties {
@@ -375,13 +412,15 @@ object LockScreenChargingComponent : YukiBaseHooker() {
             var textLogo =
                 preferences(ModulePrefs).getString("set_lock_screen_charging_text_logo_style", "0")
             dataChannel.wait<String>("set_lock_screen_charging_text_logo_style") { textLogo = it }
-            var showRealTech =
-                preferences(ModulePrefs).getBoolean("lock_screen_show_real_charging_technology", false)
+            var showRealTech = preferences(ModulePrefs).getBoolean(
+                "lock_screen_show_real_charging_technology", false
+            )
             dataChannel.wait<Boolean>("lock_screen_show_real_charging_technology") {
                 showRealTech = it
             }
-            var showWattage =
-                preferences(ModulePrefs).getBoolean("force_lock_screen_charging_show_wattage", false)
+            var showWattage = preferences(ModulePrefs).getBoolean(
+                "force_lock_screen_charging_show_wattage", false
+            )
             dataChannel.wait<Boolean>("force_lock_screen_charging_show_wattage") {
                 showWattage = it
             }
@@ -533,13 +572,15 @@ object LockScreenChargingComponent : YukiBaseHooker() {
             dataChannel.wait<String>("set_lock_screen_charging_text_logo_style") {
                 textLogo = it
             }
-            var showRealTech =
-                preferences(ModulePrefs).getBoolean("lock_screen_show_real_charging_technology", false)
+            var showRealTech = preferences(ModulePrefs).getBoolean(
+                "lock_screen_show_real_charging_technology", false
+            )
             dataChannel.wait<Boolean>("lock_screen_show_real_charging_technology") {
                 showRealTech = it
             }
-            var showWattage =
-                preferences(ModulePrefs).getBoolean("force_lock_screen_charging_show_wattage", false)
+            var showWattage = preferences(ModulePrefs).getBoolean(
+                "force_lock_screen_charging_show_wattage", false
+            )
             dataChannel.wait<Boolean>("force_lock_screen_charging_show_wattage") {
                 showWattage = it
             }
@@ -662,8 +703,9 @@ object LockScreenChargingComponent : YukiBaseHooker() {
             dataChannel.wait<String>("set_lock_screen_charging_text_logo_style") {
                 textLogo = it
             }
-            var showWattage =
-                preferences(ModulePrefs).getBoolean("force_lock_screen_charging_show_wattage", false)
+            var showWattage = preferences(ModulePrefs).getBoolean(
+                "force_lock_screen_charging_show_wattage", false
+            )
             dataChannel.wait<Boolean>("force_lock_screen_charging_show_wattage") {
                 showWattage = it
             }
