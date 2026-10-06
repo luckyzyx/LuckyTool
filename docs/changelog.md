@@ -61,6 +61,7 @@ in [TG Channel’s associated groups](https://t.me/LuckyTool)**
 - [修复] 移除最近任务列表清除按钮 C17
 - [修复] 移除锁屏顶部锁定图标 C17
 - [适配] 启用侧边栏后台挂机 C17
+- [适配] 移除电池限制插件 C17
 
 ### 1.3.4
 
