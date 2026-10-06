@@ -1,6 +1,43 @@
 package com.luckyzyx.luckytool.ui.compose.scopes
 
 import com.luckyzyx.luckytool.ui.components.preference.PrefScopeBuilder
+import com.luckyzyx.luckytool.ui.compose.scopes.apps.OplusAlarmClockPage
+import com.luckyzyx.luckytool.ui.compose.scopes.apps.OplusBatteryPage
+import com.luckyzyx.luckytool.ui.compose.scopes.apps.OplusBeaconLinkPage
+import com.luckyzyx.luckytool.ui.compose.scopes.apps.OplusBrowserPage
+import com.luckyzyx.luckytool.ui.compose.scopes.apps.OplusCalendarPage
+import com.luckyzyx.luckytool.ui.compose.scopes.apps.OplusCameraPage
+import com.luckyzyx.luckytool.ui.compose.scopes.apps.OplusCloudServicePage
+import com.luckyzyx.luckytool.ui.compose.scopes.apps.OplusDirectUIPage
+import com.luckyzyx.luckytool.ui.compose.scopes.apps.OplusEngineerModePage
+import com.luckyzyx.luckytool.ui.compose.scopes.apps.OplusEyeProtectPage
+import com.luckyzyx.luckytool.ui.compose.scopes.apps.OplusFileManagerPage
+import com.luckyzyx.luckytool.ui.compose.scopes.apps.OplusGalleryPage
+import com.luckyzyx.luckytool.ui.compose.scopes.apps.OplusGamesPage
+import com.luckyzyx.luckytool.ui.compose.scopes.apps.OplusGesturePage
+import com.luckyzyx.luckytool.ui.compose.scopes.apps.OplusHealthPage
+import com.luckyzyx.luckytool.ui.compose.scopes.apps.OplusLinkerPage
+import com.luckyzyx.luckytool.ui.compose.scopes.apps.OplusMarketPage
+import com.luckyzyx.luckytool.ui.compose.scopes.apps.OplusMMSPage
+import com.luckyzyx.luckytool.ui.compose.scopes.apps.OplusMcsPage
+import com.luckyzyx.luckytool.ui.compose.scopes.apps.OplusMyDevicesPage
+import com.luckyzyx.luckytool.ui.compose.scopes.apps.OplusNfcPage
+import com.luckyzyx.luckytool.ui.compose.scopes.apps.OplusOSharePage
+import com.luckyzyx.luckytool.ui.compose.scopes.apps.OplusOTAPage
+import com.luckyzyx.luckytool.ui.compose.scopes.apps.OplusPermissionControllerPage
+import com.luckyzyx.luckytool.ui.compose.scopes.apps.OplusPhoneManagerPage
+import com.luckyzyx.luckytool.ui.compose.scopes.apps.OplusPictorialPage
+import com.luckyzyx.luckytool.ui.compose.scopes.apps.OplusScreenshotPage
+import com.luckyzyx.luckytool.ui.compose.scopes.apps.OplusSearchBoxPage
+import com.luckyzyx.luckytool.ui.compose.scopes.apps.OplusSecuritypPermissionPage
+import com.luckyzyx.luckytool.ui.compose.scopes.apps.OplusSettingsPage
+import com.luckyzyx.luckytool.ui.compose.scopes.apps.OplusSmartSidebarPage
+import com.luckyzyx.luckytool.ui.compose.scopes.apps.OplusSoundRecorderPage
+import com.luckyzyx.luckytool.ui.compose.scopes.apps.OplusSpeechAssistPage
+import com.luckyzyx.luckytool.ui.compose.scopes.apps.OplusTeleServicePage
+import com.luckyzyx.luckytool.ui.compose.scopes.apps.OplusThemeStorePage
+import com.luckyzyx.luckytool.ui.compose.scopes.apps.OplusWeatherPage
+import com.luckyzyx.luckytool.ui.compose.scopes.apps.OplusWirelessSettingsPage
 
 /**
  * 一个 Compose 作用域页的声明——旧 [BaseScopePreferenceFeagment] 子类中
@@ -35,5 +72,43 @@ object ScopePageRegistry {
     init {
         register(StatusBarClockPage.spec)
         register(StatusBarRelatedPage.spec)
+        // P3 apps 批
+        register(OplusAlarmClockPage.spec)
+        register(OplusBatteryPage.spec)
+        register(OplusBeaconLinkPage.spec)
+        register(OplusBrowserPage.spec)
+        register(OplusCalendarPage.spec)
+        register(OplusCameraPage.spec)
+        register(OplusCloudServicePage.spec)
+        register(OplusDirectUIPage.spec)
+        register(OplusEngineerModePage.spec)
+        register(OplusEyeProtectPage.spec)
+        register(OplusFileManagerPage.spec)
+        register(OplusGalleryPage.spec)
+        register(OplusGamesPage.spec)
+        register(OplusGesturePage.spec)
+        register(OplusHealthPage.spec)
+        register(OplusLinkerPage.spec)
+        register(OplusMarketPage.spec)
+        register(OplusMMSPage.spec)
+        register(OplusMcsPage.spec)
+        register(OplusMyDevicesPage.spec)
+        register(OplusNfcPage.spec)
+        register(OplusOSharePage.spec)
+        register(OplusOTAPage.spec)
+        register(OplusPermissionControllerPage.spec)
+        register(OplusPhoneManagerPage.spec)
+        register(OplusPictorialPage.spec)
+        register(OplusScreenshotPage.spec)
+        register(OplusSearchBoxPage.spec)
+        register(OplusSecuritypPermissionPage.spec)
+        register(OplusSettingsPage.spec)
+        register(OplusSmartSidebarPage.spec)
+        register(OplusSoundRecorderPage.spec)
+        register(OplusSpeechAssistPage.spec)
+        register(OplusTeleServicePage.spec)
+        register(OplusThemeStorePage.spec)
+        register(OplusWeatherPage.spec)
+        register(OplusWirelessSettingsPage.spec)
     }
 }

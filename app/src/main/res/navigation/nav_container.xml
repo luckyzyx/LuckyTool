@@ -100,11 +100,23 @@
     </fragment>
     <fragment
             android:id="@+id/oplusScreenshot"
-            android:name="com.luckyzyx.luckytool.ui.fragment.scopes.apps.OplusScreenshot"
+            android:name="com.luckyzyx.luckytool.ui.compose.ComposeScopeFragment"
             android:label="{title_text}">
         <argument
                 android:name="title_text"
                 app:argType="string" />
+        <argument
+                android:name="page_key"
+                app:argType="string"
+                android:defaultValue="oplus_screenshot" />
+        <argument
+                android:name="scrollKey"
+                app:argType="string"
+                android:defaultValue="" />
+        <argument
+                android:name="scrollPosition"
+                app:argType="integer"
+                android:defaultValue="-1" />
     </fragment>
     <fragment
             android:id="@+id/application"
@@ -116,35 +128,83 @@
     </fragment>
     <fragment
             android:id="@+id/oplusCamera"
-            android:name="com.luckyzyx.luckytool.ui.fragment.scopes.apps.OplusCamera"
+            android:name="com.luckyzyx.luckytool.ui.compose.ComposeScopeFragment"
             android:label="{title_text}">
         <argument
                 android:name="title_text"
                 app:argType="string" />
+        <argument
+                android:name="page_key"
+                app:argType="string"
+                android:defaultValue="oplus_camera" />
+        <argument
+                android:name="scrollKey"
+                app:argType="string"
+                android:defaultValue="" />
+        <argument
+                android:name="scrollPosition"
+                app:argType="integer"
+                android:defaultValue="-1" />
     </fragment>
     <fragment
             android:id="@+id/oplusGames"
-            android:name="com.luckyzyx.luckytool.ui.fragment.scopes.apps.OplusGames"
+            android:name="com.luckyzyx.luckytool.ui.compose.ComposeScopeFragment"
             android:label="{title_text}">
         <argument
                 android:name="title_text"
                 app:argType="string" />
+        <argument
+                android:name="page_key"
+                app:argType="string"
+                android:defaultValue="oplus_games" />
+        <argument
+                android:name="scrollKey"
+                app:argType="string"
+                android:defaultValue="" />
+        <argument
+                android:name="scrollPosition"
+                app:argType="integer"
+                android:defaultValue="-1" />
     </fragment>
     <fragment
             android:id="@+id/oplusCloudService"
-            android:name="com.luckyzyx.luckytool.ui.fragment.scopes.apps.OplusCloudService"
+            android:name="com.luckyzyx.luckytool.ui.compose.ComposeScopeFragment"
             android:label="{title_text}">
         <argument
                 android:name="title_text"
                 app:argType="string" />
+        <argument
+                android:name="page_key"
+                app:argType="string"
+                android:defaultValue="oplus_cloud_service" />
+        <argument
+                android:name="scrollKey"
+                app:argType="string"
+                android:defaultValue="" />
+        <argument
+                android:name="scrollPosition"
+                app:argType="integer"
+                android:defaultValue="-1" />
     </fragment>
     <fragment
             android:id="@+id/themeStore"
-            android:name="com.luckyzyx.luckytool.ui.fragment.scopes.apps.OplusThemeStore"
+            android:name="com.luckyzyx.luckytool.ui.compose.ComposeScopeFragment"
             android:label="{title_text}">
         <argument
                 android:name="title_text"
                 app:argType="string" />
+        <argument
+                android:name="page_key"
+                app:argType="string"
+                android:defaultValue="theme_store" />
+        <argument
+                android:name="scrollKey"
+                app:argType="string"
+                android:defaultValue="" />
+        <argument
+                android:name="scrollPosition"
+                app:argType="integer"
+                android:defaultValue="-1" />
     </fragment>
     <fragment
             android:id="@+id/multiAppFragment"
@@ -224,11 +284,23 @@
     </fragment>
     <fragment
             android:id="@+id/oplusOta"
-            android:name="com.luckyzyx.luckytool.ui.fragment.scopes.apps.OplusOTA"
+            android:name="com.luckyzyx.luckytool.ui.compose.ComposeScopeFragment"
             android:label="{title_text}">
         <argument
                 android:name="title_text"
                 app:argType="string" />
+        <argument
+                android:name="page_key"
+                app:argType="string"
+                android:defaultValue="oplus_ota" />
+        <argument
+                android:name="scrollKey"
+                app:argType="string"
+                android:defaultValue="" />
+        <argument
+                android:name="scrollPosition"
+                app:argType="integer"
+                android:defaultValue="-1" />
     </fragment>
     <fragment
             android:id="@+id/zoomWindowFragment"
@@ -264,19 +336,43 @@
     </fragment>
     <fragment
             android:id="@+id/oplusBattery"
-            android:name="com.luckyzyx.luckytool.ui.fragment.scopes.apps.OplusBattery"
+            android:name="com.luckyzyx.luckytool.ui.compose.ComposeScopeFragment"
             android:label="{title_text}">
         <argument
                 android:name="title_text"
                 app:argType="string" />
+        <argument
+                android:name="page_key"
+                app:argType="string"
+                android:defaultValue="oplus_battery" />
+        <argument
+                android:name="scrollKey"
+                app:argType="string"
+                android:defaultValue="" />
+        <argument
+                android:name="scrollPosition"
+                app:argType="integer"
+                android:defaultValue="-1" />
     </fragment>
     <fragment
             android:id="@+id/oplusSettings"
-            android:name="com.luckyzyx.luckytool.ui.fragment.scopes.apps.OplusSettings"
+            android:name="com.luckyzyx.luckytool.ui.compose.ComposeScopeFragment"
             android:label="{title_text}">
         <argument
                 android:name="title_text"
                 app:argType="string" />
+        <argument
+                android:name="page_key"
+                app:argType="string"
+                android:defaultValue="oplus_settings" />
+        <argument
+                android:name="scrollKey"
+                app:argType="string"
+                android:defaultValue="" />
+        <argument
+                android:name="scrollPosition"
+                app:argType="integer"
+                android:defaultValue="-1" />
     </fragment>
     <fragment
             android:id="@+id/statusBarBattery"
@@ -344,35 +440,83 @@
     </fragment>
     <fragment
             android:id="@+id/oplusPictorial"
-            android:name="com.luckyzyx.luckytool.ui.fragment.scopes.apps.OplusPictorial"
+            android:name="com.luckyzyx.luckytool.ui.compose.ComposeScopeFragment"
             android:label="{title_text}">
         <argument
                 android:name="title_text"
                 app:argType="string" />
+        <argument
+                android:name="page_key"
+                app:argType="string"
+                android:defaultValue="oplus_pictorial" />
+        <argument
+                android:name="scrollKey"
+                app:argType="string"
+                android:defaultValue="" />
+        <argument
+                android:name="scrollPosition"
+                app:argType="integer"
+                android:defaultValue="-1" />
     </fragment>
     <fragment
             android:id="@+id/oplusMMS"
-            android:name="com.luckyzyx.luckytool.ui.fragment.scopes.apps.OplusMMS"
+            android:name="com.luckyzyx.luckytool.ui.compose.ComposeScopeFragment"
             android:label="{title_text}">
         <argument
                 android:name="title_text"
                 app:argType="string" />
+        <argument
+                android:name="page_key"
+                app:argType="string"
+                android:defaultValue="oplus_mms" />
+        <argument
+                android:name="scrollKey"
+                app:argType="string"
+                android:defaultValue="" />
+        <argument
+                android:name="scrollPosition"
+                app:argType="integer"
+                android:defaultValue="-1" />
     </fragment>
     <fragment
             android:id="@+id/oplusBrowser"
-            android:name="com.luckyzyx.luckytool.ui.fragment.scopes.apps.OplusBrowser"
+            android:name="com.luckyzyx.luckytool.ui.compose.ComposeScopeFragment"
             android:label="{title_text}">
         <argument
                 android:name="title_text"
                 app:argType="string" />
+        <argument
+                android:name="page_key"
+                app:argType="string"
+                android:defaultValue="oplus_browser" />
+        <argument
+                android:name="scrollKey"
+                app:argType="string"
+                android:defaultValue="" />
+        <argument
+                android:name="scrollPosition"
+                app:argType="integer"
+                android:defaultValue="-1" />
     </fragment>
     <fragment
             android:id="@+id/oplusGesture"
-            android:name="com.luckyzyx.luckytool.ui.fragment.scopes.apps.OplusGesture"
+            android:name="com.luckyzyx.luckytool.ui.compose.ComposeScopeFragment"
             android:label="{title_text}">
         <argument
                 android:name="title_text"
                 app:argType="string" />
+        <argument
+                android:name="page_key"
+                app:argType="string"
+                android:defaultValue="oplus_gesture" />
+        <argument
+                android:name="scrollKey"
+                app:argType="string"
+                android:defaultValue="" />
+        <argument
+                android:name="scrollPosition"
+                app:argType="integer"
+                android:defaultValue="-1" />
     </fragment>
     <fragment
             android:id="@+id/adm"
@@ -384,35 +528,83 @@
     </fragment>
     <fragment
             android:id="@+id/oplusGallery"
-            android:name="com.luckyzyx.luckytool.ui.fragment.scopes.apps.OplusGallery"
+            android:name="com.luckyzyx.luckytool.ui.compose.ComposeScopeFragment"
             android:label="{title_text}">
         <argument
                 android:name="title_text"
                 app:argType="string" />
+        <argument
+                android:name="page_key"
+                app:argType="string"
+                android:defaultValue="oplus_gallery" />
+        <argument
+                android:name="scrollKey"
+                app:argType="string"
+                android:defaultValue="" />
+        <argument
+                android:name="scrollPosition"
+                app:argType="integer"
+                android:defaultValue="-1" />
     </fragment>
     <fragment
             android:id="@+id/oplusDirectUI"
-            android:name="com.luckyzyx.luckytool.ui.fragment.scopes.apps.OplusDirectUI"
+            android:name="com.luckyzyx.luckytool.ui.compose.ComposeScopeFragment"
             android:label="{title_text}">
         <argument
                 android:name="title_text"
                 app:argType="string" />
+        <argument
+                android:name="page_key"
+                app:argType="string"
+                android:defaultValue="oplus_direct_ui" />
+        <argument
+                android:name="scrollKey"
+                app:argType="string"
+                android:defaultValue="" />
+        <argument
+                android:name="scrollPosition"
+                app:argType="integer"
+                android:defaultValue="-1" />
     </fragment>
     <fragment
             android:id="@+id/oplusSearchBox"
-            android:name="com.luckyzyx.luckytool.ui.fragment.scopes.apps.OplusSearchBox"
+            android:name="com.luckyzyx.luckytool.ui.compose.ComposeScopeFragment"
             android:label="{title_text}">
         <argument
                 android:name="title_text"
                 app:argType="string" />
+        <argument
+                android:name="page_key"
+                app:argType="string"
+                android:defaultValue="oplus_search_box" />
+        <argument
+                android:name="scrollKey"
+                app:argType="string"
+                android:defaultValue="" />
+        <argument
+                android:name="scrollPosition"
+                app:argType="integer"
+                android:defaultValue="-1" />
     </fragment>
     <fragment
             android:id="@+id/oplusMarket"
-            android:name="com.luckyzyx.luckytool.ui.fragment.scopes.apps.OplusMarket"
+            android:name="com.luckyzyx.luckytool.ui.compose.ComposeScopeFragment"
             android:label="{title_text}">
         <argument
                 android:name="title_text"
                 app:argType="string" />
+        <argument
+                android:name="page_key"
+                app:argType="string"
+                android:defaultValue="oplus_market" />
+        <argument
+                android:name="scrollKey"
+                app:argType="string"
+                android:defaultValue="" />
+        <argument
+                android:name="scrollPosition"
+                app:argType="integer"
+                android:defaultValue="-1" />
     </fragment>
     <fragment
             android:id="@+id/soundRelated"
@@ -424,51 +616,123 @@
     </fragment>
     <fragment
             android:id="@+id/oplusWeather"
-            android:name="com.luckyzyx.luckytool.ui.fragment.scopes.apps.OplusWeather"
+            android:name="com.luckyzyx.luckytool.ui.compose.ComposeScopeFragment"
             android:label="{title_text}">
         <argument
                 android:name="title_text"
                 app:argType="string" />
+        <argument
+                android:name="page_key"
+                app:argType="string"
+                android:defaultValue="oplus_weather" />
+        <argument
+                android:name="scrollKey"
+                app:argType="string"
+                android:defaultValue="" />
+        <argument
+                android:name="scrollPosition"
+                app:argType="integer"
+                android:defaultValue="-1" />
     </fragment>
     <fragment
             android:id="@+id/oplusCalendar"
-            android:name="com.luckyzyx.luckytool.ui.fragment.scopes.apps.OplusCalendar"
+            android:name="com.luckyzyx.luckytool.ui.compose.ComposeScopeFragment"
             android:label="{title_text}">
         <argument
                 android:name="title_text"
                 app:argType="string" />
+        <argument
+                android:name="page_key"
+                app:argType="string"
+                android:defaultValue="oplus_calendar" />
+        <argument
+                android:name="scrollKey"
+                app:argType="string"
+                android:defaultValue="" />
+        <argument
+                android:name="scrollPosition"
+                app:argType="integer"
+                android:defaultValue="-1" />
     </fragment>
     <fragment
             android:id="@+id/oplusSmartSidebar"
-            android:name="com.luckyzyx.luckytool.ui.fragment.scopes.apps.OplusSmartSidebar"
+            android:name="com.luckyzyx.luckytool.ui.compose.ComposeScopeFragment"
             android:label="{title_text}">
         <argument
                 android:name="title_text"
                 app:argType="string" />
+        <argument
+                android:name="page_key"
+                app:argType="string"
+                android:defaultValue="oplus_smart_sidebar" />
+        <argument
+                android:name="scrollKey"
+                app:argType="string"
+                android:defaultValue="" />
+        <argument
+                android:name="scrollPosition"
+                app:argType="integer"
+                android:defaultValue="-1" />
     </fragment>
     <fragment
             android:id="@+id/oplusTeleService"
-            android:name="com.luckyzyx.luckytool.ui.fragment.scopes.apps.OplusTeleService"
+            android:name="com.luckyzyx.luckytool.ui.compose.ComposeScopeFragment"
             android:label="{title_text}">
         <argument
                 android:name="title_text"
                 app:argType="string" />
+        <argument
+                android:name="page_key"
+                app:argType="string"
+                android:defaultValue="oplus_tele_service" />
+        <argument
+                android:name="scrollKey"
+                app:argType="string"
+                android:defaultValue="" />
+        <argument
+                android:name="scrollPosition"
+                app:argType="integer"
+                android:defaultValue="-1" />
     </fragment>
     <fragment
             android:id="@+id/oplusPhoneManager"
-            android:name="com.luckyzyx.luckytool.ui.fragment.scopes.apps.OplusPhoneManager"
+            android:name="com.luckyzyx.luckytool.ui.compose.ComposeScopeFragment"
             android:label="{title_text}">
         <argument
                 android:name="title_text"
                 app:argType="string" />
+        <argument
+                android:name="page_key"
+                app:argType="string"
+                android:defaultValue="oplus_phone_manager" />
+        <argument
+                android:name="scrollKey"
+                app:argType="string"
+                android:defaultValue="" />
+        <argument
+                android:name="scrollPosition"
+                app:argType="integer"
+                android:defaultValue="-1" />
     </fragment>
     <fragment
             android:id="@+id/oplusSoundRecorder"
-            android:name="com.luckyzyx.luckytool.ui.fragment.scopes.apps.OplusSoundRecorder"
+            android:name="com.luckyzyx.luckytool.ui.compose.ComposeScopeFragment"
             android:label="{title_text}">
         <argument
                 android:name="title_text"
                 app:argType="string" />
+        <argument
+                android:name="page_key"
+                app:argType="string"
+                android:defaultValue="oplus_sound_recorder" />
+        <argument
+                android:name="scrollKey"
+                app:argType="string"
+                android:defaultValue="" />
+        <argument
+                android:name="scrollPosition"
+                app:argType="integer"
+                android:defaultValue="-1" />
     </fragment>
     <fragment
             android:id="@+id/memcConfigFragment"
@@ -488,35 +752,83 @@
     </fragment>
     <fragment
             android:id="@+id/oplusEyeProtect"
-            android:name="com.luckyzyx.luckytool.ui.fragment.scopes.apps.OplusEyeProtect"
+            android:name="com.luckyzyx.luckytool.ui.compose.ComposeScopeFragment"
             android:label="{title_text}">
         <argument
                 android:name="title_text"
                 app:argType="string" />
+        <argument
+                android:name="page_key"
+                app:argType="string"
+                android:defaultValue="oplus_eye_protect" />
+        <argument
+                android:name="scrollKey"
+                app:argType="string"
+                android:defaultValue="" />
+        <argument
+                android:name="scrollPosition"
+                app:argType="integer"
+                android:defaultValue="-1" />
     </fragment>
     <fragment
             android:id="@+id/oplusBeaconLink"
-            android:name="com.luckyzyx.luckytool.ui.fragment.scopes.apps.OplusBeaconLink"
+            android:name="com.luckyzyx.luckytool.ui.compose.ComposeScopeFragment"
             android:label="{title_text}">
         <argument
                 android:name="title_text"
                 app:argType="string" />
+        <argument
+                android:name="page_key"
+                app:argType="string"
+                android:defaultValue="oplus_beacon_link" />
+        <argument
+                android:name="scrollKey"
+                app:argType="string"
+                android:defaultValue="" />
+        <argument
+                android:name="scrollPosition"
+                app:argType="integer"
+                android:defaultValue="-1" />
     </fragment>
     <fragment
             android:id="@+id/oplusSpeechAssist"
-            android:name="com.luckyzyx.luckytool.ui.fragment.scopes.apps.OplusSpeechAssist"
+            android:name="com.luckyzyx.luckytool.ui.compose.ComposeScopeFragment"
             android:label="{title_text}">
         <argument
                 android:name="title_text"
                 app:argType="string" />
+        <argument
+                android:name="page_key"
+                app:argType="string"
+                android:defaultValue="oplus_speech_assist" />
+        <argument
+                android:name="scrollKey"
+                app:argType="string"
+                android:defaultValue="" />
+        <argument
+                android:name="scrollPosition"
+                app:argType="integer"
+                android:defaultValue="-1" />
     </fragment>
     <fragment
             android:id="@+id/oplusWirelessSettings"
-            android:name="com.luckyzyx.luckytool.ui.fragment.scopes.apps.OplusWirelessSettings"
+            android:name="com.luckyzyx.luckytool.ui.compose.ComposeScopeFragment"
             android:label="{title_text}">
         <argument
                 android:name="title_text"
                 app:argType="string" />
+        <argument
+                android:name="page_key"
+                app:argType="string"
+                android:defaultValue="oplus_wireless_settings" />
+        <argument
+                android:name="scrollKey"
+                app:argType="string"
+                android:defaultValue="" />
+        <argument
+                android:name="scrollPosition"
+                app:argType="integer"
+                android:defaultValue="-1" />
     </fragment>
     <fragment
             android:id="@+id/hideAppIntentFragment"
@@ -528,27 +840,63 @@
     </fragment>
     <fragment
             android:id="@+id/oplusHealth"
-            android:name="com.luckyzyx.luckytool.ui.fragment.scopes.apps.OplusHealth"
+            android:name="com.luckyzyx.luckytool.ui.compose.ComposeScopeFragment"
             android:label="{title_text}">
         <argument
                 android:name="title_text"
                 app:argType="string" />
+        <argument
+                android:name="page_key"
+                app:argType="string"
+                android:defaultValue="oplus_health" />
+        <argument
+                android:name="scrollKey"
+                app:argType="string"
+                android:defaultValue="" />
+        <argument
+                android:name="scrollPosition"
+                app:argType="integer"
+                android:defaultValue="-1" />
     </fragment>
     <fragment
             android:id="@+id/oplusNfc"
-            android:name="com.luckyzyx.luckytool.ui.fragment.scopes.apps.OplusNfc"
+            android:name="com.luckyzyx.luckytool.ui.compose.ComposeScopeFragment"
             android:label="{title_text}">
         <argument
                 android:name="title_text"
                 app:argType="string" />
+        <argument
+                android:name="page_key"
+                app:argType="string"
+                android:defaultValue="oplus_nfc" />
+        <argument
+                android:name="scrollKey"
+                app:argType="string"
+                android:defaultValue="" />
+        <argument
+                android:name="scrollPosition"
+                app:argType="integer"
+                android:defaultValue="-1" />
     </fragment>
     <fragment
             android:id="@+id/oplusAlarmClock"
-            android:name="com.luckyzyx.luckytool.ui.fragment.scopes.apps.OplusAlarmClock"
+            android:name="com.luckyzyx.luckytool.ui.compose.ComposeScopeFragment"
             android:label="{title_text}">
         <argument
                 android:name="title_text"
                 app:argType="string" />
+        <argument
+                android:name="page_key"
+                app:argType="string"
+                android:defaultValue="oplus_alarm_clock" />
+        <argument
+                android:name="scrollKey"
+                app:argType="string"
+                android:defaultValue="" />
+        <argument
+                android:name="scrollPosition"
+                app:argType="integer"
+                android:defaultValue="-1" />
     </fragment>
     <fragment
             android:id="@+id/batteryInfoFragment"
@@ -560,67 +908,163 @@
     </fragment>
     <fragment
             android:id="@+id/oplusOShare"
-            android:name="com.luckyzyx.luckytool.ui.fragment.scopes.apps.OplusOShare"
+            android:name="com.luckyzyx.luckytool.ui.compose.ComposeScopeFragment"
             android:label="{title_text}">
         <argument
                 android:name="title_text"
                 app:argType="string" />
+        <argument
+                android:name="page_key"
+                app:argType="string"
+                android:defaultValue="oplus_oshare" />
+        <argument
+                android:name="scrollKey"
+                app:argType="string"
+                android:defaultValue="" />
+        <argument
+                android:name="scrollPosition"
+                app:argType="integer"
+                android:defaultValue="-1" />
     </fragment>
     <fragment
             android:id="@+id/oplusPermissionController"
-            android:name="com.luckyzyx.luckytool.ui.fragment.scopes.apps.OplusPermissionController"
+            android:name="com.luckyzyx.luckytool.ui.compose.ComposeScopeFragment"
             android:label="{title_text}">
         <argument
                 android:name="title_text"
                 app:argType="string" />
+        <argument
+                android:name="page_key"
+                app:argType="string"
+                android:defaultValue="oplus_permission_controller" />
+        <argument
+                android:name="scrollKey"
+                app:argType="string"
+                android:defaultValue="" />
+        <argument
+                android:name="scrollPosition"
+                app:argType="integer"
+                android:defaultValue="-1" />
     </fragment>
     <fragment
             android:id="@+id/oplusLinker"
-            android:name="com.luckyzyx.luckytool.ui.fragment.scopes.apps.OplusLinker"
+            android:name="com.luckyzyx.luckytool.ui.compose.ComposeScopeFragment"
             android:label="{title_text}">
         <argument
                 android:name="title_text"
                 app:argType="string" />
+        <argument
+                android:name="page_key"
+                app:argType="string"
+                android:defaultValue="oplus_linker" />
+        <argument
+                android:name="scrollKey"
+                app:argType="string"
+                android:defaultValue="" />
+        <argument
+                android:name="scrollPosition"
+                app:argType="integer"
+                android:defaultValue="-1" />
     </fragment>
     <fragment
             android:id="@+id/oplusSecuritypPermission"
-            android:name="com.luckyzyx.luckytool.ui.fragment.scopes.apps.OplusSecuritypPermission"
+            android:name="com.luckyzyx.luckytool.ui.compose.ComposeScopeFragment"
             android:label="{title_text}">
         <argument
                 android:name="title_text"
                 app:argType="string" />
+        <argument
+                android:name="page_key"
+                app:argType="string"
+                android:defaultValue="oplus_securityp_permission" />
+        <argument
+                android:name="scrollKey"
+                app:argType="string"
+                android:defaultValue="" />
+        <argument
+                android:name="scrollPosition"
+                app:argType="integer"
+                android:defaultValue="-1" />
     </fragment>
     <fragment
             android:id="@+id/oplusFileManager"
-            android:name="com.luckyzyx.luckytool.ui.fragment.scopes.apps.OplusFileManager"
+            android:name="com.luckyzyx.luckytool.ui.compose.ComposeScopeFragment"
             android:label="{title_text}">
         <argument
                 android:name="title_text"
                 app:argType="string" />
+        <argument
+                android:name="page_key"
+                app:argType="string"
+                android:defaultValue="oplus_file_manager" />
+        <argument
+                android:name="scrollKey"
+                app:argType="string"
+                android:defaultValue="" />
+        <argument
+                android:name="scrollPosition"
+                app:argType="integer"
+                android:defaultValue="-1" />
     </fragment>
     <fragment
             android:id="@+id/oplusEngineerMode"
-            android:name="com.luckyzyx.luckytool.ui.fragment.scopes.apps.OplusEngineerMode"
+            android:name="com.luckyzyx.luckytool.ui.compose.ComposeScopeFragment"
             android:label="{title_text}">
         <argument
                 android:name="title_text"
                 app:argType="string" />
+        <argument
+                android:name="page_key"
+                app:argType="string"
+                android:defaultValue="oplus_engineer_mode" />
+        <argument
+                android:name="scrollKey"
+                app:argType="string"
+                android:defaultValue="" />
+        <argument
+                android:name="scrollPosition"
+                app:argType="integer"
+                android:defaultValue="-1" />
     </fragment>
     <fragment
             android:id="@+id/oplusMyDevices"
-            android:name="com.luckyzyx.luckytool.ui.fragment.scopes.apps.OplusMyDevices"
+            android:name="com.luckyzyx.luckytool.ui.compose.ComposeScopeFragment"
             android:label="{title_text}">
         <argument
                 android:name="title_text"
                 app:argType="string" />
+        <argument
+                android:name="page_key"
+                app:argType="string"
+                android:defaultValue="oplus_my_devices" />
+        <argument
+                android:name="scrollKey"
+                app:argType="string"
+                android:defaultValue="" />
+        <argument
+                android:name="scrollPosition"
+                app:argType="integer"
+                android:defaultValue="-1" />
     </fragment>
     <fragment
             android:id="@+id/oplusMcs"
-            android:name="com.luckyzyx.luckytool.ui.fragment.scopes.apps.OplusMcs"
+            android:name="com.luckyzyx.luckytool.ui.compose.ComposeScopeFragment"
             android:label="{title_text}">
         <argument
                 android:name="title_text"
                 app:argType="string" />
+        <argument
+                android:name="page_key"
+                app:argType="string"
+                android:defaultValue="oplus_mcs" />
+        <argument
+                android:name="scrollKey"
+                app:argType="string"
+                android:defaultValue="" />
+        <argument
+                android:name="scrollPosition"
+                app:argType="integer"
+                android:defaultValue="-1" />
     </fragment>
     <fragment
             android:id="@+id/gpsJoyStick"
