@@ -128,9 +128,32 @@ class XposedFragment : BaseScopePreferenceFeagment(), MenuProvider {
 
     private var loadDialog: AlertDialog? = null
 
+    companion object {
+        /** P2 过渡：Compose Function 页顶栏的搜索/版本信息入口转发目标 */
+        @Volatile
+        var currentInstance: XposedFragment? = null
+            private set
+    }
+
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         setupMenuProvider(this)
+        currentInstance = this
+    }
+
+    override fun onDestroyView() {
+        super.onDestroyView()
+        if (currentInstance === this) currentInstance = null
+    }
+
+    /** P2 过渡：Compose 顶栏转发旧搜索对话框 */
+    fun showSearchFromShell(context: Context) {
+        context.showSearchDialog()
+    }
+
+    /** P2 过渡：Compose 顶栏转发旧版本信息对话框 */
+    fun showVersionInfoFromShell(context: Context) {
+        context.showBottomDialog()
     }
 
     override fun Context.loadRootPreference(): Preference {

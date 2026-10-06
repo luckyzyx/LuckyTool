@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- P2：Compose 壳中承载旧功能树 NavHostFragment 的容器视图 id -->
+    <item name="function_nav_host" type="id" />
+</resources>

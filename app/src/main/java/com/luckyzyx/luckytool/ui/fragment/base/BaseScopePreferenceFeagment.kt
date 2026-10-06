@@ -86,7 +86,8 @@ abstract class BaseScopePreferenceFeagment : PreferenceFragmentCompat(), MenuPro
         isVisible = isVisible && allPrefsItems.any { it.isVisible == true }
         setOnPreferenceClickListener {
             val navController = when (context) {
-                is MainActivity -> context.navController
+                // P2：主壳为 Compose，旧功能树统一走 MainActivity.functionNavController
+                is MainActivity -> context.functionNavController
                 else -> safeOfNull { findNavController() }
             }
             val bundle = Bundle().apply {
