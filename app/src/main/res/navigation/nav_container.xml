@@ -64,11 +64,23 @@
     </fragment>
     <fragment
             android:id="@+id/statusBarClock"
-            android:name="com.luckyzyx.luckytool.ui.fragment.scopes.statusbar.StatusBarClock"
+            android:name="com.luckyzyx.luckytool.ui.compose.ComposeScopeFragment"
             android:label="{title_text}">
         <argument
                 android:name="title_text"
                 app:argType="string" />
+        <argument
+                android:name="page_key"
+                app:argType="string"
+                android:defaultValue="statusbar_clock" />
+        <argument
+                android:name="scrollKey"
+                app:argType="string"
+                android:defaultValue="" />
+        <argument
+                android:name="scrollPosition"
+                app:argType="integer"
+                android:defaultValue="-1" />
     </fragment>
     <fragment
             android:id="@+id/launcher"
@@ -144,11 +156,23 @@
     </fragment>
     <fragment
             android:id="@+id/statusBar"
-            android:name="com.luckyzyx.luckytool.ui.fragment.scopes.related.StatusBarRelated"
+            android:name="com.luckyzyx.luckytool.ui.compose.ComposeScopeFragment"
             android:label="{title_text}">
         <argument
                 android:name="title_text"
                 app:argType="string" />
+        <argument
+                android:name="page_key"
+                app:argType="string"
+                android:defaultValue="statusbar" />
+        <argument
+                android:name="scrollKey"
+                app:argType="string"
+                android:defaultValue="" />
+        <argument
+                android:name="scrollPosition"
+                app:argType="integer"
+                android:defaultValue="-1" />
     </fragment>
     <fragment
             android:id="@+id/miscellaneous"
