@@ -40,27 +40,63 @@
     </fragment>
     <fragment
             android:id="@+id/statusBarNotify"
-            android:name="com.luckyzyx.luckytool.ui.fragment.scopes.statusbar.StatusBarNotify"
+            android:name="com.luckyzyx.luckytool.ui.compose.ComposeScopeFragment"
             android:label="{title_text}">
         <argument
                 android:name="title_text"
                 app:argType="string" />
+        <argument
+                android:name="page_key"
+                app:argType="string"
+                android:defaultValue="statusbar_notify" />
+        <argument
+                android:name="scrollKey"
+                app:argType="string"
+                android:defaultValue="" />
+        <argument
+                android:name="scrollPosition"
+                app:argType="integer"
+                android:defaultValue="-1" />
     </fragment>
     <fragment
             android:id="@+id/statusBarIcon"
-            android:name="com.luckyzyx.luckytool.ui.fragment.scopes.statusbar.StatusBarIcon"
+            android:name="com.luckyzyx.luckytool.ui.compose.ComposeScopeFragment"
             android:label="{title_text}">
         <argument
                 android:name="title_text"
                 app:argType="string" />
+        <argument
+                android:name="page_key"
+                app:argType="string"
+                android:defaultValue="statusbar_icon" />
+        <argument
+                android:name="scrollKey"
+                app:argType="string"
+                android:defaultValue="" />
+        <argument
+                android:name="scrollPosition"
+                app:argType="integer"
+                android:defaultValue="-1" />
     </fragment>
     <fragment
             android:id="@+id/statusBarControlCenter"
-            android:name="com.luckyzyx.luckytool.ui.fragment.scopes.statusbar.StatusBarControlCenter"
+            android:name="com.luckyzyx.luckytool.ui.compose.ComposeScopeFragment"
             android:label="{title_text}">
         <argument
                 android:name="title_text"
                 app:argType="string" />
+        <argument
+                android:name="page_key"
+                app:argType="string"
+                android:defaultValue="statusbar_control_center" />
+        <argument
+                android:name="scrollKey"
+                app:argType="string"
+                android:defaultValue="" />
+        <argument
+                android:name="scrollPosition"
+                app:argType="integer"
+                android:defaultValue="-1" />
     </fragment>
     <fragment
             android:id="@+id/statusBarClock"
@@ -268,11 +304,23 @@
     </fragment>
     <fragment
             android:id="@+id/statusBarNetWorkSpeed"
-            android:name="com.luckyzyx.luckytool.ui.fragment.scopes.statusbar.StatusBarNetWorkSpeed"
+            android:name="com.luckyzyx.luckytool.ui.compose.ComposeScopeFragment"
             android:label="{title_text}">
         <argument
                 android:name="title_text"
                 app:argType="string" />
+        <argument
+                android:name="page_key"
+                app:argType="string"
+                android:defaultValue="statusbar_network_speed" />
+        <argument
+                android:name="scrollKey"
+                app:argType="string"
+                android:defaultValue="" />
+        <argument
+                android:name="scrollPosition"
+                app:argType="integer"
+                android:defaultValue="-1" />
     </fragment>
     <fragment
             android:id="@+id/dialogRelated"
@@ -328,11 +376,23 @@
     </fragment>
     <fragment
             android:id="@+id/statusBarLayout"
-            android:name="com.luckyzyx.luckytool.ui.fragment.scopes.statusbar.StatusBarLayout"
+            android:name="com.luckyzyx.luckytool.ui.compose.ComposeScopeFragment"
             android:label="{title_text}">
         <argument
                 android:name="title_text"
                 app:argType="string" />
+        <argument
+                android:name="page_key"
+                app:argType="string"
+                android:defaultValue="statusbar_layout" />
+        <argument
+                android:name="scrollKey"
+                app:argType="string"
+                android:defaultValue="" />
+        <argument
+                android:name="scrollPosition"
+                app:argType="integer"
+                android:defaultValue="-1" />
     </fragment>
     <fragment
             android:id="@+id/oplusBattery"
@@ -376,11 +436,23 @@
     </fragment>
     <fragment
             android:id="@+id/statusBarBattery"
-            android:name="com.luckyzyx.luckytool.ui.fragment.scopes.statusbar.StatusBarBattery"
+            android:name="com.luckyzyx.luckytool.ui.compose.ComposeScopeFragment"
             android:label="{title_text}">
         <argument
                 android:name="title_text"
                 app:argType="string" />
+        <argument
+                android:name="page_key"
+                app:argType="string"
+                android:defaultValue="statusbar_battery" />
+        <argument
+                android:name="scrollKey"
+                app:argType="string"
+                android:defaultValue="" />
+        <argument
+                android:name="scrollPosition"
+                app:argType="integer"
+                android:defaultValue="-1" />
     </fragment>
     <fragment
             android:id="@+id/ksWeb"
@@ -392,11 +464,23 @@
     </fragment>
     <fragment
             android:id="@+id/statusBarTiles"
-            android:name="com.luckyzyx.luckytool.ui.fragment.scopes.statusbar.StatusBarTiles"
+            android:name="com.luckyzyx.luckytool.ui.compose.ComposeScopeFragment"
             android:label="{title_text}">
         <argument
                 android:name="title_text"
                 app:argType="string" />
+        <argument
+                android:name="page_key"
+                app:argType="string"
+                android:defaultValue="statusbar_tiles" />
+        <argument
+                android:name="scrollKey"
+                app:argType="string"
+                android:defaultValue="" />
+        <argument
+                android:name="scrollPosition"
+                app:argType="integer"
+                android:defaultValue="-1" />
     </fragment>
     <fragment
             android:id="@+id/forceFpsFragment"
@@ -408,11 +492,23 @@
     </fragment>
     <fragment
             android:id="@+id/statusBarNotifyRemoval"
-            android:name="com.luckyzyx.luckytool.ui.fragment.scopes.statusbar.StatusBarNotifyRemoval"
+            android:name="com.luckyzyx.luckytool.ui.compose.ComposeScopeFragment"
             android:label="{title_text}">
         <argument
                 android:name="title_text"
                 app:argType="string" />
+        <argument
+                android:name="page_key"
+                app:argType="string"
+                android:defaultValue="statusbar_notify_removal" />
+        <argument
+                android:name="scrollKey"
+                app:argType="string"
+                android:defaultValue="" />
+        <argument
+                android:name="scrollPosition"
+                app:argType="integer"
+                android:defaultValue="-1" />
     </fragment>
     <fragment
             android:id="@+id/extractOTAFragment"

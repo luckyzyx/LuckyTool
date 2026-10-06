@@ -38,6 +38,14 @@ import com.luckyzyx.luckytool.ui.compose.scopes.apps.OplusTeleServicePage
 import com.luckyzyx.luckytool.ui.compose.scopes.apps.OplusThemeStorePage
 import com.luckyzyx.luckytool.ui.compose.scopes.apps.OplusWeatherPage
 import com.luckyzyx.luckytool.ui.compose.scopes.apps.OplusWirelessSettingsPage
+import com.luckyzyx.luckytool.ui.compose.scopes.statusbar.StatusBarBatteryPage
+import com.luckyzyx.luckytool.ui.compose.scopes.statusbar.StatusBarControlCenterPage
+import com.luckyzyx.luckytool.ui.compose.scopes.statusbar.StatusBarIconPage
+import com.luckyzyx.luckytool.ui.compose.scopes.statusbar.StatusBarLayoutPage
+import com.luckyzyx.luckytool.ui.compose.scopes.statusbar.StatusBarNetWorkSpeedPage
+import com.luckyzyx.luckytool.ui.compose.scopes.statusbar.StatusBarNotifyPage
+import com.luckyzyx.luckytool.ui.compose.scopes.statusbar.StatusBarNotifyRemovalPage
+import com.luckyzyx.luckytool.ui.compose.scopes.statusbar.StatusBarTilesPage
 
 /**
  * 一个 Compose 作用域页的声明——旧 [BaseScopePreferenceFeagment] 子类中
@@ -110,5 +118,14 @@ object ScopePageRegistry {
         register(OplusThemeStorePage.spec)
         register(OplusWeatherPage.spec)
         register(OplusWirelessSettingsPage.spec)
+        // P3 statusbar 批
+        register(StatusBarBatteryPage.spec)
+        register(StatusBarControlCenterPage.spec)
+        register(StatusBarIconPage.spec)
+        register(StatusBarLayoutPage.spec)
+        register(StatusBarNetWorkSpeedPage.spec)
+        register(StatusBarNotifyPage.spec)
+        register(StatusBarNotifyRemovalPage.spec)
+        register(StatusBarTilesPage.spec)
     }
 }
