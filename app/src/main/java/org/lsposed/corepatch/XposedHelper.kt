@@ -30,6 +30,9 @@ object XposedHelper {
         hostClassLoader = classLoader
     }
 
+    val isHostClassLoaderInitialized: Boolean
+        get() = ::hostClassLoader.isInitialized
+
     class BeforeHookCallback(private val chain: XposedInterface.Chain) {
         val thisObject: Any? get() = chain.thisObject
         val args: Array<Any?> = chain.args.toTypedArray()

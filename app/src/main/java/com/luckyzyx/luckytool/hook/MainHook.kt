@@ -10,6 +10,8 @@ import com.highcapable.yukihookapi.hook.xposed.bridge.event.v101.onModuleLoaded
 import com.highcapable.yukihookapi.hook.xposed.bridge.event.v101.onPackageLoaded
 import com.highcapable.yukihookapi.hook.xposed.bridge.event.v101.onPackageReady
 import com.highcapable.yukihookapi.hook.xposed.bridge.event.v101.onSystemServerStarting
+import com.highcapable.yukihookapi.hook.xposed.bridge.event.v102.onHotReloaded
+import com.highcapable.yukihookapi.hook.xposed.bridge.event.v102.onHotReloading
 import com.luckyzyx.luckytool.hook.hookers.HookAlarmClock
 import com.luckyzyx.luckytool.hook.hookers.HookAndroid
 import com.luckyzyx.luckytool.hook.hookers.HookAudioEffectCenter
@@ -171,6 +173,24 @@ class MainHook : YukiHookXposedModule {
                 corePatch.onSystemServerStarting(it)
                 val disableFlagEnable = !prefs.getBoolean("disable_flag_secure", false)
                 if (disableFlagEnable) disableFlagSecure.onSystemServerStarting(it)
+            }
+            // libxposed 的 saved 槽位唯一，两个组件的状态必须合并写入，否则后写覆盖先写
+            onHotReloading {
+                it.setSavedInstanceState(
+                    arrayOf(
+                        corePatch.onHotReloading(),
+                        disableFlagSecure.onHotReloading()
+                    )
+                )
+                true
+            }
+            onHotReloaded {
+                // 新一代 XposedInterface 是监听器 receiver（this），必须先重新绑定
+                val states = it.savedInstanceState as? Array<*>
+                corePatch.onModuleLoaded(this)
+                corePatch.onHotReloaded(it, states?.getOrNull(0))
+                disableFlagSecure.onModuleLoaded(this)   // 修复其静态 module 字段在新类加载器里为 null 的问题
+                disableFlagSecure.onHotReloaded(it, states?.getOrNull(1))
             }
         }
     }

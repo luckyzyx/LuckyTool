@@ -212,14 +212,17 @@ public class DisableFlagSecure {
         }
     }
     
-    public boolean onHotReloading(@NonNull XposedModuleInterface.HotReloadingParam param) {
-        param.setSavedInstanceState(this.param);
-        return true;
+    /**
+     * LuckyTool：返回状态由入口合并写入 saved 槽位（槽位唯一，多组件不能各自 set）。
+     * this.param 为 android.util.Pair（框架类），跨代传递安全。
+     */
+    public Object onHotReloading() {
+        return this.param;
     }
     
-    public void onHotReloaded(@NonNull XposedModuleInterface.HotReloadedParam param) {
+    public void onHotReloaded(@NonNull XposedModuleInterface.HotReloadedParam param, Object savedState) {
         var isSystemServer = param.isSystemServer();
-        if (param.getSavedInstanceState() instanceof Pair<?, ?> pair
+        if (savedState instanceof Pair<?, ?> pair
                 && pair.first instanceof String packageName
                 && pair.second instanceof ClassLoader classLoader) {
             this.param = Pair.create(packageName, classLoader);
