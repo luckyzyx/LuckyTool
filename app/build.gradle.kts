@@ -3,6 +3,7 @@ import java.util.Properties
 
 plugins {
     alias(libs.plugins.android.application)
+    alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.ksp)
     alias(libs.plugins.lsplugin.resopt)
     alias(libs.plugins.lsplugin.lsparanoid)
@@ -71,10 +72,16 @@ android {
         aidl = true
         viewBinding = true
         buildConfig = true
+        compose = true
     }
     androidResources.additionalParameters.addAll(
         arrayOf("--allow-reserved-package-id", "--package-id", "0x64")
     )
+    testOptions {
+        unitTests {
+            isIncludeAndroidResources = true
+        }
+    }
     packaging {
         jniLibs {
             useLegacyPackaging = false
@@ -133,6 +140,20 @@ dependencies {
     implementation(libs.androidx.navigation.fragment.ktx)
     implementation(libs.androidx.navigation.ui.ktx)
     implementation(libs.androidx.lifecycle.viewmodel.ktx)
+    implementation(libs.androidx.lifecycle.runtime.compose)
+    implementation(libs.androidx.lifecycle.viewmodel.compose)
+    implementation(libs.androidx.activity.compose)
+    implementation(libs.androidx.navigation.compose)
+
+    //Compose (BOM 统一版本)
+    platform(libs.androidx.compose.bom)
+    implementation(libs.androidx.compose.ui)
+    implementation(libs.androidx.compose.ui.tooling.preview)
+    implementation(libs.androidx.compose.foundation)
+    implementation(libs.androidx.compose.material3)
+    debugImplementation(libs.androidx.compose.ui.tooling)
+    implementation(libs.coil.compose)
+    implementation(libs.coil.network.okhttp)
 
     //Android UI
     implementation(libs.material)
@@ -174,6 +195,11 @@ dependencies {
     implementation(libs.spiderman)
     implementation(libs.fastscroll)
     implementation(libs.android.image.cropper)
+
+    //Test
+    testImplementation(libs.junit)
+    testImplementation(libs.robolectric)
+    testImplementation(libs.androidx.test.core)
 }
 
 fun getVersionCode(): Int {
