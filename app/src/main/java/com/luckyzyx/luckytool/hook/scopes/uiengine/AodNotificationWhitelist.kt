@@ -10,7 +10,7 @@ object RemoveAodNotificationWhitelist : YukiBaseHooker() {
         //Source NotificationView -> BaseView
         "com.oplus.egview.widget.BaseView".toClass().resolve().apply {
             firstMethod { name = "isExpRegion" }.hook {
-                replaceToTrue()
+                intercept(true)
             }
         }
     }

@@ -1,15 +1,17 @@
 package com.luckyzyx.luckytool.ui.application
 
+import android.app.Application
 import com.google.android.material.color.DynamicColors
-import com.highcapable.yukihookapi.hook.xposed.application.ModuleApplication
+import com.luckyzyx.luckytool.ui.service.XposedServiceBridge
 import com.luckyzyx.luckytool.utils.ThemeUtils
 import org.lsposed.lsparanoid.Obfuscate
 
 @Obfuscate
-class MyApplication : ModuleApplication() {
+class MyApplication : Application() {
 
     override fun onCreate() {
         super.onCreate()
+        XposedServiceBridge.init()
 
         applyThemeBasedOnPreferences()
     }

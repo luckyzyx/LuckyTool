@@ -15,14 +15,14 @@ object ForceDisplayProcessManagement : YukiBaseHooker() {
             "com.oplus.settings.feature.spfunction.RunningApplicationsPreferenceController" //C14.1
         ).toClass().resolve().apply {
             firstMethod { name = "getAvailabilityStatus" }.hook {
-                replaceTo(0)
+                intercept(0)
             }
         }
         //Source RunningApplicationsNewPreferenceController
         "com.oplus.settings.feature.appmanager.controller.RunningApplicationsNewPreferenceController".toClass()
             .resolve().apply {
                 firstMethod { name = "getAvailabilityStatus" }.hook {
-                    replaceTo(0)
+                    intercept(0)
                 }
             }
     }

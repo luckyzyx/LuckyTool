@@ -5,25 +5,27 @@ import android.content.res.ColorStateList
 import android.graphics.Color
 import android.graphics.drawable.RippleDrawable
 import android.os.Bundle
-import android.os.Handler
-import android.os.Looper
 import android.view.Menu
 import android.view.MenuInflater
 import android.view.MenuItem
 import android.view.View
 import androidx.core.view.MenuProvider
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import androidx.preference.Preference
 import androidx.preference.PreferenceCategory
+import androidx.preference.PreferenceFragmentCompat
 import androidx.preference.PreferenceGroup.PreferencePositionCallback
 import androidx.recyclerview.widget.RecyclerView
-import com.highcapable.yukihookapi.hook.xposed.prefs.ui.ModulePreferenceFragment
+import com.highcapable.betterandroid.ui.extension.component.runDelayed
 import com.luckyzyx.luckytool.R
 import com.luckyzyx.luckytool.data.PrefsItem
 import com.luckyzyx.luckytool.ui.activity.MainActivity
 import com.luckyzyx.luckytool.utils.LogUtils
+import com.luckyzyx.luckytool.utils.RemotePreferenceDataStore
 import com.luckyzyx.luckytool.utils.RestartMenuUtils
 import com.luckyzyx.luckytool.utils.ThemeUtils
+import com.luckyzyx.luckytool.utils.appPrefs
 import com.luckyzyx.luckytool.utils.checkPackName
 import com.luckyzyx.luckytool.utils.getOSVersionCode
 import com.luckyzyx.luckytool.utils.getOSVersionName
@@ -34,7 +36,7 @@ import org.lsposed.lsparanoid.Obfuscate
 
 @Obfuscate
 @Suppress("unused")
-abstract class BaseScopePreferenceFeagment : ModulePreferenceFragment(), MenuProvider {
+abstract class BaseScopePreferenceFeagment : PreferenceFragmentCompat(), MenuProvider {
 
     /**
      * @see [getOSVersionName]
@@ -97,7 +99,7 @@ abstract class BaseScopePreferenceFeagment : ModulePreferenceFragment(), MenuPro
 
     fun getAllPrefsItem(context: Context): ArrayList<PrefsItem> {
         return ArrayList<PrefsItem>().apply {
-            if (scopes.size == 1 && !context.checkPackName(scopes.first())) return@apply
+            if (scopes.size == 1 && scopes.first() != "system" && !context.checkPackName(scopes.first())) return@apply
             val rootPreference = context.loadRootPreference()
             context.loadPreferences().forEachIndexed { index, preference ->
                 if (preference is PreferenceCategory) return@forEachIndexed
@@ -123,9 +125,9 @@ abstract class BaseScopePreferenceFeagment : ModulePreferenceFragment(), MenuPro
         setupMenuProvider(this)
     }
 
-    override fun onCreatePreferencesInModuleApp(savedInstanceState: Bundle?, rootKey: String?) {
-        if (currentPrefsName.isNotBlank()) preferenceManager.sharedPreferencesName =
-            currentPrefsName
+    override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
+        if (currentPrefsName.isNotBlank()) preferenceManager.preferenceDataStore =
+            RemotePreferenceDataStore(requireContext().appPrefs(currentPrefsName))
         preferenceScreen = preferenceManager.createPreferenceScreen(requireActivity()).apply {
             context.loadPreferences().forEachIndexed { index, preference ->
                 try {
@@ -144,11 +146,11 @@ abstract class BaseScopePreferenceFeagment : ModulePreferenceFragment(), MenuPro
         arguments?.apply {
             val scrollKey = getString("scrollKey", "")
             val scrollPosition = getInt("scrollPosition", -1)
-            Handler(Looper.getMainLooper()).postDelayed({
+            lifecycleScope.runDelayed(200) {
                 highLight(scrollKey, scrollPosition)
                 remove("scrollKey")
                 remove("scrollPosition")
-            }, 200)
+            }
         }
     }
 
@@ -186,7 +188,9 @@ abstract class BaseScopePreferenceFeagment : ModulePreferenceFragment(), MenuPro
         background.setState(
             intArrayOf(android.R.attr.state_pressed, android.R.attr.state_enabled)
         )
-        Handler(Looper.getMainLooper()).postDelayed({ background.setState(intArrayOf()) }, 300)
+        lifecycleScope.runDelayed(300) {
+            background.setState(intArrayOf())
+        }
     }
 
     /**
@@ -214,7 +218,7 @@ abstract class BaseScopePreferenceFeagment : ModulePreferenceFragment(), MenuPro
 
     override fun onMenuItemSelected(menuItem: MenuItem): Boolean {
         when (menuItem.itemId) {
-            1 -> RestartMenuUtils.showRestartScopeDialog(requireActivity(), scopes)
+            1 -> RestartMenuUtils.showRestartScopeDialog(requireActivity(), scopes, true)
             2 -> callOpenMenu()
         }
         return true

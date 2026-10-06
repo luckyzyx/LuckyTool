@@ -23,7 +23,7 @@ object RemoveLauncherCardName : YukiBaseHooker() {
             "com.android.launcher3.card.utils.CardNameHelper".toClass().resolve().apply {
                 firstMethod { name = "initCardName" }.hook {
                     after {
-                        val cardName = args().first().cast<View>() ?: return@after
+                        val cardName = firstArg().get<View>() ?: return@after
                         cardName.isVisible = false
                         cardName.asResolver().firstMethod {
                             name = "setTextVisibility"; parameters(Boolean::class)

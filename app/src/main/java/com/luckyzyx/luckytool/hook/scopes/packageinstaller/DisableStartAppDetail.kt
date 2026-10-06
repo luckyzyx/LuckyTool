@@ -1,6 +1,7 @@
 package com.luckyzyx.luckytool.hook.scopes.packageinstaller
 
 import com.highcapable.kavaref.KavaRef.Companion.resolve
+import com.highcapable.kavaref.extension.classOf
 import com.highcapable.yukihookapi.hook.entity.YukiBaseHooker
 import com.luckyzyx.luckytool.utils.DexkitUtils.checkDataList
 import org.lsposed.lsparanoid.Obfuscate
@@ -21,7 +22,7 @@ class DisableStartAppDetail(val dexKitBridge: DexKitBridge) : YukiBaseHooker() {
             findMethod {
                 matcher {
 //                    paramTypes(Context::class.java, String::class.java)
-                    returnType(Int::class.java)
+                    returnType(classOf<Int>())
                     usingStrings("count_canceled_by_app_detail", "com.oplus.appdetail")
                 }
             }.apply {
@@ -33,7 +34,7 @@ class DisableStartAppDetail(val dexKitBridge: DexKitBridge) : YukiBaseHooker() {
 //                        parameters(Context::class, String::class)
                         returnType = Int::class
                     }.hook {
-                        replaceTo(9)
+                        intercept(9)
                     }
                 }
             }

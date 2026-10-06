@@ -10,7 +10,7 @@ object RemoveFilterModelLimit : YukiBaseHooker() {
         //Source SystemUtil
         "com.oplus.ocs.camera.ipusdk.processunit.filter.list.SystemUtil".toClass().resolve().apply {
             firstMethod { name = "isMarketNameContainSeriesNum" }.hook {
-                replaceToTrue()
+                intercept(true)
             }
         }
     }

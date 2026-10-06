@@ -15,7 +15,7 @@ object HookGesture : YukiBaseHooker() {
         DexkitUtils.create(appInfo.sourceDir) { dexKitBridge ->
             //自定义滑动页面白名单
             //自定义视频手势白名单
-            if (prefs(ModulePrefs).getBoolean("force_enable_aon_gestures", false)) {
+            if (preferences(ModulePrefs).getBoolean("force_enable_aon_gestures", false)) {
                 loadHooker(CustomAonGestureScrollPageWhitelist(dexKitBridge))
             }
         }

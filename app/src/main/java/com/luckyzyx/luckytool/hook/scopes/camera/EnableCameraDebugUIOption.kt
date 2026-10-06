@@ -37,7 +37,7 @@ class EnableCameraDebugUIOption(val dexKitBridge: DexKitBridge) : YukiBaseHooker
                     emptyParameters()
                     returnType = Boolean::class
                 }.hook {
-                    replaceToTrue()
+                    intercept(true)
                 }
             }
         }
@@ -70,7 +70,7 @@ class EnableCameraDebugUIOption(val dexKitBridge: DexKitBridge) : YukiBaseHooker
                     parameters(Long::class)
                     returnType = Boolean::class
                 }.hook {
-                    replaceToFalse()
+                    intercept(false)
                 }
             }
         }

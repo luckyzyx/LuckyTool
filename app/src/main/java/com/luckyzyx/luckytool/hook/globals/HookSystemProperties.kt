@@ -16,7 +16,7 @@ class HookSystemProperties(private val props: Map<String, Any>) : YukiBaseHooker
             it.toClass().resolve().apply {
                 method { name = "get"; returnType = String::class }.hookAll {
                     before {
-                        val key = args().first().cast<String>()
+                        val key = firstArg().get<String>()
                         if (key.isNullOrBlank()) return@before
                         when (val value = props[key]) {
                             null -> return@before
@@ -28,21 +28,21 @@ class HookSystemProperties(private val props: Map<String, Any>) : YukiBaseHooker
                 }
                 firstMethod { name = "getBoolean"; returnType = Boolean::class }.hook {
                     before {
-                        val key = args().first().cast<String>()
+                        val key = firstArg().get<String>()
                         if (key.isNullOrBlank()) return@before
                         when (val value = props[key]) {
                             null -> return@before
-                            "1" -> resultTrue()
-                            "0" -> resultFalse()
-                            "true" -> resultTrue()
-                            "false" -> resultFalse()
+                            "1" -> result = true
+                            "0" -> result = false
+                            "true" -> result = true
+                            "false" -> result = false
                             is Boolean -> result = value
                         }
                     }
                 }
                 firstMethod { name = "getInt"; returnType = Int::class }.hook {
                     before {
-                        val key = args().first().cast<String>()
+                        val key = firstArg().get<String>()
                         if (key.isNullOrBlank()) return@before
                         when (val value = props[key]) {
                             null -> return@before
@@ -53,7 +53,7 @@ class HookSystemProperties(private val props: Map<String, Any>) : YukiBaseHooker
                 }
                 firstMethod { name = "getLong"; returnType = Long::class }.hook {
                     before {
-                        val key = args().first().cast<String>()
+                        val key = firstArg().get<String>()
                         if (key.isNullOrBlank()) return@before
                         when (val value = props[key]) {
                             null -> return@before

@@ -3,6 +3,7 @@ package com.luckyzyx.luckytool.service
 import android.content.Intent
 import android.os.IBinder
 import android.os.SystemProperties
+import com.highcapable.kavaref.extension.classOf
 import com.luckyzyx.luckytool.IGlobalFuncController
 import com.luckyzyx.luckytool.service.base.BaseControllerService
 import com.luckyzyx.luckytool.utils.formatSpace
@@ -14,7 +15,7 @@ import java.io.File
 @Obfuscate
 object GlobalFuncService : BaseControllerService<IGlobalFuncController>() {
     override val TAG = "GlobalFuncService"
-    override var controllerService: Class<*> = GlobalFuncControllerService::class.java
+    override var controllerService: Class<*> = classOf<GlobalFuncControllerService>()
 
     override fun getController(iBinder: IBinder?): IGlobalFuncController? {
         return IGlobalFuncController.Stub.asInterface(iBinder)

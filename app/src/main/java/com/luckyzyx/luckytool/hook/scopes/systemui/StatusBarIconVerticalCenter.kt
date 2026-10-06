@@ -14,10 +14,10 @@ object StatusBarIconVerticalCenter : YukiBaseHooker() {
             "com.oplus.systemui.statusbar.phone.PhoneStatusBarViewExImpl"
         ).toClass().resolve().apply {
             firstMethod { name = "getHoleTop" }.hook {
-                replaceTo(0)
+                intercept(0)
             }
             firstMethod { name = "getHoleBottom" }.hook {
-                replaceTo(0)
+                intercept(0)
             }
         }
     }

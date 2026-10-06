@@ -7,6 +7,7 @@ import android.content.Intent
 import android.os.Bundle
 import android.view.View
 import android.view.WindowManager
+import com.highcapable.kavaref.extension.classOf
 import com.luckyzyx.luckytool.R
 import com.luckyzyx.luckytool.service.tiles.ChargingTestTile
 import com.luckyzyx.luckytool.service.tiles.ExtraDimModeTile
@@ -60,10 +61,10 @@ class ShortcutActivity : Activity() {
             ?: return
 //        LogUtils.d("checkTileLongClick", "componentName", componentName.toString(), true)
         when (componentName.className) {
-            ChargingTestTile::class.java.name -> IntentUtils(this).jumpBatteryInfo()
-            ProcessManagerTile::class.java.name -> IntentUtils(this).jumpRunningApp()
-            ExtraDimModeTile::class.java.name -> IntentUtils(this).jumpVeryDarkMode()
-            FiveGTile::class.java.name -> IntentUtils(this).jumpMobileNetwork()
+            classOf<ChargingTestTile>().name -> IntentUtils(this).jumpBatteryInfo()
+            classOf<ProcessManagerTile>().name -> IntentUtils(this).jumpRunningApp()
+            classOf<ExtraDimModeTile>().name -> IntentUtils(this).jumpVeryDarkMode()
+            classOf<FiveGTile>().name -> IntentUtils(this).jumpMobileNetwork()
         }
     }
 }

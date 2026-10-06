@@ -1,6 +1,7 @@
 package com.luckyzyx.luckytool.hook.scopes.filemanager
 
 import com.highcapable.kavaref.KavaRef.Companion.resolve
+import com.highcapable.kavaref.extension.classOf
 import com.highcapable.yukihookapi.hook.entity.YukiBaseHooker
 import com.luckyzyx.luckytool.utils.DexkitUtils.checkDataList
 import org.lsposed.lsparanoid.Obfuscate
@@ -24,7 +25,7 @@ class RemoveWordLimitForLabelNameFiles(val dexKitBridge: DexKitBridge) : YukiBas
             findMethod {
                 matcher {
                     paramCount(0)
-                    returnType(Int::class.java)
+                    returnType(classOf<Int>())
                     usingNumbers(50)
                 }
             }.apply {
@@ -36,7 +37,7 @@ class RemoveWordLimitForLabelNameFiles(val dexKitBridge: DexKitBridge) : YukiBas
                         emptyParameters()
                         returnType = Int::class
                     }.hook {
-                        replaceTo(9999)
+                        intercept(9999)
                     }
                 }
             }

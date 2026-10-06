@@ -17,11 +17,11 @@ object HookSystemUIGesture : YukiBaseHooker() {
         loadHooker(FullScreenGestureSideSlideBar)
 
         //移除旋转屏幕按钮
-        if (prefs(ModulePrefs).getBoolean("remove_rotate_screen_button", false)) {
+        if (preferences(ModulePrefs).getBoolean("remove_rotate_screen_button", false)) {
             loadHooker(RemoveRotateScreenButton)
         }
         //移除返回手势确认限制
-        if (prefs(ModulePrefs).getBoolean("remove_back_gesture_confirmation_limit", false)) {
+        if (preferences(ModulePrefs).getBoolean("remove_back_gesture_confirmation_limit", false)) {
             if (osCode in 35..36) loadHooker(RemoveBackGestureConfirmationLimit)
         }
     }

@@ -14,7 +14,7 @@ object ForceDisplayContentRecommend : YukiBaseHooker() {
             "com.oplus.settings.feature.spfunction.RecommendController" //C14.1
         ).toClass().resolve().apply {
             firstMethod { name = "getAvailabilityStatus" }.hook {
-                replaceTo(0)
+                intercept(0)
             }
         }
     }

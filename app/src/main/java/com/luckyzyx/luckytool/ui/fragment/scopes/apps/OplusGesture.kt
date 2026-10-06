@@ -5,6 +5,7 @@ import android.graphics.BitmapFactory
 import android.util.ArraySet
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.graphics.drawable.toDrawable
+import androidx.preference.DropDownPreference
 import androidx.preference.Preference
 import androidx.preference.PreferenceCategory
 import androidx.preference.SwitchPreference
@@ -29,6 +30,7 @@ import com.luckyzyx.luckytool.utils.getString
 import com.luckyzyx.luckytool.utils.getStringSet
 import com.luckyzyx.luckytool.utils.putString
 import com.luckyzyx.luckytool.utils.putStringSet
+import com.luckyzyx.luckytool.utils.sendPrefsValue
 import com.luckyzyx.luckytool.utils.setPrefsIconRes
 import org.lsposed.lsparanoid.Obfuscate
 
@@ -247,6 +249,46 @@ class OplusGesture : BaseScopePreferenceFeagment() {
                     }
                     setOnPreferenceClickListener {
                         pickRightMedia.launch("image/*")
+                        true
+                    }
+                })
+            }
+            //自定义快捷键
+            add(PreferenceCategory(this@loadPreferences).apply {
+                title = getString(R.string.CustomActionButton)
+                key = "CustomActionButton"
+                isIconSpaceReserved = false
+            })
+            add(SwitchPreference(this@loadPreferences).apply {
+                title = getString(R.string.action_button_nothing_enable)
+                key = "action_button_nothing_enable"
+                isIconSpaceReserved = false
+                setOnPreferenceChangeListener { _, newValue ->
+                    sendPrefsValue("android", key, newValue)
+                    true
+                }
+            })
+            add(SwitchPreference(this@loadPreferences).apply {
+                title = getString(R.string.action_button_ring_cycle_enable)
+                key = "action_button_ring_cycle_enable"
+                isIconSpaceReserved = false
+                setOnPreferenceChangeListener { _, newValue ->
+                    sendPrefsValue("android", key, newValue)
+                    (activity as MainActivity).restart()
+                    true
+                }
+            })
+            if (getBoolean(ModulePrefs, "action_button_ring_cycle_enable")) {
+                add(DropDownPreference(this@loadPreferences).apply {
+                    title = getString(R.string.action_button_ring_cycle_mode)
+                    key = "action_button_ring_cycle_mode"
+                    summary = arraySummaryLine(getString(R.string.current_mode) + ": %s")
+                    setEntries(R.array.action_button_ring_cycle_mode_entries)
+                    entryValues = arrayOf("ring_vibrate_silent", "ring_vibrate", "ring_silent")
+                    setDefaultValue("ring_vibrate_silent")
+                    isIconSpaceReserved = false
+                    setOnPreferenceChangeListener { _, newValue ->
+                        sendPrefsValue("android", key, newValue)
                         true
                     }
                 })

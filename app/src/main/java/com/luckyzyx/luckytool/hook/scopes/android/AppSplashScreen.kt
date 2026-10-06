@@ -8,7 +8,7 @@ import org.lsposed.lsparanoid.Obfuscate
 @Obfuscate
 object AppSplashScreen : YukiBaseHooker() {
     override fun onHook() {
-        val isEnable = prefs(ModulePrefs).getBoolean("disable_splash_screen", false)
+        val isEnable = preferences(ModulePrefs).getBoolean("disable_splash_screen", false)
 
         //Source StartingSurfaceController
         "com.android.server.wm.StartingSurfaceController".toClass().resolve().apply {

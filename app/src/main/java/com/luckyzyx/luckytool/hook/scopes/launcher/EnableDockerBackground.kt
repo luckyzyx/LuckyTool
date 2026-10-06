@@ -10,7 +10,7 @@ object EnableDockerBackground : YukiBaseHooker() {
         //Source ScreenUtils
         "com.android.common.util.ScreenUtils".toClass().resolve().apply {
             firstMethod { name = "isSupportDockerExpandScreen" }.hook {
-                replaceToTrue()
+                intercept(true)
             }
             //OplusTaskHeaderView showSplitWindowIcon
 //            firstMethod { name = "hasLargeDisplayFeatures" }.hook {

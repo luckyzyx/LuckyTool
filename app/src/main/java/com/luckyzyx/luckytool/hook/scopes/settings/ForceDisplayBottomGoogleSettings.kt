@@ -11,7 +11,7 @@ object ForceDisplayBottomGoogleSettings : YukiBaseHooker() {
         "com.oplus.settings.feature.homepage.controller.GooglePreferenceController".toClass()
             .resolve().apply {
                 firstMethod { name = "getAvailabilityStatus" }.hook {
-                    replaceTo(0)
+                    intercept(0)
                 }
             }
     }

@@ -17,7 +17,6 @@
         <item>com.coloros.phonemanager</item>
         <item>com.oplus.aod</item>
         <item>com.oplus.uiengine</item>
-        <item>com.coloros.securepay</item>
         <item>com.heytap.themestore</item>
         <item>com.oplus.games</item>
         <item>com.oplus.cosa</item>
@@ -49,6 +48,7 @@
         <item>com.oplus.mediacontroller</item>
         <item>com.oplus.exsystemservice</item>
         <item>com.oplus.keyguard.clock.base</item>
+        <item>com.oplus.keyguard.personality.clocks</item>
         <item>com.oplus.beaconlink</item>
         <item>com.heytap.speechassist</item>
         <item>com.oplus.wirelesssettings</item>
@@ -63,7 +63,8 @@
         <item>com.heytap.mydevices</item>
         <item>com.heytap.accessory</item>
         <item>com.heytap.mcs</item>
-        
+
+        <item>com.oplus.claw</item>
         <item>ru.kslabs.ksweb</item>
         <item>com.dv.adm</item>
         <item>com.ruet_cse_1503050.ragib.appbackup.pro</item>
@@ -411,6 +412,12 @@
         <item>CN</item>
         <item>IN</item>
         <item>US</item>
+    </string-array>
+    
+    <string-array name="action_button_ring_cycle_mode_entries">
+        <item>响铃 振动 静音</item>
+        <item>响铃 振动</item>
+        <item>响铃 静音</item>
     </string-array>
 
 </resources>

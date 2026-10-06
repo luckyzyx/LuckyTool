@@ -15,9 +15,10 @@ import org.lsposed.lsparanoid.Obfuscate
 @Obfuscate
 object HookOplusOta : YukiBaseHooker() {
     override fun onHook() {
+        loadHooker(HookGlobalSystemProperties)
+
         val osCode = getOSVersionCode
 
-        loadHooker(HookGlobalSystemProperties)
 
         //local_update_failed_not_match 安装包不匹配
         //local_update_failed_read_exception 读取文件错误
@@ -33,11 +34,11 @@ object HookOplusOta : YukiBaseHooker() {
             //HookOTADialog
             loadHooker(HookOTADialogHelper(dexKitBridge))
             //移除OTA本地更新校验
-            if (prefs(ModulePrefs).getBoolean("remove_ota_local_update_verity", false)) {
+            if (preferences(ModulePrefs).getBoolean("remove_ota_local_update_verity", false)) {
                 loadHooker(RemoveOTALocalUpdateVerity(dexKitBridge))
             }
             //启用Opex本地安装
-            if (prefs(ModulePrefs).getBoolean("enable_opex_local_install", false)) {
+            if (preferences(ModulePrefs).getBoolean("enable_opex_local_install", false)) {
                 val opex = SystemProperties.getBoolean("oplus.opex.merge", false)
                 if (osCode >= 30 && opex) loadHooker(EnableOpexLocalInstall(dexKitBridge))
             }

@@ -21,7 +21,7 @@ object ForceDisplayPasswordManagementSettings : YukiBaseHooker() {
             "com.oplus.settings.feature.password.controller.PasswordManagerPreferenceController".toClass()
                 .resolve().apply {
                     firstMethod { name = "isPreferenceNotAvailable" }.hook {
-                        replaceToFalse()
+                        intercept(false)
                     }
                 }
         }
@@ -35,7 +35,7 @@ object ForceDisplayPasswordManagementSettings : YukiBaseHooker() {
                 .resolve().apply {
                     firstMethod { name = "displayPreference" }.hook {
                         after {
-                            val preferenceScreen = args().first().any() ?: return@after
+                            val preferenceScreen = firstArg().get() ?: return@after
                             val preference = preferenceScreen.asResolver().firstMethod {
                                 name = "findPreference"
                                 parameters(CharSequence::class)
@@ -50,7 +50,7 @@ object ForceDisplayPasswordManagementSettings : YukiBaseHooker() {
                     }
                     firstMethod { name = "updateState" }.hook {
                         after {
-                            val preference = args().first().any() ?: return@after
+                            val preference = firstArg().get() ?: return@after
                             preference.asResolver().firstMethod {
                                 name = "setVisible"
                                 parameters(Boolean::class)

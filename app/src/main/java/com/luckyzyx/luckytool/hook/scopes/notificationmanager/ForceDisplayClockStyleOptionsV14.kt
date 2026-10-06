@@ -32,7 +32,7 @@ object ForceDisplayClockStyleOptionsV14 : YukiBaseHooker() {
                         }.get<Boolean>() ?: false
                         if (!isFlavorTwoDevice) return@before
 
-                        val list = args().first().cast<ArrayList<Any>>()
+                        val list = firstArg().get<ArrayList<Any>>()
                         val context = firstMethod { name = "getContext";superclass() }.of(instance)
                             .invoke<Context>()
                         val clockTitle = context?.getString(
@@ -55,7 +55,7 @@ object ForceDisplayClockStyleOptionsV14 : YukiBaseHooker() {
                             hashMap, key, keyguardLandClockPf
                         )
                         keyguardLandClockPf?.let { list?.add(it) }
-                        resultNull()
+                        result = null
                     }
                 }
             }
@@ -69,7 +69,7 @@ object ForceDisplayClockStyleOptionsV14 : YukiBaseHooker() {
 //                    }.get().boolean()
 //                    if (!isFlavorTwoDevice) return@after
 //
-//                    val context = args().first().cast<Context>() ?: return@after
+//                    val context = firstArg().get<Context>() ?: return@after
 //                    val subTitle = context.resources.getIdentifier(
 //                        "settings_search_sub_title",
 //                        "string",

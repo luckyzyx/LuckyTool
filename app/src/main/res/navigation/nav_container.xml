@@ -167,6 +167,14 @@
                 app:argType="string" />
     </fragment>
     <fragment
+            android:id="@+id/claw"
+            android:name="com.luckyzyx.luckytool.ui.fragment.scopes.others.Claw"
+            android:label="{title_text}">
+        <argument
+                android:name="title_text"
+                app:argType="string" />
+    </fragment>
+    <fragment
             android:id="@+id/systemQuickEntry"
             android:name="com.luckyzyx.luckytool.ui.fragment.others.QuickEntryFragment"
             android:label="{title_text}">

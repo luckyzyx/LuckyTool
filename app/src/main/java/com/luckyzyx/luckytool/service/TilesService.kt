@@ -9,10 +9,12 @@ import android.telephony.TelephonyManager
 import com.android.internal.telephony.ITelephony
 import com.android.internal.telephony.RILConstants
 import com.highcapable.kavaref.KavaRef.Companion.asResolver
+import com.highcapable.kavaref.extension.classOf
 import com.luckyzyx.luckytool.ITileServiceController
 import com.luckyzyx.luckytool.hook.utils.IColorDisplayUtils
 import com.luckyzyx.luckytool.service.base.BaseControllerService
 import com.luckyzyx.luckytool.utils.A12
+import com.luckyzyx.luckytool.utils.A17
 import com.luckyzyx.luckytool.utils.LogUtils
 import com.luckyzyx.luckytool.utils.SDK
 import com.luckyzyx.luckytool.utils.replaceSpace
@@ -30,7 +32,7 @@ import java.io.FileReader
 object TilesService : BaseControllerService<ITileServiceController>() {
     override val TAG = "TileService"
 
-    override var controllerService: Class<*> = TileControllerService::class.java
+    override var controllerService: Class<*> = classOf<TileControllerService>()
 
     override fun getController(iBinder: IBinder?): ITileServiceController? {
         return ITileServiceController.Stub.asInterface(iBinder)
@@ -144,12 +146,15 @@ object TilesService : BaseControllerService<ITileServiceController>() {
                 }
             }
 
-            @SuppressLint("DeprecatedSinceApi")
+            @SuppressLint("DeprecatedSinceApi", "NewApi")
             override fun checkCompatibility(subId: Int): Boolean {
                 return try {
                     if (SDK >= A12) {
                         val types = iTelephony.getAllowedNetworkTypesForReason(subId, reasonUser)
-                        iTelephony.setAllowedNetworkTypesForReason(subId, reasonUser, types)
+                        if (SDK >= A17) iTelephony.setAllowedNetworkTypesForReason(
+                            subId, reasonUser, types, "com.android.phone"
+                        )
+                        else iTelephony.setAllowedNetworkTypesForReason(subId, reasonUser, types)
                     } else {
                         // For Q and R.
                         val types = iTelephony.getPreferredNetworkType(subId)
@@ -180,14 +185,17 @@ object TilesService : BaseControllerService<ITileServiceController>() {
                 }
             }
 
-            @SuppressLint("DeprecatedSinceApi")
+            @SuppressLint("DeprecatedSinceApi", "NewApi")
             override fun setFiveGStatus(subId: Int, enabled: Boolean) {
                 try {
                     if (SDK >= A12) {
                         var curTypes = iTelephony.getAllowedNetworkTypesForReason(subId, reasonUser)
                         curTypes = if (enabled) curTypes or bitMaskNR
                         else curTypes and bitMaskNR.inv()
-                        iTelephony.setAllowedNetworkTypesForReason(subId, reasonUser, curTypes)
+                        if (SDK >= A17) iTelephony.setAllowedNetworkTypesForReason(
+                            subId, reasonUser, curTypes, "com.android.phone"
+                        )
+                        else iTelephony.setAllowedNetworkTypesForReason(subId, reasonUser, curTypes)
                     } else {
                         // For Q and R.
                         iTelephony.setPreferredNetworkType(subId, if (enabled) modeNR else modeLTE)
@@ -269,8 +277,9 @@ object TilesService : BaseControllerService<ITileServiceController>() {
 
             override fun getHighBrightnessMode(): Boolean {
                 return try {
-                    when (BufferedReader(FileReader(highBrightnessFile)).readLine()
-                        ?.replaceSpace?.substring(0, 1)?.toIntOrNull()) {
+                    when (BufferedReader(FileReader(highBrightnessFile)).readLine()?.replaceSpace?.substring(
+                        0, 1
+                    )?.toIntOrNull()) {
                         0 -> false
                         1 -> true
                         else -> false
@@ -340,8 +349,9 @@ object TilesService : BaseControllerService<ITileServiceController>() {
 
             override fun getBypassMode(): Boolean {
                 return try {
-                    when (BufferedReader(FileReader(bypassPowerFile)).readLine()
-                        ?.replaceSpace?.substring(0, 1)?.toIntOrNull()) {
+                    when (BufferedReader(FileReader(bypassPowerFile)).readLine()?.replaceSpace?.substring(
+                        0, 1
+                    )?.toIntOrNull()) {
                         1 -> false
                         0 -> true
                         else -> false

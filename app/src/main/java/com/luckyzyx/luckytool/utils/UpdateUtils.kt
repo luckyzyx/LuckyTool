@@ -4,7 +4,6 @@ import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
 import android.provider.Settings
-import android.view.LayoutInflater
 import androidx.core.content.FileProvider
 import androidx.core.net.toUri
 import androidx.core.view.isVisible
@@ -14,6 +13,7 @@ import com.drake.net.interfaces.ProgressListener
 import com.drake.net.scope.NetCoroutineScope
 import com.drake.net.utils.scopeNet
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import com.highcapable.betterandroid.ui.extension.view.layoutInflater
 import com.highcapable.betterandroid.ui.extension.view.updatePadding
 import com.highcapable.hikage.extension.setView
 import com.highcapable.hikage.widget.androidx.core.widget.NestedScrollView
@@ -147,7 +147,7 @@ class UpdateUtils(val context: Context, private val isDev: Boolean = false) {
     @SuppressLint("ClickableViewAccessibility")
     fun downloadFile(context: Context, apkFile: File, url: String) {
         var downloadScope: NetCoroutineScope? = null
-        val binding = DialogDownloadLayoutBinding.inflate(LayoutInflater.from(context))
+        val binding = DialogDownloadLayoutBinding.inflate(context.layoutInflater)
         val downloadDialog = MaterialAlertDialogBuilder(context, dialogCentered).apply {
             setTitle(context.getString(R.string.downloading))
             setCancelable(false)

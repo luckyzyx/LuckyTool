@@ -45,7 +45,7 @@ class RemoveMarketSearchPageAppRecommend(val dexKitBridge: DexKitBridge) : YukiB
                     returnType = Void.TYPE
                 }.hook {
                     before {
-                        args().first().setNull()
+                        firstArg().set(null)
                     }
                 }
                 firstMethod {
@@ -54,7 +54,7 @@ class RemoveMarketSearchPageAppRecommend(val dexKitBridge: DexKitBridge) : YukiB
                     returnType = Void.TYPE
                 }.hook {
                     after {
-                        val dto = args().first().any() ?: return@after
+                        val dto = firstArg().get() ?: return@after
                         val viewGroup = firstField { type = horizontalAppItemView }.of(instance)
                             .get<ViewGroup>()
 
@@ -96,9 +96,9 @@ class RemoveMarketSearchPageAppRecommend(val dexKitBridge: DexKitBridge) : YukiB
                     returnType = Void.TYPE
                 }.hook {
                     before {
-                        val dto = args().first().any() ?: return@before
+                        val dto = firstArg().get() ?: return@before
                         if (dto::class isSubclassOf appListCardDto.toClass()) {
-                            args().first().setNull()
+                            firstArg().set(null)
                         }
                     }
                 }

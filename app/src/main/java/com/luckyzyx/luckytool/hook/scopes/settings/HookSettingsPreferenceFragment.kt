@@ -10,7 +10,7 @@ object HookSettingsPreferenceFragment : YukiBaseHooker() {
     override fun onHook() {
         //启用应用专属媒体音量
         val specificMediaVolume =
-            prefs(ModulePrefs).getBoolean("enable_app_specific_media_volume", false)
+            preferences(ModulePrefs).getBoolean("enable_app_specific_media_volume", false)
 
         //Source SettingsPreferenceFragment
         "com.android.settings.SettingsPreferenceFragment".toClass().resolve().apply {
@@ -19,8 +19,8 @@ object HookSettingsPreferenceFragment : YukiBaseHooker() {
                 parameters(String::class)
             }.hook {
                 before {
-                    when (args().first().string()) {
-                        "voice_mode_category" -> if (specificMediaVolume) resultTrue()
+                    when (firstArg().get<String>() ?: "") {
+                        "voice_mode_category" -> if (specificMediaVolume) result = true
                     }
                 }
             }

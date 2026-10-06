@@ -16,16 +16,16 @@ object RemoveLockScreenBottomSOSButton : YukiBaseHooker() {
             "com.oplus.keyguard.OplusEmergencyButtonExImpl" //C14 C15
         ).toClass().resolve().apply {
             firstMethodOrNull { name = "disableShowEmergencyButton" }?.hook {
-                replaceToTrue()
+                intercept(true)
             } ?: firstMethodOrNull { name = "shouldUpdateEmergencyCallButton" }?.hook {
                 before {
                     firstField { name = "mEmergencyButton" }.of(instance).get<View>()
                         ?.isVisible = false
-                    resultTrue()
+                    result = true
                 }
             } ?: firstMethod { name = "updateEmergencyCallButton" }.hook {
                 before {
-                    args().last().setFalse()
+                    lastArg().set(false)
                 }
             }
         }

@@ -1,10 +1,10 @@
 package com.luckyzyx.luckytool.hook.scopes.pictorial
 
-import android.content.Context
 import android.graphics.Bitmap
 import android.os.Handler
 import com.highcapable.kavaref.KavaRef.Companion.resolve
 import com.highcapable.kavaref.condition.type.VagueType
+import com.highcapable.kavaref.extension.classOf
 import com.highcapable.yukihookapi.hook.entity.YukiBaseHooker
 import com.luckyzyx.luckytool.utils.DexkitUtils.checkDataList
 import org.lsposed.lsparanoid.Obfuscate
@@ -19,30 +19,28 @@ class RemoveImageSaveWaterMark(val dexKitBridge: DexKitBridge) : YukiBaseHooker(
         dexKitBridge.findClass {
             matcher {
                 fields {
-                    addForType(File::class.java)
-                    addForType(Handler::class.java)
-                    addForType(Long::class.java)
-                    addForType(Boolean::class.java)
-                    addForType(String::class.java)
+                    addForType(classOf<File>())
+                    addForType(classOf<Handler>())
+                    addForType(classOf<Long>())
+                    addForType(classOf<Boolean>())
+                    addForType(classOf<String>())
                 }
                 methods {
-                    add { returnType(Handler::class.java) }
-                    add { returnType(Bitmap::class.java) }
-                    add { returnType(Boolean::class.java) }
-                    add { paramTypes(Context::class.java) }
-                    add { paramCount(5);returnType(Bitmap::class.java) }
+                    add { returnType(classOf<Bitmap>()) }
+                    add { paramCount(5); returnType(classOf<Bitmap>()) }
                     add { paramTypes("com.heytap.pictorial.core.bean.BasePictorialData") }
                 }
+                usingStrings("ImageSaveManager")
             }
         }.apply {
-            checkDataList("RemoveImageSaveWaterMark")
+            checkDataList("ImageSaveManager")
             single().name.toClass().resolve().apply {
                 firstMethod {
                     parameters(Boolean::class, VagueType, Bitmap::class, Boolean::class)
                     returnType = Bitmap::class
                 }.hook {
                     after {
-                        result = args(2).cast<Bitmap>() ?: return@after
+                        result = arg(2).get<Bitmap>() ?: return@after
                     }
                 }
             }

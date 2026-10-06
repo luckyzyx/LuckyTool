@@ -3,8 +3,6 @@
 package com.luckyzyx.luckytool.utils
 
 import android.annotation.SuppressLint
-import android.content.ClipData
-import android.content.ClipboardManager
 import android.content.ComponentName
 import android.content.ContentValues
 import android.content.Context
@@ -15,7 +13,6 @@ import android.content.pm.PackageInfo
 import android.content.res.Configuration
 import android.content.res.Resources
 import android.graphics.Bitmap
-import android.graphics.BitmapFactory
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
@@ -32,7 +29,6 @@ import android.text.SpannableString
 import android.text.TextPaint
 import android.text.style.ForegroundColorSpan
 import android.util.ArrayMap
-import android.util.ArraySet
 import android.util.Base64
 import android.util.TypedValue
 import android.view.Menu
@@ -41,7 +37,6 @@ import android.view.MenuItem
 import android.view.View
 import android.widget.Toast
 import androidx.annotation.MenuRes
-import androidx.core.content.res.ResourcesCompat
 import androidx.core.graphics.createBitmap
 import androidx.core.graphics.drawable.RoundedBitmapDrawableFactory
 import androidx.core.graphics.drawable.toBitmap
@@ -60,13 +55,18 @@ import androidx.preference.ListPreference
 import androidx.preference.Preference
 import com.drake.net.utils.withDefault
 import com.google.android.material.bottomsheet.BottomSheetDialog
+import com.highcapable.betterandroid.system.extension.component.clipboardManager
+import com.highcapable.betterandroid.system.extension.component.copy
+import com.highcapable.betterandroid.system.extension.component.sendBroadcast
+import com.highcapable.betterandroid.ui.extension.component.base.getDrawableCompat
+import com.highcapable.betterandroid.ui.extension.graphics.decodeToBitmapOrNull
+import com.highcapable.betterandroid.ui.extension.view.toast
 import com.highcapable.kavaref.KavaRef.Companion.asResolver
+import com.highcapable.kavaref.extension.classOf
 import com.highcapable.yukihookapi.hook.factory.dataChannel
-import com.highcapable.yukihookapi.hook.xposed.prefs.YukiHookPrefsBridge
 import com.luckyzyx.luckytool.BuildConfig
 import com.luckyzyx.luckytool.IGlobalFuncController
 import com.luckyzyx.luckytool.R
-import com.luckyzyx.luckytool.data.AppVerInfo
 import com.luckyzyx.luckytool.data.DisplayMode
 import com.luckyzyx.luckytool.ui.activity.MainActivity
 import com.oplus.miragewindow.OplusMirageOptions
@@ -74,27 +74,12 @@ import com.oplus.miragewindow.OplusMirageWindowManager
 import com.topjohnwu.superuser.Shell
 import com.topjohnwu.superuser.ShellUtils
 import com.topjohnwu.superuser.ipc.RootService
-import kotlinx.serialization.json.Json
 import org.json.JSONArray
 import java.io.File
 import java.util.regex.Pattern
 import kotlin.math.roundToLong
 import kotlin.random.Random
 import kotlin.system.exitProcess
-
-/**
- * 获取APP版本数组
- * @receiver YukiHookPrefsBridge
- * @param packName String
- * @return AppVerInfo
- */
-fun YukiHookPrefsBridge.getAppVerInfo(packName: String): AppVerInfo? {
-    return getStringSet(packName, ArraySet()).let {
-        if (it.isEmpty()) null else safeOfNull {
-            Json.decodeFromString(it.firstOrNull() ?: "")
-        }
-    }
-}
 
 /**
  * 获取设备信息
@@ -205,9 +190,9 @@ fun Context.showToast(id: Int, long: Boolean? = false) {
 }
 
 fun Context.showToast(msg: String, long: Boolean? = false) = if (long == true) {
-    Toast.makeText(this, msg, Toast.LENGTH_LONG).show()
+    toast(msg, Toast.LENGTH_LONG)
 } else {
-    Toast.makeText(this, msg, Toast.LENGTH_SHORT).show()
+    toast(msg)
 }
 
 /**
@@ -331,7 +316,7 @@ fun getProp(key: String, def: String): String =
 @SuppressLint("StartActivityAndCollapseDeprecated")
 fun TileService.closeCollapse() {
     try {
-        sendBroadcast(Intent("LuckyTool_CloseCollapse"))
+        sendBroadcast { action = "LuckyTool_CloseCollapse" }
     } catch (_: Exception) {
         try {
             @Suppress("DEPRECATION")
@@ -378,9 +363,7 @@ val Int.sp: Int
  * @param string CharSequence
  */
 fun Context.copyStr(string: CharSequence) {
-    val clipboard = getSystemService(ClipboardManager::class.java)
-    val clipData = ClipData.newPlainText(null, string)
-    clipboard.setPrimaryClip(clipData)
+    clipboardManager.copy(string, null)
 }
 
 /**
@@ -390,7 +373,7 @@ fun Context.copyStr(string: CharSequence) {
  */
 fun base64ToBitmap(code: String): Bitmap? {
     val decode: ByteArray = Base64.decode(code.split(",")[1], Base64.DEFAULT)
-    return BitmapFactory.decodeByteArray(decode, 0, decode.size)
+    return decode.decodeToBitmapOrNull(0, decode.size)
 }
 
 /**
@@ -410,14 +393,14 @@ fun Preference.setPrefsIconRes(resource: Any?, result: (Drawable?, Boolean) -> U
         return
     }
     val image: Drawable? = when (resource) {
-        is Int -> ResourcesCompat.getDrawable(context.resources, resource, null)
+        is Int -> context.resources.getDrawableCompat(resource, null)
         is Drawable -> resource
         is String -> AppUtils(context).getAppIcon(resource)
         else -> null
     }
     if (image == null || image.intrinsicWidth <= 0 || image.intrinsicHeight <= 0) {
         val icon =
-            ResourcesCompat.getDrawable(context.resources, android.R.mipmap.sym_def_app_icon, null)
+            context.resources.getDrawableCompat(android.R.mipmap.sym_def_app_icon, null)
         result(icon, true)
         return
     }
@@ -771,7 +754,7 @@ suspend fun getUsers(): Array<String> {
  */
 fun getCharColor(char: CharSequence): Int? {
     val sp = SpannableString(char)
-    val colorSpan = sp.getSpans(0, sp.length, ForegroundColorSpan::class.java)
+    val colorSpan = sp.getSpans(0, sp.length, classOf<ForegroundColorSpan>())
     return if (colorSpan != null && colorSpan.isNotEmpty()) colorSpan[0].foregroundColor else null
 }
 
@@ -781,7 +764,7 @@ fun getCharColor(char: CharSequence): Int? {
  * @return Array<out ForegroundColorSpan>?
  */
 fun getCharSpans(char: CharSequence): Array<out ForegroundColorSpan>? {
-    val colorSpans = SpannableString(char).getSpans(0, char.length, ForegroundColorSpan::class.java)
+    val colorSpans = SpannableString(char).getSpans(0, char.length, classOf<ForegroundColorSpan>())
     return if (colorSpans == null || colorSpans.isEmpty()) null else colorSpans
 }
 
@@ -827,7 +810,7 @@ val Context.is24
  * @param context Context
  */
 fun closeScreen(context: Context) {
-    val service = context.getSystemService(PowerManager::class.java)
+    val service = context.getSystemService(classOf<PowerManager>())
     service.asResolver().firstMethod {
         name = "goToSleep"
         parameters(Long::class)
@@ -870,21 +853,16 @@ fun logcatToFile(file: File): Boolean {
 }
 
 /**
- * 发送Prefs键值到dataChannel
- * @receiver Context
- * @param packName String
- * @param key String
- * @param newValue Any
+ * 旧 dataChannel 推送的等价物：键值写入 ModulePrefs（与宿主侧 Channel.wait 同一数据源）。
+ * @param packName 原 dataChannel 目标包，现仅作兼容保留（不再按包路由）
  */
 fun Context.sendPrefsValue(packName: String, key: String, newValue: Any) {
     dataChannel(packName).put(key, newValue)
 }
 
 /**
- * 发送Prefs键值到dataChannel
- * @receiver Context
- * @param packName String
- * @param key String
+ * 旧 dataChannel put(key)（无值推送）没有 remote prefs 对应物；
+ * 键值本身由调用方的 putXxx(ModulePrefs, ...) 已写入，本函数保留为兼容空操作。
  */
 fun Context.sendPrefsKey(packName: String, key: String) {
     dataChannel(packName).put(key)

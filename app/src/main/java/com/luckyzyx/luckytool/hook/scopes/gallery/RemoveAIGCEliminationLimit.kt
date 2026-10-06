@@ -13,7 +13,7 @@ class RemoveAIGCEliminationLimit(val dexKitBridge: DexKitBridge) : YukiBaseHooke
         //Source EliminateDetectInfo / PanoramicSegmentationInfo
         dexKitBridge.findClass {
             matcher {
-                addFieldForType(Boolean::class.java)
+                addFieldForType(classOf<Boolean>())
                 addMethod { name("equals") }
                 addMethod { name("hashCode") }
                 addMethod { name("toString") }
@@ -26,8 +26,8 @@ class RemoveAIGCEliminationLimit(val dexKitBridge: DexKitBridge) : YukiBaseHooke
                 firstConstructor { parameters { it.contains(classOf<Boolean>()) } }.hook {
                     before {
                         args.forEachIndexed { index, it ->
-                            if (it is Boolean) args(index).setFalse()
-                            if (it?.javaClass?.isEnum == true) args(index).setNull()
+                            if (it is Boolean) arg(index).set(false)
+                            if (it?.javaClass?.isEnum == true) arg(index).set(null)
                         }
                     }
                 }
@@ -37,9 +37,9 @@ class RemoveAIGCEliminationLimit(val dexKitBridge: DexKitBridge) : YukiBaseHooke
         //Source EliminateStack / PanoramicSegmentationStack
         dexKitBridge.findClass {
             matcher {
-                addFieldForType(Int::class.java)
-                addFieldForType(String::class.java)
-                addFieldForType(Boolean::class.java)
+                addFieldForType(classOf<Int>())
+                addFieldForType(classOf<String>())
+                addFieldForType(classOf<Boolean>())
                 addMethod { name("equals") }
                 addMethod { name("hashCode") }
                 addMethod { name("toString") }
@@ -52,10 +52,10 @@ class RemoveAIGCEliminationLimit(val dexKitBridge: DexKitBridge) : YukiBaseHooke
                 firstConstructor { parameters { it.contains(classOf<Boolean>()) } }.hook {
                     before {
                         args.forEachIndexed { index, it ->
-                            if (it is Boolean) args(index).setFalse()
-                            if (it?.javaClass?.isEnum == true) args(index).setNull()
+                            if (it is Boolean) arg(index).set(false)
+                            if (it?.javaClass?.isEnum == true) arg(index).set(null)
                         }
-                        if (args.last() is Boolean) args().last().setTrue()
+                        if (lastArg().get() is Boolean) lastArg().set(true)
                     }
                 }
             }

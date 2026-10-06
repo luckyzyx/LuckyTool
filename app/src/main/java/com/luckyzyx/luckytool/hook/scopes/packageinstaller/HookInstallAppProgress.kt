@@ -7,6 +7,7 @@ import android.view.View
 import android.widget.Button
 import androidx.core.view.isVisible
 import com.highcapable.kavaref.KavaRef.Companion.resolve
+import com.highcapable.kavaref.extension.classOf
 import com.highcapable.yukihookapi.hook.entity.YukiBaseHooker
 import com.luckyzyx.luckytool.utils.DexkitUtils.checkDataList
 import com.luckyzyx.luckytool.utils.ModulePrefs
@@ -18,8 +19,8 @@ import org.luckypray.dexkit.result.MethodData
 @Obfuscate
 class HookInstallAppProgress(val dexKitBridge: DexKitBridge) : YukiBaseHooker() {
 
-    val removeAds = prefs(ModulePrefs).getBoolean("remove_install_ads", false)
-    val autoDone = prefs(ModulePrefs).getBoolean("auto_click_install_button", false)
+    val removeAds = preferences(ModulePrefs).getBoolean("remove_install_ads", false)
+    val autoDone = preferences(ModulePrefs).getBoolean("auto_click_install_button", false)
 
     override fun onHook() {
         //Source InstallAppProgress
@@ -53,9 +54,9 @@ class HookInstallAppProgress(val dexKitBridge: DexKitBridge) : YukiBaseHooker() 
 
             val onPackageInstalled = findMethod {
                 matcher {
-                    paramTypes(Int::class.java)
+                    paramTypes(classOf<Int>())
                     usingNumbers(1)
-                    addUsingField { type(Handler::class.java) }
+                    addUsingField { type(classOf<Handler>()) }
                     addCaller { name(initView.name) }
                     addCaller { name("onReceive") }
                 }
@@ -92,7 +93,7 @@ class HookInstallAppProgress(val dexKitBridge: DexKitBridge) : YukiBaseHooker() 
             firstMethod { name = onPackageInstalled.methodName }.hook {
                 after {
                     val activity = instance<Activity>()
-                    if (args().first().int() == 0) {
+                    if ((firstArg().get<Int>() ?: 0) == 0) {
                         activity.findViewById<Button>(
                             activity.resources.getIdentifier(
                                 "done_button", "id",

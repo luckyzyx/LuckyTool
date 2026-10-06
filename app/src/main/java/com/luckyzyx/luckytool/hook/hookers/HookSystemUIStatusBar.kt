@@ -59,10 +59,10 @@ class HookSystemUIStatusBar(val dexKitBridge: DexKitBridge) : YukiBaseHooker() {
 
         //自定义音乐流体云白名单
         if (osCode >= 33) {
-            if (prefs(ModulePrefs).getBoolean("custom_music_fluid_cloud_whitelist", false)) {
+            if (preferences(ModulePrefs).getBoolean("custom_music_fluid_cloud_whitelist", false)) {
                 loadHooker(CustomMusicFluidCloudWhitelist)
             }
-            if (prefs(ModulePrefs).getBoolean("disable_media_music_fluid_cloud_blacklist", false)) {
+            if (preferences(ModulePrefs).getBoolean("disable_media_music_fluid_cloud_blacklist", false)) {
                 if (osCode >= 35) loadHooker(DisableMediaMusicFluidCloudBlacklist)
             }
         }
@@ -72,7 +72,7 @@ class HookSystemUIStatusBar(val dexKitBridge: DexKitBridge) : YukiBaseHooker() {
 //        "com.oplus.systemui.qs.widget.OplusToggleSliderView".toClass().apply {
 //            method { name = "onShapeChanged" }.hook {
 //                after {
-//                    val type = args().first().int()
+//                    val type = firstArg().get<Int>() ?: 0
 //                    val mSlider = field { name = "mSlider" }.get(instance).any() ?: return@after
 //                    val mThumbColorStateList = mSlider.current().field {
 //                        name = "mThumbColorStateList"
@@ -99,7 +99,7 @@ class HookSystemUIStatusBar(val dexKitBridge: DexKitBridge) : YukiBaseHooker() {
 //        "com.android.systemui.statusbar.notification.row.NotificationContentView".toClass().apply {
 //            method { name = "shouldShowBubbleButton" }.hook {
 //                before {
-//                    val entry = args().first().any() ?: return@before
+//                    val entry = firstArg().get() ?: return@before
 //                    result = entry.current().method {
 //                        name = "getBubbleMetadata";emptyParam()
 //                    }.call() != null

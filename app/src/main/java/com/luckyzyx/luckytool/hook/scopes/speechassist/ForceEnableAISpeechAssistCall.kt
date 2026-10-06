@@ -10,10 +10,10 @@ object ForceEnableAISpeechAssistCall : YukiBaseHooker() {
         //Source AiCallCommonBean
         "com.heytap.speechassist.aicall.setting.config.AiCallCommonBean".toClass().resolve().apply {
             firstMethod { name = "getSupportAiCall" }.hook {
-                replaceToTrue()
+                intercept(true)
             }
             firstMethod { name = "getSupportAiCallV2" }.hook {
-                replaceToTrue()
+                intercept(true)
             }
         }
     }

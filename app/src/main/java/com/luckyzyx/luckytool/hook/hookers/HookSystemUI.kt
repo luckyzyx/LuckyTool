@@ -68,7 +68,7 @@ object HookSystemUI : YukiBaseHooker() {
                     before {
                         val context = firstField { type = Context::class }.of(instance)
                             .get<Context>() ?: return@before
-                        val metaData = args(1).cast<MediaMetadata>() ?: return@before
+                        val metaData = arg(1).get<MediaMetadata>() ?: return@before
                         val lyricInfo = metaData.getString("lyricInfo")
                         if (lyricInfo != null) return@before
 

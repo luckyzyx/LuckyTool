@@ -16,7 +16,7 @@ object DisableAudioFocus : YukiBaseHooker() {
                 returnType = Int::class
             }.hook {
                 before {
-                    val audioAttributes = args().first().cast<AudioAttributes>() ?: return@before
+                    val audioAttributes = firstArg().get<AudioAttributes>() ?: return@before
                     if (audioAttributes.usage != AudioAttributes.USAGE_VOICE_COMMUNICATION) {
                         result = AudioManager.AUDIOFOCUS_REQUEST_GRANTED
                     }

@@ -7,6 +7,7 @@ import android.content.Intent
 import android.content.pm.ShortcutInfo
 import android.content.pm.ShortcutManager
 import android.graphics.drawable.Icon
+import com.highcapable.kavaref.extension.classOf
 import com.luckyzyx.luckytool.R
 import com.luckyzyx.luckytool.data.ShortcutBean
 import com.luckyzyx.luckytool.ui.activity.ShortcutActivity
@@ -16,7 +17,7 @@ import org.lsposed.lsparanoid.Obfuscate
 @Suppress("unused")
 class ShortcutUtils(val context: Context) {
 
-    var shortcutManager = context.getSystemService(ShortcutManager::class.java)
+    var shortcutManager = context.getSystemService(classOf<ShortcutManager>())
 
     private val existOplusGame =
         context.checkPackName("com.oplus.games") && context.checkResolveActivity(
@@ -85,7 +86,7 @@ class ShortcutUtils(val context: Context) {
                     }
 
                     else -> Intent(Intent.ACTION_VIEW).apply {
-                        setClass(context, ShortcutActivity::class.java)
+                        setClass(context, classOf<ShortcutActivity>())
                         putExtra("Shortcut", bean.key)
                     }
                 }

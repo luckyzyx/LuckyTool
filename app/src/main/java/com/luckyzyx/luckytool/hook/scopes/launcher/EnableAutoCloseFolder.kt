@@ -19,9 +19,9 @@ object EnableAutoCloseFolder : YukiBaseHooker() {
                     parameterCount = 4
                 }.hook {
                     before {
-                        val activityContext = args().first().any() ?: return@before
-                        val animate = args(1).boolean()
-                        val type = args(2).int()
+                        val activityContext = firstArg().get() ?: return@before
+                        val animate = arg(1).get<Boolean>() ?: false
+                        val type = arg(2).get<Int>() ?: 0
 
                         val typeFolder =
                             firstField { name = "TYPE_FOLDER" }.get<Int>() ?: return@before

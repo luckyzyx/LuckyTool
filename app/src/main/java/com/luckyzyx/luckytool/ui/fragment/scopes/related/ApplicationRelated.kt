@@ -432,6 +432,20 @@ class ApplicationRelated : BaseScopePreferenceFeagment() {
                 isVisible = SDK >= A14
                 isIconSpaceReserved = false
             })
+            //《自动释放应用空间》默认关闭（空间不足时自动卸载应用但保留数据）
+            add(SwitchPreference(this@loadPreferences).apply {
+                title = getString(R.string.disable_app_archiving)
+                summary = getString(R.string.disable_app_archiving_summary)
+                key = "disable_app_archiving"
+                setDefaultValue(true)
+                isVisible = osCode >= 36
+                isIconSpaceReserved = false
+                setOnPreferenceChangeListener { _, newValue ->
+                    sendPrefsValue("android", key, newValue)
+                    sendPrefsValue("com.android.settings", key, newValue)
+                    true
+                }
+            })
         }
     }
 }

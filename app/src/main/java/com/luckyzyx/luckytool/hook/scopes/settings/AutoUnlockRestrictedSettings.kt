@@ -3,6 +3,7 @@ package com.luckyzyx.luckytool.hook.scopes.settings
 import android.content.Context
 import android.content.Intent
 import com.highcapable.kavaref.KavaRef.Companion.resolve
+import com.highcapable.kavaref.extension.classOf
 import com.highcapable.yukihookapi.hook.entity.YukiBaseHooker
 import com.luckyzyx.luckytool.utils.DexkitUtils.checkDataList
 import com.luckyzyx.luckytool.utils.EcmUtils
@@ -47,7 +48,7 @@ class AutoUnlockRestrictedSettings(val dexKitBridge: DexKitBridge) : YukiBaseHoo
                                 parameters(Intent::class)
                                 returnType = Boolean::class
                             }.of(instance).invoke(null)
-                            resultFalse()
+                            result = false
                         }
                     }
                 }
@@ -62,23 +63,23 @@ class AutoUnlockRestrictedSettings(val dexKitBridge: DexKitBridge) : YukiBaseHoo
             dexKitBridge.findClass {
                 matcher {
                     fields {
-                        addForType(Context::class.java)
-                        addForType(String::class.java)
-                        addForType(Boolean::class.java)
-                        addForType(Int::class.java)
+                    addForType(classOf<Context>())
+                        addForType(classOf<String>())
+                        addForType(classOf<Boolean>())
+                        addForType(classOf<Int>())
                     }
                     methods {
                         add {
                             paramCount(0)
-                            returnType(Boolean::class.java)
+                            returnType(classOf<Boolean>())
                         }
                         add {
                             paramCount(0)
                             returnType(Void.TYPE)
                         }
                         add {
-                            paramTypes(Boolean::class.java)
-                            returnType(Boolean::class.java)
+                        paramTypes(classOf<Boolean>())
+                            returnType(classOf<Boolean>())
                         }
                     }
                     usingStrings("RestrictedPreferenceHelper")
@@ -88,16 +89,16 @@ class AutoUnlockRestrictedSettings(val dexKitBridge: DexKitBridge) : YukiBaseHoo
                 val findMethod = findMethod {
                     matcher {
                         paramCount(0)
-                        returnType(Boolean::class.java)
+                        returnType(classOf<Boolean>())
                         addCaller {
                             name("performClick")
                             returnType(Void.TYPE)
                         }
                         addUsingField {
-                            field { type(Context::class.java) }
-                            field { type(Int::class.java) }
-                            field { type(String::class.java) }
-                            field { type(Boolean::class.java) }
+                        field { type(classOf<Context>()) }
+                            field { type(classOf<Int>()) }
+                            field { type(classOf<String>()) }
+                            field { type(classOf<Boolean>()) }
                         }
                     }
                 }.checkDataList("AutoUnlockRestrictedSettings findMethod").single()
@@ -107,35 +108,35 @@ class AutoUnlockRestrictedSettings(val dexKitBridge: DexKitBridge) : YukiBaseHoo
                         addReadMethod {
                             name(findMethod.methodName)
                             paramCount(0)
-                            returnType(Boolean::class.java)
+                            returnType(classOf<Boolean>())
                         }
                     }
                 }.checkDataList("AutoUnlockRestrictedSettings findFields", onlyOne = false)
 
                 val appops = findField {
                     matcher {
-                        type(Boolean::class.java)
+                        type(classOf<Boolean>())
                         addReadMethod {
                             name(findMethod.methodName)
                             paramCount(0)
-                            returnType(Boolean::class.java)
+                            returnType(classOf<Boolean>())
                         }
                         addWriteMethod {
-                            paramTypes(Boolean::class.java.name)
-                            returnType(Boolean::class.java)
+                        paramTypes(classOf<Boolean>().name)
+                            returnType(classOf<Boolean>())
                         }
                     }
                 }.checkDataList("AutoUnlockRestrictedSettings findField AppOps").single()
 
                 val admin =
-                    fields.filter { it.typeName == Boolean::class.java.name }.toMutableList()
+                    fields.filter { it.typeName == classOf<Boolean>().name }.toMutableList()
                         .apply {
                             removeIf { it.fieldName == appops.fieldName }
                         }.first()
 
 //                val uidname =
 //                    fields.find { it.typeName == Int::class.java.name }?.fieldName ?: "uid"
-                val packname = fields.find { it.typeName == String::class.java.name }?.fieldName
+                val packname = fields.find { it.typeName == classOf<String>().name }?.fieldName
                     ?: "packageName"
 
                 findMethod.className.toClass().resolve().apply {

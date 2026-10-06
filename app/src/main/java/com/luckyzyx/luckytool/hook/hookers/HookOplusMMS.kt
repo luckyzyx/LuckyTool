@@ -12,11 +12,11 @@ object HookOplusMMS : YukiBaseHooker() {
     override fun onHook() {
         loadHooker(HookGlobalFeatureConfig)
 
-        if (prefs(ModulePrefs).getBoolean("remove_mms_bottom_input_box_menu", false)) {
+        if (preferences(ModulePrefs).getBoolean("remove_mms_bottom_input_box_menu", false)) {
             loadHooker(RemoveMmsBottomInputBoxMenu)
         }
 
-        if (prefs(ModulePrefs).getBoolean("remove_mms_card_marketing_button", false)) {
+        if (preferences(ModulePrefs).getBoolean("remove_mms_card_marketing_button", false)) {
             loadHooker(RemoveMmsCardMarketingButton)
         }
 

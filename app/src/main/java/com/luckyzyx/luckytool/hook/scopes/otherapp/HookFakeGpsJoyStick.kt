@@ -11,7 +11,7 @@ import org.lsposed.lsparanoid.Obfuscate
 @Obfuscate
 object HookFakeGpsJoyStick : YukiBaseHooker() {
     override fun onHook() {
-        if (!prefs(ModulePrefs).getBoolean("gps_joystick_unlock_pro", false)) return
+        if (!preferences(ModulePrefs).getBoolean("gps_joystick_unlock_pro", false)) return
 
         //Source
         DexkitUtils.create(appInfo.sourceDir) { dexKitBridge ->
@@ -39,7 +39,7 @@ object HookFakeGpsJoyStick : YukiBaseHooker() {
                             emptyParameters()
                             returnType = Int::class
                         }.hook {
-                            replaceTo(3)
+                            intercept(3)
                         }
                     }
                 }

@@ -10,7 +10,7 @@ object HookHealth : YukiBaseHooker() {
     override fun onHook() {
 
         //移除Root检测对话框
-        if (prefs(ModulePrefs).getBoolean("remove_health_root_check_dialog", false)) {
+        if (preferences(ModulePrefs).getBoolean("remove_health_root_check_dialog", false)) {
             loadHooker(RemoveHealthRootCheck)
         }
 

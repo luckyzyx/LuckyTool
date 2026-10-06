@@ -16,7 +16,7 @@ object FixRecordCallsOnThirdPartyAppsError : YukiBaseHooker() {
             ?.apply {
                 firstMethod { name = "setSpkVolParam" }.hook {
                     before {
-                        val level = args().first().int()
+                        val level = firstArg().get<Int>() ?: 0
                         val mSpatializerMode = firstField {
                             name = "mSpatializerMode"
                         }.of(instance).get<AtomicBoolean>() ?: return@before
@@ -36,7 +36,7 @@ object FixRecordCallsOnThirdPartyAppsError : YukiBaseHooker() {
                         }.get<Int>()
                         firstMethod { name = "setParameterImp";parameterCount = 3 }.of(instance)
                             .invoke(index, level, mSpatializerSpkVol.get())
-                        resultNull()
+                        result = null
                     }
                 }
             }

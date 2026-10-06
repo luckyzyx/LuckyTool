@@ -26,7 +26,7 @@ object ShowChargingRipple : YukiBaseHooker() {
         //Sourcee FeatureFlags -> flag_charging_ripple
         "com.android.systemui.statusbar.FeatureFlags".toClass().resolve().apply {
             firstMethod { name = "isChargingRippleEnabled" }.hook {
-                replaceToTrue()
+                intercept(true)
             }
         }
     }

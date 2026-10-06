@@ -16,8 +16,9 @@ import androidx.core.view.isVisible
 import com.highcapable.kavaref.KavaRef.Companion.asResolver
 import com.highcapable.kavaref.KavaRef.Companion.resolve
 import com.highcapable.kavaref.extension.VariousClass
+import com.highcapable.kavaref.extension.classOf
 import com.highcapable.yukihookapi.hook.entity.YukiBaseHooker
-import com.highcapable.yukihookapi.hook.factory.injectModuleAppResources
+import com.highcapable.yukihookapi.hook.factory.injectModuleResources
 import com.luckyzyx.luckytool.R
 import com.luckyzyx.luckytool.hook.utils.FlowUtils
 import com.luckyzyx.luckytool.hook.utils.sysui.AbsSettingsValueProxyUtils
@@ -44,8 +45,8 @@ object WiFiDataIconRelated : YukiBaseHooker() {
 
         @SuppressLint("MissingPermission", "DiscouragedApi")
         override fun onHook() {
-            val removeInout = prefs(ModulePrefs).getBoolean("remove_wifi_data_inout", false)
-            val wifiStandard = prefs(ModulePrefs).getBoolean("force_display_wifi_standard", false)
+            val removeInout = preferences(ModulePrefs).getBoolean("remove_wifi_data_inout", false)
+            val wifiStandard = preferences(ModulePrefs).getBoolean("force_display_wifi_standard", false)
 
             val mNetworkRequest = NetworkRequest.Builder().apply {
                 addTransportType(NetworkCapabilities.TRANSPORT_WIFI)
@@ -60,7 +61,7 @@ object WiFiDataIconRelated : YukiBaseHooker() {
                             if (!wifiStandard) return@after
                             val view = instance<View>()
                             val context = view.context
-                            val manager = context.getSystemService(ConnectivityManager::class.java)
+                            val manager = context.getSystemService(classOf<ConnectivityManager>())
                             if (!hasRegisterCallback) {
                                 val handler = Handler(Looper.getMainLooper())
                                 val callback = object : ConnectivityManager.NetworkCallback() {
@@ -78,7 +79,7 @@ object WiFiDataIconRelated : YukiBaseHooker() {
                                         wifiInfo = info
 
                                         val drawable = getSignalDrawable(
-                                            appClassLoader, context, wifiInfo!!.wifiStandard
+                                            hostClassLoader!!, context, wifiInfo!!.wifiStandard
                                         )
                                         if (drawable < 0) return
                                         view.findViewById<ImageView>(
@@ -106,10 +107,10 @@ object WiFiDataIconRelated : YukiBaseHooker() {
                             if (result == null) return@after
 
                             val originalValue =
-                                FlowUtils(appClassLoader).getValue<Int>(result!!) ?: -1
+                                FlowUtils(hostClassLoader!!).getValue<Int>(result!!) ?: -1
                             if (originalValue <= 0) return@after
 
-                            result = FlowUtils(appClassLoader).let {
+                            result = FlowUtils(hostClassLoader!!).let {
                                 val mutableStateFlow = it.MutableStateFlow(-1)
                                     ?: return@after
                                 it.asStateFlow(mutableStateFlow) ?: return@after
@@ -127,9 +128,9 @@ object WiFiDataIconRelated : YukiBaseHooker() {
                                 .get<Context>() ?: return@after
                             if (wifiInfo == null) return@after
                             val drawable =
-                                getSignalDrawable(appClassLoader, context, wifiInfo!!.wifiStandard)
+                                getSignalDrawable(hostClassLoader!!, context, wifiInfo!!.wifiStandard)
                             if (drawable < 0) return@after
-                            result = FlowUtils(appClassLoader).let {
+                            result = FlowUtils(hostClassLoader!!).let {
                                 val mutableStateFlow = it.MutableStateFlow(drawable)
                                     ?: return@after
                                 it.asStateFlow(mutableStateFlow) ?: return@after
@@ -140,12 +141,12 @@ object WiFiDataIconRelated : YukiBaseHooker() {
         }
 
         fun getSignalDrawable(classLoader: ClassLoader?, context: Context, standard: Int): Int {
-            context.injectModuleAppResources()
+            context.injectModuleResources()
             val isDual = WifiUtils(classLoader).isDualWifiConnected(context)
             val isAp = WifiUtils(classLoader).isPassPointAp(context)
             if (isDual || isAp) return -1
 
-            val technicalEnable = AbsSettingsValueProxyUtils(appClassLoader)
+            val technicalEnable = AbsSettingsValueProxyUtils(hostClassLoader!!)
                 .getGlobalIntValue(context, "wifi_use_technical_standard_icons_switch_on", 0)
             if (technicalEnable != 1) return -1
 
@@ -169,7 +170,7 @@ object WiFiDataIconRelated : YukiBaseHooker() {
     @Obfuscate
     object WiFiDataIconV14 : YukiBaseHooker() {
         override fun onHook() {
-            val removeInout = prefs(ModulePrefs).getBoolean("remove_wifi_data_inout", false)
+            val removeInout = preferences(ModulePrefs).getBoolean("remove_wifi_data_inout", false)
 
             //Source OplusStatusBarWifiView
             VariousClass(

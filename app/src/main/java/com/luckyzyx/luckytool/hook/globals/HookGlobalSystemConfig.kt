@@ -16,7 +16,7 @@ object HookGlobalSystemConfig : YukiBaseHooker() {
             //Source CredentialManagerService
             //Source OplusClearDataProtectManager interceptClearUserDataIfNeeded
             //Source PackageManagerServiceExtImpl shouldRemoveUpdatedMainlineApk
-            if (prefs(ModulePrefs).getBoolean("remove_gms_usage_restrictions", false)) {
+            if (preferences(ModulePrefs).getBoolean("remove_gms_usage_restrictions", false)) {
                 add("cn.google.services")
                 add("com.google.android.feature.services_updater")
             }

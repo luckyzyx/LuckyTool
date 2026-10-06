@@ -2,9 +2,9 @@
 
 package com.luckyzyx.luckytool.utils
 
+import android.annotation.SuppressLint
 import android.app.Activity
 import android.app.Notification
-import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.content.Context
 import android.content.Intent
@@ -13,8 +13,9 @@ import android.net.Uri
 import android.os.Build
 import android.provider.Settings
 import androidx.core.app.ActivityCompat
+import androidx.core.app.NotificationChannelCompat
 import androidx.core.app.NotificationCompat
-import androidx.core.app.NotificationManagerCompat
+import com.highcapable.betterandroid.ui.component.notification.factory.notificationManager
 import com.luckyzyx.luckytool.R
 import org.lsposed.lsparanoid.Obfuscate
 
@@ -33,12 +34,13 @@ object NotifyUtils {
      * @param context Context
      * @return Notification
      */
+    @SuppressLint("ReplaceWithNotificationComponent")
     fun getDemoNotification(context: Context): Notification {
         return NotificationCompat.Builder(context, DEFAULT_NOTICE_ID)
             .setSmallIcon(R.drawable.ic_baseline_info_24)
             .setContentTitle("标题")
             .setContentText("内容")
-//            .setStyle(NotificationCompat.BigTextStyle().bigText(""))
+            .setStyle(NotificationCompat.BigTextStyle().bigText(""))
             .setPriority(NotificationCompat.PRIORITY_DEFAULT)
             .build()
     }
@@ -60,10 +62,9 @@ object NotifyUtils {
      * @param notifyId Int 通知ID
      * @param notification Notification 通知
      */
+    @SuppressLint("MissingPermission")
     fun sendNotification(context: Context, notifyId: Int, notification: Notification) {
-        val notificationManager =
-            context.getSystemService(NotificationManager::class.java)
-        notificationManager.notify(notifyId, notification)
+        context.notificationManager.notify(notifyId, notification)
     }
 
     /**
@@ -72,9 +73,7 @@ object NotifyUtils {
      * @param notifyId Int 通知ID
      */
     fun clearNotification(context: Context, notifyId: Int) {
-        val notificationManager =
-            context.getSystemService(NotificationManager::class.java)
-        notificationManager.cancel(notifyId)
+        context.notificationManager.cancel(notifyId)
     }
 
     /**
@@ -82,10 +81,8 @@ object NotifyUtils {
      * @param context Context
      * @param channel NotificationChannel Channel
      */
-    fun createChannel(context: Context, channel: NotificationChannel) {
-        val notificationManager =
-            context.getSystemService(NotificationManager::class.java)
-        notificationManager.createNotificationChannel(channel)
+    fun createChannel(context: Context, channel: NotificationChannelCompat) {
+        context.notificationManager.createNotificationChannel(channel)
     }
 
     /**
@@ -94,9 +91,7 @@ object NotifyUtils {
      * @param channelId String 渠道ID
      */
     fun deleteChannel(context: Context, channelId: String) {
-        val notificationManager =
-            context.getSystemService(NotificationManager::class.java)
-        notificationManager.deleteNotificationChannel(channelId)
+        context.notificationManager.deleteNotificationChannel(channelId)
     }
 
     /**
@@ -113,7 +108,7 @@ object NotifyUtils {
                 else ActivityCompat.requestPermissions(activity, arrayOf(POST_NOTIFICATIONS), 100)
             }
         } else {
-            val enabled = NotificationManagerCompat.from(activity).areNotificationsEnabled()
+            val enabled = activity.notificationManager.areNotificationsEnabled()
             if (!enabled) enableNotification(activity)
         }
     }

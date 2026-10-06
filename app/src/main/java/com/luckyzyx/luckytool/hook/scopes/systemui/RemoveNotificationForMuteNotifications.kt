@@ -14,7 +14,7 @@ object RemoveNotificationForMuteNotifications : YukiBaseHooker() {
             "com.oplus.systemui.statusbar.controller.NoDisturbController" //C14
         ).toClass().resolve().apply {
             firstMethod { name = "checkBlockBannerStatus" }.hook {
-                replaceToFalse()
+                intercept(false)
             }
         }
     }

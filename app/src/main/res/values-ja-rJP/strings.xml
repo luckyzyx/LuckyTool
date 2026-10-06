@@ -123,19 +123,6 @@
     <string name="ColorOSCorePatchTip">ColorOSの公式インストーラーを使用するには他の機能を有効にする必要があります。\n機能一覧-アプリ関連-アプリインストール関連</string>
     <string name="corepatch">コアのパッチ</string>
     <string name="corepatch_summary">Remove install limits, supports Android %1$s</string>
-    <string name="downgr">アプリのダウングレードを許可</string>
-    <string name="downgr_summary">新しいバージョンのアプリがインストールされている状態でも、古いバージョンのアプリをインストール可能にします</string>
-    <string name="authcreak">パッケージマネージャの署名チェックを無効化</string>
-    <string name="authcreak_summary">アプリのインストール時の署名チェックを無効にします</string>
-    <string name="digestCreak">APKの署名チェックを無効化</string>
-    <string name="digestCreak_summary">直接インストールされたアプリを署名が異なるアプリでも上書きインストールを可能にします</string>
-    <string name="UsePreSig">インストール時に署名をされたアプリをインストール</string>
-    <string name="UsePreSig_summary">これは正常ではありません！危険です！絶対に必要な場合のみに有効化してください</string>
-    <string name="usepresig_warn">!!! すべてのインストールされたアプリをすべてのパッケージで上書きする事ができます!!\n不明なパッケージをインストールします</string>
-    <string name="shared_user_title">共有ユーザーの認証をバイパスする</string>
-    <string name="shared_user_summary">Allow install app with signature differ from its shared user (<b>\'Disable compare signatures\' must be enabled too</b>)</string>
-    <string name="disable_verification_agent_title">パッケージ検証エージェントを無効化</string>
-    <string name="disable_verification_agent_summary">例: Google Play プロテクト</string>
     <!--Status Bar-->
     <string name="StatusBar">ステータスバー関連</string>
     <string name="StatusbarEvents">ステータスバーのイベント</string>
@@ -247,7 +234,6 @@
     <string name="fix_control_center_date_display">コントロールセンターの日付表示を修正</string>
     <string name="fix_control_center_date_display_suammry">日付を完全に表示できない問題を修正します</string>
     <string name="ControlCenterNotificationCenter">コントロールセンターの通知センター</string>
-    <string name="enable_notification_align_both_sides">通知の両端揃えを有効化</string>
     <string name="remove_notification_cleanup_button">通知のクリアボタンを削除</string>
     <string name="enable_notification_importance_classification">通知の重要度分類を有効化</string>
     <string name="custom_notification_background_transparency">カスタム通知の背景の透明度</string>
@@ -846,6 +832,7 @@
     <string name="remove_market_splash_page_app_recommend">App Market のスプラッシュページからおすすめアプリを削除</string>
     <string name="remove_market_update_download_page_app_recommend">Remove app recommendations from market update download page</string>
     <string name="remove_market_mine_page_app_recommend">App Market のマイアプリページからおすすめアプリを削除</string>
+    <string name="default_expand_update_list">Expand update list by default</string>
     <!--OplusWeather-->
     <string name="disable_weather_jump_browser">天気のブラウザーリダイレクトを無効化</string>
     <string name="remove_weather_some_page_bottom_ads">天気セクションページの下部にある広告を削除</string>

@@ -11,7 +11,7 @@ object RemoveSettingsBottomLaboratory : YukiBaseHooker() {
         "com.oplus.settings.feature.homepage.TopLevelLaboratoryPreferenceController".toClass()
             .resolve().apply {
                 firstMethod { name = "getAvailabilityStatus" }.hook {
-                    replaceTo(3)
+                    intercept(3)
                 }
             }
     }

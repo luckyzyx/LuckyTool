@@ -10,4 +10,12 @@ public abstract class DisplayAddress {
         
     }
     
+    public static final class StablePhysical extends DisplayAddress {
+        
+        public long getPhysicalDisplayId() {
+            throw new RuntimeException("STUB");
+        }
+        
+    }
+    
 }

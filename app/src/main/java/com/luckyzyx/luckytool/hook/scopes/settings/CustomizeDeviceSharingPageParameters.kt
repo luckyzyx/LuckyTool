@@ -44,7 +44,7 @@ object CustomizeDeviceSharingPageParameters : YukiBaseHooker() {
         setOnClickListener {
             var editText: EditText? = null
             var dialog: Any? = null
-            COUIAlertDialogBuilder(context, "COUIAlertDialog.SingleInput", appClassLoader).apply {
+            COUIAlertDialogBuilder(context, "COUIAlertDialog.SingleInput", hostClassLoader).apply {
                 setTitle(text)
                 setNegativeButton(android.R.string.cancel, null)
                 setPositiveButton(android.R.string.ok) { _, _ ->

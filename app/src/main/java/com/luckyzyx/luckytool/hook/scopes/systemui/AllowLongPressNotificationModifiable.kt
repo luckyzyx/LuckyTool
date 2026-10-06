@@ -21,7 +21,7 @@ object AllowLongPressNotificationModifiable : YukiBaseHooker() {
             }.hook {
                 before {
                     firstFieldOrNull { name = "isAppModifiable" }?.of(instance)?.set(true) ?: run {
-                        args().first().any()?.asResolver()?.firstField { name = "isAppModifiable" }
+                        firstArg().get()?.asResolver()?.firstField { name = "isAppModifiable" }
                             ?.set(true)
                     }
                 }

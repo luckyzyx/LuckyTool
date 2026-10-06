@@ -10,6 +10,7 @@ import android.os.IUserManager
 import android.os.RemoteException
 import android.os.ServiceManager
 import android.os.SystemProperties
+import com.highcapable.kavaref.extension.classOf
 import com.luckyzyx.luckytool.IUserServiceController
 import com.luckyzyx.luckytool.service.base.BaseControllerService
 import com.luckyzyx.luckytool.utils.LogUtils
@@ -20,7 +21,7 @@ import java.util.LinkedList
 @Obfuscate
 object UserService : BaseControllerService<IUserServiceController>() {
     override val TAG: String = "UserService"
-    override var controllerService: Class<*> = UserControllerService::class.java
+    override var controllerService: Class<*> = classOf<UserControllerService>()
 
     private var um: IUserManager? = null
     private var binder: IBinder? = null

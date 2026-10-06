@@ -3,6 +3,7 @@
 package com.luckyzyx.luckytool.hook.utils
 
 import com.highcapable.kavaref.KavaRef.Companion.asResolver
+import com.highcapable.kavaref.extension.classOf
 import com.highcapable.kavaref.extension.createInstance
 import com.highcapable.kavaref.extension.toClass
 import org.lsposed.lsparanoid.Obfuscate
@@ -26,48 +27,48 @@ class RefUtils(val classLoader: ClassLoader?) {
         }
     }
 
-    fun FloatRef(): Any? {
+    fun FloatRef(): Any {
         return FloatRef(null)
     }
 
-    fun FloatRef(element: Float? = null): Any? {
+    fun FloatRef(element: Float? = null): Any {
         return FloatRefCls.toClass(classLoader).createInstance(isPublic = false).apply {
             asResolver().firstField { name = "element";type = Float::class }.set(element)
         }
     }
 
-    fun IntRef(): Any? {
+    fun IntRef(): Any {
         return IntRef(null)
     }
 
-    fun IntRef(element: Int? = null): Any? {
+    fun IntRef(element: Int? = null): Any {
         return IntRefCls.toClass(classLoader).createInstance(isPublic = false).apply {
             asResolver().firstField { name = "element";type = Int::class }.set(element)
         }
     }
 
-    fun LongRef(): Any? {
+    fun LongRef(): Any {
         return LongRef(null)
     }
 
-    fun LongRef(element: Long? = null): Any? {
+    fun LongRef(element: Long? = null): Any {
         return LongRefCls.toClass(classLoader).createInstance(isPublic = false).apply {
             asResolver().firstField { name = "element";type = Long::class }.set(element)
         }
     }
 
-    inline fun <reified T> ObjectRef(): Any? {
+    inline fun <reified T : Any> ObjectRef(): Any {
         return ObjectRef<T>(null)
     }
 
-    inline fun <reified T> ObjectRef(element: T? = null): Any? {
+    inline fun <reified T : Any> ObjectRef(element: T? = null): Any {
         return ObjectRefCls.toClass(classLoader).createInstance(isPublic = false).apply {
-            asResolver().firstField { name = "element";type = T::class.java }.set(element)
+            asResolver().firstField { name = "element";type = classOf<T>() }.set(element)
         }
     }
 
     inline fun <reified T : Any> getRefElement(ref: Any): T? {
-        return ref.asResolver().firstField { name = "element";type = T::class.java }.get<T>()
+        return ref.asResolver().firstField { name = "element";type = classOf<T>() }.get<T>()
     }
 
 }

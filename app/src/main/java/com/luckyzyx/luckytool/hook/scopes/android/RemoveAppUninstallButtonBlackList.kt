@@ -10,7 +10,7 @@ import org.lsposed.lsparanoid.Obfuscate
 @Obfuscate
 object RemoveAppUninstallButtonBlackList : YukiBaseHooker() {
     override fun onHook() {
-        val isEnable = prefs(ModulePrefs).getBoolean("remove_app_uninstall_button_blacklist", false)
+        val isEnable = preferences(ModulePrefs).getBoolean("remove_app_uninstall_button_blacklist", false)
 
         //Source OplusUninstallableConfigManager
         "com.android.server.pm.OplusUninstallableConfigManager".toClass().resolve().apply {

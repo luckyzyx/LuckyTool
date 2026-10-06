@@ -8,13 +8,13 @@ import org.lsposed.lsparanoid.Obfuscate
 @Obfuscate
 object HookOplusCosa : YukiBaseHooker() {
     override fun onHook() {
+        loadHooker(HookGlobalFeatureConfig)
+
         val osCode = getOSVersionCode
 
-        loadHooker(HookGlobalFeatureConfig)
-//        loadHooker(HookGlobalSystemProperties)
 
         //启用旁路供电支持
-//        if (prefs(ModulePrefs).getBoolean("enable_game_bypass_charging_support", false)) {
+//        if (preferences(ModulePrefs).getBoolean("enable_game_bypass_charging_support", false)) {
 //            if (osCode >= 33) loadHooker(EnableGameBypassChargingSupport)
 //        }
     }

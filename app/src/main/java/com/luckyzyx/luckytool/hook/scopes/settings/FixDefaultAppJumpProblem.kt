@@ -16,7 +16,7 @@ object FixDefaultAppJumpProblem : YukiBaseHooker() {
             .resolve().apply {
                 firstMethod { name = "handlePreferenceTreeClick" }.hook {
                     before {
-                        val preference = args().first().any() ?: return@before
+                        val preference = firstArg().get() ?: return@before
                         val key =
                             preference.asResolver().firstMethod { name = "getKey";superclass() }
                             .invoke<String>()

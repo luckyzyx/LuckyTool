@@ -16,7 +16,7 @@ object HideLockScreenStatusBarDisplay : YukiBaseHooker() {
         ).toClass().resolve().apply {
             firstMethod { name = "setVisibility" }.hook {
                 before {
-                    args().first().set(View.INVISIBLE)
+                    firstArg().set(View.INVISIBLE)
                 }
             }
         }

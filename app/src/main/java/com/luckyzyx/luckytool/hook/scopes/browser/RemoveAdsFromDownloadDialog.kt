@@ -2,6 +2,7 @@ package com.luckyzyx.luckytool.hook.scopes.browser
 
 import android.content.Context
 import com.highcapable.kavaref.KavaRef.Companion.resolve
+import com.highcapable.kavaref.extension.classOf
 import com.highcapable.yukihookapi.hook.entity.YukiBaseHooker
 import com.luckyzyx.luckytool.utils.DexkitUtils.checkDataList
 import org.lsposed.lsparanoid.Obfuscate
@@ -14,10 +15,10 @@ class RemoveAdsFromDownloadDialog(val dexKitBridge: DexKitBridge) : YukiBaseHook
         dexKitBridge.findMethod {
             matcher {
                 declaredClass {
-                    addFieldForType(Context::class.java)
-                    addFieldForType(String::class.java)
+                addFieldForType(classOf<Context>())
+                    addFieldForType(classOf<String>())
                     addMethod {
-                        paramTypes(Context::class.java, Int::class.java)
+                    paramTypes(classOf<Context>(), classOf<Int>())
                         returnType(Void.TYPE)
                     }
                     usingStrings("DownloadCardAdProvider")

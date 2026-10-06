@@ -14,14 +14,14 @@ object RemoveGreenDotPrivacyPrompt : YukiBaseHooker() {
             "com.oplus.systemui.privacy.ViewState" //C14 C15
         ).toClass().resolve().apply {
             firstMethod { name = "shouldShowDot" }.hook {
-                replaceToFalse()
+                intercept(false)
             }
         }
 
         //Source ViewState
         "com.android.systemui.statusbar.events.ViewState".toClass().resolve().apply {
             firstMethod { name = "shouldShowDot" }.hook {
-                replaceToFalse()
+                intercept(false)
             }
         }
     }

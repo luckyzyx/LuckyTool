@@ -26,6 +26,7 @@ import androidx.navigation.fragment.findNavController
 import com.drake.net.utils.scopeLife
 import com.drake.net.utils.withDefault
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import com.highcapable.betterandroid.ui.extension.view.textToString
 import com.highcapable.kavaref.extension.classOf
 import com.luckyzyx.luckytool.IAdbDebugController
 import com.luckyzyx.luckytool.R
@@ -234,14 +235,14 @@ class OtherFragment : BaseFragment<FragmentOtherBinding>(), MenuProvider {
                 val adbTv = binding.adbTv.apply {
                     if (getPort != 0 && getPort != -1) text = "adb connect $getIP:$getPort"
                     setOnLongClickListener {
-                        context.copyStr(text.toString())
+                        context.copyStr(textToString())
                         true
                     }
                 }
                 val adbTvTip = binding.adbTvTip.apply {
                     isVisible = adbTv.text.isNullOrBlank().not()
                     setOnLongClickListener {
-                        context.copyStr(adbTv.text.toString())
+                        context.copyStr(adbTv.textToString())
                         true
                     }
                 }

@@ -9,17 +9,21 @@ import org.lsposed.lsparanoid.Obfuscate
 @Obfuscate
 object CustomMusicFluidCloudWhitelist : YukiBaseHooker() {
     override fun onHook() {
-        val disabled = prefs(ModulePrefs).getBoolean("disable_music_fluid_cloud_display", false)
+        val disabled = preferences(ModulePrefs).getBoolean("disable_music_fluid_cloud_display", false)
         val set =
-            prefs(ModulePrefs).getStringSet("set_custom_music_fluid_cloud_whitelist", ArraySet())
+            preferences(ModulePrefs).getStringSet("set_custom_music_fluid_cloud_whitelist", ArraySet())
 
         //Source OplusMediaRusUpdateManager
         "com.oplus.systemui.media.seedling.rus.OplusMediaRusUpdateManager".toClass().resolve()
             .apply {
-                firstMethod {
+                (firstMethodOrNull {
                     name = "getRusWhiteList"
                     returnType = List::class
-                }.hook {
+                } ?: firstMethod {
+                    name = "parsePackageListFromStringSet"
+                    parameters(Set::class)
+                    returnType = List::class
+                }).hook {
                     after {
                         val originalList = result<java.util.ArrayList<String>>() ?: return@after
                         if (disabled) {

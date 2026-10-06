@@ -10,10 +10,10 @@ object UnlockSomeHiddenOptions : YukiBaseHooker() {
         //Source SecrecyServiceHelper
         "com.oplus.engineermode.impl.SecrecyServiceHelper".toClass().resolve().apply {
             firstMethod { name = "isSecrecySupported" }.hook {
-                replaceToTrue()
+                intercept(true)
             }
             firstMethod { name = "getSecrecyState" }.hook {
-                replaceToFalse()
+                intercept(false)
             }
         }
     }

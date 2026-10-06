@@ -3,7 +3,6 @@ package com.luckyzyx.luckytool.ui.fragment.scopes.apps
 import android.content.Context
 import androidx.preference.Preference
 import androidx.preference.SwitchPreference
-import org.lsposed.lsparanoid.Obfuscate
 import com.luckyzyx.luckytool.R
 import com.luckyzyx.luckytool.ui.fragment.base.BaseScopePreferenceFeagment
 import com.luckyzyx.luckytool.utils.AppUtils
@@ -11,6 +10,7 @@ import com.luckyzyx.luckytool.utils.ModulePrefs
 import com.luckyzyx.luckytool.utils.arraySummaryLine
 import com.luckyzyx.luckytool.utils.checkPackName
 import com.luckyzyx.luckytool.utils.setPrefsIconRes
+import org.lsposed.lsparanoid.Obfuscate
 
 @Obfuscate
 class OplusMarket : BaseScopePreferenceFeagment() {
@@ -55,6 +55,12 @@ class OplusMarket : BaseScopePreferenceFeagment() {
             add(SwitchPreference(this@loadPreferences).apply {
                 title = getString(R.string.remove_market_mine_page_app_recommend)
                 key = "remove_market_mine_page_app_recommend"
+                setDefaultValue(false)
+                isIconSpaceReserved = false
+            })
+            add(SwitchPreference(this@loadPreferences).apply {
+                title = getString(R.string.default_expand_update_list)
+                key = "default_expand_update_list"
                 setDefaultValue(false)
                 isIconSpaceReserved = false
             })

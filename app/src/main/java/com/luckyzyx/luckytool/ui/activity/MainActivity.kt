@@ -16,8 +16,6 @@ import com.highcapable.betterandroid.system.extension.component.Intent
 import com.highcapable.betterandroid.ui.extension.component.fragmentManager
 import com.highcapable.betterandroid.ui.extension.view.toast
 import com.highcapable.kavaref.extension.classOf
-import com.highcapable.yukihookapi.YukiHookAPI
-import com.highcapable.yukihookapi.hook.factory.prefs
 import com.luckyzyx.luckytool.BuildConfig
 import com.luckyzyx.luckytool.R
 import com.luckyzyx.luckytool.databinding.ActivityMainBinding
@@ -31,6 +29,7 @@ import com.luckyzyx.luckytool.service.TilesService
 import com.luckyzyx.luckytool.service.UserService
 import com.luckyzyx.luckytool.ui.activity.base.BaseActivity
 import com.luckyzyx.luckytool.ui.fragment.home.HomeFragment
+import com.luckyzyx.luckytool.ui.service.XposedServiceBridge
 import com.luckyzyx.luckytool.utils.A12
 import com.luckyzyx.luckytool.utils.BiometricUtils
 import com.luckyzyx.luckytool.utils.DeviceUtils
@@ -53,7 +52,6 @@ import kotlin.system.exitProcess
 @Suppress("PrivatePropertyName")
 open class MainActivity : BaseActivity<ActivityMainBinding>() {
     //检测Prefs状态
-    private var isModuleActive = YukiHookAPI.Status.isXposedModuleActive
     private val KEY_PREFIX = classOf<MainActivity>().name + '.'
     private val EXTRA_SAVED_INSTANCE_STATE = KEY_PREFIX + "SAVED_INSTANCE_STATE"
 
@@ -90,9 +88,8 @@ open class MainActivity : BaseActivity<ActivityMainBinding>() {
     }
 
     private fun checkXposed() {
-        val prefsArray = arrayOf(ModulePrefs, SettingsPrefs, IntentPrefs, OtherPrefs)
-        val prefsStatus = prefsArray.map { prefs(it).isPreferencesAvailable }
-        if (!isModuleActive || prefsStatus.contains(false)) {
+        XposedServiceBridge.awaitReady()
+        if (!XposedServiceBridge.isModuleActive) {
             MaterialAlertDialogBuilder(this).apply {
                 setCancelable(false)
                 setMessage(getString(R.string.unsupported_xposed))

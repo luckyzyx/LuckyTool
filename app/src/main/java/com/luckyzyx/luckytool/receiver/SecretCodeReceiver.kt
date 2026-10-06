@@ -3,8 +3,9 @@ package com.luckyzyx.luckytool.receiver
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
-import org.lsposed.lsparanoid.Obfuscate
+import com.highcapable.kavaref.extension.classOf
 import com.luckyzyx.luckytool.ui.activity.MainActivity
+import org.lsposed.lsparanoid.Obfuscate
 
 @Suppress("PrivatePropertyName")
 @Obfuscate
@@ -15,7 +16,7 @@ class SecretCodeReceiver : BroadcastReceiver() {
         if (intent.action == SECRET_CODE_ACTION) {
             val code = intent.data?.host ?: return
             if (code == "582598665") Intent().apply {
-                setClass(context, MainActivity::class.java)
+                setClass(context, classOf<MainActivity>())
                 addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                 addFlags(Intent.FLAG_ACTIVITY_MULTIPLE_TASK)
                 context.startActivity(this)

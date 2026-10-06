@@ -15,7 +15,7 @@ object EnableXModeFeature : YukiBaseHooker() {
         ).toClass().resolve().apply {
             firstMethod { parameterCount = 1;returnType = Any::class }.hook {
                 after {
-                    resultTrue()
+                    result = true
                 }
             }
         }

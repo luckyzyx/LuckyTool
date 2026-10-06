@@ -11,9 +11,9 @@ object ForceEnableBuoyAutomaticallyHides : YukiBaseHooker() {
         "com.coloros.edgepanel.utils.EdgePanelUtils".toClass().resolve().apply {
             firstMethodOrNull { name = "isMetaDataSupportByPackage";parameterCount = 2 }?.hook {
                 after {
-                    val packName = args().first().string()
-                    val key = args().last().string()
-                    if (packName == "com.android.systemui" && key == "sidebar_gesture_support") resultTrue()
+                    val packName = firstArg().get<String>() ?: ""
+                    val key = lastArg().get<String>() ?: ""
+                    if (packName == "com.android.systemui" && key == "sidebar_gesture_support") result = true
                 }
             }
         }

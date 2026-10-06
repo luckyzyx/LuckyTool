@@ -6,11 +6,13 @@ import com.luckyzyx.luckytool.hook.globals.HookGlobalPmsFeature
 import com.luckyzyx.luckytool.hook.globals.HookGlobalSystemConfig
 import com.luckyzyx.luckytool.hook.globals.HookGlobalSystemProperties
 import com.luckyzyx.luckytool.hook.scopes.android.ADBInstallConfirm
+import com.luckyzyx.luckytool.hook.scopes.android.ActionButtonKeyInterceptor
 import com.luckyzyx.luckytool.hook.scopes.android.AllowUntrustedTouch
 import com.luckyzyx.luckytool.hook.scopes.android.AppSplashScreen
 import com.luckyzyx.luckytool.hook.scopes.android.BatteryOptimizationWhitelist
 import com.luckyzyx.luckytool.hook.scopes.android.DarkModeService
 import com.luckyzyx.luckytool.hook.scopes.android.DisableAccessibilityWarningDialog
+import com.luckyzyx.luckytool.hook.scopes.android.DisableAppArchiving
 import com.luckyzyx.luckytool.hook.scopes.android.DisableAudioFocus
 import com.luckyzyx.luckytool.hook.scopes.android.DisableMaliciousAppIntercept
 import com.luckyzyx.luckytool.hook.scopes.android.EnableKeepNotificationWhenAppStop
@@ -67,7 +69,7 @@ object HookAndroid : YukiBaseHooker() {
         loadHooker(HookOplusWifiService)
 
         //Hook HookWindowManagerService
-        loadHooker(HookWindowManagerService)
+        if (osCode >= 23) loadHooker(HookWindowManagerService)
 
         //音量阶数
         loadHooker(MediaVolumeLevel)
@@ -111,6 +113,12 @@ object HookAndroid : YukiBaseHooker() {
         //启用音量键控制手电筒手势
         loadHooker(SystemEnableVolumeKeyControlFlashlight)
 
+        //快捷键拦截（无操作接管 / 自定义响铃切换）
+        if (osCode >= 36) loadHooker(ActionButtonKeyInterceptor)
+
+        //全局关闭应用自动归档（空间不足自动卸载应用）
+        if (osCode >= 36) loadHooker(DisableAppArchiving)
+
         //强制所有应用支持分屏
         if (osCode in 26..33) loadHooker(ForceAllAppsSupportSplitScreen)
 
@@ -144,17 +152,17 @@ object HookAndroid : YukiBaseHooker() {
         loadHooker(RemoveAlwaysAllowAppStartList)
 
         //禁用风险应用拦截
-        if (prefs(ModulePrefs).getBoolean("disable_malicious_app_intercept", false)) {
+        if (preferences(ModulePrefs).getBoolean("disable_malicious_app_intercept", false)) {
             if (osCode >= 38) loadHooker(DisableMaliciousAppIntercept)
         }
 
         //禁用无障碍警告对话框
-        if (prefs(ModulePrefs).getBoolean("disable_accessibility_warning_dialog", false)) {
+        if (preferences(ModulePrefs).getBoolean("disable_accessibility_warning_dialog", false)) {
             if (osCode >= 38) loadHooker(DisableAccessibilityWarningDialog)
         }
 
         //禁用音频焦点
-        if (prefs(ModulePrefs).getBoolean("disable_audio_focus", false)) {
+        if (preferences(ModulePrefs).getBoolean("disable_audio_focus", false)) {
             loadHooker(DisableAudioFocus)
         }
 
@@ -197,8 +205,8 @@ object HookAndroid : YukiBaseHooker() {
 //                        .toClassOrNull()
 //                    val isSystemDir = clazz?.field { name = "PARSE_IS_SYSTEM_DIR";type(IntType) }
 //                        ?.get()?.cast<Int>() ?: return@beforeHook
-//                    val parseFlags = args().last().cast<Int>() ?: return@beforeHook
-//                    if ((parseFlags and isSystemDir) != 0) resultNull()
+//                    val parseFlags = lastArg().get<Int>() ?: return@beforeHook
+//                    if ((parseFlags and isSystemDir) != 0) result = null
 //                }
 //            }
 //        }
@@ -212,7 +220,7 @@ object HookAndroid : YukiBaseHooker() {
 //                        .toClassOrNull()
 //                    val jar = clazz?.field { name = "JAR";type(IntType) }?.get()?.cast<Int>()
 //                        ?: return@beforeHook
-//                    args().last().set(jar)
+//                    lastArg().set(jar)
 //                }
 //            }
 //        }

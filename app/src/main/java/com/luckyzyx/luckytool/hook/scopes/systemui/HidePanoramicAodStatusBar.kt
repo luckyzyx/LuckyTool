@@ -29,7 +29,7 @@ object HidePanoramicAodStatusBar : YukiBaseHooker() {
                     val isPanoramicAod = aodDataInstance.asResolver().firstMethod {
                         name = "isPanoramicAod"
                     }.invoke<Boolean>() ?: return@before
-                    if (args(0).boolean() && isPanoramicAod) resultFalse()
+                    if (arg(0).get<Boolean>() ?: false && isPanoramicAod) result = false
                 }
             }
         }

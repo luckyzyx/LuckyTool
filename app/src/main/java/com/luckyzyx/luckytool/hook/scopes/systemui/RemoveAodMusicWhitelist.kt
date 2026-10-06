@@ -10,10 +10,10 @@ object RemoveAodMusicWhitelist : YukiBaseHooker() {
         //Source AodMediaDataListener
         "com.oplusos.systemui.aod.mediapanel.AodMediaDataListener\$Companion".toClass().resolve().apply {
             firstMethod { name = "isAodMediaSupport" }.hook {
-                replaceToTrue()
+                intercept(true)
             }
             firstMethod { name = "isAodMediaSupportWithoutFeature" }.hook {
-                replaceToTrue()
+                intercept(true)
             }
         }
     }

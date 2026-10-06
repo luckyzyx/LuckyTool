@@ -8,7 +8,7 @@ import org.lsposed.lsparanoid.Obfuscate
 @Obfuscate
 object RemoveSystemScreenshotDelay : YukiBaseHooker() {
     override fun onHook() {
-        val isEnable = prefs(ModulePrefs).getBoolean("remove_system_screenshot_delay", false)
+        val isEnable = preferences(ModulePrefs).getBoolean("remove_system_screenshot_delay", false)
 
         //Source PhoneWindowManager
         "com.android.server.policy.PhoneWindowManager".toClass().resolve().apply {
@@ -16,7 +16,9 @@ object RemoveSystemScreenshotDelay : YukiBaseHooker() {
                 name = "getScreenshotChordLongPressDelay"
                 returnType = Long::class
             }.hook {
-                if (isEnable) replaceTo(0L)
+                if (isEnable) {
+                    intercept(0L)
+                }
             }
         }
     }

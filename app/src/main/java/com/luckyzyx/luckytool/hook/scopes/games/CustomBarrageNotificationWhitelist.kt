@@ -9,7 +9,7 @@ import org.lsposed.lsparanoid.Obfuscate
 @Obfuscate
 object CustomBarrageNotificationWhitelist : YukiBaseHooker() {
     override fun onHook() {
-        val set = prefs(ModulePrefs).getStringSet(
+        val set = preferences(ModulePrefs).getStringSet(
             "custom_barrage_notification_whitelist_list", ArraySet()
         )
 

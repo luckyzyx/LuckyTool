@@ -15,9 +15,9 @@ object HookOplusBubbleTextView : YukiBaseHooker() {
         val osCode = getOSVersionCode
 
         val multiLine =
-            prefs(ModulePrefs).getBoolean("allow_app_names_display_multiple_lines", false)
-        val textLineHeight = prefs(ModulePrefs).getInt("custom_app_icon_name_line_height", -1)
-        val iconSize = prefs(ModulePrefs).getInt("custom_launcher_app_icon_size", 0)
+            preferences(ModulePrefs).getBoolean("allow_app_names_display_multiple_lines", false)
+        val textLineHeight = preferences(ModulePrefs).getInt("custom_app_icon_name_line_height", -1)
+        val iconSize = preferences(ModulePrefs).getInt("custom_launcher_app_icon_size", 0)
 
         //Source OplusBubbleTextView
         "com.android.launcher3.OplusBubbleTextView".toClass().resolve().apply {
@@ -28,7 +28,7 @@ object HookOplusBubbleTextView : YukiBaseHooker() {
                 }.hook {
                     before {
                         instance<TextView>().maxLines = 2
-                        resultNull()
+                        result = null
                     }
                 }
             }
@@ -43,9 +43,16 @@ object HookOplusBubbleTextView : YukiBaseHooker() {
             }
         }
 
-        //Source IconParam
-        "com.android.launcher.layoutparam.IconParam".toClass().resolve().apply {
-            firstMethod { name = "getIconSizePx" }.hook {
+        // C17 起 IconParam 混淆为 j4.j、getIconSizePx 混淆为 d()，旧 hook 无法命中；
+        // 两版图标尺寸的构造源头都是 LauncherIconConfig.calculateIconSizeByUxDesign()
+        // 无参版本，hook 源头等价于替换 getIconSizePx 的读取结果。
+        //（secondary 分支不经过该方法，C16 走 SecondaryLauncherUtils、C17 固定 72）
+        //Source LauncherIconConfig
+        "com.android.launcher.theme.LauncherIconConfig".toClass().resolve().apply {
+            firstMethod {
+                name = "calculateIconSizeByUxDesign"
+                emptyParameters()
+            }.hook {
                 before {
                     if (iconSize > 0) result = iconSize.dp
                 }

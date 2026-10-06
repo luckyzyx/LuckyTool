@@ -13,7 +13,7 @@ object RemoveMmsBottomInputBoxMenu : YukiBaseHooker() {
                 name = "getMenus"
                 returnType = List::class
             }.hook {
-                replaceTo(ArrayList<Any>())
+                intercept(ArrayList<Any>())
             }
         }
     }

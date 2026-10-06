@@ -2,6 +2,7 @@ package com.luckyzyx.luckytool.hook.scopes.gallery
 
 import android.text.Spanned
 import com.highcapable.kavaref.KavaRef.Companion.resolve
+import com.highcapable.kavaref.extension.classOf
 import com.highcapable.yukihookapi.hook.entity.YukiBaseHooker
 import com.luckyzyx.luckytool.utils.DexkitUtils.checkDataList
 import com.luckyzyx.luckytool.utils.getOSVersionCode
@@ -32,10 +33,10 @@ class GalleryWaterMarkWordDialog(val dexKitBridge: DexKitBridge) : YukiBaseHooke
                 matcher {
                     name("filter")
                     paramTypes(
-                        CharSequence::class.java, Int::class.java, Int::class.java,
-                        Spanned::class.java, Int::class.java, Int::class.java
+                        classOf<CharSequence>(), classOf<Int>(), classOf<Int>(),
+                        classOf<Spanned>(), classOf<Int>(), classOf<Int>()
                     )
-                    returnType(CharSequence::class.java)
+                    returnType(classOf<CharSequence>())
                     usingNumbers(0, 1, 2)
                     usingStrings("")
                 }
@@ -51,7 +52,7 @@ class GalleryWaterMarkWordDialog(val dexKitBridge: DexKitBridge) : YukiBaseHooke
                         returnType = CharSequence::class
                     }.hook {
                         before {
-                            result = args().first().cast<CharSequence>() ?: return@before
+                            result = firstArg().get<CharSequence>() ?: return@before
                         }
                     }
                 }

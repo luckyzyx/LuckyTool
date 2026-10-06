@@ -11,11 +11,11 @@ object RemoveWidgetsAddRequestWhitelist : YukiBaseHooker() {
         "com.android.launcher3.widget.WidgetControlHelper".toClassOrNull() ?: return
         //Source AddItemActivity
         "com.android.launcher3.dragndrop.AddItemActivity".toClass().resolve().apply {
-            firstMethod {
+            firstMethodOrNull {
                 name = "isAllowedAddWidget"
                 parameterCount { it in 1..2 }
-            }.hook {
-                replaceToTrue()
+            }?.hook {
+                intercept(true)
             }
         }
     }

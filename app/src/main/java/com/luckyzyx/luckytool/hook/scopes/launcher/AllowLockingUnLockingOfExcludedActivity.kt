@@ -15,7 +15,7 @@ object AllowLockingUnLockingOfExcludedActivity : YukiBaseHooker() {
             (firstMethodOrNull { name = "isAppLockable" }
                 ?: firstMethod { name = "isAppSupportLock" }).hook {
                 before {
-                    val intent = args().last().cast<Intent>() ?: return@before
+                    val intent = lastArg().get<Intent>() ?: return@before
                     val flag = intent.flags
                     if (flag and Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS == Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS) {
                         intent.removeFlags(Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS)

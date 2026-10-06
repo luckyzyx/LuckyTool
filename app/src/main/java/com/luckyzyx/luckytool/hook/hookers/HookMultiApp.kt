@@ -10,12 +10,13 @@ import org.lsposed.lsparanoid.Obfuscate
 @Obfuscate
 object HookMultiApp : YukiBaseHooker() {
     override fun onHook() {
-        val osCode = getOSVersionCode
-
         loadHooker(HookGlobalFeatureConfig)
 
+        val osCode = getOSVersionCode
+
+
         //移除应用分身黑名单
-        if (prefs(ModulePrefs).getBoolean("remove_multi_app_blacklist", false)) {
+        if (preferences(ModulePrefs).getBoolean("remove_multi_app_blacklist", false)) {
             if (osCode >= 31) loadHooker(RemoveMultiAppBlacklist)
         }
     }

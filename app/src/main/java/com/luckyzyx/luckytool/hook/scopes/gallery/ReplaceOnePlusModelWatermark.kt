@@ -1,6 +1,7 @@
 package com.luckyzyx.luckytool.hook.scopes.gallery
 
 import com.highcapable.kavaref.KavaRef.Companion.resolve
+import com.highcapable.kavaref.extension.classOf
 import com.highcapable.yukihookapi.hook.entity.YukiBaseHooker
 import com.luckyzyx.luckytool.utils.DexkitUtils.checkDataList
 import com.luckyzyx.luckytool.utils.ModulePrefs
@@ -10,21 +11,21 @@ import org.luckypray.dexkit.DexKitBridge
 @Obfuscate
 class ReplaceOnePlusModelWatermark(val dexKitBridge: DexKitBridge) : YukiBaseHooker() {
     override fun onHook() {
-        val waterMark = prefs(ModulePrefs).getString("custom_model_watermark", "None")
+        val waterMark = preferences(ModulePrefs).getString("custom_model_watermark", "None")
 
         //Source WatermarkContent
         "com.oplus.tbluniformeditor.plugins.watermark.data.WatermarkContent".toClass().resolve()
             .apply {
                 firstMethod { name = "getMake" }.hook {
-                    replaceTo("")
+                    intercept("")
                 }
             }
 
         //Source MarketNameInfo -> com.oplus.camera -> ro.vendor.oplus.market.name / ro.vendor.oplus.market.enname
         dexKitBridge.findClass {
             matcher {
-                addFieldForType(String::class.java)
-                addMethod { paramCount(0);returnType(String::class.java) }
+            addFieldForType(classOf<String>())
+                addMethod { paramCount(0);returnType(classOf<String>()) }
                 usingStrings(
                     "MarketNameInfo",
                     "ro.vendor.oplus.market.name",

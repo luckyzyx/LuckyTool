@@ -8,13 +8,13 @@ import org.lsposed.lsparanoid.Obfuscate
 @Obfuscate
 object ForceEnable32BitSupport : YukiBaseHooker() {
     override fun onHook() {
-        val isEnable = prefs(ModulePrefs).getBoolean("force_enable_32_bit_support", false)
+        val isEnable = preferences(ModulePrefs).getBoolean("force_enable_32_bit_support", false)
         if (!isEnable) return
 
         //Source OplusPackageManagerHelper
         "com.android.server.pm.OplusPackageManagerHelper".toClass().resolve().apply {
             firstMethod { name = "allowInstall32BitApp" }.hook {
-                replaceToTrue()
+                intercept(true)
             }
         }
     }

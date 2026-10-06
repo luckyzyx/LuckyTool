@@ -5,6 +5,7 @@ import android.view.ViewGroup
 import android.widget.TextView
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.text.layoutDirection
+import com.highcapable.betterandroid.ui.extension.view.textToString
 import com.highcapable.kavaref.KavaRef.Companion.asResolver
 import com.highcapable.kavaref.KavaRef.Companion.resolve
 import com.highcapable.kavaref.extension.VariousClass
@@ -25,18 +26,18 @@ import kotlin.math.abs
 @Suppress("LocalVariableName", "DiscouragedApi")
 object ControlCenterDateStyle : YukiBaseHooker() {
     override fun onHook() {
-        var removeComma = prefs(ModulePrefs).getBoolean("remove_control_center_date_comma", false)
+        var removeComma = preferences(ModulePrefs).getBoolean("remove_control_center_date_comma", false)
         dataChannel.wait<Boolean>("remove_control_center_date_comma") { removeComma = it }
         var showLunar =
-            prefs(ModulePrefs).getBoolean("statusbar_control_center_date_show_lunar", false)
+            preferences(ModulePrefs).getBoolean("statusbar_control_center_date_show_lunar", false)
         dataChannel.wait<Boolean>("statusbar_control_center_date_show_lunar") { showLunar = it }
-        var disableScroll = prefs(ModulePrefs).getBoolean(
+        var disableScroll = preferences(ModulePrefs).getBoolean(
             "statusbar_control_center_date_disable_text_scroll", false
         )
         dataChannel.wait<Boolean>("statusbar_control_center_date_disable_text_scroll") {
             disableScroll = it
         }
-        var displayMode = prefs(ModulePrefs).getString(
+        var displayMode = preferences(ModulePrefs).getString(
             "statusbar_control_center_date_set_display_mode_horizontal",
             "0"
         )
@@ -56,7 +57,7 @@ object ControlCenterDateStyle : YukiBaseHooker() {
                     if (!removeComma && !showLunar) return@before
 
                     val dateView = instance<TextView>()
-                    val timeInfo = WeatherInfoParseHelper(appClassLoader)
+                    val timeInfo = WeatherInfoParseHelper(hostClassLoader!!)
                         .getLocalTimeInfo(dateView.context)
                     val mLastText = firstField { name = "mLastText" }.of(instance).get<String>()
                     if (timeInfo != null) {
@@ -79,10 +80,10 @@ object ControlCenterDateStyle : YukiBaseHooker() {
                         if (format != mLastText) dateView.text = format
                     }
                     if (dateView.text.isNotBlank()) {
-                        var res = dateView.text.toString()
+                        var res = dateView.textToString()
                         if (removeComma) res = res.replace("，", " ")
                         if (showLunar) {
-                            LunarHelperUtils(appClassLoader).apply {
+                            LunarHelperUtils(hostClassLoader!!).apply {
                                 if (lunarInstance == null) lunarInstance =
                                     getInstance(dateView.context)
                                 val lunarInfo = generateLunarDate(2)
@@ -92,7 +93,7 @@ object ControlCenterDateStyle : YukiBaseHooker() {
                         dateView.text = res
                         firstField { name = "mLastText" }.of(instance).set(res)
                     }
-                    resultNull()
+                    result = null
                 }
             }
         }

@@ -106,10 +106,17 @@ dependencies {
     compileOnly(projects.hiddenApiStub)
     implementation(projects.colorpicker)
 
-    //XPosed or API
-    compileOnly(libs.xposed.api)
-    implementation(libs.yukihookapi)
-    ksp(libs.ksp.yukihookapi)
+    @Suppress("AvoidDuplicateDependencies")
+    platform(libs.yukihook.bom).apply {
+        implementation(this)
+        ksp(this)
+    }
+    implementation(libs.yukihook.core)
+    ksp(libs.yukihook.compiler)
+    implementation(libs.yukihook.runtime.libxposed)
+
+    compileOnly(libs.libxposed.api)
+    implementation(libs.libxposed.service)
 
     implementation(libs.kavaref.core)
     implementation(libs.kavaref.android)

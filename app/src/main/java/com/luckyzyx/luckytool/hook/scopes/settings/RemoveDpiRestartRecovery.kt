@@ -1,40 +1,16 @@
 package com.luckyzyx.luckytool.hook.scopes.settings
 
 import android.content.Context
-import android.provider.Settings
 import com.highcapable.kavaref.KavaRef.Companion.resolve
+import com.highcapable.kavaref.extension.classOf
 import com.highcapable.yukihookapi.hook.entity.YukiBaseHooker
 import com.luckyzyx.luckytool.utils.DexkitUtils.checkDataList
 import org.lsposed.lsparanoid.Obfuscate
 import org.luckypray.dexkit.DexKitBridge
-import kotlin.math.max
-import kotlin.math.min
 
 @Obfuscate
 class RemoveDpiRestartRecovery(val dexKitBridge: DexKitBridge) : YukiBaseHooker() {
     override fun onHook() {
-        //Source OplusDensityPreference
-        "com.oplus.settings.widget.preference.OplusDensityPreference".toClass().resolve().apply {
-            firstMethod {
-                name = "onPreferenceChange"
-                parameterCount = 2
-            }.hook {
-                after {
-                    val newValue = args().last().string()
-                    val context = firstMethod { name = "getContext";superclass() }.of(instance)
-                        .invoke<Context>() ?: return@after
-                    val displayMetrics = context.applicationContext.resources.displayMetrics
-                    val min = min(displayMetrics.widthPixels, displayMetrics.heightPixels) *
-                            160 / max(newValue.toInt(), 320)
-                    val max = max(min, 120)
-                    Settings.Secure.putString(
-                        context.contentResolver, "display_density_forced", max.toString()
-                    )
-                    firstMethod { name = "notifyChanged";superclass() }.of(instance).invoke()
-                }
-            }
-        }
-
         loadHooker(HookSettingsUtils(dexKitBridge))
     }
 
@@ -45,19 +21,19 @@ class RemoveDpiRestartRecovery(val dexKitBridge: DexKitBridge) : YukiBaseHooker(
             dexKitBridge.findClass {
                 matcher {
                     addMethod {
-                        paramTypes(Context::class.java, Boolean::class.java)
+                        paramTypes(classOf<Context>(), classOf<Boolean>())
                     }
                     addMethod {
                         paramTypes(
-                            String::class.java,
-                            Int::class.java,
-                            Int::class.java,
-                            Boolean::class.java
+                            classOf<String>(),
+                            classOf<Int>(),
+                            classOf<Int>(),
+                            classOf<Boolean>()
                         )
                         usingStrings("restoreCompassPhoneDisplayDensity")
                     }
                     addMethod {
-                        paramTypes(Context::class.java, String::class.java, Int::class.java)
+                        paramTypes(classOf<Context>(), classOf<String>(), classOf<Int>())
                         usingStrings("restorePhoneDisplayDensity")
                     }
                     usingStrings("SettingsUtils")
@@ -66,16 +42,16 @@ class RemoveDpiRestartRecovery(val dexKitBridge: DexKitBridge) : YukiBaseHooker(
                 checkDataList("RemoveDpiRestartRecovery Clazz")
                 findMethod {
                     matcher {
-                        paramTypes(Context::class.java, Boolean::class.java)
+                        paramTypes(classOf<Context>(), classOf<Boolean>())
                         addInvoke {
                             paramTypes(
-                                String::class.java, Int::class.java,
-                                Int::class.java, Boolean::class.java
+                                classOf<String>(), classOf<Int>(),
+                                classOf<Int>(), classOf<Boolean>()
                             )
                             usingStrings("restoreCompassPhoneDisplayDensity")
                         }
                         addInvoke {
-                            paramTypes(Context::class.java, String::class.java, Int::class.java)
+                            paramTypes(classOf<Context>(), classOf<String>(), classOf<Int>())
                             usingStrings("restorePhoneDisplayDensity")
                         }
                     }

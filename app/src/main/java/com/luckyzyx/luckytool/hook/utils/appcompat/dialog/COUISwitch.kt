@@ -4,6 +4,7 @@ import android.content.Context
 import android.util.AttributeSet
 import android.widget.CompoundButton
 import com.highcapable.kavaref.KavaRef.Companion.asResolver
+import com.highcapable.kavaref.extension.classOf
 import com.highcapable.kavaref.extension.createInstance
 import com.highcapable.kavaref.extension.toClass
 import org.lsposed.lsparanoid.Obfuscate
@@ -76,7 +77,7 @@ class COUISwitch {
     fun setOnCheckedChangeListener(listener: CompoundButton.OnCheckedChangeListener): Any? {
         return builder?.asResolver()?.firstMethod {
             name = "setOnCheckedChangeListener"
-            parameters(CompoundButton.OnCheckedChangeListener::class.java)
+            parameters(classOf<CompoundButton.OnCheckedChangeListener>())
             superclass()
         }?.invoke(listener)
     }

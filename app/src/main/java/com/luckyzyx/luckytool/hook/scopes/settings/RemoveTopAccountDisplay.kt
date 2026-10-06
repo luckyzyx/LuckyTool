@@ -16,7 +16,11 @@ object RemoveTopAccountDisplay : YukiBaseHooker() {
                     name = if (SDK >= A13) "checkAvailable"
                     else "getAvailabilityStatus"
                 }.hook {
-                    if (SDK >= A13) replaceToFalse() else replaceTo(3)
+                    if (SDK >= A13) {
+                        intercept(false)
+                    } else {
+                        intercept(3)
+                    }
                 }
             }
     }

@@ -123,19 +123,7 @@
     <string name="ColorOSCorePatchTip">Oficiální instalátor pro Color OS musí umožnit ostatním funkcím používat\nSeznam funkcí-Vztahující se k aplikacím-Vztahující se k instalaci aplikací</string>
     <string name="corepatch">Hlavní patch</string>
     <string name="corepatch_summary">Odstranit limity instalace, podporuje Android %1$s</string>
-    <string name="downgr">Povolit downgrade aplikací</string>
-    <string name="downgr_summary">Umožňuje aplikaci přepsat starší verze, pokud jsou nainstalovány novější verze.</string>
-    <string name="authcreak">Zákazat ověřování podpisu správce balíčků</string>
-    <string name="authcreak_summary">Ověřování podpisu při instalaci aplikací lze nainstalovat.</string>
-    <string name="digestCreak">Zakázat ověřování podpisu APK</string>
-    <string name="digestCreak_summary">Umožňuje přepsat přímo nainstalované aplikace různými podpisy k balíčku</string>
-    <string name="UsePreSig">Vždy používat při instalaci podepsanou instalovanou aplikaci</string>
-    <string name="UsePreSig_summary">Není to normální! Hrozí nebezpečí! Povolte pouze pokud je to nezbytně nutné</string>
-    <string name="usepresig_warn">!!! Všechny balíčky mohou přepsat nainstalovanou aplikaci!!\npro instalaci neznámých balíčků</string>
-    <string name="shared_user_title">Ignorovat sdílené ověření uživatele</string>
-    <string name="shared_user_summary">Povolit instalaci aplikace s odlišným podpisem od sdíleného uživatele (<b>\'Zakázat porovnání podpisu\' musí být také povoleno</b>)</string>
-    <string name="disable_verification_agent_title">Zakázat agenta pro ověření balíčku</string>
-    <string name="disable_verification_agent_summary">například Ochrana Google Play</string>
+
     <!--Status Bar-->
     <string name="StatusBar">Stavová lišta</string>
     <string name="StatusbarEvents">Události stavové lišty</string>
@@ -247,7 +235,6 @@
     <string name="fix_control_center_date_display">Opravit zobrazení data v ovládacím panelu</string>
     <string name="fix_control_center_date_display_suammry">Opravit problém, kdy datum nemůže být zobrazeno celé</string>
     <string name="ControlCenterNotificationCenter">Oznamovací centrum Ovládacího centra</string>
-    <string name="enable_notification_align_both_sides">Povolit zarovnání notifikací z obou stran</string>
     <string name="remove_notification_cleanup_button">Odstranit tlačítko pro smazání všech notifikací</string>
     <string name="enable_notification_importance_classification">Povolit klasifikaci důležitosti pro notifikace</string>
     <string name="custom_notification_background_transparency">Vlastní průhlednost pozadí panelu notifikací</string>
@@ -846,6 +833,7 @@
     <string name="remove_market_splash_page_app_recommend">Odstranit doporučení aplikací ze stránky aktualizace softwaru</string>
     <string name="remove_market_update_download_page_app_recommend">Odstraňte doporučení aplikací ze stránky stahování aktualizací v obchodě s aplikacemi</string>
     <string name="remove_market_mine_page_app_recommend">Odstranění doporučení aplikací z hlavní stránky obchodu se softwarem</string>
+    <string name="default_expand_update_list">Expand update list by default</string>
     <!--OplusWeather-->
     <string name="disable_weather_jump_browser">Zakázat přesměrování prohlížeče z počasí</string>
     <string name="remove_weather_some_page_bottom_ads">Odstranit reklamy v dolní části stránky počasí</string>

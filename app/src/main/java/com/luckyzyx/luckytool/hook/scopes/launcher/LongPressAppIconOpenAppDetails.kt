@@ -1,5 +1,6 @@
 package com.luckyzyx.luckytool.hook.scopes.launcher
 
+import android.content.Intent
 import android.view.View
 import android.widget.TextView
 import com.highcapable.kavaref.KavaRef.Companion.asResolver
@@ -27,13 +28,15 @@ object LongPressAppIconOpenAppDetails : YukiBaseHooker() {
                     val titleView = headerView.asResolver().firstField {
                         name = if (SDK >= A13) "titleTv" else "mTitleView"
                     }.get<TextView>() ?: return@after
-                    val task = firstMethod { name = "getTask";superclass() }
+                    val task = firstMethod { name = "getTask"; superclass() }
                         .of(instance).invoke() ?: return@after
                     val key = task.asResolver().firstField { name = "key" }.get() ?: return@after
-                    val packName =
-                        key.asResolver().firstMethod { name = "getPackageName" }.invoke<String>()
-                            ?: return@after
-                    val userId = key.asResolver().firstField { name = "userId" }.get<Int>()
+                    val intent = key.asResolver().firstField { type = Intent::class }.get<Intent>()
+                        ?: return@after
+                    val packName = intent.component?.packageName ?: intent.`package`
+                    val userId =
+                        task.asResolver().firstMethodOrNull { name = "getUserId" }?.invoke<Int>()
+                            ?: key.asResolver().firstField { name = "userId" }.get<Int>()
                     iconView.setLongClick(packName, userId)
                     titleView.setLongClick(packName, userId)
                 }
@@ -50,9 +53,12 @@ object LongPressAppIconOpenAppDetails : YukiBaseHooker() {
                     val task =
                         firstMethod { name = "getTask" }.of(instance).invoke() ?: return@after
                     val key = task.asResolver().firstField { name = "key" }.get() ?: return@after
-                    val packName = key.asResolver().firstMethod { name = "getPackageName" }
-                        .invoke<String>() ?: return@after
-                    val userId = key.asResolver().firstField { name = "userId" }.get<Int>()
+                    val intent = key.asResolver().firstField { type = Intent::class }.get<Intent>()
+                        ?: return@after
+                    val packName = intent.component?.packageName ?: intent.`package`
+                    val userId =
+                        task.asResolver().firstMethodOrNull { name = "getUserId" }?.invoke<Int>()
+                            ?: key.asResolver().firstField { name = "userId" }.get<Int>()
                     instance<View>().setLongClick(packName, userId)
                 }
             }

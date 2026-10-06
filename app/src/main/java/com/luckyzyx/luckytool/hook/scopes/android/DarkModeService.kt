@@ -19,19 +19,19 @@ object DarkModeService : YukiBaseHooker() {
     val list = ArraySet<DarkModeInfo>()
 
     fun loadData() {
-        isEnable = prefs(ModulePrefs).getBoolean("dark_mode_list_enable", false)
+        isEnable = preferences(ModulePrefs).getBoolean("dark_mode_list_enable", false)
         dataChannel.wait<Boolean>("dark_mode_list_enable") {
             isEnable = it
             YLog.debug("update dark mode service configs status -> $it")
         }
 
         list.clear()
-        val enabled = prefs(ModulePrefs).getStringSet("dark_mode_support_list", ArraySet())
+        val enabled = preferences(ModulePrefs).getStringSet("dark_mode_support_list", ArraySet())
         list.addAll(enabled.mapNotNull {
             safeOfNull { Json.decodeFromString<DarkModeInfo>(it) }
         })
         dataChannel.wait("dark_mode_support_list") {
-            val new = prefs(ModulePrefs).getStringSet("dark_mode_support_list", ArraySet())
+            val new = preferences(ModulePrefs).getStringSet("dark_mode_support_list", ArraySet())
             YLog.debug("update dark mode service whitelist configs -> ${list.size} | ${new.size}")
             list.clear()
             list.addAll(new.mapNotNull {

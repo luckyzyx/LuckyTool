@@ -8,7 +8,7 @@ import org.lsposed.lsparanoid.Obfuscate
 @Obfuscate
 object CustomDesktopDefaultHomePage : YukiBaseHooker() {
     override fun onHook() {
-        val page = prefs(ModulePrefs).getString("custom_desktop_default_home_page", "0")
+        val page = preferences(ModulePrefs).getString("custom_desktop_default_home_page", "0")
         if (page.isBlank() || page.toIntOrNull() == null) return
 
         //Source Workspace

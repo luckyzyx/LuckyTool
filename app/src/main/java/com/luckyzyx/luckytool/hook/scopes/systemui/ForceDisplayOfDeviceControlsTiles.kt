@@ -10,7 +10,7 @@ object ForceDisplayOfDeviceControlsTiles : YukiBaseHooker() {
         //Source OplusDeviceControlsTile
         "com.oplus.systemui.qs.tiles.OplusDeviceControlsTile".toClass().resolve().apply {
             firstMethod { name = "isAvailable" }.hook {
-                replaceToTrue()
+                intercept(true)
             }
         }
     }

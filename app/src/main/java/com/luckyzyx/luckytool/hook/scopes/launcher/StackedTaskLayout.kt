@@ -14,9 +14,9 @@ object StackedTaskLayout : YukiBaseHooker() {
 
     override fun onHook() {
 
-        val isEnable = prefs(ModulePrefs).getBoolean("enable_stacked_task_layout", false)
-        val level = prefs(ModulePrefs).getInt("set_task_stacking_level", 7)
-        val isFix = prefs(ModulePrefs).getBoolean("fix_current_task_to_the_top", false)
+        val isEnable = preferences(ModulePrefs).getBoolean("enable_stacked_task_layout", false)
+        val level = preferences(ModulePrefs).getInt("set_task_stacking_level", 7)
+        val isFix = preferences(ModulePrefs).getBoolean("fix_current_task_to_the_top", false)
         if (!isEnable) return
 
         //Source DeviceProfile -> overview_page_spacing
@@ -39,7 +39,7 @@ object StackedTaskLayout : YukiBaseHooker() {
                     superclass()
                 }.hook {
                     before {
-                        args().first().set(-(level * 10).dp)
+                        firstArg().set(-(level * 10).dp)
                     }
                 }
             }
@@ -47,7 +47,7 @@ object StackedTaskLayout : YukiBaseHooker() {
 //                name = "applyLoadPlan"
 //            }.hook {
 //                before {
-//                    args().first().apply {
+//                    firstArg().apply {
 //                        set(java.util.ArrayList(list<Any>().reversed()))
 //                    }
 //                }

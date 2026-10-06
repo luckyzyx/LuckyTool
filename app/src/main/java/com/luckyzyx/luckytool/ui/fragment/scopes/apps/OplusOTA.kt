@@ -141,7 +141,8 @@ class OplusOTA : BaseScopePreferenceFeagment() {
                     if (newValue as Boolean) {
                         ShellUtils.fastCmd(
                             "${CommandUtils.resetprop} ${CommandUtils.otaVerityMode} enforcing",
-                            "${CommandUtils.resetprop} ${CommandUtils.otaVbmetaState} locked"
+                            "${CommandUtils.resetprop} ${CommandUtils.otaVbmetaState} locked",
+                            "${CommandUtils.resetprop} ${CommandUtils.otaLockedState} 1"
                         )
                         (activity as MainActivity).restart()
                     }

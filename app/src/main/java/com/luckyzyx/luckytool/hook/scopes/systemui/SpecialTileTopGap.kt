@@ -19,17 +19,17 @@ object SpecialTileTopGap : YukiBaseHooker() {
     @SuppressLint("DiscouragedApi")
     override fun onHook() {
         val osCode = getOSVersionCode
-        var top = prefs(ModulePrefs).getInt("control_center_special_tile_top_gap", 10)
+        var top = preferences(ModulePrefs).getInt("control_center_special_tile_top_gap", 10)
         dataChannel.wait<Int>("control_center_special_tile_top_gap") { top = it }
-        var bottom = prefs(ModulePrefs).getInt("control_center_special_tile_bottom_gap", 0)
+        var bottom = preferences(ModulePrefs).getInt("control_center_special_tile_bottom_gap", 0)
         dataChannel.wait<Int>("control_center_special_tile_bottom_gap") { bottom = it }
         var smallBrightness =
-            prefs(ModulePrefs).getBoolean("decrease_horizontal_brightness_bar_top_gap", false)
+            preferences(ModulePrefs).getBoolean("decrease_horizontal_brightness_bar_top_gap", false)
         dataChannel.wait<Boolean>("decrease_horizontal_brightness_bar_top_gap") {
             smallBrightness = it
         }
 
-        val isSupportVolumeSeekBar = QSFeatureOptionUtils(appClassLoader).isSupportVolumeSeekBar()
+        val isSupportVolumeSeekBar = QSFeatureOptionUtils(hostClassLoader!!).isSupportVolumeSeekBar()
         if (isSupportVolumeSeekBar) return
 
         //Source OplusQSTileMediaContainerController

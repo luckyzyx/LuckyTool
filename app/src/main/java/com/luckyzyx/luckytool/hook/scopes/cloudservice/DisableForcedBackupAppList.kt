@@ -26,7 +26,7 @@ object DisableForcedBackupAppList : YukiBaseHooker() {
         //Source BackupRestoreOpt
         "com.heytap.cloud.backuprestore.bswitch.BackupRestoreOpt".toClass().resolve().apply {
             firstMethodOrNull { name = "getForceSelect" }?.hook {
-                replaceToFalse()
+                intercept(false)
             }
         }
 

@@ -8,14 +8,14 @@ import android.view.ViewGroup
 import android.widget.TextView
 import com.highcapable.kavaref.KavaRef.Companion.resolve
 import com.highcapable.kavaref.condition.type.VagueType
+import com.highcapable.kavaref.extension.classOf
 import com.highcapable.yukihookapi.hook.entity.YukiBaseHooker
 import com.luckyzyx.luckytool.utils.DexkitUtils.checkDataList
 import org.lsposed.lsparanoid.Obfuscate
 import org.luckypray.dexkit.DexKitBridge
 
 @Obfuscate
-class RemoveMarketUpdateDownloadPageAppRecommend(val dexKitBridge: DexKitBridge) :
-    YukiBaseHooker() {
+class RemoveMarketUpdateDownloadPageAppRecommend(val dexKitBridge: DexKitBridge)  : YukiBaseHooker() {
     override fun onHook() {
         val cardDto = "com.heytap.cdo.card.domain.dto.CardDto"
         val imageLoader = "com.nearme.imageloader.ImageLoader"
@@ -27,7 +27,7 @@ class RemoveMarketUpdateDownloadPageAppRecommend(val dexKitBridge: DexKitBridge)
                 addMethod {
                     name("processData")
 //                    paramTypes(ListClass, IntType, null)
-                    returnType(List::class.java)
+                    returnType(classOf<List<*>>())
                 }
             }
         }.apply {
@@ -45,34 +45,34 @@ class RemoveMarketUpdateDownloadPageAppRecommend(val dexKitBridge: DexKitBridge)
         dexKitBridge.findClass {
             matcher {
                 fields {
-                    addForType(ViewGroup::class.java)
-                    addForType(TextView::class.java)
+                addForType(classOf<ViewGroup>())
+                    addForType(classOf<TextView>())
                     addForType(imageLoader)
                 }
                 methods {
                     add {
-                        paramTypes(Context::class.java, Int::class.java)
+                    paramTypes(classOf<Context>(), classOf<Int>())
                         returnType(Void.TYPE)
                     }
                     add {
                         paramTypes(
-                            Context::class.java,
-                            String::class.java,
-                            Int::class.java,
-                            Int::class.java
+                            classOf<Context>(),
+                            classOf<String>(),
+                            classOf<Int>(),
+                            classOf<Int>()
                         )
                         returnType(Void.TYPE)
                     }
                     add {
-                        paramTypes(View::class.java, Boolean::class.java)
+                    paramTypes(classOf<View>(), classOf<Boolean>())
                         returnType(Void.TYPE)
                     }
                     add {
                         paramCount(0)
-                        returnType(View::class.java)
+                        returnType(classOf<View>())
                     }
                     add {
-                        paramTypes(LayoutInflater::class.java);returnType(View::class.java)
+                    paramTypes(classOf<LayoutInflater>());returnType(classOf<View>())
                     }
                 }
             }
@@ -101,10 +101,10 @@ class RemoveMarketUpdateDownloadPageAppRecommend(val dexKitBridge: DexKitBridge)
                 checkDataList("RemoveMarketUpdatePageAppRecommend AppUpdateFragmentV2")
                 findMethod {
                     matcher {
-                        paramTypes(List::class.java)
+                    paramTypes(classOf<List<*>>())
                         addInvoke {
-                            paramTypes(Context::class.java, Float::class.java)
-                            returnType(Int::class.java)
+                        paramTypes(classOf<Context>(), classOf<Float>())
+                            returnType(classOf<Int>())
                         }
                         usingNumbers(114.0F)
                     }
@@ -115,16 +115,16 @@ class RemoveMarketUpdateDownloadPageAppRecommend(val dexKitBridge: DexKitBridge)
                         parameters(List::class)
                     }.hook {
                         before {
-                            args().first().cast<java.util.ArrayList<Any>>()?.clear()
+                            firstArg().get<java.util.ArrayList<Any>>()?.clear()
                         }
                     }
                 }
 
                 findMethod {
                     matcher {
-                        paramTypes(Boolean::class.java)
+                    paramTypes(classOf<Boolean>())
                         usingNumbers(0, 300L)
-                        addUsingField { type(ValueAnimator::class.java) }
+                        addUsingField { type(classOf<ValueAnimator>()) }
                         addInvoke { paramCount(0) }
                         usingStrings("mRecommendUpdateContainer", "mNormalUpdateContainer")
                     }

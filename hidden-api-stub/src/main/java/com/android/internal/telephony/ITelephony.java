@@ -6,6 +6,7 @@ import android.os.IBinder;
 import android.os.RemoteException;
 
 import androidx.annotation.DeprecatedSinceApi;
+import androidx.annotation.RequiresApi;
 
 public interface ITelephony {
     
@@ -19,7 +20,11 @@ public interface ITelephony {
     
     long getAllowedNetworkTypesForReason(int i, int i2) throws RemoteException;
     
+    @DeprecatedSinceApi(api = Build.VERSION_CODES.CINNAMON_BUN)
     boolean setAllowedNetworkTypesForReason(int i, int i2, long j) throws RemoteException;
+    
+    @RequiresApi(api = Build.VERSION_CODES.CINNAMON_BUN)
+    boolean setAllowedNetworkTypesForReason(int i, int i2, long j, String str) throws RemoteException;
     
     @DeprecatedSinceApi(api = Build.VERSION_CODES.S, message = "该方法仅在Android12之前存在!")
     int getPreferredNetworkType(int i) throws RemoteException;

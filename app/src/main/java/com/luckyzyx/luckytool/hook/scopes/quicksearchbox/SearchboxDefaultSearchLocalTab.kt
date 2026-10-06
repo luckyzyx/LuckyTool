@@ -1,6 +1,7 @@
 package com.luckyzyx.luckytool.hook.scopes.quicksearchbox
 
 import com.highcapable.kavaref.KavaRef.Companion.resolve
+import com.highcapable.kavaref.extension.classOf
 import com.highcapable.yukihookapi.hook.entity.YukiBaseHooker
 import com.luckyzyx.luckytool.utils.DexkitUtils.checkDataList
 import org.lsposed.lsparanoid.Obfuscate
@@ -21,7 +22,7 @@ class SearchboxDefaultSearchLocalTab(val dexKitBridge: DexKitBridge) : YukiBaseH
             findMethod {
                 matcher {
                     paramCount(0)
-                    returnType(String::class.java)
+                    returnType(classOf<String>())
                     addUsingField {
                         type("com.heytap.quicksearchbox.core.localsearch.SearchParams")
                     }
@@ -42,7 +43,7 @@ class SearchboxDefaultSearchLocalTab(val dexKitBridge: DexKitBridge) : YukiBaseH
                         emptyParameters()
                         returnType = String::class
                     }.hook {
-                        replaceTo("local")
+                        intercept("local")
                     }
                 }
             }

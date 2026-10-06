@@ -20,7 +20,7 @@ object RemoveLowBatteryDialogWarning : YukiBaseHooker() {
                 intercept()
             }
             firstMethodOrNull { name = "showLowBatteryWarning" }?.hook {
-                replaceToFalse()
+                intercept(false)
             }
         }
     }

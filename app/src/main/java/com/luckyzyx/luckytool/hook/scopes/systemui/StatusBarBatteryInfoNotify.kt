@@ -1,19 +1,20 @@
 package com.luckyzyx.luckytool.hook.scopes.systemui
 
 import android.annotation.SuppressLint
-import android.app.NotificationChannel
-import android.app.NotificationManager
 import android.content.Context
 import android.content.Intent
 import android.os.BatteryManager
 import android.os.SystemProperties
 import android.util.TypedValue
 import android.widget.RemoteViews
-import androidx.core.app.NotificationCompat
+import androidx.core.graphics.drawable.IconCompat
+import com.highcapable.betterandroid.ui.component.notification.factory.Notification
+import com.highcapable.betterandroid.ui.component.notification.factory.NotificationChannel
+import com.highcapable.betterandroid.ui.component.notification.type.NotificationImportance
 import com.highcapable.yukihookapi.hook.entity.YukiBaseHooker
-import com.highcapable.yukihookapi.hook.factory.injectModuleAppResources
+import com.highcapable.yukihookapi.hook.factory.injectModuleResources
 import com.highcapable.yukihookapi.hook.log.YLog
-import org.lsposed.lsparanoid.Obfuscate
+import com.luckyzyx.luckytool.BuildConfig
 import com.luckyzyx.luckytool.R
 import com.luckyzyx.luckytool.hook.utils.IChargerUtils
 import com.luckyzyx.luckytool.hook.utils.sysui.BatteryControllerUtils
@@ -28,6 +29,7 @@ import com.luckyzyx.luckytool.utils.getIntProperty
 import com.luckyzyx.luckytool.utils.getOSVersionCode
 import com.luckyzyx.luckytool.utils.getStringProperty
 import com.luckyzyx.luckytool.utils.safeOf
+import org.lsposed.lsparanoid.Obfuscate
 import java.io.StringReader
 import java.util.Properties
 import kotlin.math.abs
@@ -79,72 +81,83 @@ object StatusBarBatteryInfoNotify : YukiBaseHooker() {
     private var isSimple: Boolean = false
     private var fontSize: Int = 11
 
-    private const val channelNotifyId = 112233
-    private const val channelId = "luckytool_notify"
-    private const val channelName = "LuckyTool"
+    private const val NOTIFY_ID = 112233
+    private const val CHANNEL_ID = "luckytool_notify"
+    private const val CHANNEL_NAME = "LuckyTool"
+
+    private val channel = NotificationChannel(
+        channelId = CHANNEL_ID, importance = NotificationImportance.DEFAULT
+    ) {
+        name = CHANNEL_NAME
+        sound(null)
+    }
 
     override fun onHook() {
-        var thisContext: Context? = null
-        displayMode = prefs(ModulePrefs).getString("battery_information_display_mode", "0")
+        displayMode = preferences(ModulePrefs).getString("battery_information_display_mode", "0")
         dataChannel.wait<String>("battery_information_display_mode") {
             displayMode = it
-            initSend(thisContext)
+            initSend(hostApplication)
         }
         showChargerInfo =
-            prefs(ModulePrefs).getBoolean("battery_information_show_charge_info", false)
+            preferences(ModulePrefs).getBoolean("battery_information_show_charge_info", false)
         dataChannel.wait<Boolean>("battery_information_show_charge_info") {
             showChargerInfo = it
-            initSend(thisContext)
+            initSend(hostApplication)
         }
         showUpdateTime =
-            prefs(ModulePrefs).getBoolean("battery_information_show_update_time", false)
+            preferences(ModulePrefs).getBoolean("battery_information_show_update_time", false)
         dataChannel.wait<Boolean>("battery_information_show_update_time") {
             showUpdateTime = it
-            initSend(thisContext)
+            initSend(hostApplication)
         }
-        showVolMode = prefs(ModulePrefs).getString("battery_information_voltage_display_mode", "0")
+        showVolMode =
+            preferences(ModulePrefs).getString("battery_information_voltage_display_mode", "0")
         dataChannel.wait<String>("battery_information_voltage_display_mode") {
             showVolMode = it
-            initSend(thisContext)
+            initSend(hostApplication)
         }
-        isHealth = prefs(ModulePrefs).getBoolean("battery_information_show_battery_health", false)
+        isHealth =
+            preferences(ModulePrefs).getBoolean("battery_information_show_battery_health", false)
         dataChannel.wait<Boolean>("battery_information_show_battery_health") {
             isHealth = it
-            initSend(thisContext)
+            initSend(hostApplication)
         }
-        isPositive =
-            prefs(ModulePrefs).getBoolean("battery_information_always_show_positive_current", false)
+        isPositive = preferences(ModulePrefs).getBoolean(
+            "battery_information_always_show_positive_current", false
+        )
         dataChannel.wait<Boolean>("battery_information_always_show_positive_current") {
             isPositive = it
-            initSend(thisContext)
+            initSend(hostApplication)
         }
-        isSimple = prefs(ModulePrefs).getBoolean("battery_information_show_simple_mode", false)
+        isSimple =
+            preferences(ModulePrefs).getBoolean("battery_information_show_simple_mode", false)
         dataChannel.wait<Boolean>("battery_information_show_simple_mode") {
             isSimple = it
-            initSend(thisContext)
+            initSend(hostApplication)
         }
-        fontSize = prefs(ModulePrefs).getInt("battery_information_custom_font_size", 11)
+        fontSize = preferences(ModulePrefs).getInt("battery_information_custom_font_size", 11)
         dataChannel.wait<Int>("battery_information_custom_font_size") {
             fontSize = it
-            initSend(thisContext)
+            initSend(hostApplication)
         }
 
-        onAppLifecycle {
-            onCreate { injectModuleAppResources() }
+        registerAppLifecycle {
+            onCreate {
+                injectModuleResources()
+            }
             //BatteryService
             registerReceiver(Intent.ACTION_BATTERY_CHANGED) { context: Context, _: Intent ->
-                thisContext = context
-                context.injectModuleAppResources()
+                context.injectModuleResources()
+
                 initInfo(context)
                 initSend(context)
             }
             //OplusBatteryService
             registerReceiver("android.intent.action.ADDITIONAL_BATTERY_CHANGED") { context: Context, intent: Intent ->
-                thisContext = context
-                context.injectModuleAppResources()
-                chargerTechnology = (intent.getIntExtra("chargertechnology", 0))
-                chargeWattage = (intent.getIntExtra("chargewattage", 0))
-                ppsMode = (intent.getIntExtra("pps_chg_mode", 0))
+                context.injectModuleResources()
+                chargerTechnology = intent.getIntExtra("chargertechnology", 0)
+                chargeWattage = intent.getIntExtra("chargewattage", 0)
+                ppsMode = intent.getIntExtra("pps_chg_mode", 0)
                 chargerWattageCpa = intent.getIntExtra("cpa_charge_wattage", 0)
 
                 initInfo(context)
@@ -211,17 +224,9 @@ object StatusBarBatteryInfoNotify : YukiBaseHooker() {
         }
     }
 
-    private fun createChannel(context: Context) {
-        val channel = NotificationChannel(
-            channelId, channelName, NotificationManager.IMPORTANCE_DEFAULT
-        ).apply {
-            setSound(null, null)
-        }
-        NotifyUtils.createChannel(context, channel)
-    }
-
     private fun initSend(context: Context?) {
-        if (context == null) return
+        //hostApplication 可能先于首次电池广播可用，未初始化数据前不发送
+        if (context == null || !::chargeInfo.isInitialized) return
         when (displayMode) {
             "1" -> sendNotification(
                 context, showChargerInfo && isCharging, showUpdateTime, isSimple, showVolMode
@@ -235,14 +240,16 @@ object StatusBarBatteryInfoNotify : YukiBaseHooker() {
         }
     }
 
-    @SuppressLint("DiscouragedApi")
+    @SuppressLint("DiscouragedApi", "MissingPermission", "RestrictedApi")
     private fun sendNotification(
-        context: Context, isCharging: Boolean, isUpdateTime: Boolean,
-        isSimple: Boolean, showVolMode: String
+        context: Context,
+        isCharging: Boolean,
+        isUpdateTime: Boolean,
+        isSimple: Boolean,
+        showVolMode: String
     ) {
-        createChannel(context)
         //com.oplusos.systemui.keyguard.charginganim.ChargingTypeConstants C14.1-
-        val technology = BatteryControllerUtils(appClassLoader).let {
+        val technology = BatteryControllerUtils(hostClassLoader!!).let {
             if (getOSVersionCode >= 34) it.getTechnologyName(
                 chargerTechnology, usbFastChgType, ppsMode, isWireless
             )
@@ -278,11 +285,9 @@ object StatusBarBatteryInfoNotify : YukiBaseHooker() {
         val updateTimeStr = safeOf("UpdateTime") { context.getString(R.string.battery_update_time) }
 
         val power = abs(powerCalc).formatDecimals(2) + "W"
-        val wattage = when {
-            chargeWattage == 0 && chargerWattageCpa == 0 -> ""
-            chargeWattage == 0 && chargerWattageCpa != 0 -> "${chargerWattageCpa}W"
-            else -> "${chargeWattage}W"
-        }
+        val wattage = if (chargeWattage == 0) {
+            if (chargerWattageCpa == 0) "" else "${chargerWattageCpa}W"
+        } else "${chargeWattage}W"
 
         val finalTemp = if (temperature < 0) "NaN" else "$temperature℃"
         val tem = if (isSimple) finalTemp else "${tempStr}: $finalTemp"
@@ -365,35 +370,41 @@ object StatusBarBatteryInfoNotify : YukiBaseHooker() {
             else "${updateTimeStr}: " + formatDate("HH:mm:ss")
         } else ""
 
-        val remoteViews = RemoteViews(packageName, R.layout.layout_battery_notify_view)
+        val remoteViews =
+            RemoteViews(BuildConfig.APPLICATION_ID, R.layout.layout_battery_notify_view)
         val info = formatStringInfoLine(batteryInfo, chargeInfo, updateTime)
         remoteViews.setTextViewText(R.id.battery_notify_tv, info)
         remoteViews.setTextViewTextSize(
             R.id.battery_notify_tv, TypedValue.COMPLEX_UNIT_SP, fontSize.toFloat()
         )
-
-        val notify = NotificationCompat.Builder(context, channelId).apply {
-            setAutoCancel(false)
-            setOngoing(true)
-            setSmallIcon(batteryIcon)
-            setCustomContentView(remoteViews)
-            setCustomBigContentView(remoteViews)
-            priority = NotificationCompat.PRIORITY_DEFAULT
-        }.build()
-        NotifyUtils.sendNotification(context, channelNotifyId, notify)
+        val notify = Notification(context = context, channel = channel) {
+            //不能传 context 创建图标：IconCompat.createWithResource(context, id) 构造时会调用
+            //Resources.getResourceName(id) 解析资源名，依赖 SystemUI 进程内的模块资源注入，
+            //且 0x7f 段 ID 与 SystemUI 自身资源表易撞车；解析失败直接抛
+            //IllegalArgumentException("Icon resource cannot be found")，notify 根本不会执行。
+            //传 null Resources 只记录包名+ID、不做任何解析，加载时任何进程都经已安装模块 APK 获取
+            smallIcon(IconCompat.createWithResource(null, BuildConfig.APPLICATION_ID, batteryIcon))
+            contentTitle = "BatteryInfo"
+            contentText = info
+            customContentView = remoteViews
+            customBigContentView = remoteViews
+            autoCancel(false)
+            ongoing(true)
+        }
+        NotifyUtils.sendNotification(context, NOTIFY_ID, notify.instance)
     }
 
     private fun clearNotification(context: Context) {
-        NotifyUtils.clearNotification(context, channelNotifyId)
+        NotifyUtils.clearNotification(context, NOTIFY_ID)
     }
 
     private fun getChargeInfo(): Properties {
         return try {
-            val queryChargeInfo = IChargerUtils(appClassLoader).let {
+            val queryChargeInfo = IChargerUtils(hostClassLoader!!).let {
                 if (oplusCharger == null) oplusCharger = it.getInstance()
                 it.queryChargeInfo(oplusCharger)
             } ?: ""
-//        LogUtils.d("getChargeInfo", "queryChargeInfo", queryChargeInfo.toString(), true)
+//            YLog.d("getChargeInfo -> queryChargeInfo : $queryChargeInfo")
             Properties().apply {
                 if (queryChargeInfo.isNotBlank()) load(StringReader(queryChargeInfo))
             }

@@ -22,8 +22,8 @@ object RunFloatingWindowTasksInForeground : YukiBaseHooker() {
                 parameters(Int::class, Boolean::class)
             }.hook {
                 before {
-                    flag = args().first().int()
-                    status = args().last().boolean()
+                    flag = firstArg().get<Int>() ?: 0
+                    status = lastArg().get<Boolean>() ?: false
 
                     //浮窗全屏 flag 4
                     //浮窗贴边 flag 5
@@ -42,7 +42,7 @@ object RunFloatingWindowTasksInForeground : YukiBaseHooker() {
                         if (uid > 0) baseIntent.putExtra("TASKINFO_UID", uid)
 
                         startMirageWindow(baseIntent)
-                        resultNull()
+                        result = null
                     }
                 }
             }
@@ -52,7 +52,7 @@ object RunFloatingWindowTasksInForeground : YukiBaseHooker() {
         "com.oplus.zoom.ui.floathandle.FloatHandleController".toClass().resolve().apply {
             firstMethod { name = "onTaskMovedToFront" }.hook {
                 before {
-                    if (flag == 5) resultNull()
+                    if (flag == 5) result = null
                 }
             }
         }

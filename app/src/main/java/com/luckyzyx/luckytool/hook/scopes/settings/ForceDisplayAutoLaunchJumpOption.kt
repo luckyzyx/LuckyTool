@@ -11,7 +11,7 @@ object ForceDisplayAutoLaunchJumpOption : YukiBaseHooker() {
         "com.oplus.settings.feature.appmanager.controller.AutoLaunchMgrPreferenceController".toClass()
             .resolve().apply {
                 firstMethod { name = "getAvailabilityStatus" }.hook {
-                    replaceTo(0)
+                    intercept(0)
                 }
             }
     }

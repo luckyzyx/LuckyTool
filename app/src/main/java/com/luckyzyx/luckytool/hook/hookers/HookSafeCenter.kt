@@ -16,7 +16,7 @@ object HookSafeCenter : YukiBaseHooker() {
 
         DexkitUtils.create(appInfo.sourceDir) { dexKitBridge ->
             //移除自启数量限制
-            if (SDK < A13 && prefs(ModulePrefs).getBoolean("unlock_startup_limit", false)) {
+            if (SDK < A13 && preferences(ModulePrefs).getBoolean("unlock_startup_limit", false)) {
                 loadHooker(UnlockStartupLimitOld(dexKitBridge))
             }
         }

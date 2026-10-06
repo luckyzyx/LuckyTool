@@ -15,7 +15,7 @@ object EnableSwipeUpNavigationGesture : YukiBaseHooker() {
                 parameters(Context::class)
                 returnType = Int::class
             }.hook {
-                replaceTo(0)
+                intercept(0)
             }
         }
     }

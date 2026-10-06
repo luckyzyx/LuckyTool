@@ -11,7 +11,7 @@ object EnableStatusBarClockFormat : YukiBaseHooker() {
         "com.oplus.settings.feature.notification.controller.RmStatusbarClockPreferenceController".toClass()
             .resolve().apply {
                 firstMethod { name = "getAvailabilityStatus" }.hook {
-                    replaceTo(0)
+                    intercept(0)
                 }
             }
     }

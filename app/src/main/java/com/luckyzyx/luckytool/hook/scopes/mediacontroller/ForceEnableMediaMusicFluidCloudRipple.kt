@@ -10,7 +10,7 @@ import org.lsposed.lsparanoid.Obfuscate
 object ForceEnableMediaMusicFluidCloudRipple : YukiBaseHooker() {
     override fun onHook() {
         var isEnable =
-            prefs(ModulePrefs).getBoolean("force_enable_media_music_fluid_cloud_ripple", false)
+            preferences(ModulePrefs).getBoolean("force_enable_media_music_fluid_cloud_ripple", false)
         dataChannel.wait<Boolean>("force_enable_media_music_fluid_cloud_ripple") { isEnable = it }
 
         //Source SeedlingTool
@@ -20,7 +20,7 @@ object ForceEnableMediaMusicFluidCloudRipple : YukiBaseHooker() {
             }.hookAll {
                 before {
                     if (!isEnable) return@before
-                    val json = args(1).any() ?: return@before
+                    val json = arg(1).get() ?: return@before
                     if (json is JSONObject) {
                         val staticVoicePrintShow = json.optBoolean("staticVoicePrintShow", true)
                         if (staticVoicePrintShow) {

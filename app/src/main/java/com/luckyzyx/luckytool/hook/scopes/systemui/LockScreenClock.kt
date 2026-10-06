@@ -37,7 +37,7 @@ import java.util.Calendar
 object LockScreenClock : YukiBaseHooker() {
 
     override fun onHook() {
-        val removeClock = prefs(ModulePrefs).getBoolean("remove_lock_screen_clock_component", false)
+        val removeClock = preferences(ModulePrefs).getBoolean("remove_lock_screen_clock_component", false)
         if (removeClock) {
             if (SDK >= A15) loadHooker(RemoveLockScreenClock)
             else loadHooker(RemoveLockScreenClockV14)
@@ -54,7 +54,7 @@ object LockScreenClock : YukiBaseHooker() {
                         before {
                             firstField { name = "keyguardStyleClock" }.of(instance)
                                 .get<View>()?.isVisible = false
-                            resultNull()
+                            result = null
                         }
                     }
                 }
@@ -106,16 +106,16 @@ object LockScreenClock : YukiBaseHooker() {
     @Obfuscate
     object LockScreenClockStyleV14 : YukiBaseHooker() {
         override fun onHook() {
-            var redMode = prefs(ModulePrefs).getString("lock_screen_clock_redone_mode", "0")
+            var redMode = preferences(ModulePrefs).getString("lock_screen_clock_redone_mode", "0")
             dataChannel.wait<String>("lock_screen_clock_redone_mode") { redMode = it }
             var dualClock =
-                prefs(ModulePrefs).getBoolean("apply_lock_screen_dual_clock_redone", false)
+                preferences(ModulePrefs).getBoolean("apply_lock_screen_dual_clock_redone", false)
             dataChannel.wait<Boolean>("apply_lock_screen_dual_clock_redone") { dualClock = it }
-            val isCenter = prefs(ModulePrefs).getBoolean("set_lock_screen_centered", false)
+            val isCenter = preferences(ModulePrefs).getBoolean("set_lock_screen_centered", false)
             val userTypeface =
-                prefs(ModulePrefs).getBoolean("lock_screen_clock_use_user_typeface", false)
-            val weatherInfoClazz = WeatherInfoParseHelper(appClassLoader).weatherInfoClazz
-            val timeInfoClazz = WeatherInfoParseHelper(appClassLoader).timeInfoClazz
+                preferences(ModulePrefs).getBoolean("lock_screen_clock_use_user_typeface", false)
+            val weatherInfoClazz = WeatherInfoParseHelper(hostClassLoader!!).weatherInfoClazz
+            val timeInfoClazz = WeatherInfoParseHelper(hostClassLoader!!).timeInfoClazz
 
             //OPPO/Realme kgd_single_clock / kgd_dual_clock
             //Source SingleClockView kgd_single_clock
@@ -180,7 +180,7 @@ object LockScreenClock : YukiBaseHooker() {
                             else if (s.contains("updateResidentTime")) "ResidentTime"
                             else return@after
                         }
-                        val view = if (args.size > 1) args().first().any() ?: return@after
+                        val view = if (args.size > 1) firstArg().get() ?: return@after
                         else instance
                         when (type) {
                             "LocatedTime" -> {
@@ -291,14 +291,14 @@ object LockScreenClock : YukiBaseHooker() {
                                 else if (s.contains("updateResidentTime")) "ResidentTime"
                                 else return@after
                             }
-                            val view = if (args.size > 1) args().first().any() ?: return@after
+                            val view = if (args.size > 1) firstArg().get() ?: return@after
                             else instance
                             when (type) {
                                 "LocateTime" -> {
                                     val mLocatedTimeHour = view.asResolver().firstField {
                                         name = "mTvHorizontalLocateClockHour"
                                     }.get<TextView>() ?: return@after
-                                    val mLocatedTimeInfo = args().last().any() ?: return@after
+                                    val mLocatedTimeInfo = lastArg().get() ?: return@after
                                     val mHour =
                                         mLocatedTimeInfo.asResolver()
                                             .firstMethod { name = "getHour" }
@@ -310,7 +310,7 @@ object LockScreenClock : YukiBaseHooker() {
                                     val mResidentTimeHour = view.asResolver().firstField {
                                         name = "mTvHorizontalResidentClockHour"
                                     }.get<TextView>() ?: return@after
-                                    val mResidentTimeInfo = args().last().any() ?: return@after
+                                    val mResidentTimeInfo = lastArg().get() ?: return@after
                                     val mHour =
                                         mResidentTimeInfo.asResolver()
                                             .firstMethod { name = "getHour" }
@@ -331,7 +331,7 @@ object LockScreenClock : YukiBaseHooker() {
                                 firstField { name = "mTvHorizontalLocateClockHour" }.of(instance)
                                     .get<TextView>() ?: return@after
                             val mLocatedTimeInfo =
-                                WeatherInfoParseHelper(appClassLoader).getLocalTimeInfo(mContext)
+                                WeatherInfoParseHelper(hostClassLoader!!).getLocalTimeInfo(mContext)
                                     ?: return@after
                             val mHour =
                                 mLocatedTimeInfo.asResolver().firstMethod { name = "getHour" }
@@ -348,17 +348,17 @@ object LockScreenClock : YukiBaseHooker() {
                             val mResidentTimeHour =
                                 firstField { name = "mTvHorizontalResidentClockHour" }.of(instance)
                                     .get<TextView>() ?: return@after
-                            val info = ClockSwitchHelper(appClassLoader).let {
+                            val info = ClockSwitchHelper(hostClassLoader!!).let {
                                 it.getInstance(mContext)
                                     ?.let { its -> it.getResidentWeatherInfo(its) }
                             }
-                                ?: WeatherInfoParseHelper(appClassLoader).weatherInfoClazz
+                                ?: WeatherInfoParseHelper(hostClassLoader!!).weatherInfoClazz
                                     .createInstance(isPublic = false)
                             val timeZone =
                                 info.asResolver().firstMethod { name = "getTimeZone" }.invoke<String>()
                                     ?: "0.0"
                             val mResidentTimeInfo =
-                                WeatherInfoParseHelper(appClassLoader).getResidentTimeInfo(
+                                WeatherInfoParseHelper(hostClassLoader!!).getResidentTimeInfo(
                                     mContext, timeZone
                                 ) ?: return@after
                             val mHour =

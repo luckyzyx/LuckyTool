@@ -9,9 +9,9 @@ import org.lsposed.lsparanoid.Obfuscate
 object BatteryOptimizationWhitelist : YukiBaseHooker() {
     override fun onHook() {
         val isEnable =
-            prefs(ModulePrefs).getBoolean("restore_default_battery_optimization_whitelist", false)
+            preferences(ModulePrefs).getBoolean("restore_default_battery_optimization_whitelist", false)
         val disableCustom = false
-//            prefs(ModulePrefs).getBoolean("disable_customize_battery_optimization_whiteList", false)
+//            preferences(ModulePrefs).getBoolean("disable_customize_battery_optimization_whiteList", false)
         if (!isEnable) return
 
         //Source oplus-service-jobscheduler -> OplusDeviceIdleHelper
@@ -20,7 +20,7 @@ object BatteryOptimizationWhitelist : YukiBaseHooker() {
             (firstMethodOrNull { name = "getNewWhiteList" }
                 ?: firstMethod { name = "getNewWhiteListLocked" }).hook {
                 before {
-                    val whiteListAll = args().first().cast<java.util.ArrayList<String>>()
+                    val whiteListAll = firstArg().get<ArrayList<String>>()
                     whiteListAll?.clear()
                     val mDefaultWhitelist = firstField { name = "mDefaultWhitelist" }
                         .get<List<String>>() ?: listOf()
@@ -30,7 +30,7 @@ object BatteryOptimizationWhitelist : YukiBaseHooker() {
                         .invoke(whiteListAll)
                     firstMethod { name = "addNfcJapanFelica" }.of(instance).invoke(whiteListAll)
         //                    whiteListAll?.add("com.oplus.upgradeguide")
-                    resultNull()
+                    result = null
                 }
             }
         }

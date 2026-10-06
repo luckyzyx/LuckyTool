@@ -35,3 +35,13 @@ AlphaBackupPro,KSWeb,ADM
 
 ## Lsposed Repo
 [LuckyTool](https://github.com/Xposed-Modules-Repo/com.luckyzyx.luckytool)  
+
+## Star History
+
+<a href="https://www.star-history.com/#luckyzyx/LuckyTool&Timeline">
+ <picture>
+   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=luckyzyx/LuckyTool&type=Timeline&theme=dark" />
+   <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/svg?repos=luckyzyx/LuckyTool&type=Timeline" />
+   <img alt="Star History Chart" src="https://api.star-history.com/svg?repos=luckyzyx/LuckyTool&type=Timeline" />
+ </picture>
+</a>

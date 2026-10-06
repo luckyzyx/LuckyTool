@@ -11,7 +11,7 @@ import org.luckypray.dexkit.DexKitBridge
 class HookNotificationHelper(val dexKitBridge: DexKitBridge) : YukiBaseHooker() {
     override fun onHook() {
         val notifySuccess =
-            prefs(ModulePrefs).getBoolean("remove_ota_notify_install_success", false)
+            preferences(ModulePrefs).getBoolean("remove_ota_notify_install_success", false)
 
         //Source NotificationHelper
         dexKitBridge.findClass {

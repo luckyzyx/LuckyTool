@@ -2,6 +2,7 @@ package com.luckyzyx.luckytool.hook.scopes.settings
 
 import android.content.pm.ApplicationInfo
 import com.highcapable.kavaref.KavaRef.Companion.resolve
+import com.highcapable.kavaref.extension.classOf
 import com.highcapable.yukihookapi.hook.entity.YukiBaseHooker
 import com.luckyzyx.luckytool.utils.A13
 import com.luckyzyx.luckytool.utils.DexkitUtils.checkDataList
@@ -18,20 +19,20 @@ class HookSettingsFeature(val dexKitBridge: DexKitBridge) : YukiBaseHooker() {
     @Obfuscate
     class HookExpUst(val dexKitBridge: DexKitBridge) : YukiBaseHooker() {
         override fun onHook() {
-            val neverTimeout = prefs(ModulePrefs).getBoolean("enable_show_never_timeout", false)
+            val neverTimeout = preferences(ModulePrefs).getBoolean("enable_show_never_timeout", false)
 
             //Source ExpUstUtils
             dexKitBridge.findClass {
                 matcher {
                     methods {
-                        add { returnType(String::class.java) }
-                        add { returnType(Boolean::class.java) }
-                        add { returnType(ApplicationInfo::class.java) }
-                        add { paramTypes(String::class.java) }
-                        add { paramTypes(Int::class.java) }
-                        add { paramTypes(Int::class.java, String::class.java) }
-                        add { paramTypes(String::class.java) }
-                        add { paramTypes(String::class.java, String::class.java) }
+                    add { returnType(classOf<String>()) }
+                        add { returnType(classOf<Boolean>()) }
+                        add { returnType(classOf<ApplicationInfo>()) }
+                        add { paramTypes(classOf<String>()) }
+                        add { paramTypes(classOf<Int>()) }
+                        add { paramTypes(classOf<Int>(), classOf<String>()) }
+                        add { paramTypes(classOf<String>()) }
+                        add { paramTypes(classOf<String>(), classOf<String>()) }
                     }
                     usingStrings("screen_off_timeout")
                 }
@@ -43,9 +44,9 @@ class HookSettingsFeature(val dexKitBridge: DexKitBridge) : YukiBaseHooker() {
                         returnType = Boolean::class
                     }.hookAll {
                         before {
-                            when (args().first().int()) {
+                            when (firstArg().get<Int>() ?: 0) {
                                 //Source DisplayTimeOutController -> 永不息屏(24H)
-                                11 -> if (SDK < A13 && neverTimeout) resultTrue()
+                                11 -> if (SDK < A13 && neverTimeout) result = true
                             }
                         }
                     }

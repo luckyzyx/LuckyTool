@@ -2,7 +2,6 @@ package com.luckyzyx.luckytool.service.tiles
 
 import android.service.quicksettings.Tile
 import android.service.quicksettings.TileService
-import com.highcapable.yukihookapi.hook.factory.dataChannel
 import org.lsposed.lsparanoid.Obfuscate
 import com.luckyzyx.luckytool.ITileServiceController
 import com.luckyzyx.luckytool.service.TilesService
@@ -26,13 +25,11 @@ class HighBrightnessModeTile : TileService() {
             Tile.STATE_INACTIVE -> {
                 controller?.highBrightnessMode = true
                 putBoolean(SettingsPrefs, keyHighBrightness, true)
-                dataChannel("com.android.systemui").put(keyHighBrightness, true)
             }
 
             Tile.STATE_ACTIVE -> {
                 controller?.highBrightnessMode = false
                 putBoolean(SettingsPrefs, keyHighBrightness, false)
-                dataChannel("com.android.systemui").put(keyHighBrightness, false)
             }
 
             Tile.STATE_UNAVAILABLE -> {}

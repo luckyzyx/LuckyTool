@@ -27,7 +27,8 @@ class LockScreenRelated : BaseScopePreferenceFeagment() {
     override val scopes = arrayOf(
         "com.android.systemui",
         "com.oplus.notificationmanager",
-        "com.oplus.keyguard.clock.base"
+        "com.oplus.keyguard.clock.base",
+        "com.oplus.keyguard.personality.clocks"
     )
 
     override val isEnableRestartMenu: Boolean = true

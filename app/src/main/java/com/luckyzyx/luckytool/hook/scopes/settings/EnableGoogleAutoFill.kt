@@ -11,6 +11,7 @@ import android.graphics.drawable.Drawable
 import android.os.UserHandle
 import com.highcapable.kavaref.KavaRef.Companion.asResolver
 import com.highcapable.kavaref.KavaRef.Companion.resolve
+import com.highcapable.kavaref.extension.classOf
 import com.highcapable.kavaref.extension.createInstance
 import com.highcapable.yukihookapi.hook.entity.YukiBaseHooker
 import com.luckyzyx.luckytool.utils.DexkitUtils.checkDataList
@@ -109,18 +110,18 @@ class EnableGoogleAutoFill(val dexKitBridge: DexKitBridge) : YukiBaseHooker() {
             val defaultAppInfoClazz = dexKitBridge.findClass {
                 matcher {
                     fields {
-                        addForType(Int::class.java)
-                        addForType(String::class.java)
-                        addForType(Context::class.java)
-                        addForType(ComponentName::class.java)
-                        addForType(PackageManager::class.java)
-                        addForType(PackageItemInfo::class.java)
+                    addForType(classOf<Int>())
+                        addForType(classOf<String>())
+                        addForType(classOf<Context>())
+                        addForType(classOf<ComponentName>())
+                        addForType(classOf<PackageManager>())
+                        addForType(classOf<PackageItemInfo>())
                     }
                     methods {
-                        add { paramCount(0);returnType(String::class.java) }
-                        add { paramCount(0);returnType(Drawable::class.java) }
-                        add { paramCount(0);returnType(CharSequence::class.java) }
-                        add { paramCount(0);returnType(ComponentInfo::class.java) }
+                    add { paramCount(0);returnType(classOf<String>()) }
+                        add { paramCount(0);returnType(classOf<Drawable>()) }
+                        add { paramCount(0);returnType(classOf<CharSequence>()) }
+                        add { paramCount(0);returnType(classOf<ComponentInfo>()) }
                     }
                 }
             }.let {
@@ -141,7 +142,7 @@ class EnableGoogleAutoFill(val dexKitBridge: DexKitBridge) : YukiBaseHooker() {
                                 firstMethod { name = "getContext";superclass() }.of(instance)
                                     .invoke<Context>() ?: return@before
                             val packageManager = firstField {
-                                type = PackageManager::class.java;superclass()
+                                type = classOf<PackageManager>();superclass()
                             }.of(instance).get<PackageManager>() ?: return@before
                             val intent = firstField {
                                 type = Intent::class;superclass()

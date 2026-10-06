@@ -8,6 +8,7 @@ import android.view.Menu
 import androidx.core.content.edit
 import com.highcapable.betterandroid.ui.extension.view.toast
 import com.highcapable.kavaref.KavaRef.Companion.resolve
+import com.highcapable.kavaref.extension.classOf
 import com.highcapable.yukihookapi.hook.entity.YukiBaseHooker
 import com.highcapable.yukihookapi.hook.log.YLog
 import com.luckyzyx.luckytool.utils.DexkitUtils.checkDataList
@@ -20,26 +21,33 @@ import java.io.File
 @Obfuscate
 class EnableOpexLocalInstall(val dexKitBridge: DexKitBridge) : YukiBaseHooker() {
 
-    val packageListInfo = "com.oplus.ota.db.PackageListInfo"
+    companion object {
+        val packageListInfo = "com.oplus.ota.db.PackageListInfo"
 
-    val opexCopyResultCode = "com.oplus.ota.opex.OpexPackageHelper\$OpexCopyResultCode"
+        val opexCopyResultCode = "com.oplus.ota.opex.OpexPackageHelper\$OpexCopyResultCode"
 
-    val OpexMenuItemCode = 10000
+        val OpexMenuItemCode = 10000
+    }
 
     override fun onHook() {
         //OpexPackageHelper
-        //"com.oplus.ota.opex.OpexPackageHelper"
         val opexPackageHelper = dexKitBridge.findClass {
             matcher {
-                addMethod {
-                    paramTypes(Context::class.java, packageListInfo.toClass(), Int::class.java)
-                    returnType(opexCopyResultCode)
+                methods {
+                    add {
+                        paramTypes(classOf<String>())
+                        returnType(packageListInfo)
+                    }
+                    add {
+                        paramCount(3..4)
+                        returnType(opexCopyResultCode)
+                    }
                 }
                 usingStrings("OpexPackageHelper")
             }
         }.apply {
             checkDataList("OpexPackageHelper")
-        }.single().name
+        }.single().name.toClass()
 
         //Source EntryActivity
         "com.oplus.otaui.activity.EntryActivity".toClass().resolve().apply {
@@ -50,7 +58,7 @@ class EnableOpexLocalInstall(val dexKitBridge: DexKitBridge) : YukiBaseHooker() 
             }.hook {
                 after {
                     val activity = instance<Activity>()
-                    val menu = args().first().cast<Menu>() ?: return@after
+                    val menu = firstArg().get<Menu>() ?: return@after
                     menu.add(0, OpexMenuItemCode, 0, "Opex")
                     menu.findItem(OpexMenuItemCode)?.setOnMenuItemClickListener {
                         val intent = Intent("android.intent.action.OPEN_DOCUMENT")
@@ -69,9 +77,9 @@ class EnableOpexLocalInstall(val dexKitBridge: DexKitBridge) : YukiBaseHooker() 
             }.hook {
                 before {
                     val activity = instance<Activity>()
-                    val requestCode = args().first().int()
-                    val resultCode = args(1).int()
-                    val intent = args().last().cast<Intent>() ?: return@before
+                    val requestCode = firstArg().get<Int>() ?: 0
+                    val resultCode = arg(1).get<Int>() ?: 0
+                    val intent = lastArg().get<Intent>() ?: return@before
                     if (requestCode == OpexMenuItemCode && resultCode == Activity.RESULT_OK) {
                         try {
                             val sp =
@@ -106,31 +114,41 @@ class EnableOpexLocalInstall(val dexKitBridge: DexKitBridge) : YukiBaseHooker() 
                         if (!opexDir.exists()) opexDir.mkdirs()
 
                         val opexFile = File(opexDir, name)
-                        if (!opexFile.exists()) opexFile.createNewFile()
+                        if (!opexFile.exists()) {
+                            activity.showToast("$name file is not found")
+                            return@before
+                        }
                         FileUtils.copyUriToFile(activity, uri, opexFile)
 
-                        val fileSize = opexDir.listFiles {
+                        val fileList = opexDir.listFiles {
                             it.name.startsWith("ovl_update")
                         } ?: arrayOf()
 
-                        val halper = opexPackageHelper.toClass()
-                        val info = halper.resolve().firstMethod {
+                        val info = opexPackageHelper.resolve().firstMethod {
                             parameters(String::class)
                             returnType = packageListInfo
                         }.invoke(opexDir.path) ?: return@before
 
-                        fileSize.forEachIndexed { index, file ->
+                        fileList.forEachIndexed { index, file ->
                             val name = file.nameWithoutExtension.substringAfterLast("/")
-                            val code = halper.resolve().firstMethod {
-                                parameters(Context::class, packageListInfo, Int::class)
+                            val copy = opexPackageHelper.resolve().firstMethod {
+                                parameterCount { it in 3..4 }
+                                parameters {
+                                    it[0] == classOf<Context>() && it[1].name == packageListInfo && it[2] == classOf<Int>()
+                                }
                                 returnType = opexCopyResultCode
-                            }.invoke(activity, info, index)
+                            }
+                            val code = if (copy.self.parameterCount == 3) {
+                                copy.invoke(activity, info, index)
+                            } else {
+                                copy.invoke(activity, info, index, false)
+                            }
                             YLog.debug("$name -> $code")
                             activity.showToast("$name -> $code")
                         }
 
                         FileUtils.deleteFile(opexDir)
-                        resultNull()
+                        result = null
                     }
                 }
             }

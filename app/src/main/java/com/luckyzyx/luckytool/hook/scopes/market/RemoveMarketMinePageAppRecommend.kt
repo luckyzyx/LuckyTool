@@ -4,6 +4,7 @@ import android.content.Context
 import android.os.Bundle
 import com.highcapable.kavaref.KavaRef.Companion.asResolver
 import com.highcapable.kavaref.KavaRef.Companion.resolve
+import com.highcapable.kavaref.extension.classOf
 import com.highcapable.yukihookapi.hook.entity.YukiBaseHooker
 import com.luckyzyx.luckytool.utils.DexkitUtils.checkDataList
 import org.lsposed.lsparanoid.Obfuscate
@@ -19,11 +20,11 @@ class RemoveMarketMinePageAppRecommend(val dexKitBridge: DexKitBridge) : YukiBas
         dexKitBridge.findClass {
             matcher {
                 fields {
-                    addForType(Map::class.java)
-                    addForType(String::class.java)
-                    addForType(Boolean::class.java)
-                    addForType(Bundle::class.java)
-                    addForType(Context::class.java)
+                    addForType(classOf<Map<*,*>>())
+                    addForType(classOf<String>())
+                    addForType(classOf<Boolean>())
+                    addForType(classOf<Bundle>())
+                    addForType(classOf<Context>())
                     addForType(mineActionBarView)
                 }
                 methods {
@@ -36,10 +37,10 @@ class RemoveMarketMinePageAppRecommend(val dexKitBridge: DexKitBridge) : YukiBas
 //                    add { returnType(cdoNestedScrollListView) }
                     add {
                         paramTypes(viewLayerWrapDto)
-                        returnType(Map::class.java)
+                        returnType(classOf<Map<*,*>>())
                     }
                     add {
-                        paramTypes(viewLayerWrapDto, Boolean::class.java.name)
+                        paramTypes(viewLayerWrapDto, classOf<Boolean>().name)
                         returnType(Void.TYPE)
                     }
                 }
@@ -53,7 +54,7 @@ class RemoveMarketMinePageAppRecommend(val dexKitBridge: DexKitBridge) : YukiBas
                     returnType(Void.TYPE)
                 }.hook {
                     before {
-                        val dto = args().first().any() ?: return@before
+                        val dto = firstArg().get() ?: return@before
                         val cards = dto.asResolver().firstMethod {
                             name = "getCards"
                         }.invoke<List<Any>>()?.toMutableList()?.apply {

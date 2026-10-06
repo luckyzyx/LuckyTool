@@ -1,11 +1,11 @@
 package com.luckyzyx.luckytool.utils
 
 import android.content.Context
-import android.view.LayoutInflater
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
-import org.lsposed.lsparanoid.Obfuscate
+import com.highcapable.betterandroid.ui.extension.view.layoutInflater
 import com.luckyzyx.luckytool.R
 import com.luckyzyx.luckytool.databinding.DialogDonateLayoutBinding
+import org.lsposed.lsparanoid.Obfuscate
 
 @Suppress("unused")
 @Obfuscate
@@ -18,7 +18,7 @@ object DonateUtils {
     private val CPP = "PayPal"
 
     fun showQRCode(context: Context, type: Int) {
-        val binding = DialogDonateLayoutBinding.inflate(LayoutInflater.from(context))
+        val binding = DialogDonateLayoutBinding.inflate(context.layoutInflater)
         MaterialAlertDialogBuilder(context, dialogCentered).apply {
             setTitle(
                 when (type) {

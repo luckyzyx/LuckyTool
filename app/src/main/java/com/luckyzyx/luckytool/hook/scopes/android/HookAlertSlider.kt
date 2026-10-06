@@ -13,19 +13,19 @@ object HookAlertSlider : YukiBaseHooker() {
             firstMethod { name = "setUp" }.hook {
                 before {
                     YLog.debug("${method.name} is call")
-                    resultNull()
+                    result = null
                 }
             }
             firstMethod { name = "setMiddle" }.hook {
                 before {
                     YLog.debug("${method.name} is call")
-                    resultNull()
+                    result = null
                 }
             }
             firstMethod { name = "setDown" }.hook {
                 before {
                     YLog.debug("${method.name} is call")
-                    resultNull()
+                    result = null
                 }
             }
         }

@@ -92,7 +92,7 @@ class DialogRelated : BaseScopePreferenceFeagment() {
             })
             add(SwitchPreference(this@loadPreferences).apply {
                 title = getString(R.string.disable_accessibility_warning_dialog)
-                summary = getString(R.string.need_restart_system)
+                summary = "BottomSheet + Dialog"
                 key = "disable_accessibility_warning_dialog"
                 setDefaultValue(false)
                 isVisible = osCode >= 38

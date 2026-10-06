@@ -16,7 +16,7 @@ object RemoveSeparateControlCenterButton : YukiBaseHooker() {
         if (osCode >= 37) loadHooker(SeparateControlCenterButton)
         else loadHooker(SeparateControlCenterButtonV15)
 
-        if (prefs(ModulePrefs).getBoolean("remove_control_center_settings_button", false)) {
+        if (preferences(ModulePrefs).getBoolean("remove_control_center_settings_button", false)) {
             loadHooker(RemoveSeparateControlCenterSettingsButton)
         }
     }
@@ -33,7 +33,7 @@ object RemoveSeparateControlCenterButton : YukiBaseHooker() {
                         returnType = "kotlinx.coroutines.flow.StateFlow"
                     }.hook {
                         before {
-                            result = FlowUtils(appClassLoader).let {
+                            result = FlowUtils(hostClassLoader!!).let {
                                 it.asStateFlow(it.MutableStateFlow(true))
                             }
                         }
@@ -45,8 +45,12 @@ object RemoveSeparateControlCenterButton : YukiBaseHooker() {
     @Obfuscate
     object SeparateControlCenterButton : YukiBaseHooker() {
         override fun onHook() {
-            val hideEdit = prefs(ModulePrefs).getBoolean("remove_control_center_edit_button", false)
-            val hideMore = prefs(ModulePrefs).getBoolean("remove_control_center_more_button", false)
+            val osCode = getOSVersionCode
+
+            val hideEdit =
+                preferences(ModulePrefs).getBoolean("remove_control_center_edit_button", false)
+            val hideMore =
+                preferences(ModulePrefs).getBoolean("remove_control_center_more_button", false)
 
             //Source OplusQSQuickEntranceComponent
             "com.oplus.systemui.plugins.qs.quickentrance.OplusQSQuickEntranceComponent".toClass()
@@ -59,7 +63,7 @@ object RemoveSeparateControlCenterButton : YukiBaseHooker() {
                                 firstField { name = "editBtnRedDot" }.of(instance).get<View>()
                                     ?.isVisible = false
                             }
-                            if (hideMore) {
+                            if (osCode in 34..39 && hideMore) {
                                 firstField { name = "moreBtn" }.of(instance).get<View>()
                                     ?.isVisible = false
                                 firstField { name = "moreBtnRedDot" }.of(instance).get<View>()
@@ -75,7 +79,7 @@ object RemoveSeparateControlCenterButton : YukiBaseHooker() {
                                 firstField { name = "editBtnRedDot" }.of(instance).get<View>()
                                     ?.isVisible = false
                             }
-                            if (hideMore) {
+                            if (osCode in 34..39 && hideMore) {
                                 firstField { name = "moreBtn" }.of(instance).get<View>()
                                     ?.isVisible = false
                                 firstField { name = "moreBtnRedDot" }.of(instance).get<View>()
@@ -90,8 +94,10 @@ object RemoveSeparateControlCenterButton : YukiBaseHooker() {
     @Obfuscate
     object SeparateControlCenterButtonV15 : YukiBaseHooker() {
         override fun onHook() {
-            val hideEdit = prefs(ModulePrefs).getBoolean("remove_control_center_edit_button", false)
-            val hideMore = prefs(ModulePrefs).getBoolean("remove_control_center_more_button", false)
+            val hideEdit =
+                preferences(ModulePrefs).getBoolean("remove_control_center_edit_button", false)
+            val hideMore =
+                preferences(ModulePrefs).getBoolean("remove_control_center_more_button", false)
 
             //Source OplusQSBottomViewController
             "com.oplus.systemui.plugins.qs.bottom.OplusQSBottomViewController".toClass().resolve()

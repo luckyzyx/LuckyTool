@@ -9,7 +9,7 @@ import org.lsposed.lsparanoid.Obfuscate
 object EnableDeveloperPage : YukiBaseHooker() {
     override fun onHook() {
         //Source GameDevelopOptionsActivity
-        "business.compact.activity.GameDevelopOptionsActivity".toClass().resolve().apply {
+        "business.compact.activity.GameDevelopOptionsActivity".toClassOrNull()?.resolve()?.apply {
             firstMethod {
                 name = "onCreate"
                 parameterCount = 1
@@ -19,7 +19,7 @@ object EnableDeveloperPage : YukiBaseHooker() {
                         putExtra("gameDevelopOptions", "GameDevelopOptionsActivity")
                         putExtra("openAutomation", -1)
                     }
-                    args().first().setNull()
+                    firstArg().set(null)
                 }
             }
         }

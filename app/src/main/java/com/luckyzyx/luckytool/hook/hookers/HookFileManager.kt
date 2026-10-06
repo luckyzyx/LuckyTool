@@ -17,15 +17,15 @@ object HookFileManager : YukiBaseHooker() {
         DexkitUtils.create(appInfo.sourceDir) { dexKitBridge ->
 
             //移除文件保存字数限制
-            if (prefs(ModulePrefs).getBoolean("remove_word_limit_for_saving_files", false)) {
+            if (preferences(ModulePrefs).getBoolean("remove_word_limit_for_saving_files", false)) {
                 if (osCode >= 37) loadHooker(RemoveWordLimitForSavingFiles(dexKitBridge))
             }
             //移除压缩文件字数限制
-            if (prefs(ModulePrefs).getBoolean("remove_word_limit_for_compress_files", false)) {
+            if (preferences(ModulePrefs).getBoolean("remove_word_limit_for_compress_files", false)) {
                 if (osCode >= 37) loadHooker(RemoveWordLimitForCompressFiles(dexKitBridge))
             }
             //移除重命名文件字数限制
-            if (prefs(ModulePrefs).getBoolean("remove_word_limit_for_label_name_files", false)) {
+            if (preferences(ModulePrefs).getBoolean("remove_word_limit_for_label_name_files", false)) {
                 if (osCode >= 37) loadHooker(RemoveWordLimitForLabelNameFiles(dexKitBridge))
             }
         }

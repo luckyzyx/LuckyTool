@@ -12,7 +12,7 @@ object RemoveAlmanacPageInformationFlow : YukiBaseHooker() {
             .resolve().apply {
                 firstMethod { name = "onCreateViewHolder" }.hook {
                     before {
-                        args().last().set(0)
+                        lastArg().set(0)
                     }
                 }
             }

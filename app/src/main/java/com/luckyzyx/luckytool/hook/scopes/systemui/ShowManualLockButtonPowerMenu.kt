@@ -36,8 +36,8 @@ object ShowManualLockButtonPowerMenu : YukiBaseHooker() {
             "com.oplus.systemui.shutdown.ShutdownViewControl".toClass().resolve().apply {
                 firstConstructor { parameters(Context::class) }.hook {
                     after {
-                        if (FlavorOneFeatureUtils(appClassLoader).isFlavorOneDevice() == true) return@after
-                        val context = args().first().cast<Context>() ?: return@after
+                        if (FlavorOneFeatureUtils(hostClassLoader!!).isFlavorOneDevice() == true) return@after
+                        val context = firstArg().get<Context>() ?: return@after
                         val isManuallyLockedOn = getManuallyLockedStatus() ?: return@after
                         val getCurrentUserId = OsBinderCacheUtils.toClass().resolve().firstMethod {
                             name = "getCurrentUserId"
@@ -74,7 +74,7 @@ object ShowManualLockButtonPowerMenu : YukiBaseHooker() {
             "com.oplus.systemui.shutdown.OplusGlobalActionsDialog".toClass().resolve().apply {
                 firstMethod { name = "showOrHideDialog" }.hook {
                     after {
-                        if (FlavorOneFeatureUtils(appClassLoader).isFlavorOneDevice() == true) return@after
+                        if (FlavorOneFeatureUtils(hostClassLoader!!).isFlavorOneDevice() == true) return@after
                         val mExt = firstField { name = "mExt" }.of(instance).get() ?: return@after
                         val listener = mExt.asResolver().firstField { name = "mOnManuallyLock" }.get()
 
@@ -98,7 +98,7 @@ object ShowManualLockButtonPowerMenu : YukiBaseHooker() {
             "com.android.keyguard.KeyguardUpdateMonitor".toClass().resolve().apply {
                 firstConstructor().hook {
                     after {
-                        if (FlavorOneFeatureUtils(appClassLoader).isFlavorOneDevice() == true) return@after
+                        if (FlavorOneFeatureUtils(hostClassLoader!!).isFlavorOneDevice() == true) return@after
                         val mContext = firstField { name = "mContext" }.of(instance).get<Context>()
                             ?: return@after
                         val mHandler = firstField { name = "mHandler" }.of(instance).get<Handler>()
@@ -109,9 +109,9 @@ object ShowManualLockButtonPowerMenu : YukiBaseHooker() {
                 }
                 firstMethod { name = "setKeyguardGoingAway" }.hook {
                     before {
-                        if (FlavorOneFeatureUtils(appClassLoader).isFlavorOneDevice() == true) return@before
+                        if (FlavorOneFeatureUtils(hostClassLoader!!).isFlavorOneDevice() == true) return@before
                         val isManuallyLockedOn = getManuallyLockedStatus() ?: return@before
-                        val bool = args().first().boolean()
+                        val bool = firstArg().get<Boolean>() ?: false
                         if (bool && isManuallyLockedOn) setManuallyLockedStatus(false)
                     }
                 }
@@ -121,7 +121,7 @@ object ShowManualLockButtonPowerMenu : YukiBaseHooker() {
             "com.android.systemui.keyguard.KeyguardViewMediator".toClass().resolve().apply {
                 firstMethod { name = "handleStartKeyguardExitAnimation" }.hook {
                     after {
-                        if (FlavorOneFeatureUtils(appClassLoader).isFlavorOneDevice() == true) return@after
+                        if (FlavorOneFeatureUtils(hostClassLoader!!).isFlavorOneDevice() == true) return@after
                         val isManuallyLockedOn = getManuallyLockedStatus() ?: return@after
                         if (isManuallyLockedOn) setManuallyLockedStatus(false)
                     }
@@ -137,8 +137,8 @@ object ShowManualLockButtonPowerMenu : YukiBaseHooker() {
             "com.oplus.systemui.shutdown.ShutdownViewControl".toClass().resolve().apply {
                 firstMethod { name = "initManuallyLock" }.hook {
                     after {
-                        if (FlavorOneFeatureUtils(appClassLoader).isFlavorOneDevice() == true) return@after
-                        val context = args().first().cast<Context>() ?: return@after
+                        if (FlavorOneFeatureUtils(hostClassLoader!!).isFlavorOneDevice() == true) return@after
+                        val context = firstArg().get<Context>() ?: return@after
                         val manuallyLockCanBeSeen =
                             firstMethod { name = "manuallyLockCanBeSeen" }.of(instance)
                                 .invoke<Boolean>(context) ?: return@after
@@ -178,7 +178,7 @@ object ShowManualLockButtonPowerMenu : YukiBaseHooker() {
             "com.oplus.systemui.shutdown.OplusGlobalActionsDialog".toClass().resolve().apply {
                 firstMethod { name = "showOrHideDialog" }.hook {
                     after {
-                        if (FlavorOneFeatureUtils(appClassLoader).isFlavorOneDevice() == true) return@after
+                        if (FlavorOneFeatureUtils(hostClassLoader!!).isFlavorOneDevice() == true) return@after
                         val mExt = firstField { name = "mExt" }.of(instance).get() ?: return@after
                         val mLockPatternUtils =
                             firstField { name = "mLockPatternUtils" }.of(instance).get()
@@ -196,7 +196,7 @@ object ShowManualLockButtonPowerMenu : YukiBaseHooker() {
             "com.android.keyguard.KeyguardUpdateMonitor".toClass().resolve().apply {
                 firstConstructor().hook {
                     after {
-                        if (FlavorOneFeatureUtils(appClassLoader).isFlavorOneDevice() == true) return@after
+                        if (FlavorOneFeatureUtils(hostClassLoader!!).isFlavorOneDevice() == true) return@after
                         val mContext =
                             firstField { name = "mContext" }.of(instance).get<Context>()
                                 ?: return@after
@@ -209,9 +209,9 @@ object ShowManualLockButtonPowerMenu : YukiBaseHooker() {
                 }
                 firstMethod { name = "setKeyguardGoingAway" }.hook {
                     before {
-                        if (FlavorOneFeatureUtils(appClassLoader).isFlavorOneDevice() == true) return@before
+                        if (FlavorOneFeatureUtils(hostClassLoader!!).isFlavorOneDevice() == true) return@before
                         val isManuallyLockedOn = getManuallyLockedStatus() ?: return@before
-                        val bool = args().first().boolean()
+                        val bool = firstArg().get<Boolean>() ?: false
                         if (bool && isManuallyLockedOn) setManuallyLockedStatus(false)
                     }
                 }
@@ -221,7 +221,7 @@ object ShowManualLockButtonPowerMenu : YukiBaseHooker() {
             "com.android.systemui.keyguard.KeyguardViewMediator".toClass().resolve().apply {
                 firstMethod { name = "handleStartKeyguardExitAnimation" }.hook {
                     after {
-                        if (FlavorOneFeatureUtils(appClassLoader).isFlavorOneDevice() == true) return@after
+                        if (FlavorOneFeatureUtils(hostClassLoader!!).isFlavorOneDevice() == true) return@after
                         val isManuallyLockedOn = getManuallyLockedStatus() ?: return@after
                         if (isManuallyLockedOn) setManuallyLockedStatus(false)
                     }
@@ -270,7 +270,7 @@ object ShowManualLockButtonPowerMenu : YukiBaseHooker() {
 
     private fun getOplusManuallyLock(): Any? {
         val shutDownDependency = "com.android.systemui.shutdown.ShutDownDependencyEx".toClass()
-        val dependency = DependencyUtils(appClassLoader, true).getDependency(shutDownDependency)
+        val dependency = DependencyUtils(hostClassLoader!!, true).getDependency(shutDownDependency)
         return dependency?.asResolver()?.firstMethod { name = "getOplusManuallyLockEx" }?.invoke()
     }
 

@@ -271,6 +271,7 @@ class StatusBarTiles : BaseScopePreferenceFeagment() {
                 summary = getString(R.string.classic_control_center_mode_only)
                 key = "control_center_tile_enable"
                 setDefaultValue(false)
+                isVisible = osCode < 40
                 isIconSpaceReserved = false
                 setOnPreferenceChangeListener { _, newValue ->
                     if ((newValue as Boolean).not()) findPreference<SwitchPreference>("auto_expand_tile_rows_horizontal")?.isChecked =

@@ -19,7 +19,7 @@ object DisableMediaMusicFluidCloudBlacklist : YukiBaseHooker() {
                         type = OplusMediaControlManager::class
                     }.of(instance).get<OplusMediaControlManager>() ?: return@before
                     manager.setMediaControlDenyList(listOf(""))
-                    resultNull()
+                    result = null
                 }
             }
         }

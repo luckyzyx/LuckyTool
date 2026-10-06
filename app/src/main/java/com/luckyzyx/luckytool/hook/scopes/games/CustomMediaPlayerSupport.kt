@@ -10,7 +10,7 @@ import org.lsposed.lsparanoid.Obfuscate
 @Obfuscate
 object CustomMediaPlayerSupport : YukiBaseHooker() {
     override fun onHook() {
-        val set = prefs(ModulePrefs).getStringSet("custom_media_player_support_list", ArraySet())
+        val set = preferences(ModulePrefs).getStringSet("custom_media_player_support_list", ArraySet())
         //Source MediaSessionHelper
         VariousClass(
             "business.module.media.MediaSessionHelper", //V8 V9

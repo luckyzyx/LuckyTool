@@ -2,6 +2,7 @@ package com.luckyzyx.luckytool.hook.scopes.oshare
 
 import android.content.Context
 import com.highcapable.kavaref.KavaRef.Companion.resolve
+import com.highcapable.kavaref.extension.classOf
 import com.highcapable.yukihookapi.hook.entity.YukiBaseHooker
 import com.luckyzyx.luckytool.utils.DexkitUtils.checkDataList
 import com.luckyzyx.luckytool.utils.getOSVersionCode
@@ -30,8 +31,8 @@ class RemoveOShareCloseCountDown(val dexKitBridge: DexKitBridge) : YukiBaseHooke
                 checkDataList("OShareFeatureConfig")
                 findMethod {
                     matcher {
-                        paramTypes(Context::class.java)
-                        returnType(Long::class.java)
+                    paramTypes(classOf<Context>())
+                        returnType(classOf<Long>())
                         usingStrings("getSwitchTimeOut")
                     }
                 }.apply {
@@ -42,7 +43,7 @@ class RemoveOShareCloseCountDown(val dexKitBridge: DexKitBridge) : YukiBaseHooke
                             parameters(Context::class)
                             returnType = Long::class
                         }.hook {
-                            replaceTo(0L)
+                            intercept(0L)
                         }
                     }
                 }
@@ -62,7 +63,7 @@ class RemoveOShareCloseCountDown(val dexKitBridge: DexKitBridge) : YukiBaseHooke
                 checkDataList("SpUtils")
                 findMethod {
                     matcher {
-                        paramTypes(Context::class.java, Long::class.java)
+                    paramTypes(classOf<Context>(), classOf<Long>())
                         usingStrings("updateLastTurnOnTime", "key_last_turn_on_time")
                     }
                 }.apply {
@@ -72,7 +73,7 @@ class RemoveOShareCloseCountDown(val dexKitBridge: DexKitBridge) : YukiBaseHooke
                             parameters(Context::class, Long::class)
                         }.hook {
                             before {
-                                args().last().set(0L)
+                                lastArg().set(0L)
                             }
                         }
                     }

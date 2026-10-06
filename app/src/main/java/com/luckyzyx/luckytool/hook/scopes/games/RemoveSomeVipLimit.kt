@@ -13,46 +13,46 @@ object RemoveSomeVipLimit : YukiBaseHooker() {
         //<string name="magic_voice_buy_vip_tip">开启游戏变声，尽享全部变声效果</string>
         "com.oplus.games.account.bean.VipInfoBean\$VipInfosDTO".toClass().resolve().apply {
             firstMethod { name = "getVip" }.hook {
-                replaceToTrue()
+                intercept(true)
             }
             firstMethod { name = "getExpiredVip" }.hook {
-                replaceToFalse()
+                intercept(false)
             }
             firstMethod { name = "getExpireTime" }.hook {
-                replaceTo("2999-12-31")
+                intercept("2999-12-31")
             }
             firstMethod { name = "getSign" }.hook {
-                replaceToTrue()
+                intercept(true)
             }
         }
         //Source VipAccelearateResponse
         "com.oplus.games.account.bean.VipAccelearateResponse".toClass().resolve().apply {
             firstMethod { name = "getSuperBooster" }.hook {
-                replaceToTrue()
+                intercept(true)
             }
             firstMethod { name = "isSuperBooster" }.hook {
-                replaceToTrue()
+                intercept(true)
             }
         }
         //Source VIPStateBean
         "com.oplus.games.account.bean.VIPStateBean".toClass().resolve().apply {
             firstMethod { name = "getVipState" }.hook {
-                replaceTo(5)
+                intercept(5)
             }
             firstMethod { name = "getExpireTime" }.hook {
-                replaceTo("2999-12-31")
+                intercept("2999-12-31")
             }
         }
         //Source UserInfo
         "com.coloros.gamespaceui.module.magicvoice.oplus.data.UserInfo".toClass().resolve().apply {
             firstMethod { name = "getExpireTime" }.hook {
-                replaceTo("2999-12-31")
+                intercept("2999-12-31")
             }
             firstMethod { name = "getHasTrialQualifications" }.hook {
-                replaceToTrue()
+                intercept(true)
             }
             firstMethod { name = "getUserIdentity" }.hook {
-                replaceTo(3)
+                intercept(3)
             }
         }
     }

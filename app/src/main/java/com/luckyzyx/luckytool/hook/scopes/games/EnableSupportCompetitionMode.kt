@@ -1,6 +1,7 @@
 package com.luckyzyx.luckytool.hook.scopes.games
 
 import com.highcapable.kavaref.KavaRef.Companion.resolve
+import com.highcapable.kavaref.extension.classOf
 import com.highcapable.yukihookapi.hook.entity.YukiBaseHooker
 import com.luckyzyx.luckytool.utils.DexkitUtils.checkDataList
 import org.lsposed.lsparanoid.Obfuscate
@@ -14,12 +15,12 @@ class EnableSupportCompetitionMode(val dexKitBridge: DexKitBridge) : YukiBaseHoo
         dexKitBridge.findClass {
             matcher {
                 fields {
-                    addForType(List::class.java)
+                    addForType(classOf<List<*>>())
                 }
                 methods {
-                    add { paramCount(0);returnType(List::class.java) }
-                    add { paramCount(0);returnType(Boolean::class.java) }
-                    add { paramTypes(String::class.java, ArrayList::class.java) }
+                add { paramCount(0);returnType(classOf<List<*>>()) }
+                    add { paramCount(0);returnType(classOf<Boolean>()) }
+                    add { paramTypes(classOf<String>(), classOf<ArrayList<*>>()) }
                 }
             }
         }.apply {
@@ -28,7 +29,7 @@ class EnableSupportCompetitionMode(val dexKitBridge: DexKitBridge) : YukiBaseHoo
             findMethod {
                 matcher {
                     paramCount(0)
-                    returnType(Boolean::class.java)
+                    returnType(classOf<Boolean>())
                     usingStrings("isSupportCompetitionMode")
                 }
             }.apply {
@@ -40,7 +41,7 @@ class EnableSupportCompetitionMode(val dexKitBridge: DexKitBridge) : YukiBaseHoo
                         emptyParameters()
                         returnType = Boolean::class
                     }.hook {
-                        replaceToTrue()
+                        intercept(true)
                     }
                 }
             }

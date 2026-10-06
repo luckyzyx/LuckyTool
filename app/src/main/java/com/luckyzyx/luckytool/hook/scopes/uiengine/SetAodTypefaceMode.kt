@@ -11,8 +11,8 @@ import org.lsposed.lsparanoid.Obfuscate
 @Obfuscate
 object SetAodTypefaceMode : YukiBaseHooker() {
     override fun onHook() {
-        val typefaceMode = prefs(ModulePrefs).getString("set_aod_typeface_mode", "0")
-        val applyClock = prefs(ModulePrefs).getBoolean("apply_aod_clock_typeface", false)
+        val typefaceMode = preferences(ModulePrefs).getString("set_aod_typeface_mode", "0")
+        val applyClock = preferences(ModulePrefs).getBoolean("apply_aod_clock_typeface", false)
 
         //Source AodTextView
         "com.oplus.egview.widget.AodTextView".toClass().resolve().apply {

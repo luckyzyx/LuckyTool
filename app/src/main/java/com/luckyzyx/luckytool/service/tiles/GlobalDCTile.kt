@@ -2,7 +2,6 @@ package com.luckyzyx.luckytool.service.tiles
 
 import android.service.quicksettings.Tile
 import android.service.quicksettings.TileService
-import com.highcapable.yukihookapi.hook.factory.dataChannel
 import org.lsposed.lsparanoid.Obfuscate
 import com.luckyzyx.luckytool.ITileServiceController
 import com.luckyzyx.luckytool.service.TilesService
@@ -26,13 +25,11 @@ class GlobalDCTile : TileService() {
             Tile.STATE_INACTIVE -> {
                 controller?.globalDCMode = true
                 putBoolean(SettingsPrefs, keyGlobalDCMode, true)
-                dataChannel("com.android.systemui").put(keyGlobalDCMode, true)
             }
 
             Tile.STATE_ACTIVE -> {
                 controller?.globalDCMode = false
                 putBoolean(SettingsPrefs, keyGlobalDCMode, false)
-                dataChannel("com.android.systemui").put(keyGlobalDCMode, false)
             }
 
             Tile.STATE_UNAVAILABLE -> {}

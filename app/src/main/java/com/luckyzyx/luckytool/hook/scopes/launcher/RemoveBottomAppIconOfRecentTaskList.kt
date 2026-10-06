@@ -24,7 +24,7 @@ object RemoveBottomAppIconOfRecentTaskList : YukiBaseHooker() {
             }
             firstMethodOrNull { name = "hideDockView" }?.hook {
                 before {
-                    args().first().setTrue()
+                    firstArg().set(true)
                 }
             }
         }
@@ -33,17 +33,17 @@ object RemoveBottomAppIconOfRecentTaskList : YukiBaseHooker() {
         "com.oplus.quickstep.dock.DockViewController".toClassOrNull()?.resolve()?.apply {
             firstMethod { name = "onRecentsViewOrientationChange" }.hook {
                 before {
-                    args().first().setFalse()
+                    firstArg().set(false)
                 }
             }
             firstMethod { name = "updateOnTaskDisplayModeChange" }.hook {
                 before {
-                    args().first().setTrue()
+                    firstArg().set(true)
                 }
             }
             firstMethod { name = "updateOnLauncherMultiWindowChange" }.hook {
                 before {
-                    args().first().setTrue()
+                    firstArg().set(true)
                 }
             }
         }

@@ -8,7 +8,7 @@ import org.lsposed.lsparanoid.Obfuscate
 @Obfuscate
 object RemoveStatusBarTopNotification : YukiBaseHooker() {
     override fun onHook() {
-        val isEnable = prefs(ModulePrefs).getBoolean("remove_statusbar_top_notification", false)
+        val isEnable = preferences(ModulePrefs).getBoolean("remove_statusbar_top_notification", false)
 
         //Source AlertWindowNotification
         "com.android.server.wm.AlertWindowNotification".toClass().resolve().apply {

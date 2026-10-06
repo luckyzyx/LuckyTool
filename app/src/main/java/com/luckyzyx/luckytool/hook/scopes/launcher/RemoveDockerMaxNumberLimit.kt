@@ -17,7 +17,7 @@ object RemoveDockerMaxNumberLimit : YukiBaseHooker() {
                 returnType = Int::class
             }.hook {
                 after {
-                    LauncherAppStateUtils(appClassLoader).apply {
+                    LauncherAppStateUtils(hostClassLoader!!).apply {
                         val state = getInstanceNoCreate() ?: return@after
                         val idp = getInvariantDeviceProfile(state) ?: return@after
                         val col = idp.asResolver().firstMethod {

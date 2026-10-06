@@ -2,11 +2,10 @@ package com.luckyzyx.luckytool.hook.scopes.smartsidebar
 
 import android.content.Context
 import com.highcapable.kavaref.KavaRef.Companion.resolve
-import com.highcapable.kavaref.condition.type.Modifiers
 import com.highcapable.kavaref.extension.VariousClass
 import com.highcapable.kavaref.extension.createInstance
 import com.highcapable.yukihookapi.hook.entity.YukiBaseHooker
-import com.highcapable.yukihookapi.hook.factory.injectModuleAppResources
+import com.highcapable.yukihookapi.hook.factory.injectModuleResources
 import com.luckyzyx.luckytool.R
 import com.luckyzyx.luckytool.utils.IntentUtils
 import com.luckyzyx.luckytool.utils.getOSVersionCode
@@ -28,18 +27,17 @@ object EnableRunInBackground : YukiBaseHooker() {
         //Source BackgroundRunTool or GTModelTool
         targetTool.resolve().apply {
             if (targetTool.simpleName != "BackgroundRunTool") {
-                var context: Context?
-                firstConstructor { parameters(Context::class) }.hook {
-                    before {
-                        context = args().first().cast<Context>() ?: return@before
-                        context.injectModuleAppResources()
-                    }
+                firstMethod { name = "getIconRes" }.intercept {
+                    val context = firstField { type = Context::class; superclass() }.of(instance)
+                        .get<Context>() ?: return@intercept proceed()
+                    context.injectModuleResources()
+                    R.drawable.background_run
                 }
-                firstMethod { name = "getIconRes" }.hook {
-                    replaceTo(R.drawable.background_run)
-                }
-                firstMethod { name = "getNameRes" }.hook {
-                    replaceTo(R.string.run_in_background)
+                firstMethod { name = "getNameRes" }.intercept {
+                    val context = firstField { type = Context::class; superclass() }.of(instance)
+                        .get<Context>() ?: return@intercept proceed()
+                    context.injectModuleResources()
+                    R.string.run_in_background
                 }
             }
             firstMethod { name = "handle" }.hook {
@@ -51,11 +49,11 @@ object EnableRunInBackground : YukiBaseHooker() {
                             .of(instance).get<Context>() ?: return@before
                         IntentUtils(context).startBackgroundRunServiceV14()
                     }
-                    resultNull()
+                    result = null
                 }
             }
             firstMethod { name = "isToolAvailable" }.hook {
-                replaceToTrue()
+                intercept(true)
             }
         }
 
@@ -73,18 +71,25 @@ object EnableRunInBackground : YukiBaseHooker() {
                 }
             }
 
-        //Source ImageDataHandleImpl
-        "com.oplus.smartsidebar.panelview.edgepanel.data.viewdatahandlers.ImageDataHandleImpl".toClass()
-            .resolve().apply {
-                firstMethod { name = "getToolAppIcon" }.hook {
-                    before {
-                        "com.coloros.common.App".toClass().resolve().firstField {
-//                            name = "sContext"
-                            modifiers(Modifiers.STATIC)
-                            type = Context::class
-                        }.get<Context>()?.injectModuleAppResources()
-                    }
-                }
+        //Source App
+        "com.coloros.common.App".toClass().resolve().apply {
+            firstMethod {
+                name = "setStaticContext"
+                parameters(Context::class)
+            }.intercept {
+                val context = firstArg() as? Context
+                context?.injectModuleResources()
+                proceed()
             }
+            firstMethod {
+                name = "getIconContext"
+                emptyParameters()
+                returnType = Context::class
+            }.intercept {
+                val context = proceed() as? Context
+                context?.injectModuleResources()
+                context
+            }
+        }
     }
 }

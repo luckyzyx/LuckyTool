@@ -1,21 +1,25 @@
 package com.luckyzyx.luckytool.service
 
+import android.content.Context
 import android.content.Intent
 import android.content.pm.IPackageManager
+import android.os.Build
 import android.os.IBinder
 import android.os.RemoteException
 import android.os.ServiceManager
 import android.os.SystemProperties
+import com.highcapable.kavaref.extension.classOf
 import com.luckyzyx.luckytool.IPackageServiceController
 import com.luckyzyx.luckytool.service.base.BaseControllerService
 import com.luckyzyx.luckytool.utils.LogUtils
 import com.topjohnwu.superuser.ipc.RootService
 import org.lsposed.lsparanoid.Obfuscate
+import java.io.IOException
 
 @Obfuscate
 object PackagesService : BaseControllerService<IPackageServiceController>() {
     override val TAG = "PackageService"
-    override var controllerService: Class<*> = PackageControllerService::class.java
+    override var controllerService: Class<*> = classOf<PackageControllerService>()
 
     private var pm: IPackageManager? = null
     private var binder: IBinder? = null
@@ -31,6 +35,11 @@ object PackagesService : BaseControllerService<IPackageServiceController>() {
 
     override fun getController(iBinder: IBinder?): IPackageServiceController? {
         return IPackageServiceController.Stub.asInterface(iBinder)
+    }
+
+    override fun get(context: Context?, result: (IPackageServiceController?) -> Unit) {
+        if (controller?.asBinder()?.isBinderAlive == false) controller = null
+        super.get(context, result)
     }
 
     @Obfuscate
@@ -66,10 +75,42 @@ object PackagesService : BaseControllerService<IPackageServiceController>() {
     }
 
     fun performDexOptMode(packageName: String): Boolean {
+        // ColorOS 17 removes IPackageManager.performDexOptMode. Run the ART shell
+        // entry point from this root process instead of calling the missing API.
+        if (Build.VERSION.SDK_INT >= 37) return compileWithArtService(packageName)
         val pm = getPackageManager() ?: return false
         return pm.performDexOptMode(
             packageName, SystemProperties.getBoolean("dalvik.vm.usejitprofiles", false),
             SystemProperties.get("pm.dexopt.install", "speed-profile"), true, true, null
         )
+    }
+
+    private fun compileWithArtService(packageName: String): Boolean {
+        return try {
+            val process = ProcessBuilder(
+                "/system/bin/cmd", "package", "compile", "-f", "-m",
+                SystemProperties.get("pm.dexopt.install", "speed-profile"), packageName
+            ).redirectErrorStream(true).start()
+            try {
+                val output = process.inputStream.bufferedReader().use { it.readText() }
+                val exitCode = process.waitFor()
+                // ART may exit with 0 even when dexopt prints "Failure".
+                val success = exitCode == 0 &&
+                    output.lineSequence().lastOrNull { it.isNotBlank() }?.trim() == "Success"
+                if (!success) {
+                    LogUtils.e(TAG, "compileWithArtService", "$packageName: exit=$exitCode $output", true)
+                }
+                success
+            } finally {
+                process.destroy()
+            }
+        } catch (e: IOException) {
+            LogUtils.e(TAG, "compileWithArtService", "$packageName: $e", true)
+            false
+        } catch (e: InterruptedException) {
+            Thread.currentThread().interrupt()
+            LogUtils.e(TAG, "compileWithArtService", "$packageName: $e", true)
+            false
+        }
     }
 }

@@ -16,6 +16,7 @@ import android.net.Uri
 import android.provider.Settings
 import android.util.ArraySet
 import androidx.core.net.toUri
+import com.luckyzyx.luckytool.BuildConfig
 import com.luckyzyx.luckytool.data.AppVerInfo
 import kotlinx.serialization.json.Json
 import org.lsposed.lsparanoid.Obfuscate
@@ -248,6 +249,29 @@ class AppUtils(val context: Context) {
             setPackage("com.oplus.multiapp")
             putExtra("title", label)
             putExtra("pkgName", packName)
+        }
+        context.startActivity(intent)
+    }
+
+    /**
+     * 跳转耗电控制页面
+     * @receiver Context
+     * @param packName String
+     */
+    fun openPowerControlIntent(label: CharSequence, packName: String) {
+        val intent = Intent().apply {
+            setClassName(
+                "com.oplus.battery",
+                "com.oplus.powermanager.fuelgaue.PowerControlActivity"
+            )
+            putExtra("title", "Title")
+            putExtra(
+                "pkgName",
+                BuildConfig.APPLICATION_ID
+            )
+            putExtra("callingSource", -1)
+            putExtra("drainType", "APP")
+            setFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
         }
         context.startActivity(intent)
     }

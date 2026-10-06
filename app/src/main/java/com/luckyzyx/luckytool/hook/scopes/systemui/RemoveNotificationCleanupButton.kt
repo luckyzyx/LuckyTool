@@ -16,8 +16,8 @@ object RemoveNotificationCleanupButton : YukiBaseHooker() {
         ).toClass().resolve().apply {
             firstMethod { name = "setVisible";parameterCount = 3 }.hook {
                 before {
-                    args(1).setFalse()
-                    args().last().setFalse()
+                    arg(1).set(false)
+                    lastArg().set(false)
                 }
             }
         }

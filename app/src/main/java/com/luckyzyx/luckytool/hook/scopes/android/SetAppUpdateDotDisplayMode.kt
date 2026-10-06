@@ -13,7 +13,7 @@ object SetAppUpdateDotDisplayMode : YukiBaseHooker() {
     private const val OplusPMHelper = "com.android.server.pm.OplusOsPackageManagerHelper"
 
     override fun onHook() {
-        val mode = prefs(ModulePrefs).getString("set_app_update_dot_display_mode", "0")
+        val mode = preferences(ModulePrefs).getString("set_app_update_dot_display_mode", "0")
         if (mode == "0") return
 
         //Source PackageManagerServiceExtImpl
@@ -23,10 +23,10 @@ object SetAppUpdateDotDisplayMode : YukiBaseHooker() {
                 parameterCount = 6
             }.hook {
                 after {
-                    val packName = args(2).string()
-                    val installSource = args(3).any()
+                    val packName = arg(2).get<String>() ?: ""
+                    val installSource = arg(3).get()
 
-                    val isUpdate = args(4).boolean()
+                    val isUpdate = arg(4).get<Boolean>() ?: false
                     val marketList = firstField {
                         name = "DEFAULT_MARKET_LIST";type = List::class
                     }.get<List<String>>() ?: java.util.ArrayList()

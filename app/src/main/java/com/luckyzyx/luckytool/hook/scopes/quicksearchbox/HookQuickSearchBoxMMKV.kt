@@ -2,6 +2,7 @@ package com.luckyzyx.luckytool.hook.scopes.quicksearchbox
 
 import android.util.ArrayMap
 import com.highcapable.kavaref.KavaRef.Companion.resolve
+import com.highcapable.kavaref.extension.classOf
 import com.highcapable.yukihookapi.hook.entity.YukiBaseHooker
 import com.luckyzyx.luckytool.utils.DexkitUtils.checkDataList
 import com.luckyzyx.luckytool.utils.ModulePrefs
@@ -13,7 +14,7 @@ class HookQuickSearchBoxMMKV(val dexKitBridge: DexKitBridge) : YukiBaseHooker() 
     override fun onHook() {
         val map = ArrayMap<String, Any>().apply {
             if (
-                prefs(ModulePrefs)
+                preferences(ModulePrefs)
                     .getBoolean("remove_searchbox_uninstalled_app_suggestions", false)
             ) {
                 put("new_suggest_app_card", false)
@@ -23,8 +24,7 @@ class HookQuickSearchBoxMMKV(val dexKitBridge: DexKitBridge) : YukiBaseHooker() 
     }
 
     @Obfuscate
-    class HookMMKVManager(val dexKitBridge: DexKitBridge, val map: ArrayMap<String, Any>) :
-        YukiBaseHooker() {
+    class HookMMKVManager(val dexKitBridge: DexKitBridge, val map: ArrayMap<String, Any>)  : YukiBaseHooker() {
         override fun onHook() {
             //Source MMKVManager
             dexKitBridge.findClass {
@@ -35,8 +35,8 @@ class HookQuickSearchBoxMMKV(val dexKitBridge: DexKitBridge) : YukiBaseHooker() 
                 checkDataList("HookMMKV find clazz")
                 findMethod {
                     matcher {
-                        paramTypes(String::class.java, String::class.java)
-                        returnType(String::class.java)
+                    paramTypes(classOf<String>(), classOf<String>())
+                        returnType(classOf<String>())
                         usingStrings("getString")
                     }
                 }.apply {
@@ -48,7 +48,7 @@ class HookQuickSearchBoxMMKV(val dexKitBridge: DexKitBridge) : YukiBaseHooker() 
                             returnType = String::class
                         }.hook {
                             before {
-                                val key = args().first().cast<String>()
+                                val key = firstArg().get<String>()
                                 if (key.isNullOrBlank()) return@before
                                 when (val value = map[key]) {
                                     null -> return@before
@@ -62,8 +62,8 @@ class HookQuickSearchBoxMMKV(val dexKitBridge: DexKitBridge) : YukiBaseHooker() 
                 }
                 findMethod {
                     matcher {
-                        paramTypes(String::class.java, Boolean::class.java)
-                        returnType(Boolean::class.java)
+                    paramTypes(classOf<String>(), classOf<Boolean>())
+                        returnType(classOf<Boolean>())
                         usingStrings("getBoolean")
                     }
                 }.apply {
@@ -75,14 +75,14 @@ class HookQuickSearchBoxMMKV(val dexKitBridge: DexKitBridge) : YukiBaseHooker() 
                             returnType = Boolean::class
                         }.hook {
                             before {
-                                val key = args().first().cast<String>()
+                                val key = firstArg().get<String>()
                                 if (key.isNullOrBlank()) return@before
                                 when (val value = map[key]) {
                                     null -> return@before
-                                    "1" -> resultTrue()
-                                    "0" -> resultFalse()
-                                    "true" -> resultTrue()
-                                    "false" -> resultFalse()
+                                    "1" -> result = true
+                                    "0" -> result = false
+                                    "true" -> result = true
+                                    "false" -> result = false
                                     is Boolean -> result = value
                                 }
                             }

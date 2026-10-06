@@ -4,6 +4,7 @@ import android.content.Context
 import android.util.ArrayMap
 import android.util.ArraySet
 import com.highcapable.kavaref.KavaRef.Companion.resolve
+import com.highcapable.kavaref.extension.classOf
 import com.highcapable.yukihookapi.hook.entity.YukiBaseHooker
 import com.luckyzyx.luckytool.utils.DexkitUtils.checkDataList
 import com.luckyzyx.luckytool.utils.ModulePrefs
@@ -13,10 +14,10 @@ import org.luckypray.dexkit.DexKitBridge
 @Obfuscate
 class CustomAonGestureScrollPageWhitelist(val dexKitBridge: DexKitBridge) : YukiBaseHooker() {
     override fun onHook() {
-        val pageSet = prefs(ModulePrefs).getStringSet(
+        val pageSet = preferences(ModulePrefs).getStringSet(
             "custom_aon_gesture_scroll_page_whitelist_list", ArraySet()
         )
-//        val videoSet = prefs(ModulePrefs).getStringSet(
+//        val videoSet = preferences(ModulePrefs).getStringSet(
 //            "custom_aon_gesture_video_whitelist_list", ArraySet()
 //        )
         if (pageSet.isEmpty()) return
@@ -26,16 +27,16 @@ class CustomAonGestureScrollPageWhitelist(val dexKitBridge: DexKitBridge) : Yuki
         dexKitBridge.findClass {
             matcher {
                 fields {
-                    addForType(Context::class.java)
-                    addForType(ArrayList::class.java)
-                    addForType(ArrayMap::class.java)
-                    addForType(Int::class.java)
-                    addForType(Float::class.java)
-                    addForType(List::class.java)
+                addForType(classOf<Context>())
+                    addForType(classOf<ArrayList<*>>())
+                    addForType(classOf<ArrayMap<*,*>>())
+                    addForType(classOf<Int>())
+                    addForType(classOf<Float>())
+                    addForType(classOf<List<*>>())
                 }
                 methods {
-                    add { paramTypes(String::class.java);returnType(Int::class.java) }
-                    add { paramTypes(List::class.java);returnType(Void.TYPE) }
+                add { paramTypes(classOf<String>());returnType(classOf<Int>()) }
+                    add { paramTypes(classOf<List<*>>());returnType(Void.TYPE) }
                 }
                 usingStrings("com.ss.android.ugc.aweme", "com.smile.gifmaker")
             }

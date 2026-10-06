@@ -45,10 +45,22 @@ object HookLauncher : YukiBaseHooker() {
 
             loadHooker(HookGlobalFeatureProvider(dexKitBridge))
 
-        }
+            //HookLauncherFeature
+            loadHooker(HookLauncherFeature(dexKitBridge))
 
-        //HookLauncherFeature
-        loadHooker(HookLauncherFeature)
+            //强制启用最近任务内存显示
+            if (preferences(ModulePrefs).getBoolean("force_enable_recent_task_memory_display", false)) {
+                if (osCode >= 30) loadHooker(ForceEnableRecentTaskMemoryDisplay(dexKitBridge))
+            }
+
+            //应用徽章
+            if (SDK >= A13) loadHooker(HookAppBadge(dexKitBridge))
+
+            //解锁后台任务锁定限制
+            if (preferences(ModulePrefs).getBoolean("unlock_task_locks", false)) {
+                loadHooker(UnlockTaskLocks(dexKitBridge))
+            }
+        }
 
         //HookLauncherFeatureFlags
 //        if (osCode >= 27) loadHooker(HookLauncherFeatureFlags)
@@ -65,79 +77,70 @@ object HookLauncher : YukiBaseHooker() {
         //桌面图标相关
         loadHooker(HookOplusBubbleTextView)
 
-        //应用徽章
-        if (SDK >= A13) loadHooker(HookAppBadge)
 
         //设置桌面布局行列数
-        if (prefs(ModulePrefs).getBoolean("launcher_layout_enable", false)) {
+        if (preferences(ModulePrefs).getBoolean("launcher_layout_enable", false)) {
             loadHooker(LauncherLayoutRowColume)
         }
         //移除文件夹名称输入限制
-        if (prefs(ModulePrefs).getBoolean("remove_folder_name_input_limit", false)) {
+        if (preferences(ModulePrefs).getBoolean("remove_folder_name_input_limit", false)) {
             loadHooker(RemoveFolderNameInputLimit)
         }
         //移除文件夹预览背景
-        if (prefs(ModulePrefs).getBoolean("remove_folder_preview_background", false)) {
+        if (preferences(ModulePrefs).getBoolean("remove_folder_preview_background", false)) {
             loadHooker(RemoveFolderPreviewBackground)
         }
         //最近任务列表清除按钮
-        if (prefs(ModulePrefs).getBoolean("remove_recent_task_list_clear_button", false)) {
+        if (preferences(ModulePrefs).getBoolean("remove_recent_task_list_clear_button", false)) {
             loadHooker(RecentTaskListClearButton)
         }
         //最近任务列表长按APP图标打开应用详情
-        if (prefs(ModulePrefs).getBoolean("long_press_app_icon_open_app_details", false)) {
+        if (preferences(ModulePrefs).getBoolean("long_press_app_icon_open_app_details", false)) {
             loadHooker(LongPressAppIconOpenAppDetails)
         }
         //移除最近任务列表底部APP图标
-        if (prefs(ModulePrefs).getBoolean("remove_bottom_app_icon_of_recent_task_list", false)) {
+        if (preferences(ModulePrefs).getBoolean("remove_bottom_app_icon_of_recent_task_list", false)) {
             loadHooker(RemoveBottomAppIconOfRecentTaskList)
         }
         //启用Docker背景显示
-        if (prefs(ModulePrefs).getBoolean("enable_docker_background", false)) {
+        if (preferences(ModulePrefs).getBoolean("enable_docker_background", false)) {
             if (osCode >= 26) loadHooker(EnableDockerBackground)
         }
         //强制启用Docker背景模糊
-        if (prefs(ModulePrefs).getBoolean("force_enable_docker_background_blur", false)) {
+        if (preferences(ModulePrefs).getBoolean("force_enable_docker_background_blur", false)) {
             if (osCode >= 37) loadHooker(ForceEnableDockerBackgroundBlur)
         }
-        //解锁后台任务锁定限制
-        if (prefs(ModulePrefs).getBoolean("unlock_task_locks", false)) {
-            loadHooker(UnlockTaskLocks)
-        }
         //允许锁定或解锁已排除活动
-        if (prefs(ModulePrefs).getBoolean("allow_locking_unlocking_of_excluded_activity", false)) {
+        if (preferences(ModulePrefs).getBoolean("allow_locking_unlocking_of_excluded_activity", false)) {
             loadHooker(AllowLockingUnLockingOfExcludedActivity)
         }
         //移除App更新圆点
         if (osCode >= 33) loadHooker(RemoveAppUpdateGreenDot)
-        //强制启用最近任务内存显示
-        if (prefs(ModulePrefs).getBoolean("force_enable_recent_task_memory_display", false)) {
-            if (osCode >= 30) loadHooker(ForceEnableRecentTaskMemoryDisplay)
-        }
+
         //启用自动关闭文件夹
-        if (prefs(ModulePrefs).getBoolean("enable_auto_close_folder", false)) {
+        if (preferences(ModulePrefs).getBoolean("enable_auto_close_folder", false)) {
             if (osCode >= 34) loadHooker(EnableAutoCloseFolder)
         }
         //移除小组件添加请求白名单
-        if (prefs(ModulePrefs).getBoolean("remove_widgets_add_request_whitelist", false)) {
+        if (preferences(ModulePrefs).getBoolean("remove_widgets_add_request_whitelist", false)) {
             if (osCode >= 30) loadHooker(RemoveWidgetsAddRequestWhitelist)
         }
         //移除桌面卡片名称
-        if (prefs(ModulePrefs).getBoolean("remove_launcher_card_name", false)) {
+        if (preferences(ModulePrefs).getBoolean("remove_launcher_card_name", false)) {
             if (osCode >= 26) loadHooker(RemoveLauncherCardName)
         }
         //禁用长按应用图标二级菜单
-        if (prefs(ModulePrefs).getBoolean("disable_long_press_app_icon_secondary_menu", false)) {
+        if (preferences(ModulePrefs).getBoolean("disable_long_press_app_icon_secondary_menu", false)) {
             if (osCode >= 37) loadHooker(DisableLongPressAppIconSecondaryMenu)
         }
         //自定义桌面默认主页
         loadHooker(CustomDesktopDefaultHomePage)
         //启用桌面下方按钮选择项
-        if (prefs(ModulePrefs).getBoolean("enable_launcher_indicator_entry", false)) {
+        if (preferences(ModulePrefs).getBoolean("enable_launcher_indicator_entry", false)) {
             if (osCode >= 37) loadHooker(EnableLauncherIndicatorEntry)
         }
         //移除Docker最大数量限制
-        if (prefs(ModulePrefs).getBoolean("remove_docker_max_number_limit", false)) {
+        if (preferences(ModulePrefs).getBoolean("remove_docker_max_number_limit", false)) {
             if (osCode >= 38) loadHooker(RemoveDockerMaxNumberLimit)
         }
 

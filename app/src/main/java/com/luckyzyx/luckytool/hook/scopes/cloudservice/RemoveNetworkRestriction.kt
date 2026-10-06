@@ -2,6 +2,7 @@ package com.luckyzyx.luckytool.hook.scopes.cloudservice
 
 import android.content.Context
 import com.highcapable.kavaref.KavaRef.Companion.resolve
+import com.highcapable.kavaref.extension.classOf
 import com.highcapable.yukihookapi.hook.entity.YukiBaseHooker
 import com.luckyzyx.luckytool.utils.DexkitUtils.checkDataList
 import org.lsposed.lsparanoid.Obfuscate
@@ -20,22 +21,22 @@ class RemoveNetworkRestriction(val dexKitBridge: DexKitBridge) : YukiBaseHooker(
                 methods {
                     add {
                         paramCount(0)
-                        returnType(Int::class.java)
+                        returnType(classOf<Int>())
                         usingStrings("connectivity")
                         usingNumbers(0, 1, 2)
                     }
                     add {
-                        paramTypes(Int::class.java)
-                        returnType(Boolean::class.java)
+                    paramTypes(classOf<Int>())
+                        returnType(classOf<Boolean>())
                     }
                     add {
-                        paramTypes(Context::class.java)
-                        returnType(Boolean::class.java)
+                    paramTypes(classOf<Context>())
+                        returnType(classOf<Boolean>())
                         usingStrings("NetworkUtil", "connectivity", "isMobileDataNetwork")
                     }
                     add {
-                        paramTypes(Context::class.java)
-                        returnType(Boolean::class.java)
+                    paramTypes(classOf<Context>())
+                        returnType(classOf<Boolean>())
                         usingStrings("NetworkUtil", "connectivity", "isNetworkConnected")
                     }
                 }

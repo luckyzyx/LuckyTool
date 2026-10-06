@@ -15,6 +15,7 @@ import androidx.core.graphics.drawable.RoundedBitmapDrawableFactory
 import androidx.core.view.children
 import androidx.core.view.isVisible
 import com.highcapable.betterandroid.ui.extension.component.startActivity
+import com.highcapable.betterandroid.ui.extension.view.parentOrNull
 import com.highcapable.kavaref.KavaRef.Companion.asResolver
 import com.highcapable.kavaref.KavaRef.Companion.resolve
 import com.highcapable.yukihookapi.hook.entity.YukiBaseHooker
@@ -31,17 +32,17 @@ object CustomizeDeviceOTACardBackground : YukiBaseHooker() {
     override fun onHook() {
         val osCode = getOSVersionCode
         val backgroundPath =
-            prefs(ModulePrefs).getString("customize_device_ota_card_background_path", "")
-        val hideText = prefs(ModulePrefs).getBoolean("hide_ota_card_top_text", false)
+            preferences(ModulePrefs).getString("customize_device_ota_card_background_path", "")
+        val hideText = preferences(ModulePrefs).getBoolean("hide_ota_card_top_text", false)
         val applySharePage =
-            prefs(ModulePrefs).getBoolean("apply_device_parameter_sharing_page", false)
+            preferences(ModulePrefs).getBoolean("apply_device_parameter_sharing_page", false)
 
         //Source AboutDeviceOtaUpdatePreference
         "com.oplus.settings.widget.preference.AboutDeviceOtaUpdatePreference".toClass().resolve()
             .apply {
                 firstMethod { name = "onBindViewHolder" }.hook {
                     after {
-                        val holder = args().first().any() ?: return@after
+                        val holder = firstArg().get() ?: return@after
                         val itemView =
                             holder.asResolver().firstField { name = "itemView"; superclass() }
                                 .get<View>() ?: return@after
@@ -88,14 +89,14 @@ object CustomizeDeviceOTACardBackground : YukiBaseHooker() {
                 }
                 if (false) {
                     firstMethod { name = "isSupportTopVideo" }.hook {
-                        replaceToFalse()
+                        intercept(false)
                     }
                     firstMethod { name = "isSupportEasterEggVideo" }.hook {
-                        replaceToFalse()
+                        intercept(false)
                     }
                     firstMethod { name = "applyVideoTransform" }.hook {
                         before {
-                            args().first().setNull()
+                            firstArg().set(null)
                         }
                     }
                     firstMethod { name = "getColorOSVideoPath" }.hook {
@@ -118,8 +119,8 @@ object CustomizeDeviceOTACardBackground : YukiBaseHooker() {
                     after {
                         val context = firstMethod { name = "getContext"; superclass() }
                             .of(instance).invoke<Context>() ?: return@after
-                        val menu = args().first().cast<Menu>() ?: return@after
-                        val menuInflater = args().last().cast<MenuInflater>() ?: return@after
+                        val menu = firstArg().get<Menu>() ?: return@after
+                        val menuInflater = lastArg().get<MenuInflater>() ?: return@after
                         val menuId = context.resources.getIdentifier(
                             "about_device_share_menu", "menu",
                             this@CustomizeDeviceOTACardBackground.packageName
@@ -135,7 +136,7 @@ object CustomizeDeviceOTACardBackground : YukiBaseHooker() {
                     after {
                         val context = firstMethod { name = "getContext"; superclass() }
                             .of(instance).invoke<Context>() ?: return@after
-                        val menuItem = args().first().cast<MenuItem>() ?: return@after
+                        val menuItem = firstArg().get<MenuItem>() ?: return@after
                         val shareId = context.resources.getIdentifier(
                             "about_share", "id",
                             this@CustomizeDeviceOTACardBackground.packageName
@@ -183,7 +184,8 @@ object CustomizeDeviceOTACardBackground : YukiBaseHooker() {
                                 "lin_button", "id",
                                 this@CustomizeDeviceOTACardBackground.packageName
                             )
-                            (activity.findViewById<LinearLayout>(linId)?.parent as? RelativeLayout)
+                            (activity.findViewById<LinearLayout>(linId)
+                                ?.parentOrNull<RelativeLayout>())
                                 ?.background = drawableFactory
                         }
                     }

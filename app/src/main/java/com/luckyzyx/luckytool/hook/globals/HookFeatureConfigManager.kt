@@ -17,7 +17,7 @@ class HookFeatureConfigManager(private val features: Map<String, Boolean>) : Yuk
                 returnType = Boolean::class
             }.hook {
                 before {
-                    val key = args().first().cast<String>()
+                    val key = firstArg().get<String>()
                     if (key.isNullOrBlank()) return@before
                     val value = features[key]
                     if (value != null) result = value
@@ -36,7 +36,7 @@ class HookFeatureConfigManager(private val features: Map<String, Boolean>) : Yuk
                     returnType = Boolean::class
                 }.hook {
                     before {
-                        val key = args().first().string()
+                        val key = firstArg().get<String>() ?: ""
                         if (key.isBlank()) return@before
                         val value = features[key]
                         if (value != null) result = value
@@ -48,7 +48,7 @@ class HookFeatureConfigManager(private val features: Map<String, Boolean>) : Yuk
                     returnType = Boolean::class
                 }?.hook {
                     before {
-                        val key = args().first().string()
+                        val key = firstArg().get<String>() ?: ""
                         if (key.isBlank()) return@before
                         val value = features[key]
                         if (value != null) result = value

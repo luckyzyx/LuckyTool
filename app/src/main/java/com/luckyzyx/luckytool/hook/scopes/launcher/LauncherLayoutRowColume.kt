@@ -19,13 +19,13 @@ object LauncherLayoutRowColume : YukiBaseHooker() {
     @Obfuscate
     object LayoutRowColume : YukiBaseHooker() {
         override fun onHook() {
-            val maxRows = prefs(ModulePrefs).getInt("launcher_layout_max_rows", 6)
-            val maxColumns = prefs(ModulePrefs).getInt("launcher_layout_max_columns", 4)
+            val maxRows = preferences(ModulePrefs).getInt("launcher_layout_max_rows", 6)
+            val maxColumns = preferences(ModulePrefs).getInt("launcher_layout_max_columns", 4)
 
             //Source UiConfig
             "com.android.launcher.UiConfig".toClass().resolve().apply {
                 firstMethod { name = "isSupportLayout" }.hook {
-                    replaceToTrue()
+                    intercept(true)
                 }
                 firstMethod { name = "getSupportLayout" }.hook {
                     before {
@@ -39,6 +39,19 @@ object LauncherLayoutRowColume : YukiBaseHooker() {
                     }
                 }
             }
+
+            //Source IconFallenUtils
+            "com.android.launcher.iconfallen.IconFallenUtils".toClass().resolve().apply {
+                firstMethod {
+                    name = "getLogicCellX"
+                    returnType = Int::class
+                }.hook {
+                    after {
+                        val res = result<Int>() ?: return@after
+                        if (res > 4) result = 4
+                    }
+                }
+            }
         }
     }
 
@@ -48,11 +61,11 @@ object LauncherLayoutRowColume : YukiBaseHooker() {
             //Source UiConfig
             "com.android.launcher.UiConfig".toClass().resolve().apply {
                 firstMethod { name = "isSupportLayout" }.hook {
-                    replaceToTrue()
+                    intercept(true)
                 }
             }
-            val maxRows = prefs(ModulePrefs).getInt("launcher_layout_max_rows", 6)
-            val maxColumns = prefs(ModulePrefs).getInt("launcher_layout_max_columns", 4)
+            val maxRows = preferences(ModulePrefs).getInt("launcher_layout_max_rows", 6)
+            val maxColumns = preferences(ModulePrefs).getInt("launcher_layout_max_columns", 4)
             //Source ToggleBarLayoutAdapter
             "com.android.launcher.togglebar.adapter.ToggleBarLayoutAdapter".toClass().resolve()
                 .apply {

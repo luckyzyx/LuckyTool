@@ -39,7 +39,7 @@ object ForceDisplayOfRingingStatusToggleTiles : YukiBaseHooker() {
                 }
             }
             firstMethod { name = "isAvailable"; superclass() }.hook {
-                replaceToTrue()
+                intercept(true)
             }
         }
 
@@ -54,7 +54,7 @@ object ForceDisplayOfRingingStatusToggleTiles : YukiBaseHooker() {
                 parameters(String::class)
             }.hook {
                 before {
-                    val key = args().first().string()
+                    val key = firstArg().get<String>() ?: ""
                     if (key == "ringermode") {
                         val provider = firstField {
 //                            name = "mFlavorOneRingerModeTileProvider"

@@ -26,11 +26,11 @@ object EnableVideoMemcFrameInsertion : YukiBaseHooker() {
 
     override fun onHook() {
         if (getOSVersionCode < 26) return
-        val isEnable = prefs(ModulePrefs).getBoolean("enable_video_memc_frame_insertion", false)
+        val isEnable = preferences(ModulePrefs).getBoolean("enable_video_memc_frame_insertion", false)
         val configPackages =
-            prefs(ModulePrefs).getStringSet("memc_config_package_list", ArraySet())
+            preferences(ModulePrefs).getStringSet("memc_config_package_list", ArraySet())
         val configActivitys =
-            prefs(ModulePrefs).getStringSet("memc_config_activity_list", ArraySet())
+            preferences(ModulePrefs).getStringSet("memc_config_activity_list", ArraySet())
 
         //Source OplusMemcHelper
         VariousClass(

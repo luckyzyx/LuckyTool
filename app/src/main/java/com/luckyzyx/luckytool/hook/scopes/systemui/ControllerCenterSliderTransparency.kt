@@ -17,7 +17,7 @@ import org.lsposed.lsparanoid.Obfuscate
 @Obfuscate
 object ControllerCenterSliderTransparency : YukiBaseHooker() {
     override fun onHook() {
-        val customAlpha = prefs(ModulePrefs).getInt("custom_control_center_silder_transparency", -1)
+        val customAlpha = preferences(ModulePrefs).getInt("custom_control_center_silder_transparency", -1)
 
         //Source OplusToggleSliderView C14.0
         VariousClass(

@@ -9,7 +9,7 @@ import org.lsposed.lsparanoid.Obfuscate
 object HookPowerManager : YukiBaseHooker() {
     override fun onHook() {
         val removeThermal =
-            prefs(ModulePrefs).getBoolean("disable_temperature_control_listener", false)
+            preferences(ModulePrefs).getBoolean("disable_temperature_control_listener", false)
         if (!removeThermal) return
 
         //Source PowerManager
@@ -19,7 +19,7 @@ object HookPowerManager : YukiBaseHooker() {
                 parameterCount = 1
             }.hook {
                 after {
-                    val listener = args().first().any() ?: return@after
+                    val listener = firstArg().get() ?: return@after
                     firstMethod {
                         name = "removeThermalStatusListener"
                         parameterCount = 1
@@ -27,7 +27,7 @@ object HookPowerManager : YukiBaseHooker() {
                 }
             }
             firstMethod { name = "getCurrentThermalStatus" }.hook {
-                replaceTo(0)
+                intercept(0)
             }
         }
     }

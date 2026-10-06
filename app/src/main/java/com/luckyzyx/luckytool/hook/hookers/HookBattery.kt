@@ -1,6 +1,7 @@
 package com.luckyzyx.luckytool.hook.hookers
 
 import com.highcapable.yukihookapi.hook.entity.YukiBaseHooker
+import com.luckyzyx.luckytool.hook.globals.HookGlobalFeatureConfig
 import com.luckyzyx.luckytool.hook.globals.HookGlobalFeatureProvider
 import com.luckyzyx.luckytool.hook.scopes.battery.DisplayModuleCalculatesBatteryHealthData
 import com.luckyzyx.luckytool.hook.scopes.battery.HookBatteryNotify
@@ -17,6 +18,8 @@ import org.lsposed.lsparanoid.Obfuscate
 @Obfuscate
 object HookBattery : YukiBaseHooker() {
     override fun onHook() {
+        loadHooker(HookGlobalFeatureConfig)
+
         if (SDK < A13) try {
             DexkitUtils.create(appInfo.sourceDir).close()
         } catch (_: UnsatisfiedLinkError) {
@@ -27,23 +30,22 @@ object HookBattery : YukiBaseHooker() {
             loadHooker(HookGlobalFeatureProvider(dexKitBridge))
             //电池通知
             loadHooker(HookBatteryNotify(dexKitBridge))
-            //移除自启数量限制
-            if (prefs(ModulePrefs).getBoolean("unlock_startup_limit", false)) {
+            if (preferences(ModulePrefs).getBoolean("unlock_startup_limit", false)) {
                 if (SDK >= A13) loadHooker(UnlockStartupLimit(dexKitBridge))
             }
             //移除电池温度控制
-            if (prefs(ModulePrefs).getBoolean("remove_battery_temperature_control", false)) {
+            if (preferences(ModulePrefs).getBoolean("remove_battery_temperature_control", false)) {
                 loadHooker(RemoveBatteryTemperatureControl(dexKitBridge))
                 loadHooker(LauncherHighTempreatureProtection(dexKitBridge))
             }
             //移除电池限制插件
-            if (prefs(ModulePrefs).getBoolean("remove_battery_restrict_plugin", false)) {
+            if (preferences(ModulePrefs).getBoolean("remove_battery_restrict_plugin", false)) {
                 loadHooker(RemoveBatteryRestrictPlugin(dexKitBridge))
             }
         }
 
         //显示模块计算电池健康数据
-        if (prefs(ModulePrefs).getBoolean("open_battery_health", false)) {
+        if (preferences(ModulePrefs).getBoolean("open_battery_health", false)) {
             if (SDK >= A13) loadHooker(DisplayModuleCalculatesBatteryHealthData)
         }
     }

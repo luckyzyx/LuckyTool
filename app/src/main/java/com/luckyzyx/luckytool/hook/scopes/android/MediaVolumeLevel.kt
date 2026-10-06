@@ -10,8 +10,8 @@ import org.lsposed.lsparanoid.Obfuscate
 @Obfuscate
 object MediaVolumeLevel : YukiBaseHooker() {
     override fun onHook() {
-        val mediaVolumeLevel = prefs(ModulePrefs).getInt("media_volume_level", 0)
-        val minVolumeZero = prefs(ModulePrefs).getBoolean("minimum_volume_level_can_be_zero", false)
+        val mediaVolumeLevel = preferences(ModulePrefs).getInt("media_volume_level", 0)
+        val minVolumeZero = preferences(ModulePrefs).getBoolean("minimum_volume_level_can_be_zero", false)
 
         //Source AudioServiceExtImpl
         "com.android.server.audio.AudioServiceExtImpl".toClass().resolve().apply {

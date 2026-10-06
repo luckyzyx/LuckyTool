@@ -10,10 +10,10 @@ object UnlockThemeStoreVip : YukiBaseHooker() {
         //Source VipUserDto
         "com.oppo.cdo.card.theme.dto.vip.VipUserDto".toClassOrNull()?.resolve()?.apply {
             firstMethod { name = "getVipStatus" }.hook {
-                replaceTo(1)
+                intercept(1)
             }
             firstMethod { name = "getVipDays" }.hook {
-                replaceTo(999)
+                intercept(999)
             }
         }
 
@@ -21,17 +21,17 @@ object UnlockThemeStoreVip : YukiBaseHooker() {
         "com.oppo.cdo.card.theme.dto.page.WeatherPageResponseDto".toClassOrNull()?.resolve()
             ?.apply {
                 firstMethod { name = "getVipStatus" }.hook {
-                    replaceTo(1)
+                    intercept(1)
                 }
             }
 
         //Source ResourceItemDto
         "com.oppo.cdo.theme.domain.dto.response.ResourceItemDto".toClassOrNull()?.resolve()?.apply {
             firstMethod { name = "getIsVip" }.hook {
-                replaceTo(1)
+                intercept(1)
             }
             firstMethod { name = "getIsVipAvailable" }.hook {
-                replaceTo(1)
+                intercept(1)
             }
         }
 
@@ -39,23 +39,23 @@ object UnlockThemeStoreVip : YukiBaseHooker() {
         "com.oppo.cdo.theme.domain.dto.response.PublishProductItemDto".toClassOrNull()?.resolve()
             ?.apply {
                 firstMethod { name = "getPrice" }.hook {
-                    replaceTo(0.0)
+                    intercept(0.0)
                 }
                 firstMethod { name = "getIsVipAvailable" }.hook {
-                    replaceTo(1)
+                    intercept(1)
                 }
             }
 
         //Source SplashDto
         "com.oppo.cdo.card.theme.dto.SplashDto".toClassOrNull()?.resolve()?.apply {
             firstMethod { name = "getAdData" }.hook {
-                replaceTo(null)
+                intercept(null)
             }
             firstMethod { name = "getShowTime" }.hook {
-                replaceTo(1)
+                intercept(1)
             }
             firstMethod { name = "getIsSkip" }.hook {
-                replaceToTrue()
+                intercept(true)
             }
         }
 

@@ -6,6 +6,7 @@ import android.os.IBinder
 import android.os.IPowerManager
 import android.os.RemoteException
 import android.os.ServiceManager
+import com.highcapable.kavaref.extension.classOf
 import com.luckyzyx.luckytool.IPowerServiceController
 import com.luckyzyx.luckytool.service.base.BaseControllerService
 import com.luckyzyx.luckytool.utils.LogUtils
@@ -15,7 +16,7 @@ import org.lsposed.lsparanoid.Obfuscate
 @Obfuscate
 object PowerService : BaseControllerService<IPowerServiceController>() {
     override val TAG: String = "PowerService"
-    override var controllerService: Class<*> = PowerControllerService::class.java
+    override var controllerService: Class<*> = classOf<PowerControllerService>()
 
     private var pm: IPowerManager? = null
     private var binder: IBinder? = null

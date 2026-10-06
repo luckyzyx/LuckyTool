@@ -15,7 +15,7 @@ object RemoveToolRecommendationCard : YukiBaseHooker() {
                     returnType = Void.TYPE
                 }.hook {
                     before {
-                        args().first().set(ArrayList<Any>())
+                        firstArg().set(ArrayList<Any>())
                     }
                 }
             }
@@ -24,8 +24,8 @@ object RemoveToolRecommendationCard : YukiBaseHooker() {
 //        "business.toolpanel.adapter.GameToolTileAdapter".toClassOrNull()?.apply {
 //            method { name = "onCreateViewHolder" }.hook {
 //                after {
-//                    val parent = args().first().cast<ViewGroup>() ?: return@after
-//                    val id = args().last().int()
+//                    val parent = firstArg().get<ViewGroup>() ?: return@after
+//                    val id = lastArg().get<Int>() ?: 0
 //                    if (id == 10005) result<ViewHolder>()?.itemView?.isVisible = false
 //                }
 //            }

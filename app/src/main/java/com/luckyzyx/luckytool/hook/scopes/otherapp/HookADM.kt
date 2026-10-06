@@ -4,6 +4,7 @@ import android.app.Activity
 import androidx.core.content.edit
 import androidx.preference.PreferenceManager
 import com.highcapable.kavaref.KavaRef.Companion.resolve
+import com.highcapable.kavaref.extension.classOf
 import com.highcapable.yukihookapi.hook.entity.YukiBaseHooker
 import com.luckyzyx.luckytool.utils.DexkitUtils
 import com.luckyzyx.luckytool.utils.DexkitUtils.checkDataList
@@ -15,7 +16,7 @@ import org.luckypray.dexkit.query.enums.StringMatchType
 object HookADM : YukiBaseHooker() {
     override fun onHook() {
         //解锁Pro
-        if (prefs(ModulePrefs).getBoolean("adm_unlock_pro", false)) {
+        if (preferences(ModulePrefs).getBoolean("adm_unlock_pro", false)) {
             loadHooker(UnlockAdmPro)
         }
         //解锁线程数
@@ -44,7 +45,7 @@ object HookADM : YukiBaseHooker() {
     @Obfuscate
     object UnlockAdmThreads : YukiBaseHooker() {
         override fun onHook() {
-            val threads = prefs(ModulePrefs).getString("adm_unlock_more_threads", "0")
+            val threads = preferences(ModulePrefs).getString("adm_unlock_more_threads", "0")
                 .toIntOrNull() ?: 0
             if (threads <= 0) return
 
@@ -52,16 +53,16 @@ object HookADM : YukiBaseHooker() {
             DexkitUtils.create(appInfo.sourceDir) { dexKitBridge ->
                 dexKitBridge.findClass {
                     matcher {
-                        addFieldForType(Int::class.java)
+                    addFieldForType(classOf<Int>())
                         methods {
                             add {
                                 name("call", StringMatchType.Contains)
-                                paramCount(0);returnType(Int::class.java)
+                                paramCount(0);returnType(classOf<Int>())
                                 usingNumbers(15)
                             }
                             add {
                                 name("call", StringMatchType.Contains)
-                                paramCount(0);returnType(Boolean::class.java)
+                                paramCount(0);returnType(classOf<Boolean>())
                             }
                         }
                     }

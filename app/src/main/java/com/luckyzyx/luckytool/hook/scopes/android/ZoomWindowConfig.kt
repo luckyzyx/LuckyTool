@@ -21,8 +21,8 @@ class ZoomWindowConfig : YukiBaseHooker() {
     var multiNum = 2
 
     fun loadData() {
-        mode = prefs(ModulePrefs).getString("custom_app_floating_window_display_mode", "0")
-        list.addAll(prefs(ModulePrefs).getStringSet("zoom_window_support_list", ArraySet()))
+        mode = preferences(ModulePrefs).getString("custom_app_floating_window_display_mode", "0")
+        list.addAll(preferences(ModulePrefs).getStringSet("zoom_window_support_list", ArraySet()))
 
         dataChannel.wait<String>("custom_app_floating_window_display_mode") {
             mode = it
@@ -30,15 +30,15 @@ class ZoomWindowConfig : YukiBaseHooker() {
         }
 
         dataChannel.wait("zoom_window_support_list") {
-            val new = prefs(ModulePrefs).getStringSet("zoom_window_support_list", ArraySet())
+            val new = preferences(ModulePrefs).getStringSet("zoom_window_support_list", ArraySet())
             YLog.debug("update zoom window whitelist configs -> ${list.size} | ${new.size}")
             list.clear()
             list.addAll(new)
         }
 
-        multiWindow = prefs(ModulePrefs).getBoolean("force_enable_multi_window_mode", false)
+        multiWindow = preferences(ModulePrefs).getBoolean("force_enable_multi_window_mode", false)
         dataChannel.wait<Boolean>("force_enable_multi_window_mode") { multiWindow = it }
-        multiNum = prefs(ModulePrefs).getInt("custom_multi_window_display_upper_limit", 2)
+        multiNum = preferences(ModulePrefs).getInt("custom_multi_window_display_upper_limit", 2)
         dataChannel.wait<Int>("custom_multi_window_display_upper_limit") { multiNum = it }
 
         YLog.debug("init zoom window configs success -> ${list.size}")
@@ -63,13 +63,13 @@ class ZoomWindowConfig : YukiBaseHooker() {
                 }.hook {
                     before {
                         when (mode) {
-                            "1" -> resultFalse()
-                            "2" -> resultTrue()
+                            "1" -> result = false
+                            "2" -> result = true
                             "3" -> {
-                                val target = args().first().string()
+                                val target = firstArg().get<String>() ?: ""
                                 val packName = if (target.contains("/").not()) target
                                 else target.split("/")[0]
-                                if (list.contains(packName)) resultTrue()
+                                if (list.contains(packName)) result = true
                             }
                         }
                     }
@@ -89,13 +89,13 @@ class ZoomWindowConfig : YukiBaseHooker() {
                 }.hook {
                     before {
                         when (mode) {
-                            "1" -> resultFalse()
-                            "2" -> resultTrue()
+                            "1" -> result = false
+                            "2" -> result = true
                             "3" -> {
-                                val target = args().first().string()
+                                val target = firstArg().get<String>() ?: ""
                                 val packName = if (target.contains("/").not()) target
                                 else target.split("/")[0]
-                                if (list.contains(packName)) resultTrue()
+                                if (list.contains(packName)) result = true
                             }
                         }
                     }
@@ -109,7 +109,7 @@ class ZoomWindowConfig : YukiBaseHooker() {
                     returnType = Int::class
                 }.hook {
                     after {
-//                        val scenario = args().first().int()
+//                        val scenario = firstArg().get<Int>() ?: 0
 //                        val num = result<Int>() ?: -1
 //                        YLog.debug("${method.name} -> $scenario -> $num")
                         if (multiWindow && multiNum > 0) result = multiNum

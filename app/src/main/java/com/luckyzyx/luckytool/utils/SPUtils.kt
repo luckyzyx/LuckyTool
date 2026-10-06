@@ -7,15 +7,25 @@ import android.util.ArrayMap
 import android.util.ArraySet
 import androidx.collection.arrayMapOf
 import androidx.collection.arraySetOf
+import com.luckyzyx.luckytool.ui.service.XposedServiceBridge
 
 const val ModulePrefs: String = "ModulePrefs"
 const val IntentPrefs: String = "IntentPrefs"
 const val SettingsPrefs: String = "SettingsPrefs"
 const val OtherPrefs: String = "OtherPrefs"
 
+/**
+ * UI 侧 prefs 访问统一入口：绑定 libxposed service 时走 remote prefs
+ * （与宿主进程 YukiHookPreferences 同一数据源），未绑定时回落本地 prefs。
+ */
+internal fun Context.appPrefs(prefsName: String): android.content.SharedPreferences =
+    XposedServiceBridge.preferences(prefsName)
+        ?: getSharedPreferences(prefsName, Context.MODE_PRIVATE)
+
+
 fun Context.getString(prefsName: String, key: String, defaultValue: String = ""): String {
     return try {
-        val prefs = getSharedPreferences(prefsName, Context.MODE_WORLD_READABLE)
+        val prefs = appPrefs(prefsName)
         prefs.getString(key, defaultValue) ?: defaultValue
     } catch (t: Throwable) {
         LogUtils.e("SPUtils", "getString $key -> $defaultValue", "$t", true)
@@ -25,7 +35,7 @@ fun Context.getString(prefsName: String, key: String, defaultValue: String = "")
 
 fun Context.putString(prefsName: String, key: String, value: String): Boolean {
     return try {
-        val prefs = getSharedPreferences(prefsName, Context.MODE_WORLD_READABLE)
+        val prefs = appPrefs(prefsName)
         prefs.edit().putString(key, value).commit()
     } catch (t: Throwable) {
         LogUtils.e("SPUtils", "putString $key -> $value", "$t", true)
@@ -37,7 +47,7 @@ fun Context.getStringSet(
     prefsName: String, key: String, defaultValue: Set<String> = arraySetOf()
 ): Set<String> {
     return try {
-        val prefs = getSharedPreferences(prefsName, Context.MODE_WORLD_READABLE)
+        val prefs = appPrefs(prefsName)
         ArraySet(prefs.getStringSet(key, defaultValue))
     } catch (t: Throwable) {
         LogUtils.e("SPUtils", "getStringSet $key -> $defaultValue", "$t", true)
@@ -47,7 +57,7 @@ fun Context.getStringSet(
 
 fun Context.putStringSet(prefsName: String, key: String, value: Set<String>): Boolean {
     return try {
-        val prefs = getSharedPreferences(prefsName, Context.MODE_WORLD_READABLE)
+        val prefs = appPrefs(prefsName)
         prefs.edit().putStringSet(key, value).commit()
     } catch (t: Throwable) {
         LogUtils.e("SPUtils", "putStringSet $key -> $value", "$t", true)
@@ -57,7 +67,7 @@ fun Context.putStringSet(prefsName: String, key: String, value: Set<String>): Bo
 
 fun Context.getInt(prefsName: String, key: String, defaultValue: Int = -1): Int {
     return try {
-        val prefs = getSharedPreferences(prefsName, Context.MODE_WORLD_READABLE)
+        val prefs = appPrefs(prefsName)
         prefs.getInt(key, defaultValue)
     } catch (t: Throwable) {
         LogUtils.e("SPUtils", "getInt $key -> $defaultValue", "$t", true)
@@ -67,7 +77,7 @@ fun Context.getInt(prefsName: String, key: String, defaultValue: Int = -1): Int 
 
 fun Context.putInt(prefsName: String, key: String, value: Int): Boolean {
     return try {
-        val prefs = getSharedPreferences(prefsName, Context.MODE_WORLD_READABLE)
+        val prefs = appPrefs(prefsName)
         prefs.edit().putInt(key, value).commit()
     } catch (t: Throwable) {
         LogUtils.e("SPUtils", "putInt $key -> $value", "$t", true)
@@ -77,7 +87,7 @@ fun Context.putInt(prefsName: String, key: String, value: Int): Boolean {
 
 fun Context.getLong(prefsName: String, key: String, defaultValue: Long = -1L): Long {
     return try {
-        val prefs = getSharedPreferences(prefsName, Context.MODE_WORLD_READABLE)
+        val prefs = appPrefs(prefsName)
         prefs.getLong(key, defaultValue)
     } catch (t: Throwable) {
         LogUtils.e("SPUtils", "getLong $key -> $defaultValue", "$t", true)
@@ -87,7 +97,7 @@ fun Context.getLong(prefsName: String, key: String, defaultValue: Long = -1L): L
 
 fun Context.putLong(prefsName: String, key: String, value: Long): Boolean {
     return try {
-        val prefs = getSharedPreferences(prefsName, Context.MODE_WORLD_READABLE)
+        val prefs = appPrefs(prefsName)
         prefs.edit().putLong(key, value).commit()
     } catch (t: Throwable) {
         LogUtils.e("SPUtils", "putLong $key -> $value", "$t", true)
@@ -97,7 +107,7 @@ fun Context.putLong(prefsName: String, key: String, value: Long): Boolean {
 
 fun Context.getFloat(prefsName: String, key: String, defaultValue: Float = -1F): Float {
     return try {
-        val prefs = getSharedPreferences(prefsName, Context.MODE_WORLD_READABLE)
+        val prefs = appPrefs(prefsName)
         prefs.getFloat(key, defaultValue)
     } catch (t: Throwable) {
         LogUtils.e("SPUtils", "getFloat $key -> $defaultValue", "$t", true)
@@ -107,7 +117,7 @@ fun Context.getFloat(prefsName: String, key: String, defaultValue: Float = -1F):
 
 fun Context.putFloat(prefsName: String, key: String, value: Float): Boolean {
     return try {
-        val prefs = getSharedPreferences(prefsName, Context.MODE_WORLD_READABLE)
+        val prefs = appPrefs(prefsName)
         prefs.edit().putFloat(key, value).commit()
     } catch (t: Throwable) {
         LogUtils.e("SPUtils", "putFloat $key -> $value", "$t", true)
@@ -117,7 +127,7 @@ fun Context.putFloat(prefsName: String, key: String, value: Float): Boolean {
 
 fun Context.getBoolean(prefsName: String, key: String, defaultValue: Boolean = false): Boolean {
     return try {
-        val prefs = getSharedPreferences(prefsName, Context.MODE_WORLD_READABLE)
+        val prefs = appPrefs(prefsName)
         prefs.getBoolean(key, defaultValue)
     } catch (t: Throwable) {
         LogUtils.e("SPUtils", "getBoolean $key -> $defaultValue", "$t", true)
@@ -127,7 +137,7 @@ fun Context.getBoolean(prefsName: String, key: String, defaultValue: Boolean = f
 
 fun Context.putBoolean(prefsName: String, key: String, value: Boolean): Boolean {
     return try {
-        val prefs = getSharedPreferences(prefsName, Context.MODE_WORLD_READABLE)
+        val prefs = appPrefs(prefsName)
         prefs.edit().putBoolean(key, value).commit()
     } catch (t: Throwable) {
         LogUtils.e("SPUtils", "putBoolean $key -> $value", "$t", true)
@@ -143,7 +153,7 @@ fun Context.putBoolean(prefsName: String, key: String, value: Boolean): Boolean 
  */
 fun Context.removeKey(prefsName: String, key: String): Boolean {
     return try {
-        val prefs = getSharedPreferences(prefsName, Context.MODE_WORLD_READABLE)
+        val prefs = appPrefs(prefsName)
         prefs.edit().remove(key).commit()
     } catch (t: Throwable) {
         LogUtils.e("SPUtils", "removeKey $key", "$t", true)
@@ -159,7 +169,7 @@ fun Context.removeKey(prefsName: String, key: String): Boolean {
  */
 fun Context.clearPrefs(prefsName: String): Boolean {
     return try {
-        val prefs = getSharedPreferences(prefsName, Context.MODE_WORLD_READABLE)
+        val prefs = appPrefs(prefsName)
         prefs.edit().clear().commit()
     } catch (t: Throwable) {
         LogUtils.e("SPUtils", "clearPrefs $prefsName", "$t", true)
@@ -176,7 +186,7 @@ fun Context.clearAllPrefs(vararg prefList: String): Boolean {
     val curStatus = BooleanArray(prefList.size)
     prefList.forEachIndexed { index, name ->
         try {
-            val prefs = getSharedPreferences(name, Context.MODE_WORLD_READABLE)
+            val prefs = appPrefs(name)
             curStatus[index] = prefs.edit().clear().commit()
         } catch (t: Throwable) {
             LogUtils.e("SPUtils", "clearAllPrefs $name", "$t", true)
@@ -194,7 +204,7 @@ fun Context.clearAllPrefs(vararg prefList: String): Boolean {
  */
 fun Context.backupPrefs(prefsName: String): MutableMap<String, *> {
     return try {
-        val prefs = getSharedPreferences(prefsName, Context.MODE_WORLD_READABLE)
+        val prefs = appPrefs(prefsName)
         prefs.all
     } catch (t: Throwable) {
         LogUtils.e("SPUtils", "backupPrefs $prefsName", "$t", true)
@@ -212,7 +222,7 @@ fun Context.backupAllPrefs(vararg prefList: String): ArrayMap<String, MutableMap
     val map = ArrayMap<String, MutableMap<String, *>?>()
     prefList.forEachIndexed { _, name ->
         try {
-            val prefs = getSharedPreferences(name, Context.MODE_WORLD_READABLE)
+            val prefs = appPrefs(name)
             map[name] = prefs.all
         } catch (t: Throwable) {
             LogUtils.e("SPUtils", "backupAllPrefs $name", "$t", true)

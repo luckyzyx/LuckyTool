@@ -18,7 +18,7 @@ class RemoveWelfarePage(val dexKitBridge: DexKitBridge) : YukiBaseHooker() {
             "business.mainpanel.main.MainPanelFragment".toClass().resolve().apply {
                 firstMethod { name = "addRadioButton" }.hook {
                     before {
-                        if (args().first().string() == "welfare") resultNull()
+                        if ((firstArg().get<String>() ?: "") == "welfare") result = null
                     }
                 }
                 firstMethod { name = "initView" }.hook {
@@ -35,9 +35,9 @@ class RemoveWelfarePage(val dexKitBridge: DexKitBridge) : YukiBaseHooker() {
                 }
             }.findField {
                 matcher {
-                    type(String::class.java)
+                    type(classOf<String>())
                     addReadMethod {
-                        paramTypes(null, Boolean::class.java, Boolean::class.java)
+                        paramTypes(null, classOf<Boolean>(), classOf<Boolean>())
                         returnType(Void.TYPE)
                         usingStrings("perf", "tool")
                     }
@@ -70,9 +70,9 @@ class RemoveWelfarePage(val dexKitBridge: DexKitBridge) : YukiBaseHooker() {
                 returnType = Void.TYPE
             }.hook {
                 before {
-                    val list = args().first().list<Any>()
+                    val list = firstArg().get<List<Any>>() ?: emptyList()
                     val first = list.getOrNull(0) ?: return@before
-                    args().first().set(ArrayList(arrayListOf(first)))
+                    firstArg().set(ArrayList(arrayListOf(first)))
                 }
             }
         }

@@ -125,18 +125,6 @@
     <string name="ColorOSCorePatchTip">Bộ cài đặt ColorOS chính thức cần kích hoạt các chức năng khác để sử dụng\nDanh sách chức năng-Ứng dụng-Cài đặt ứng dụng</string>
     <string name="corepatch">Vá lõi hệ thống</string>
     <string name="corepatch_summary">Xóa giới hạn cài đặt, hỗ trợ Android %1$s</string>
-    <string name="downgr">Cho phép hạ cấp ứng dụng</string>
-    <string name="downgr_summary">Cho phép ứng dụng ghi đè các phiên bản cũ hơn nếu các phiên bản mới được cài đặt.</string>
-    <string name="authcreak">Tắt xác thực chữ ký của trình quản lý gói</string>
-    <string name="authcreak_summary">Xác minh chữ ký khi cài đặt ứng dụng.</string>
-    <string name="digestCreak">Vô hiệu chữ ký xác thực APK</string>
-    <string name="digestCreak_summary">Cho phép ghi đè các ứng dụng được cài đặt trực tiếp có chữ ký khác nhau</string>
-    <string name="UsePreSig">Luôn sử dụng cài đặt APP có chữ ký</string>
-    <string name="UsePreSig_summary">Bất thường! Nguy hiểm! Chỉ bật khi thực sự cần thiết</string>
-    <string name="usepresig_warn">!!! Tất cả các gói có thể ghi đè ứng dụng đã cài đặt!!\nđể cài đặt các gói không xác định</string>
-    <string name="shared_user_title">Bỏ qua xác minh chữ ký người dùng được chia sẻ</string>
-    <string name="shared_user_summary">Cho phép cài đặt các ứng dụng có chữ ký khác nhau từ những người dùng chia sẻ chúng (<b>Cũng cần bật \"Tắt xác minh chữ ký Apk\"</b>)</string>
-    <string name="disable_verification_agent_title">Vô hiệu hóa xác minh gói cài đặt</string>
     <string name="disable_verification_agent_summary">Ví dụ: Google Play Protect</string>
     <!--Status Bar-->
     <string name="StatusBar">Thanh trạng thái</string>
@@ -249,7 +237,6 @@
     <string name="fix_control_center_date_display">Sửa lỗi hiển thị ngày của trung tâm điều khiển</string>
     <string name="fix_control_center_date_display_suammry">Sửa lỗi không hiển thị ngày hoàn toàn</string>
     <string name="ControlCenterNotificationCenter">Trung tâm điều khiển Trung tâm thông báo</string>
-    <string name="enable_notification_align_both_sides">Bật thông báo căn chỉnh cả hai bên</string>
     <string name="remove_notification_cleanup_button">Xóa nút dọn dẹp thông báo</string>
     <string name="enable_notification_importance_classification">Bật phân loại mức độ quan trọng của thông báo</string>
     <string name="custom_notification_background_transparency">Độ trong suốt của nền thông báo tùy chỉnh</string>
@@ -848,6 +835,7 @@
     <string name="remove_market_splash_page_app_recommend">Xóa đề xuất ứng dụng khỏi trang khởi chạy cửa hàng</string>
     <string name="remove_market_update_download_page_app_recommend">Xóa đề xuất ứng dụng khỏi trang tải xuống bản cập nhật cửa hàng</string>
     <string name="remove_market_mine_page_app_recommend">Xóa đề xuất ứng dụng Lưu trữ trang của tôi</string>
+    <string name="default_expand_update_list">Expand update list by default</string>
     <!--OplusWeather-->
     <string name="disable_weather_jump_browser">Tắt trình duyệt chuyển hướng sang ứng dụng thời tiết</string>
     <string name="remove_weather_some_page_bottom_ads">Xóa quảng cáo ở cuối trang phần thời tiết</string>

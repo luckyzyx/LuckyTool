@@ -19,6 +19,7 @@ import org.lsposed.lsparanoid.Obfuscate
 @Obfuscate
 object HookSystemUIDialog : YukiBaseHooker() {
     override fun onHook() {
+
         val osCode = getOSVersionCode
 
         DexkitUtils.create(appInfo.sourceDir) { dexKitBridge ->
@@ -29,41 +30,41 @@ object HookSystemUIDialog : YukiBaseHooker() {
         }
 
         //启用音量条百分比显示
-        if (prefs(ModulePrefs).getBoolean("enable_volume_bar_percent_display", false)) {
+        if (preferences(ModulePrefs).getBoolean("enable_volume_bar_percent_display", false)) {
             loadHooker(EnableVolumeBarPercentDisplay)
         }
 
         //禁用音量条粗细效果
-        if (prefs(ModulePrefs).getBoolean("disable_volume_bar_thickness_effect", false)) {
+        if (preferences(ModulePrefs).getBoolean("disable_volume_bar_thickness_effect", false)) {
             if (osCode >= 30) loadHooker(DisableVolumeBarThicknessEffect)
         }
 
         //禁用复制悬浮窗
-        if (prefs(ModulePrefs).getBoolean("disable_duplicate_floating_window", false)) {
+        if (preferences(ModulePrefs).getBoolean("disable_duplicate_floating_window", false)) {
             loadHooker(DisableDuplicateFloatingWindow)
         }
         //禁用耳机高音量警告
-        if (prefs(ModulePrefs).getBoolean("disable_headphone_high_volume_warning", false)) {
+        if (preferences(ModulePrefs).getBoolean("disable_headphone_high_volume_warning", false)) {
             loadHooker(DisableHeadphoneHighVolumeWarning)
         }
         //移除低电量对话框警告
-        if (prefs(ModulePrefs).getBoolean("remove_low_battery_dialog_warning", false)) {
+        if (preferences(ModulePrefs).getBoolean("remove_low_battery_dialog_warning", false)) {
             loadHooker(RemoveLowBatteryDialogWarning)
         }
         //移除USB连接对话框
-        if (prefs(ModulePrefs).getBoolean("remove_usb_connect_dialog", false)) {
+        if (preferences(ModulePrefs).getBoolean("remove_usb_connect_dialog", false)) {
             loadHooker(RemoveUSBConnectDialog)
         }
         //移除开始录制或投射对话框
-        if (prefs(ModulePrefs).getBoolean("remove_start_recording_or_casting_dialog", false)) {
+        if (preferences(ModulePrefs).getBoolean("remove_start_recording_or_casting_dialog", false)) {
             loadHooker(RemoveStartRecordingOrCastingDialog)
         }
         //浮窗贴边前台运行
-        if (prefs(ModulePrefs).getBoolean("run_floating_window_tasks_in_foreground", false)) {
+        if (preferences(ModulePrefs).getBoolean("run_floating_window_tasks_in_foreground", false)) {
             if (osCode in 26..33) loadHooker(RunFloatingWindowTasksInForeground)
         }
         //强制显示Toast提示图标
-        if (prefs(ModulePrefs).getBoolean("force_show_toast_icon", false)) {
+        if (preferences(ModulePrefs).getBoolean("force_show_toast_icon", false)) {
             loadHooker(ForceShowToastIcon)
         }
     }

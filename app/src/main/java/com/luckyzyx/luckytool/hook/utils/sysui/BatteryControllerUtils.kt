@@ -28,7 +28,8 @@ class BatteryControllerUtils(val classLoader: ClassLoader?) {
 
     @DeprecatedSinceApi(Build.VERSION_CODES.TIRAMISU, "仅在A13中使用")
     fun getChargerTechnology(instance: Any): Int {
-        return instance.asResolver().firstMethod { name = "getChargerTechnology" }.invoke<Int>() ?: 0
+        return instance.asResolver().firstMethod { name = "getChargerTechnology" }.invoke<Int>()
+            ?: 0
     }
 
     @DeprecatedSinceApi(Build.VERSION_CODES.TIRAMISU, "仅在A13中使用")

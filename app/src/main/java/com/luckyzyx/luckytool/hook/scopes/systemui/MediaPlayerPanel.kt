@@ -24,7 +24,7 @@ object MediaPlayerPanel : YukiBaseHooker() {
         val isAutoDisplay = VariousClass(
             "com.oplusos.systemui.qs.OplusQSTileMediaContainer", //C13.1
             "com.oplus.systemui.qs.OplusQSTileMediaContainer" //C14
-        ).toClassOrNull()?.let {
+        ).toClassOrNull(hostClassLoader)?.let {
             it.resolve().firstMethodOrNull { name = "setMediaMode" } != null
         } ?: true
 
@@ -32,7 +32,7 @@ object MediaPlayerPanel : YukiBaseHooker() {
         else loadHooker(MediaPlayerDisplayModePermanent)
 
         //强制开启媒体切换按钮
-        if (prefs(ModulePrefs).getBoolean("force_enable_media_toggle_button", false)) {
+        if (preferences(ModulePrefs).getBoolean("force_enable_media_toggle_button", false)) {
             if (SDK == A13) loadHooker(ForceEnableMediaToggleButton)
         }
     }
@@ -40,7 +40,7 @@ object MediaPlayerPanel : YukiBaseHooker() {
     @Obfuscate
     object MediaPlayerDisplayMode : YukiBaseHooker() {
         override fun onHook() {
-            var mode = prefs(ModulePrefs).getString("set_media_player_display_mode", "0")
+            var mode = preferences(ModulePrefs).getString("set_media_player_display_mode", "0")
             dataChannel.wait<String>("set_media_player_display_mode") { mode = it }
 
             //Source OplusQsMediaCarouselController
@@ -71,7 +71,7 @@ object MediaPlayerPanel : YukiBaseHooker() {
                                         else -> return@after
                                     }
                                     val mediaModeChangeListener =
-                                        args().first().any() ?: return@after
+                                        firstArg().get() ?: return@after
                                     mediaModeChangeListener.asResolver()
                                         .firstMethod { name = "onChanged" }.invoke(status)
                                 }
@@ -91,7 +91,7 @@ object MediaPlayerPanel : YukiBaseHooker() {
                             "3" -> getMediaData() != null
                             else -> return@before
                         }
-                        args().first().set(status)
+                        firstArg().set(status)
                     }
                 }
             }
@@ -105,7 +105,7 @@ object MediaPlayerPanel : YukiBaseHooker() {
                             "3" -> getMediaData() != null
                             else -> return@before
                         }
-                        args().first().set(status)
+                        firstArg().set(status)
                     }
                 }
             }
@@ -116,7 +116,7 @@ object MediaPlayerPanel : YukiBaseHooker() {
     object MediaPlayerDisplayModePermanent : YukiBaseHooker() {
         @SuppressLint("DiscouragedApi")
         override fun onHook() {
-            var mode = prefs(ModulePrefs).getString("set_media_player_display_mode", "0")
+            var mode = preferences(ModulePrefs).getString("set_media_player_display_mode", "0")
             dataChannel.wait<String>("set_media_player_display_mode") {
                 mode = it
                 ControlCenterTiles.callback?.invoke("set_media_player_display_mode", it)
@@ -140,8 +140,8 @@ object MediaPlayerPanel : YukiBaseHooker() {
                             "3" -> if (getMediaData() == null) 8 else 0
                             else -> return@before
                         }
-                        val res = args().first().cast<Resources>() ?: return@before
-                        val bool = args().last().cast<Boolean>() ?: return@before
+                        val res = firstArg().get<Resources>() ?: return@before
+                        val bool = lastArg().get<Boolean>() ?: return@before
                         val linear = firstField { name = "mQsMediaPanelContainer" }.of(instance)
                             .get<LinearLayout>() ?: return@before
                         val mTmpConstraintSet =
@@ -160,7 +160,7 @@ object MediaPlayerPanel : YukiBaseHooker() {
                         if (status == 0) mTmpConstraintSet.constrainHeightSet(
                             linear.id, heightSize
                         )
-                        resultNull()
+                        result = null
                     }
                 }
                 firstMethod { name = "updateQsSecondTileContainer" }.hook {
@@ -171,8 +171,8 @@ object MediaPlayerPanel : YukiBaseHooker() {
                             "3" -> getMediaData() != null
                             else -> return@before
                         }
-                        val res = args().first().cast<Resources>() ?: return@before
-                        val bool = args().last().cast<Boolean>() ?: return@before
+                        val res = firstArg().get<Resources>() ?: return@before
+                        val bool = lastArg().get<Boolean>() ?: return@before
                         val linear = firstField { name = "mSecondTileContainer" }.of(instance)
                             .get<LinearLayout>() ?: return@before
                         val mTmpConstraintSet =
@@ -214,7 +214,7 @@ object MediaPlayerPanel : YukiBaseHooker() {
                             mTmpConstraintSet.connectSet(linear.id, 7, 0, 7, 0)
                             mTmpConstraintSet.connectSet(linear.id, 3, 0, 3, 0)
                         }
-                        resultNull()
+                        result = null
                     }
                 }
             }
@@ -222,7 +222,7 @@ object MediaPlayerPanel : YukiBaseHooker() {
     }
 
     fun getMediaData(): Any? {
-        return MediaPlayerDataUtils(appClassLoader).getMediaDataStatus()
+        return MediaPlayerDataUtils(hostClassLoader!!).getMediaDataStatus()
     }
 
     fun Any.connectSet(startId: Int, startSide: Int, endId: Int, endSide: Int, margin: Int) {
@@ -253,7 +253,7 @@ object MediaPlayerPanel : YukiBaseHooker() {
             "com.oplus.systemui.qs.media.OplusQsMediaPanelView".toClass().resolve().apply {
                 firstMethod { name = "bindMediaData" }.hook {
                     after {
-                        args().first().any() ?: firstField { name = "mMediaOutputBtn" }.of(instance)
+                        firstArg().get() ?: firstField { name = "mMediaOutputBtn" }.of(instance)
                             .get<ImageButton>()?.setMediaOutputBtn()
                     }
                 }
@@ -262,7 +262,7 @@ object MediaPlayerPanel : YukiBaseHooker() {
             "com.oplus.systemui.qs.media.OplusQsMediaOutputDialog".toClass().resolve().apply {
                 firstMethod { name = "bindMediaView" }.hook {
                     after {
-                        args().first().any() ?: firstField { name = "mMediaOutputBtn" }.of(instance)
+                        firstArg().get() ?: firstField { name = "mMediaOutputBtn" }.of(instance)
                             .get<ImageButton>()?.setMediaOutputBtn()
                     }
                 }
@@ -275,7 +275,7 @@ object MediaPlayerPanel : YukiBaseHooker() {
         isEnabled = true
         setOnClickListener {
             val clazz = "com.android.systemui.media.dialog.MediaOutputDialogFactory".toClass()
-            val mMediaOutputDialogFactory = DependencyUtils(appClassLoader).getDependency(clazz)
+            val mMediaOutputDialogFactory = DependencyUtils(hostClassLoader!!).getDependency(clazz)
             mMediaOutputDialogFactory?.asResolver()
                 ?.firstMethod { name = "create"; parameterCount = 3 }
                 ?.invoke("", true, null)

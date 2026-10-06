@@ -3,6 +3,7 @@ package com.luckyzyx.luckytool.service
 import android.content.Intent
 import android.os.IBinder
 import android.os.SystemProperties
+import com.highcapable.kavaref.extension.classOf
 import com.luckyzyx.luckytool.IAdbDebugController
 import com.luckyzyx.luckytool.service.base.BaseControllerService
 import com.luckyzyx.luckytool.utils.LogUtils
@@ -15,7 +16,7 @@ import java.net.NetworkInterface
 @Obfuscate
 object AdbService : BaseControllerService<IAdbDebugController>() {
     override val TAG = "AdbService"
-    override var controllerService: Class<*> = AdbControllerService::class.java
+    override var controllerService: Class<*> = classOf<AdbControllerService>()
 
     override fun getController(iBinder: IBinder?): IAdbDebugController? {
         return IAdbDebugController.Stub.asInterface(iBinder)

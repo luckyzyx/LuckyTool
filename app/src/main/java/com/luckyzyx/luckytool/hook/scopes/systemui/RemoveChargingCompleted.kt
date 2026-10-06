@@ -16,7 +16,7 @@ object RemoveChargingCompleted : YukiBaseHooker() {
         ).toClass().resolve().apply {
             firstMethod { name = "showChargeErrorDialog";parameterCount = 1 }.hook {
                 before {
-                    if (args().first().int() == 7) resultNull()
+                    if ((firstArg().get<Int>() ?: 0) == 7) result = null
                 }
             }
         }

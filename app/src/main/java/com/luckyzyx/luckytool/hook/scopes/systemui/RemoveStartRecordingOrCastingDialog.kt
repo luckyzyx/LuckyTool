@@ -15,7 +15,7 @@ object RemoveStartRecordingOrCastingDialog : YukiBaseHooker() {
                     parameters(Int::class, String::class)
                     returnType = Boolean::class
                 }.hook {
-                    replaceToTrue()
+                    intercept(true)
                 }
             }
     }

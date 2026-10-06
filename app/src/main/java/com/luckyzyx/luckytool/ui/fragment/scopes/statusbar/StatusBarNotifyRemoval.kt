@@ -122,6 +122,7 @@ class StatusBarNotifyRemoval : BaseScopePreferenceFeagment() {
                 title = getString(R.string.remove_gt_mode_notification)
                 key = "remove_gt_mode_notification"
                 setDefaultValue(false)
+                isVisible = osCode < 40
                 isIconSpaceReserved = false
             })
         }

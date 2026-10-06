@@ -10,7 +10,7 @@ object EnableGameBypassChargingSupport : YukiBaseHooker() {
         //Source COSAExportedImpl
         "com.oplus.cosa.exported.COSAExportedImpl".toClass().resolve().apply {
             firstMethod { name = "getBypassChargingDeviceSupport" }.hook{
-                replaceTo(2)
+                intercept(2)
             }
         }
     }

@@ -25,7 +25,7 @@ object CustomNotificationBackgroundTransparency : YukiBaseHooker() {
 
     override fun onHook() {
         if (getOSVersionCode < 25) return
-        customAlpha = prefs(ModulePrefs).getInt("custom_notification_background_transparency", -1)
+        customAlpha = preferences(ModulePrefs).getInt("custom_notification_background_transparency", -1)
         dataChannel.wait<Int>("custom_notification_background_transparency") {
             customAlpha = it
         }
@@ -41,13 +41,13 @@ object CustomNotificationBackgroundTransparency : YukiBaseHooker() {
                 ?: firstMethod { method { name = "draw";parameterCount = 2 } }).hook {
                 before {
                     if (customAlpha < 0) return@before
-                    modifyNotifyPanelAlpha(instance(), args().last().cast<Drawable>())
+                    modifyNotifyPanelAlpha(instance(), lastArg().get<Drawable>())
                 }
             }
             firstMethod { name = "draw";parameterCount = 2;superclass() }.hook {
                 before {
                     if (customAlpha < 0) return@before
-                    modifyNotifyPanelAlpha(instance(), args().last().cast<Drawable>())
+                    modifyNotifyPanelAlpha(instance(), lastArg().get<Drawable>())
                 }
             }
         }
@@ -56,12 +56,12 @@ object CustomNotificationBackgroundTransparency : YukiBaseHooker() {
         if (isOld) NotificationBackgroundView.toClass().resolve().apply {
             firstMethod { name = "draw";parameterCount = 2 }.hook {
                 before {
-                    modifyNotifyPanelAlpha(instance(), args().last().cast<Drawable>())
+                    modifyNotifyPanelAlpha(instance(), lastArg().get<Drawable>())
                 }
             }
             firstMethodOrNull { name = "drawCustom";parameterCount = 2 }?.hook {
                 before {
-                    modifyNotifyPanelAlpha(instance(), args().last().cast<Drawable>())
+                    modifyNotifyPanelAlpha(instance(), lastArg().get<Drawable>())
                 }
             }
         }

@@ -6,6 +6,7 @@ import android.database.ContentObserver
 import android.os.Handler
 import android.os.Looper
 import com.highcapable.kavaref.KavaRef.Companion.resolve
+import com.highcapable.kavaref.extension.classOf
 import com.highcapable.yukihookapi.hook.entity.YukiBaseHooker
 import com.luckyzyx.luckytool.utils.DexkitUtils.checkDataList
 import org.lsposed.lsparanoid.Obfuscate
@@ -17,7 +18,7 @@ class RemoveBatteryTemperatureControl(val dexKitBridge: DexKitBridge) : YukiBase
         //Source ThermalControlHandler / ThermalControllHandler
         dexKitBridge.findClass {
             matcher {
-                addFieldForType(Context::class.java)
+            addFieldForType(classOf<Context>())
 //                addFieldForType(Looper::class.java)
                 addMethod { name("handleMessage") }
 //                usingStrings("ThermalControllHandler")
@@ -62,10 +63,10 @@ class RemoveBatteryTemperatureControl(val dexKitBridge: DexKitBridge) : YukiBase
                     paramCount(0)
                     returnType(Void.TYPE)
                     usingFields {
-                        add { type(Boolean::class.java) }
-                        add { type(Handler::class.java) }
-                        add { type(ContentResolver::class.java) }
-                        add { type(ContentObserver::class.java) }
+                    add { type(classOf<Boolean>()) }
+                        add { type(classOf<Handler>()) }
+                        add { type(classOf<ContentResolver>()) }
+                        add { type(classOf<ContentObserver>()) }
                     }
                     addInvoke {
                         paramCount(0)

@@ -5,6 +5,7 @@ import android.content.Context
 import android.content.Intent
 import com.android.internal.hidden_from_bootclasspath.android.permission.flags.Flags
 import com.highcapable.kavaref.KavaRef.Companion.asResolver
+import com.highcapable.kavaref.extension.classOf
 import com.luckyzyx.luckytool.utils.CommandUtils.uid
 import org.lsposed.lsparanoid.Obfuscate
 
@@ -81,7 +82,7 @@ class EcmUtils(val context: Context) {
     }
 
     fun isAppopsRestricted(packName: String): Boolean {
-        val appOps = context.getSystemService(AppOpsManager::class.java)
+        val appOps = context.getSystemService(classOf<AppOpsManager>())
         val op = appOps.asResolver().firstField { name = "OPSTR_ACCESS_RESTRICTED_SETTINGS" }
             .get<String>() ?: return false
         val uid = PackageUtils(context.packageManager).getPackageUid(packName, 0) ?: return false
@@ -90,7 +91,7 @@ class EcmUtils(val context: Context) {
     }
 
     fun setAppopsRestrict(packName: String, restrict: Boolean) {
-        val appOps = context.getSystemService(AppOpsManager::class.java)
+        val appOps = context.getSystemService(classOf<AppOpsManager>())
         appOps.asResolver().firstMethod {
             name = "setMode"
             parameters(Int::class, Int::class, String::class, Int::class)

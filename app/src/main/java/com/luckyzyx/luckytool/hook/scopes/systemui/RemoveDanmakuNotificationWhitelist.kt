@@ -16,7 +16,7 @@ object RemoveDanmakuNotificationWhitelist : YukiBaseHooker() {
             firstMethod {
                 name = "isSupportDanmaku"
             }.hook {
-                replaceToTrue()
+                intercept(true)
             }
         }
     }

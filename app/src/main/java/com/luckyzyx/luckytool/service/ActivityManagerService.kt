@@ -7,16 +7,17 @@ import android.content.pm.UserInfo
 import android.os.IBinder
 import android.os.RemoteException
 import android.os.ServiceManager
-import org.lsposed.lsparanoid.Obfuscate
+import com.highcapable.kavaref.extension.classOf
 import com.luckyzyx.luckytool.IActivityServiceController
 import com.luckyzyx.luckytool.service.base.BaseControllerService
 import com.luckyzyx.luckytool.utils.LogUtils
 import com.topjohnwu.superuser.ipc.RootService
+import org.lsposed.lsparanoid.Obfuscate
 
 @Obfuscate
 object ActivityManagerService : BaseControllerService<IActivityServiceController>() {
     override val TAG: String = "ActivityManagerService"
-    override var controllerService: Class<*> = ActivityControllerService::class.java
+    override var controllerService: Class<*> = classOf<ActivityControllerService>()
 
     private var am: IActivityManager? = null
     private var binder: IBinder? = null

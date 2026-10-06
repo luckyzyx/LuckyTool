@@ -18,7 +18,7 @@ object EnableGlobalNotificationSimpleBannerMode : YukiBaseHooker() {
                 name = "isSimpleBannerEnable"
                 returnType = Boolean::class
             }.hook {
-                replaceToTrue()
+                intercept(true)
             }
         }
     }

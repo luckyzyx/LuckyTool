@@ -9,15 +9,15 @@ import org.lsposed.lsparanoid.Obfuscate
 object HookMediaProjectionManager : YukiBaseHooker() {
     override fun onHook() {
         val isEnable =
-            prefs(ModulePrefs).getBoolean("enable_record_calls_on_third_party_apps", false)
+            preferences(ModulePrefs).getBoolean("enable_record_calls_on_third_party_apps", false)
 
         //Source MediaProjectionManagerServiceExtImpl
         "android.media.projection.MediaProjectionManagerServiceExtImpl".toClassOrNull()?.resolve()?.apply {
             firstMethod { name = "isOplusApp";parameterCount = 1 }.hook {
                 after {
                     if (!isEnable) return@after
-                    val packageName = args().first().string()
-                    if (packageName == "com.oplus.audiomonitor") resultTrue()
+                    val packageName = firstArg().get<String>() ?: ""
+                    if (packageName == "com.oplus.audiomonitor") result = true
                 }
             }
         }

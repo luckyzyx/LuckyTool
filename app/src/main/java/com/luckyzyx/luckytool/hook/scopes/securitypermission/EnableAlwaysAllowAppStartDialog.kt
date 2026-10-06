@@ -7,6 +7,7 @@ import android.content.res.Configuration
 import android.os.Bundle
 import com.highcapable.kavaref.KavaRef.Companion.asResolver
 import com.highcapable.kavaref.KavaRef.Companion.resolve
+import com.highcapable.kavaref.extension.classOf
 import com.highcapable.yukihookapi.hook.entity.YukiBaseHooker
 import com.luckyzyx.luckytool.utils.DexkitUtils.checkDataList
 import org.lsposed.lsparanoid.Obfuscate
@@ -26,9 +27,9 @@ class EnableAlwaysAllowAppStartDialog(val dexKitBridge: DexKitBridge) : YukiBase
             dexKitBridge.findClass {
                 matcher {
                     fields {
-                        addForType(Configuration::class.java)
-                        addForType(ComponentCallbacks::class.java)
-                        addForType(DialogInterface.OnClickListener::class.java)
+                    addForType(classOf<Configuration>())
+                        addForType(classOf<ComponentCallbacks>())
+                        addForType(classOf<DialogInterface.OnClickListener>())
                     }
                     usingStrings("COUIAlertDialogBuilder")
                 }
@@ -38,12 +39,12 @@ class EnableAlwaysAllowAppStartDialog(val dexKitBridge: DexKitBridge) : YukiBase
                 findMethod {
                     matcher {
                         paramTypes(
-                            Int::class.java,
-                            DialogInterface.OnClickListener::class.java,
-                            Boolean::class.java
+                            classOf<Int>(),
+                            classOf<DialogInterface.OnClickListener>(),
+                            classOf<Boolean>()
                         )
                         addUsingField {
-                            type(Int::class.java)
+                            type(classOf<Int>())
                         }
                         usingNumbers(android.R.id.button3)
                     }
@@ -60,8 +61,8 @@ class EnableAlwaysAllowAppStartDialog(val dexKitBridge: DexKitBridge) : YukiBase
                             )
                         }.hook {
                             before {
-                                val resId = args().first().int()
-                                val listener = args(1).any() ?: return@before
+                                val resId = firstArg().get<Int>() ?: 0
+                                val listener = arg(1).get() ?: return@before
                                 val activity =
                                     listener.asResolver().firstField { type = Activity::class }
                                         .get<Activity>() ?: return@before
@@ -73,7 +74,7 @@ class EnableAlwaysAllowAppStartDialog(val dexKitBridge: DexKitBridge) : YukiBase
                                     "app_start_dialog_always_allow", "string",
                                     this@HookAlwaysAllowButton.packageName
                                 ).takeIf { it > 0 } ?: return@before
-                                if (resId == allow30Id) args().first().set(alwaysAllowId)
+                                if (resId == allow30Id) firstArg().set(alwaysAllowId)
                             }
                         }
                     }
@@ -98,7 +99,7 @@ class EnableAlwaysAllowAppStartDialog(val dexKitBridge: DexKitBridge) : YukiBase
 
                 findMethod {
                     matcher {
-                        paramTypes(Bundle::class.java)
+                        paramTypes(classOf<Bundle>())
                         usingStrings("OplusPermissionManager", "putActivityStartWhiteList")
                     }
                 }.apply {
@@ -110,7 +111,7 @@ class EnableAlwaysAllowAppStartDialog(val dexKitBridge: DexKitBridge) : YukiBase
                             parameters(Bundle::class)
                         }.hook {
                             before {
-                                val bundle = args().first().cast<Bundle>() ?: return@before
+                                val bundle = firstArg().get<Bundle>() ?: return@before
                                 bundle.remove("valid_time")
                             }
                         }

@@ -4,6 +4,7 @@ import android.content.Context
 import android.provider.Settings
 import com.highcapable.kavaref.KavaRef.Companion.resolve
 import com.highcapable.kavaref.extension.VariousClass
+import com.highcapable.kavaref.extension.classOf
 import com.highcapable.yukihookapi.hook.entity.YukiBaseHooker
 import com.luckyzyx.luckytool.hook.utils.SettingsUtils
 import org.lsposed.lsparanoid.Obfuscate
@@ -27,7 +28,7 @@ object ForceEnableScreenOffMusicSupport : YukiBaseHooker() {
                     val context = firstField { name = "mContext" }.of(instance).get<Context>()
                         ?: return@after
                     SettingsUtils.putIntForUser(
-                        Settings.Secure::class.java, context.contentResolver,
+                        classOf<Settings.Secure>(), context.contentResolver,
                         "aod_media_support", 1, 0
                     )
                     statisticUtil.toClass().resolve().firstMethod {

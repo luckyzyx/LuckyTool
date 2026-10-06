@@ -1,12 +1,12 @@
 package com.luckyzyx.luckytool.selector
 
 import android.content.Context
-import android.view.LayoutInflater
 import android.widget.CompoundButton
 import androidx.core.view.isVisible
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.google.android.material.chip.Chip
 import com.google.android.material.chip.ChipGroup
+import com.highcapable.betterandroid.ui.extension.view.layoutInflater
 import com.luckyzyx.luckytool.databinding.DialogSortFilterSelectorLayoutBinding
 import org.lsposed.lsparanoid.Obfuscate
 
@@ -14,7 +14,7 @@ import org.lsposed.lsparanoid.Obfuscate
 class SortFilterBottomSheetDialog(context: Context) : BottomSheetDialog(context) {
 
     private var binding =
-        DialogSortFilterSelectorLayoutBinding.inflate(LayoutInflater.from(context))
+        DialogSortFilterSelectorLayoutBinding.inflate(context.layoutInflater)
 
     init {
         setContentView(binding.root)

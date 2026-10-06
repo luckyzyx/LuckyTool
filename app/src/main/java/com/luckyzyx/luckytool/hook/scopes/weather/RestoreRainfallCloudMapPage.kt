@@ -11,7 +11,7 @@ object RestoreRainfallCloudMapPage : YukiBaseHooker() {
         "com.oplus.weather.indexoperations.IndexOperationsManager".toClassOrNull()?.resolve()
             ?.apply {
                 firstMethod { name = "supportIndexOperationsFeature" }.hook {
-                    replaceToFalse()
+                    intercept(false)
                 }
             }
     }

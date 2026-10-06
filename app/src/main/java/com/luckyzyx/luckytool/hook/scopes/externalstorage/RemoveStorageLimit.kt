@@ -10,7 +10,7 @@ object RemoveStorageLimit : YukiBaseHooker() {
         //Source ExternalStorageProvider
         "com.android.externalstorage.ExternalStorageProvider".toClass().resolve().apply {
             firstMethodOrNull { name = "shouldBlockDirectoryFromTree" }?.hook {
-                replaceToFalse()
+                intercept(false)
             }
         }
     }

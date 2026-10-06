@@ -5,7 +5,7 @@ import com.luckyzyx.luckytool.hook.scopes.systemui.ControlCenterBackgroundTransP
 import com.luckyzyx.luckytool.hook.scopes.systemui.ControlCenterClockStyle
 import com.luckyzyx.luckytool.hook.scopes.systemui.ControlCenterDateStyle
 import com.luckyzyx.luckytool.hook.scopes.systemui.EnableControlCenterProgressPercentDisplay
-import com.luckyzyx.luckytool.hook.scopes.systemui.EnableNotificationAlignBothSides
+import com.luckyzyx.luckytool.hook.scopes.systemui.EnableNotificationSideSpacing
 import com.luckyzyx.luckytool.hook.scopes.systemui.NotificationBackgroundBlurAlpha
 import com.luckyzyx.luckytool.hook.scopes.systemui.RemoveControlCenterCarriers
 import com.luckyzyx.luckytool.hook.scopes.systemui.RemoveControlCenterUserSwitcher
@@ -26,12 +26,12 @@ object StatusBarControlCenter : YukiBaseHooker() {
         //控制中心日期样式
         loadHooker(ControlCenterDateStyle)
 
-        //通知两侧对齐
-        if (prefs(ModulePrefs).getBoolean("enable_notification_align_both_sides", false)) {
-            loadHooker(EnableNotificationAlignBothSides)
+        //自定义通知两侧间距
+        if (preferences(ModulePrefs).getBoolean("enable_notification_side_spacing", false)) {
+            if (osCode >= 23) loadHooker(EnableNotificationSideSpacing)
         }
         //移除控制中心多用户
-        if (prefs(ModulePrefs).getBoolean("remove_control_center_user_switcher", false)) {
+        if (preferences(ModulePrefs).getBoolean("remove_control_center_user_switcher", false)) {
             if (osCode < 26) loadHooker(RemoveControlCenterUserSwitcher)
         }
         //控制中心底部网络警告
@@ -49,13 +49,16 @@ object StatusBarControlCenter : YukiBaseHooker() {
 
         //启用控制中心进度条百分比显示
         val enableProgressPercent =
-            prefs(ModulePrefs).getBoolean("enable_control_center_progress_percent_display", false)
+            preferences(ModulePrefs).getBoolean(
+                "enable_control_center_progress_percent_display",
+                false
+            )
         if (enableProgressPercent) {
             loadHooker(EnableControlCenterProgressPercentDisplay)
         }
 
         //移除控制中心运营商
-        if (prefs(ModulePrefs).getBoolean("remove_control_center_carriers", false)) {
+        if (preferences(ModulePrefs).getBoolean("remove_control_center_carriers", false)) {
             loadHooker(RemoveControlCenterCarriers)
         }
     }

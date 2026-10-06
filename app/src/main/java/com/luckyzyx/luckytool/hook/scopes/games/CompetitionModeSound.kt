@@ -5,6 +5,7 @@ import android.media.AudioManager
 import android.media.SoundPool
 import android.util.SparseIntArray
 import com.highcapable.kavaref.KavaRef.Companion.resolve
+import com.highcapable.kavaref.extension.classOf
 import com.highcapable.yukihookapi.hook.entity.YukiBaseHooker
 import com.luckyzyx.luckytool.utils.DexkitUtils.checkDataList
 import org.lsposed.lsparanoid.Obfuscate
@@ -18,11 +19,11 @@ class CompetitionModeSound(val dexKitBridge: DexKitBridge) : YukiBaseHooker() {
         dexKitBridge.findClass {
             matcher {
                 fields {
-                    addForType(Context::class.java)
-                    addForType(Boolean::class.java)
-                    addForType(SoundPool::class.java)
-                    addForType(AudioManager::class.java)
-                    addForType(SparseIntArray::class.java)
+                addForType(classOf<Context>())
+                    addForType(classOf<Boolean>())
+                    addForType(classOf<SoundPool>())
+                    addForType(classOf<AudioManager>())
+                    addForType(classOf<SparseIntArray>())
                 }
                 methods {
                     add {
@@ -30,7 +31,7 @@ class CompetitionModeSound(val dexKitBridge: DexKitBridge) : YukiBaseHooker() {
                         returnType(Void.TYPE)
                     }
                     add {
-                        paramTypes(Int::class.java)
+                        paramTypes(classOf<Int>())
                         returnType(Void.TYPE)
                     }
                 }
@@ -40,7 +41,7 @@ class CompetitionModeSound(val dexKitBridge: DexKitBridge) : YukiBaseHooker() {
             single().name.toClass().resolve().apply {
                 method { parameters(Int::class) }.hookAll {
                     before {
-                        if (args().first().int() == 9) resultNull()
+                        if ((firstArg().get<Int>() ?: 0) == 9) result = null
                     }
                 }
             }

@@ -17,9 +17,9 @@ import com.luckyzyx.luckytool.hook.scopes.games.RemoveSomeVipLimit
 import com.luckyzyx.luckytool.hook.scopes.games.RemoveStartupAnimation
 import com.luckyzyx.luckytool.hook.scopes.games.RemoveToolRecommendationCard
 import com.luckyzyx.luckytool.hook.scopes.games.RemoveWelfarePage
+import com.luckyzyx.luckytool.hook.utils.getAppVerInfo
 import com.luckyzyx.luckytool.utils.DexkitUtils
 import com.luckyzyx.luckytool.utils.ModulePrefs
-import com.luckyzyx.luckytool.utils.getAppVerInfo
 import com.luckyzyx.luckytool.utils.getOSVersionCode
 import org.lsposed.lsparanoid.Obfuscate
 
@@ -28,7 +28,7 @@ object HookOplusGames : YukiBaseHooker() {
     override fun onHook() {
         val osCode = getOSVersionCode
 
-        val appVer = prefs(ModulePrefs).getAppVerInfo(packageName)
+        val appVer = preferences(ModulePrefs).getAppVerInfo(packageName)
         //非ColorOS官方安装器直接返回
         if (appVer?.versionCommit == "0") return
         val isNew = (appVer?.versionName?.substringBefore(".")?.toIntOrNull() ?: 10) >= 10
@@ -40,27 +40,27 @@ object HookOplusGames : YukiBaseHooker() {
             //HookCloudConditionFeature
             if (!isNew) loadHooker(CloudConditionFeature(appVer, dexKitBridge))
             //游戏滤镜-->Root检测
-            if (prefs(ModulePrefs).getBoolean("remove_root_check", false)) {
+            if (preferences(ModulePrefs).getBoolean("remove_root_check", false)) {
                 loadHooker(RemoveRootCheck(dexKitBridge))
             }
             //移除启动动画
-            if (prefs(ModulePrefs).getBoolean("remove_startup_animation", false)) {
+            if (preferences(ModulePrefs).getBoolean("remove_startup_animation", false)) {
                 loadHooker(RemoveStartupAnimation(dexKitBridge))
             }
             //启用赛事支持模式
-            if (prefs(ModulePrefs).getBoolean("enable_support_competition_mode", false)) {
+            if (preferences(ModulePrefs).getBoolean("enable_support_competition_mode", false)) {
                 loadHooker(EnableSupportCompetitionMode(dexKitBridge))
             }
             //移除赛事模式音效
-            if (prefs(ModulePrefs).getBoolean("remove_competition_mode_sound", false)) {
+            if (preferences(ModulePrefs).getBoolean("remove_competition_mode_sound", false)) {
                 loadHooker(CompetitionModeSound(dexKitBridge))
             }
             //移除游戏助手福利页面
-            if (!isNew && prefs(ModulePrefs).getBoolean("remove_welfare_page", false)) {
+            if (!isNew && preferences(ModulePrefs).getBoolean("remove_welfare_page", false)) {
                 loadHooker(RemoveWelfarePage(dexKitBridge))
             }
             //启用游戏助手后台挂机
-            if (prefs(ModulePrefs).getBoolean("enable_game_run_in_background", false)) {
+            if (preferences(ModulePrefs).getBoolean("enable_game_run_in_background", false)) {
                 if (osCode >= 27) loadHooker(EnableGameRunInBackground(dexKitBridge))
             }
         }
@@ -69,25 +69,25 @@ object HookOplusGames : YukiBaseHooker() {
         loadHooker(CustomMediaPlayerSupport)
 
         //启用开发者选项
-        if (prefs(ModulePrefs).getBoolean("enable_developer_page", false)) {
+        if (preferences(ModulePrefs).getBoolean("enable_developer_page", false)) {
             loadHooker(EnableDeveloperPage)
         }
         //启用X模式
-        if (prefs(ModulePrefs).getBoolean("enable_x_mode_feature", false)) {
+        if (preferences(ModulePrefs).getBoolean("enable_x_mode_feature", false)) {
             loadHooker(EnableXModeFeature)
         }
         //移除部分VIP限制
-        if (prefs(ModulePrefs).getBoolean("remove_some_vip_limit", false)) {
+        if (preferences(ModulePrefs).getBoolean("remove_some_vip_limit", false)) {
             loadHooker(RemoveSomeVipLimit)
         }
         //移除游戏助手温度检测
-        if (prefs(ModulePrefs).getBoolean("remove_game_assistant_temperature_detection")) {
+        if (preferences(ModulePrefs).getBoolean("remove_game_assistant_temperature_detection", false)) {
             loadHooker(RemoveGameAssistantTemperatureDetection)
         }
         //自定义弹幕通知白名单
         loadHooker(CustomBarrageNotificationWhitelist)
         //移除游戏助手工具推荐卡片
-        if (!isNew && prefs(ModulePrefs).getBoolean("remove_tool_recommendation_card")) {
+        if (!isNew && preferences(ModulePrefs).getBoolean("remove_tool_recommendation_card")) {
             if ((appVer?.versionCode ?: 0) >= 90000000) loadHooker(RemoveToolRecommendationCard)
         }
 
@@ -96,7 +96,7 @@ object HookOplusGames : YukiBaseHooker() {
 //            method { name = "I";param(StringClass);returnType = BooleanType }.hook {
 //                after {
 //                    YLog.debug("isSupportGameEyeProtect -> $result")
-//                    resultTrue()
+//                    result = true
 //                }
 //            }
 //        }
@@ -112,9 +112,9 @@ object HookOplusGames : YukiBaseHooker() {
 //            "business.module.cpusetting.GameCpuSettingViewModel".toClass().apply {
 //                method { param(StringClass);returnType = BooleanType }.hook {
 //                    after {
-//                        val key = args().first().string()
+//                        val key = firstArg().get<String>() ?: ""
 //                        YLog.debug("isSupportCpuFreqCtrlPanel ($key) -> $result")
-//                        resultTrue()
+//                        result = true
 //                    }
 //                }
 //            }

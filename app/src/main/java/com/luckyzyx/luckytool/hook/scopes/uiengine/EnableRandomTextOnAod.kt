@@ -13,10 +13,10 @@ import java.io.File
 @Obfuscate
 object EnableRandomTextOnAod : YukiBaseHooker() {
     override fun onHook() {
-        val mode = prefs(ModulePrefs).getString("set_random_text_display_mode", "0")
+        val mode = preferences(ModulePrefs).getString("set_random_text_display_mode", "0")
 
-        val customFile = prefs(ModulePrefs).getString("custom_random_text_file", "")
-        val customApi = prefs(ModulePrefs).getString("custom_random_text_api", "")
+        val customFile = preferences(ModulePrefs).getString("custom_random_text_file", "")
+        val customApi = preferences(ModulePrefs).getString("custom_random_text_api", "")
 
         val yiyanTextArrayCache = ArrayList<String>()
         var yiyanTextCache = ""
@@ -54,7 +54,7 @@ object EnableRandomTextOnAod : YukiBaseHooker() {
             }
             firstMethod { name = "getCustomView" }.hook {
                 before {
-                    val viewBean = args().first().any() ?: return@before
+                    val viewBean = firstArg().get() ?: return@before
                     val mViewType =
                         viewBean.asResolver().firstMethod { name = "getViewType" }.invoke<String>()
                     if (mViewType != "AodTextView") return@before

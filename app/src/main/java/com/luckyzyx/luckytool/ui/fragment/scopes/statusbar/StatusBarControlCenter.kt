@@ -159,11 +159,48 @@ class StatusBarControlCenter : BaseScopePreferenceFeagment() {
                 isIconSpaceReserved = false
             })
             add(SwitchPreference(this@loadPreferences).apply {
-                title = getString(R.string.enable_notification_align_both_sides)
-                key = "enable_notification_align_both_sides"
+                title = getString(R.string.enable_notification_side_spacing)
+                key = "enable_notification_side_spacing"
                 setDefaultValue(false)
+                isVisible = osCode >= 23
                 isIconSpaceReserved = false
+                setOnPreferenceChangeListener { _, _ ->
+                    (activity as MainActivity).restart()
+                    true
+                }
             })
+            if (getBoolean(ModulePrefs, "enable_notification_side_spacing", false)) {
+                if (osCode >= 23) {
+                    add(SeekBarPreference(this@loadPreferences).apply {
+                        title = getString(R.string.custom_notification_side_spacing_vertical)
+                        key = "custom_notification_side_spacing_vertical"
+                        setDefaultValue(0)
+                        max = 30
+                        min = -30
+                        showSeekBarValue = true
+                        updatesContinuously = false
+                        isIconSpaceReserved = false
+                        setOnPreferenceChangeListener { _, newValue ->
+                            sendPrefsValue("com.android.systemui", key, newValue)
+                            true
+                        }
+                    })
+                    add(SeekBarPreference(this@loadPreferences).apply {
+                        title = getString(R.string.custom__notification_side_spacing_horizontal)
+                        key = "custom__notification_side_spacing_horizontal"
+                        setDefaultValue(0)
+                        max = 30
+                        min = -30
+                        showSeekBarValue = true
+                        updatesContinuously = false
+                        isIconSpaceReserved = false
+                        setOnPreferenceChangeListener { _, newValue ->
+                            sendPrefsValue("com.android.systemui", key, newValue)
+                            true
+                        }
+                    })
+                }
+            }
             add(SwitchPreference(this@loadPreferences).apply {
                 title = getString(R.string.enable_notification_importance_classification)
                 key = "enable_notification_importance_classification"
@@ -277,7 +314,7 @@ class StatusBarControlCenter : BaseScopePreferenceFeagment() {
                 summary = getString(R.string.separate_control_center_mode_only)
                 key = "remove_control_center_more_button"
                 setDefaultValue(false)
-                isVisible = osCode >= 34
+                isVisible = osCode in 34..39
                 isIconSpaceReserved = false
             })
             add(SwitchPreference(this@loadPreferences).apply {

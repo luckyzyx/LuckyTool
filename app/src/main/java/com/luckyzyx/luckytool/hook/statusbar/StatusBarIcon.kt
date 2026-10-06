@@ -30,27 +30,27 @@ object StatusBarIcon : YukiBaseHooker() {
         loadHooker(BluetoothIconRelated)
 
         //移除状态栏支付保护图标
-        if (prefs(ModulePrefs).getBoolean("remove_statusbar_securepayment_icon", false)) {
+        if (preferences(ModulePrefs).getBoolean("remove_statusbar_securepayment_icon", false)) {
             loadHooker(RemoveStatusBarSecurePayment)
         }
         //移除高性能模式图标
-        if (prefs(ModulePrefs).getBoolean("remove_high_performance_mode_icon", false)) {
+        if (preferences(ModulePrefs).getBoolean("remove_high_performance_mode_icon", false)) {
             loadHooker(RemoveHighPerformanceModeIcon)
         }
         //移除绿点隐私提示
-        if (prefs(ModulePrefs).getBoolean("remove_green_dot_privacy_prompt", false)) {
+        if (preferences(ModulePrefs).getBoolean("remove_green_dot_privacy_prompt", false)) {
             loadHooker(RemoveGreenDotPrivacyPrompt)
         }
         //移除系统提示图标
-        if (prefs(ModulePrefs).getBoolean("remove_system_prompt_icon", false)) {
+        if (preferences(ModulePrefs).getBoolean("remove_system_prompt_icon", false)) {
             loadHooker(RemoveSystemPromptIcon)
         }
         //状态栏图标垂直居中
-        if (prefs(ModulePrefs).getBoolean("status_bar_icon_vertical_center", false)) {
+        if (preferences(ModulePrefs).getBoolean("status_bar_icon_vertical_center", false)) {
             if (SDK <= A13) loadHooker(StatusBarIconVerticalCenter)
         }
         //隐藏未使用信号标签
-        if (prefs(ModulePrefs).getBoolean("hide_inactive_signal_labels_gen2x2", false)) {
+        if (preferences(ModulePrefs).getBoolean("hide_inactive_signal_labels_gen2x2", false)) {
             loadHooker(HideInActiveSignalLabelsGen2x2)
         }
         //自定义流体云图标背景透明度

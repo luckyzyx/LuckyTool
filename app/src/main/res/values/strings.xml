@@ -98,10 +98,12 @@
     <string name="menu_search">Search menu</string>
     <string name="menu_settings">Set menu</string>
     <string name="restart_scope">Restart scoped processes</string>
+    <string name="reload_hooker">Reload processes hooker</string>
     <string name="re_optimize_dex">Re-optimize Dex</string>
     <string name="need_restart_scope">Need to restart scope</string>
     <string name="need_restart_system">Need to restart system</string>
     <string name="restart_scope_message">Are you sure you want to restart all scoped processes except the system framework?\nUse this if the module isn\'t working!\nMake sure all the relevant scopes are checked!</string>
+    <string name="reload_hooker_message">Are you sure you want to reload all scoped processes? It can be used after the module is updated!</string>
     <string name="re_optimize_dex_message">Re-optimize all scope Dex?</string>
     <string name="re_optimize_dex_completed">Optimization completed, it is recommended to restart the scope or system</string>
     <string name="re_optimize_dex_failed">Optimization failed</string>
@@ -110,6 +112,7 @@
     <string name="optimize_dex_after_system_update">Dex must be optimized after system update</string>
     <string name="optimize_only_this_page_scope">Optimize only this page scope</string>
     <string name="restart_only_this_page_scope">Restart only this page scope</string>
+    <string name="reload_only_this_page_hooker">Reload only this page hooker</string>
     <string name="reboot">Restart System</string>
     <string name="fast_reboot">Fast reboot</string>
     <string name="menu_versioninfo">Version Information</string>
@@ -140,23 +143,28 @@
     <string name="ColorOSCorePatchTip">The official Color OS installer needs to enable other functions to use\nFunction List-Application Related-Application Installation Related</string>
     <string name="corepatch">Core Patch</string>
     <string name="corepatch_summary">Remove install limits, supports Android %1$s</string>
-    <string name="downgr">Allow downgrade apps</string>
-    <string name="downgr_summary">Allows the app to override older versions if new versions are installed.</string>
-    <string name="authcreak">Disable package manager signature validation</string>
-    <string name="authcreak_summary">Signature verification when installing apps can be installed.</string>
-    <string name="digestCreak">Disable APK Signature validation</string>
-    <string name="digestCreak_summary">Allows overriding directly installed apps with different signatures to the package</string>
-    <string name="exactSigCheck">Disable exact signature match</string>
-    <string name="exactSigCheck_summary">Disables exact signature match between apks, allowing installs with each apk split having a different signature. Only enable when really needed</string>
-    <string name="UsePreSig">Always use the signed installed APP while installing</string>
-    <string name="UsePreSig_summary">Is not a normal!danger! Only enable when absolutely needed</string>
-    <string name="usepresig_warn">!!! All packages can override installed App!!\nto install unknown packages</string>
-    <string name="bypassBlock">Bypass block</string>
-    <string name="bypassBlock_summary">Bypass blocklist in some devices like Nothing Phone</string>
-    <string name="shared_user_title">Bypass shared user verify</string>
-    <string name="shared_user_summary">Allow install app with signature differ from its shared user (<b>\'Disable compare signatures\' must be enabled too</b>)</string>
-    <string name="disable_verification_agent_title">Disable Package Verification Agent</string>
-    <string name="disable_verification_agent_summary">e.g. Google Play Protection</string>
+    <string name="bypass_downgrade">Bypass downgrade</string>
+    <string name="bypass_verification">Bypass verification</string>
+    <string name="bypass_digest">Bypass digest</string>
+    <string name="bypass_exact_signature_match">Bypass exact signature match</string>
+    <string name="use_previous_signatures">Use previous signatures</string>
+    <string name="bypass_shared_user">Bypass shared user verification</string>
+    <string name="disable_verification_agent">Disable Package Verification Agent</string>
+    <string name="bypass_downgrade_summary">Allow installing an older version over a newer version.</string>
+    <string name="bypass_verification_summary">Allow installing APKs with invalid or modified signatures.</string>
+    <string name="bypass_resource_arsc_restrictions">Bypass resources.arsc alignment restriction</string>
+    <string name="bypass_resource_arsc_restrictions_summary">Allow installing APKs whose resources.arsc is compressed or not 4-byte aligned on Android 11 and later.</string>
+    <string name="bypass_digest_summary">Allow reinstalling an app with a different signature.</string>
+    <string name="bypass_exact_signature_match_summary">Allow split APKs to use different signatures.</string>
+    <string name="use_previous_signatures_summary">Always use the installed app signatures during installation.</string>
+    <string name="use_previous_signatures_warning">Any APK may overwrite the installed app. Enable only when necessary.</string>
+    <string name="allow_hidden_apis_for_system_apps">Allow hidden APIs for system apps</string>
+    <string name="allow_hidden_apis_for_system_apps_summary">Allow system apps with signatures that do not match the platform signature to use hidden APIs without restriction.</string>
+    <string name="miui_usepresig_warn">Xiaomi/Redmi users must not enable this option; otherwise, the device may fail to boot.</string>
+    <string name="bypass_shared_user_summary">Allow packages with a different shared-user signature.</string>
+    <string name="disable_verification_agent_summary">For example, Google Play Protect.</string>
+    <string name="bypass_block">Bypass installation blocklist</string>
+    <string name="bypass_block_summary">Bypass blocklists on devices such as Nothing Phone.</string>
     
     <!--Status Bar-->
     <string name="StatusBar">StatusBar Related</string>
@@ -292,7 +300,9 @@
     <string name="remove_control_center_carriers">Remove control center carriers</string>
     
     <string name="ControlCenterNotificationCenter">Control Center Notification Center</string>
-    <string name="enable_notification_align_both_sides">Enable notification align both sides</string>
+    <string name="enable_notification_side_spacing">Enable notification side spacing</string>
+    <string name="custom_notification_side_spacing_vertical">Custom notification side spacing (portrait)</string>
+    <string name="custom__notification_side_spacing_horizontal">Custom notification side spacing (landscape)</string>
     <string name="remove_notification_cleanup_button">Remove notification cleanup button</string>
     <string name="enable_notification_importance_classification">Enable notification importance classification</string>
     <string name="custom_notification_background_transparency">Custom notification background transparency</string>
@@ -645,6 +655,8 @@
     <string name="allow_disabling_system_apps_summary">This module is not responsible if the system application cannot be restored due to user operations.</string>
     <string name="remove_app_uninstall_button_blacklist">Remove blacklist of app uninstall button</string>
     <string name="enable_custom_app_language">Enable custom app language</string>
+    <string name="disable_app_archiving">Auto release app space off by default</string>
+    <string name="disable_app_archiving_summary">All apps are opted out of auto-archiving (uninstall app but keep data when storage is low) by default</string>
     
     <!--FloatingWindowDialogRelated-->
     <string name="FloatingWindowDialogRelated">Floating Window / Dialog Related</string>
@@ -995,6 +1007,11 @@
     <string name="replace_side_slider_icon_on_left">Replace the side slide icon on the left</string>
     <string name="replace_side_slider_icon_on_right">Replace the side slide icon on the right</string>
     
+    <string name="CustomActionButton">Custom Action Key</string>
+    <string name="action_button_nothing_enable">Replace no-op event</string>
+    <string name="action_button_ring_cycle_enable">Replace ringtone cycle event</string>
+    <string name="action_button_ring_cycle_mode">Set ringtone cycle mode</string>
+    
     <!--OplusMMS-->
     <string name="remove_verification_code_floating_window">Remove verification code floating window</string>
     <string name="remove_mms_bottom_input_box_menu">Remove the input box menu at the bottom</string>
@@ -1024,6 +1041,7 @@
     <string name="remove_market_splash_page_app_recommend">Remove app recommendations from market splash page</string>
     <string name="remove_market_update_download_page_app_recommend">Remove app recommendations from market update download page</string>
     <string name="remove_market_mine_page_app_recommend">Remove app recommendations from market mine page</string>
+    <string name="default_expand_update_list">Expand update list by default</string>
     
     <!--OplusWeather-->
     <string name="disable_weather_jump_browser">Disable weather redirect browser</string>
@@ -1101,6 +1119,9 @@
     <!--ADM-->
     <string name="adm_unlock_pro">Unlock Pro</string>
     <string name="adm_unlock_more_threads">Unlock more download threads</string>
+    <!--Claw-->
+    <string name="remove_root_detection">Remove Root Detection</string>
+    <string name="remove_root_detection_summary">Bypass the Root device restriction in the recruitment page</string>
     
     <!--Home-->
     <string name="fps_title">Force refresh rate</string>
@@ -1340,5 +1361,17 @@
     <string name="net_error">Unknown network error</string>
     <string name="net_other_error">Unknown error</string>
     <string name="no_error_message">No error message</string>
+    <string name="apk_details_versions">Version comparison</string>
+    <string name="apk_details_installed">Installed</string>
+    <string name="apk_details_incoming">Installing</string>
+    <string name="apk_details_not_installed">Not installed</string>
+    <string name="apk_details_version_code">Build %1$s</string>
+    <string name="apk_details_information">Package information</string>
+    <string name="apk_details_package">Package name</string>
+    <string name="apk_details_size">Package size</string>
+    <string name="apk_details_min_sdk">Minimum SDK</string>
+    <string name="apk_details_target_sdk">Target SDK</string>
+    <string name="apk_details_unknown">Unavailable</string>
+
 
 </resources>

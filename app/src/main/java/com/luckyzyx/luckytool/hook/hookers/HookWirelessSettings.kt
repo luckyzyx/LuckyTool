@@ -13,7 +13,7 @@ object HookWirelessSettings : YukiBaseHooker() {
         DexkitUtils.create(appInfo.sourceDir) { dexKitBridge ->
 
             //启用WiFi详情显示网关
-            if (prefs(ModulePrefs).getBoolean("enable_wifi_details_display_gateway", false)) {
+            if (preferences(ModulePrefs).getBoolean("enable_wifi_details_display_gateway", false)) {
                 loadHooker(EnableWifiDetailsDisplayGateway(dexKitBridge))
             }
 

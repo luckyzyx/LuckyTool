@@ -18,7 +18,7 @@ object RemoveStatusBarBottomNetworkWarn : YukiBaseHooker() {
     @Obfuscate
     object StatusBarBottomNetworkWarn : YukiBaseHooker() {
         override fun onHook() {
-            var removeMode = prefs(ModulePrefs).getString("remove_control_center_networkwarn", "0")
+            var removeMode = preferences(ModulePrefs).getString("remove_control_center_networkwarn", "0")
             dataChannel.wait<String>("remove_control_center_networkwarn") { removeMode = it }
 
             //Source OplusQSSecurityController
@@ -37,7 +37,7 @@ object RemoveStatusBarBottomNetworkWarn : YukiBaseHooker() {
     @Obfuscate
     object StatusBarBottomNetworkWarnOld : YukiBaseHooker() {
         override fun onHook() {
-            var removeMode = prefs(ModulePrefs).getString("remove_control_center_networkwarn", "0")
+            var removeMode = preferences(ModulePrefs).getString("remove_control_center_networkwarn", "0")
             dataChannel.wait<String>("remove_control_center_networkwarn") { removeMode = it }
 
             //Source OplusQSSecurityText

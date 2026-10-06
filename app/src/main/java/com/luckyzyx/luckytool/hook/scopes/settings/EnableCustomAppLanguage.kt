@@ -10,14 +10,14 @@ object EnableCustomAppLanguage : YukiBaseHooker() {
         //Source AppLocaleUtil
         "com.android.settings.applications.AppLocaleUtil".toClass().resolve().apply {
             firstMethod { name = "canDisplayLocaleUi" }.hook {
-                replaceToTrue()
+                intercept(true)
             }
         }
         //Source AppLocalePreferenceController
         "com.android.settings.applications.appinfo.AppLocalePreferenceController".toClass()
             .resolve().apply {
             firstMethod { name = "getAvailabilityStatus" }.hook {
-                replaceTo(0)
+                intercept(0)
             }
         }
     }

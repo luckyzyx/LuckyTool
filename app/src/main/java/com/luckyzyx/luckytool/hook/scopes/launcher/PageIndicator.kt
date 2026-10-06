@@ -15,11 +15,11 @@ import org.lsposed.lsparanoid.Obfuscate
 @Obfuscate
 object PageIndicator : YukiBaseHooker() {
     override fun onHook() {
-        val removeDesktop = prefs(ModulePrefs).getBoolean("remove_pagination_component", false)
+        val removeDesktop = preferences(ModulePrefs).getBoolean("remove_pagination_component", false)
         val removeFolder =
-            prefs(ModulePrefs).getBoolean("remove_folder_pagination_component", false)
+            preferences(ModulePrefs).getBoolean("remove_folder_pagination_component", false)
         val disableSliding =
-            prefs(ModulePrefs).getBoolean("disable_pagination_component_sliding", false)
+            preferences(ModulePrefs).getBoolean("disable_pagination_component_sliding", false)
 
         //Source OplusPageIndicator
         "com.android.launcher.pageindicators.OplusPageIndicator".toClass().resolve().apply {
@@ -34,12 +34,12 @@ object PageIndicator : YukiBaseHooker() {
                     when (entryName) {
                         "drag_layer" -> if (removeDesktop) {
                             view.isVisible = false
-                            resultNull()
+                            result = null
                         }
 
                         "folder_content_root" -> if (removeFolder) {
                             view.isVisible = false
-                            resultNull()
+                            result = null
                         }
                     }
                 }
@@ -48,13 +48,19 @@ object PageIndicator : YukiBaseHooker() {
 
         if (SDK < A13) return
 
-        //Source PageIndicatorTouchHelper
-        "com.android.launcher.pageindicators.PageIndicatorTouchHelper".toClass().resolve().apply {
+        // C17 起 PageIndicatorTouchHelper 混淆为 pageindicators/p，onActionMove 内联进
+        // 其 a(MotionEvent) 入口；两版共用的滑动切换点是
+        // OplusPageIndicator.getSwitchTargetPage，返回 -1 时新旧版均跳过页面切换，
+        // 且不影响按压反馈动画与统计。
+        //Source OplusPageIndicator getSwitchTargetPage
+        "com.android.launcher.pageindicators.OplusPageIndicator".toClass().resolve().apply {
             firstMethod {
-                name = "onActionMove"
+                name = "getSwitchTargetPage"
                 parameters(MotionEvent::class)
             }.hook {
-                if (disableSliding) intercept()
+                if (disableSliding) {
+                    intercept(-1)
+                }
             }
         }
 

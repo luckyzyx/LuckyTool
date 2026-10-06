@@ -123,18 +123,6 @@
     <string name="ColorOSCorePatchTip">The official Color OS installer needs to enable other functions to use\nFunction List-Application Related-Application Installation Related</string>
     <string name="corepatch">Patch Nucleu</string>
     <string name="corepatch_summary">Remove install limits, supports Android %1$s</string>
-    <string name="downgr">Permite downgrade aplicații</string>
-    <string name="downgr_summary">Permite aplicației să suprascrie versiunile mai vechi dacă sunt instalate versiuni noi.</string>
-    <string name="authcreak">Dezactivează validarea semnăturii managerului de pachete</string>
-    <string name="authcreak_summary">Verificarea semnăturii când instalezi aplicații poate fi instalată.</string>
-    <string name="digestCreak">Dezactivează validarea semnăturii APK</string>
-    <string name="digestCreak_summary">Permite suprascrierea aplicațiilor instalate direct cu semnături diferite ale pachetului</string>
-    <string name="UsePreSig">Utilizează întotdeauna aplicația semnată instalată în timpul instalării</string>
-    <string name="UsePreSig_summary">Nu este un pericol normal!! Activează doar atunci când este absolut necesar</string>
-    <string name="usepresig_warn">!!! Toate pachetele pot suprascrie aplicația instalată!!\npentru a instala pachete necunoscute</string>
-    <string name="shared_user_title">Bypass shared user verify</string>
-    <string name="shared_user_summary">Permite instalarea aplicației cu semnătură diferă de utilizatorul partajat (<b>\'Dezactivează compararea semnăturilor\' trebuie să fie activată de asemenea</b>)</string>
-    <string name="disable_verification_agent_title">Dezactivează Agentul de Verificare Pachet</string>
     <string name="disable_verification_agent_summary">ex. Protecție Google Play</string>
     <!--Status Bar-->
     <string name="StatusBar">Asociat cu bara de stare</string>
@@ -247,7 +235,7 @@
     <string name="fix_control_center_date_display">Repară afișarea datei în centrul de control</string>
     <string name="fix_control_center_date_display_suammry">Remediați problema că data nu poate fi afișată complet</string>
     <string name="ControlCenterNotificationCenter">Centrul de notificare din Centrul de control</string>
-    <string name="enable_notification_align_both_sides">Activează alinierea notificărilor în ambele părți</string>
+    <string name="custom__notification_side_spacing_horizontal">自定义通知两侧间距(横屏)</string>
     <string name="remove_notification_cleanup_button">Remove notification cleanup button</string>
     <string name="enable_notification_importance_classification">Activează clasificarea importanței notificărilor</string>
     <string name="custom_notification_background_transparency">Custom notification background transparency</string>
@@ -846,6 +834,7 @@
     <string name="remove_market_splash_page_app_recommend">Remove app recommendations from market splash page</string>
     <string name="remove_market_update_download_page_app_recommend">Remove app recommendations from market update download page</string>
     <string name="remove_market_mine_page_app_recommend">Remove app recommendations from market mine page</string>
+    <string name="default_expand_update_list">Expand update list by default</string>
     <!--OplusWeather-->
     <string name="disable_weather_jump_browser">Disable weather redirect browser</string>
     <string name="remove_weather_some_page_bottom_ads">Remove the ads at the bottom of the weather section page</string>
@@ -1055,4 +1044,6 @@
     <string name="net_error">Unknown network error</string>
     <string name="net_other_error">Unknown error</string>
     <string name="no_error_message">No error message</string>
+    <string name="enable_notification_side_spacing">启用通知两侧间距</string>
+    <string name="custom_notification_side_spacing_vertical">自定义通知两侧间距(竖屏)</string>
 </resources>

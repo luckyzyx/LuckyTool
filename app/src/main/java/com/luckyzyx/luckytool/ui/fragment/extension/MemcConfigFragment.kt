@@ -25,6 +25,8 @@ import com.google.android.material.tabs.TabLayoutMediator
 import com.highcapable.betterandroid.ui.component.adapter.factory.bindAdapter
 import com.highcapable.betterandroid.ui.component.adapter.factory.bindFragments
 import com.highcapable.betterandroid.ui.component.adapter.recycler.factory.notifyDataSetChangedIgnore
+import com.highcapable.betterandroid.ui.extension.view.layoutInflater
+import com.highcapable.betterandroid.ui.extension.view.textToString
 import com.luckyzyx.luckytool.R
 import com.luckyzyx.luckytool.data.AppInfo
 import com.luckyzyx.luckytool.data.MemcConfigActivity
@@ -325,7 +327,7 @@ class MemcConfigFragment : BaseFragment<FragmentMemcLayoutBinding>(), MenuProvid
         }
 
         fun addOrEditData(context: Context, config: MemcConfigPackage? = null) {
-            val binding = DialogMemcConfigLayoutBinding.inflate(LayoutInflater.from(context))
+            val binding = DialogMemcConfigLayoutBinding.inflate(context.layoutInflater)
             binding.packageLayout.hint = "PackageName"
             binding.activityLayout.isVisible = false
             binding.rateLayout.hint = "ScreenRate"
@@ -360,10 +362,10 @@ class MemcConfigFragment : BaseFragment<FragmentMemcLayoutBinding>(), MenuProvid
             MaterialAlertDialogBuilder(requireActivity(), dialogCentered).apply {
                 setView(binding.root)
                 setPositiveButton(android.R.string.ok) { _, _ ->
-                    val packageName = binding.packageView.text?.toString()
-                    val rate = binding.rateView.text?.toString()
-                    val type = binding.typeView.text?.toString()
-                    if (!(packageName.isNullOrBlank() || rate.isNullOrBlank() || type.isNullOrBlank())) {
+                    val packageName = binding.packageView.textToString()
+                    val rate = binding.rateView.textToString()
+                    val type = binding.typeView.textToString()
+                    if (!(packageName.isBlank() || rate.isBlank() || type.isBlank())) {
                         val newConfig = MemcConfigPackage(packageName, rate, type)
                         onItemChanged?.invoke(config, newConfig)
                     } else context.showToast("Data is incomplete!")
@@ -506,7 +508,7 @@ class MemcConfigFragment : BaseFragment<FragmentMemcLayoutBinding>(), MenuProvid
         }
 
         fun addOrEditData(context: Context, config: MemcConfigActivity? = null) {
-            val binding = DialogMemcConfigLayoutBinding.inflate(LayoutInflater.from(context))
+            val binding = DialogMemcConfigLayoutBinding.inflate(context.layoutInflater)
             binding.packageLayout.hint = "PackageName"
             binding.activityLayout.hint = "ActivityName"
             binding.rateLayout.isVisible = false
@@ -540,13 +542,11 @@ class MemcConfigFragment : BaseFragment<FragmentMemcLayoutBinding>(), MenuProvid
 
             binding.activityView.apply {
                 setOnClickListener {
-                    val packageName = binding.packageView.text?.toString()
-                    val packInfo = packageName?.let {
-                        PackageUtils(context.packageManager).getPackageInfo(
-                            it, PackageManager.GET_ACTIVITIES
-                        )
-                    }
-                    if (packageName.isNullOrBlank()) {
+                    val packageName = binding.packageView.textToString()
+                    val packInfo = PackageUtils(context.packageManager).getPackageInfo(
+                        packageName, PackageManager.GET_ACTIVITIES
+                    )
+                    if (packageName.isBlank()) {
                         context.showToast("PackageName is null!")
                         return@setOnClickListener
                     }
@@ -569,10 +569,10 @@ class MemcConfigFragment : BaseFragment<FragmentMemcLayoutBinding>(), MenuProvid
             MaterialAlertDialogBuilder(requireActivity(), dialogCentered).apply {
                 setView(binding.root)
                 setPositiveButton(android.R.string.ok) { _, _ ->
-                    val packageName = binding.packageView.text?.toString()
-                    val activity = binding.activityView.text?.toString()
-                    val type = binding.typeView.text?.toString()
-                    if (!(packageName.isNullOrBlank() || activity.isNullOrBlank() || type.isNullOrBlank())) {
+                    val packageName = binding.packageView.textToString()
+                    val activity = binding.activityView.textToString()
+                    val type = binding.typeView.textToString()
+                    if (!(packageName.isBlank() || activity.isBlank() || type.isBlank())) {
                         val newConfig = MemcConfigActivity(packageName, activity, type)
                         onItemChanged?.invoke(config, newConfig)
                     } else context.showToast("Data is incomplete!")

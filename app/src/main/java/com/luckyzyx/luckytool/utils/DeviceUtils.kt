@@ -229,7 +229,7 @@ object DeviceUtils {
             LogUtils.d("calcLocalHealth", "calc", "$calc", isDebug)
             return if (calc > 100) calc / 1000 else calc
         } catch (e: Exception) {
-            YLog.error("Calc Local Health Error", e)
+            YLog.error("Calc Local Health Error", e = e)
             return -1
         }
     }

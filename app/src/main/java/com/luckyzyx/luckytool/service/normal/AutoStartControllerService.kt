@@ -2,15 +2,15 @@ package com.luckyzyx.luckytool.service.normal
 
 import android.annotation.SuppressLint
 import android.app.ForegroundServiceStartNotAllowedException
-import android.app.Notification
-import android.app.NotificationChannel
-import android.app.NotificationManager
 import android.app.Service
 import android.content.Intent
 import android.content.pm.ServiceInfo
 import android.os.IBinder
-import androidx.core.app.NotificationCompat
 import com.drake.net.utils.scope
+import com.highcapable.betterandroid.ui.component.notification.factory.Notification
+import com.highcapable.betterandroid.ui.component.notification.factory.NotificationChannel
+import com.highcapable.betterandroid.ui.component.notification.factory.startForeground
+import com.highcapable.betterandroid.ui.component.notification.type.NotificationImportance
 import com.luckyzyx.luckytool.R
 import com.luckyzyx.luckytool.utils.A14
 import com.luckyzyx.luckytool.utils.CommandUtils
@@ -21,7 +21,6 @@ import com.luckyzyx.luckytool.utils.GlobalKeyValue.keyHighBrightness
 import com.luckyzyx.luckytool.utils.GlobalKeyValue.keyTileAutoStart
 import com.luckyzyx.luckytool.utils.GlobalKeyValue.keyTouchSamplingRate
 import com.luckyzyx.luckytool.utils.GlobalKeyValue.keyTouchSamplingRateLevel
-import com.luckyzyx.luckytool.utils.NotifyUtils
 import com.luckyzyx.luckytool.utils.SDK
 import com.luckyzyx.luckytool.utils.SettingsPrefs
 import com.luckyzyx.luckytool.utils.getBoolean
@@ -36,37 +35,37 @@ import org.lsposed.lsparanoid.Obfuscate
 @Obfuscate
 class AutoStartControllerService : Service() {
 
-    private val channelId = "auto_start_channel"
-    private val channelNotifyId = 1001
-    private lateinit var channelName: String
-
-    private lateinit var channel: NotificationChannel
-    private lateinit var notify: Notification
+    private val CHANNEL_ID = "auto_start_channel"
+    private val NOTIFY_ID = 1001
 
     override fun onCreate() {
-        channelName = getString(R.string.auto_start_service_channel_name)
-        channel = NotificationChannel(channelId, channelName, NotificationManager.IMPORTANCE_LOW)
-        notify = NotificationCompat.Builder(this, channelId).apply {
-            setAutoCancel(false)
-            setOngoing(true)
-            setSmallIcon(R.mipmap.ic_launcher_round)
-            setContentTitle(getString(R.string.auto_start_service_channel_title))
-            priority = NotificationCompat.PRIORITY_LOW
-        }.build()
-        NotifyUtils.createChannel(this@AutoStartControllerService, channel)
+
     }
 
     @SuppressLint("WrongConstant", "InlinedApi")
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         scope(Dispatchers.Default) {
             try {
+                val channel = NotificationChannel(
+                    channelId = CHANNEL_ID, importance = NotificationImportance.LOW
+                ) {
+                    name = getString(R.string.auto_start_service_channel_name)
+                }
+                val notify = Notification(
+                    context = this@AutoStartControllerService, channel = channel
+                ) {
+                    smallIconResId = R.mipmap.ic_launcher_round
+                    contentTitle = getString(R.string.auto_start_service_channel_title)
+                    autoCancel(false)
+                    ongoing(true)
+                }
                 if (SDK >= A14) startForeground(
-                    channelNotifyId, notify, ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE
-                ) else startForeground(channelNotifyId, notify)
-            } catch (e: ForegroundServiceStartNotAllowedException) {
+                    NOTIFY_ID, notify, ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE
+                ) else startForeground(NOTIFY_ID, notify)
+            } catch (@SuppressLint("NewApi") _: ForegroundServiceStartNotAllowedException) {
                 showToast(getString(R.string.service_auto_start_controller_not_allow_tips))
                 return@scope
-            } catch (e: Exception) {
+            } catch (_: Exception) {
                 showToast("AutoStartControllerService cannot be started!")
                 return@scope
             }

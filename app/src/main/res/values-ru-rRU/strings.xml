@@ -123,18 +123,6 @@
     <string name="ColorOSCorePatchTip">Официальному установщику Color OS необходимо включить другие функции для использования\nСписок функций-Приложения-Установка приложений</string>
     <string name="corepatch">Патчи ядра</string>
     <string name="corepatch_summary">Убрать ограничения на установку, поддерживает Android %1$s</string>
-    <string name="downgr">Разрешить понижение версии</string>
-    <string name="downgr_summary">Разрешить приложению перезаписывать установку старой версии непосредственно в случае установки новой версии</string>
-    <string name="authcreak">Отключить проверку подписи диспетчера пакетов</string>
-    <string name="authcreak_summary">Отключить проверку подписи при установке приложений, вы можете устанавливать поддельные приложения</string>
-    <string name="digestCreak">Отключить проверку подписи APK</string>
-    <string name="digestCreak_summary">Разрешить прямое переопределение для установки приложений с разными подписями для одного и того же имени пакета</string>
-    <string name="UsePreSig">Всегда использовать подпись установленного приложения при установке</string>
-    <string name="UsePreSig_summary">Опасно! Включать только в случае крайней необходимости</string>
-    <string name="usepresig_warn">!!!Все установщики могут перезаписывать установленные приложения!!! Будьте осторожны при установке приложений из неизвестных источников</string>
-    <string name="shared_user_title">Обход проверки общего пользователя</string>
-    <string name="shared_user_summary">Разрешить установку приложения, подпись которого отличается от общего пользователя (<b>также необходимо включить \"Отключить сравнение подписей\"</b>)</string>
-    <string name="disable_verification_agent_title">Отключить сервис проверки пакетов</string>
     <string name="disable_verification_agent_summary">Например Google Play Protection</string>
     <!--Status Bar-->
     <string name="StatusBar">Статусбар и шторка</string>
@@ -247,7 +235,7 @@
     <string name="fix_control_center_date_display">Исправить отображение даты в шторке</string>
     <string name="fix_control_center_date_display_suammry">Устранить проблему, из-за которой дата может отображаться не полностью</string>
     <string name="ControlCenterNotificationCenter">Уведомления в шторке</string>
-    <string name="enable_notification_align_both_sides">Включить выравнивание уведомлений по обе стороны</string>
+    <string name="custom__notification_side_spacing_horizontal">自定义通知两侧间距(横屏)</string>
     <string name="remove_notification_cleanup_button">Удалить кнопку очистки уведомлений</string>
     <string name="enable_notification_importance_classification">Включить классификацию важности уведомлений</string>
     <string name="custom_notification_background_transparency">Прозрачность фона уведомлений</string>
@@ -846,6 +834,7 @@
     <string name="remove_market_splash_page_app_recommend">Удалить рекомендации приложений с заставки в магазине</string>
     <string name="remove_market_update_download_page_app_recommend">Удалить рекомендации приложений со страницы загрузки обновлений магазина</string>
     <string name="remove_market_mine_page_app_recommend">Удалить рекомендации приложений со страницы обновления магазина</string>
+    <string name="default_expand_update_list">Expand update list by default</string>
     <!--OplusWeather-->
     <string name="disable_weather_jump_browser">Отключить переадресацию в браузер из погоды</string>
     <string name="remove_weather_some_page_bottom_ads">Удалить рекламу в нижней части страницы погоды</string>
@@ -1055,4 +1044,6 @@
     <string name="net_error">Неизвестная сетевая ошибка</string>
     <string name="net_other_error">Неизвестная ошибка</string>
     <string name="no_error_message">Нет сообщения об ошибке</string>
+    <string name="enable_notification_side_spacing">启用通知两侧间距</string>
+    <string name="custom_notification_side_spacing_vertical">自定义通知两侧间距(竖屏)</string>
 </resources>

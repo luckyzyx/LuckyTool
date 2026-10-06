@@ -5,7 +5,7 @@ import android.os.Bundle
 import android.provider.Settings
 import androidx.preference.Preference
 import androidx.preference.PreferenceCategory
-import com.highcapable.yukihookapi.hook.xposed.prefs.ui.ModulePreferenceFragment
+import androidx.preference.PreferenceFragmentCompat
 import org.lsposed.lsparanoid.Obfuscate
 import com.luckyzyx.luckytool.R
 import com.luckyzyx.luckytool.utils.IntentUtils
@@ -13,8 +13,8 @@ import com.luckyzyx.luckytool.utils.checkResolveActivity
 import com.topjohnwu.superuser.ShellUtils
 
 @Obfuscate
-class QuickEntryFragment : ModulePreferenceFragment() {
-    override fun onCreatePreferencesInModuleApp(savedInstanceState: Bundle?, rootKey: String?) {
+class QuickEntryFragment : PreferenceFragmentCompat() {
+    override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
         preferenceScreen = preferenceManager.createPreferenceScreen(requireActivity()).apply {
             //系统调试相关
             addPreference(PreferenceCategory(context).apply {

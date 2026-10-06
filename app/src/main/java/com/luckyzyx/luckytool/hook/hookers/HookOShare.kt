@@ -13,7 +13,7 @@ object HookOShare : YukiBaseHooker() {
         DexkitUtils.create(appInfo.sourceDir) { dexKitBridge ->
 
             //移除互传关闭倒计时
-            if (prefs(ModulePrefs).getBoolean("remove_oshare_close_countdown", false)) {
+            if (preferences(ModulePrefs).getBoolean("remove_oshare_close_countdown", false)) {
                 loadHooker(RemoveOShareCloseCountDown(dexKitBridge))
             }
 

@@ -8,6 +8,7 @@ import android.content.pm.PackageManager
 import android.view.View
 import android.widget.Button
 import com.highcapable.kavaref.KavaRef.Companion.resolve
+import com.highcapable.kavaref.extension.classOf
 import com.highcapable.yukihookapi.hook.entity.YukiBaseHooker
 import com.luckyzyx.luckytool.utils.DexkitUtils.checkDataList
 import com.luckyzyx.luckytool.utils.ModulePrefs
@@ -18,9 +19,9 @@ import org.luckypray.dexkit.result.MethodData
 @Obfuscate
 class HookOplusPackageInstallerActivity(val dexKitBridge: DexKitBridge) : YukiBaseHooker() {
 
-    val disableScan = prefs(ModulePrefs).getBoolean("skip_apk_scan", false)
-    val allowReplace = prefs(ModulePrefs).getBoolean("allow_downgrade_install", false)
-    val autoInstall = prefs(ModulePrefs).getBoolean("auto_click_install_button", false)
+    val disableScan = preferences(ModulePrefs).getBoolean("skip_apk_scan", false)
+    val allowReplace = preferences(ModulePrefs).getBoolean("allow_downgrade_install", false)
+    val autoInstall = preferences(ModulePrefs).getBoolean("auto_click_install_button", false)
 
     override fun onHook() {
         //Source OPlusPackageInstallerActivity
@@ -35,9 +36,9 @@ class HookOplusPackageInstallerActivity(val dexKitBridge: DexKitBridge) : YukiBa
                 matcher {
                     paramCount(0)
                     usingFields {
-                        add { type(Long::class.java) }
-                        add { type(Boolean::class.java) }
-                        add { type(View::class.java) }
+                    add { type(classOf<Long>()) }
+                        add { type(classOf<Boolean>()) }
+                        add { type(classOf<View>()) }
                     }
                     addCaller { name("onClick") }
                     addInvoke { paramCount(0);returnType(Void.TYPE) }
@@ -48,10 +49,10 @@ class HookOplusPackageInstallerActivity(val dexKitBridge: DexKitBridge) : YukiBa
                 matcher {
                     paramCount(0)
                     usingFields {
-                        add { type(PackageManager::class.java) }
-                        add { type(PackageInfo::class.java) }
-                        add { type(ApplicationInfo::class.java) }
-                        add { type(Boolean::class.java) }
+                    add { type(classOf<PackageManager>()) }
+                        add { type(classOf<PackageInfo>()) }
+                        add { type(classOf<ApplicationInfo>()) }
+                        add { type(classOf<Boolean>()) }
                     }
                     addCaller { name("onClick") }
                     addInvoke { paramCount(0);returnType(Void.TYPE) }
@@ -78,9 +79,9 @@ class HookOplusPackageInstallerActivity(val dexKitBridge: DexKitBridge) : YukiBa
                     usingNumbers(0)
                     addCaller { name(initiateInstall.name);paramCount(0) }
                     addInvoke { paramCount(0);returnType(Void.TYPE) }
-                    addUsingField { type(View::class.java) }
-                    addUsingField { type(Boolean::class.java) }
-                    addUsingField { type(ArrayList::class.java) }
+                    addUsingField { type(classOf<View>()) }
+                    addUsingField { type(classOf<Boolean>()) }
+                    addUsingField { type(classOf<ArrayList<*>>()) }
                 }
             }.checkDataList("startInstallConfirm").single()
 
@@ -95,7 +96,7 @@ class HookOplusPackageInstallerActivity(val dexKitBridge: DexKitBridge) : YukiBa
             firstMethod { name = checkToScanRisk.methodName }.hook {
                 before {
                     firstMethod { name = initiateInstall.methodName }.of(instance).invoke()
-                    resultNull()
+                    result = null
                 }
             }
         }
@@ -106,7 +107,7 @@ class HookOplusPackageInstallerActivity(val dexKitBridge: DexKitBridge) : YukiBa
             firstMethod { name = parseReplaceInstall.methodName }.hook {
                 before {
                     firstMethod { name = preSafeInstall.methodName }.of(instance).invoke()
-                    resultNull()
+                    result = null
                 }
             }
         }

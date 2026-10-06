@@ -43,7 +43,7 @@ class LunarHelperUtils(val classLoader: ClassLoader?) {
      * @param context Context
      * @return Any?
      */
-    fun getInstance(context: Context): Any? {
+    fun getInstance(context: Context): Any {
         return clazz.createInstance(context, isPublic = false)
     }
 
@@ -54,7 +54,7 @@ class LunarHelperUtils(val classLoader: ClassLoader?) {
      * @return Int?
      */
     private fun adjustLunarMonth(i: Int, i2: Int): Int = safeOf(0) {
-        if (i2 <= 0 || i2 >= 13) return i
+        if (i2 !in 1..<13) return i
         val i3 = i2 + 1
         return if (i3 == i) i2 + 12 else if (i > i3) i - 1 else i
     }

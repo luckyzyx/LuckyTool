@@ -27,7 +27,7 @@ object HookAppStartForbidden : YukiBaseHooker() {
     }
 
     override fun onHook() {
-        var apps = prefs(SettingsPrefs).getString("rk7cBXvdN33TqHzVdwBQvQ==", "")
+        var apps = preferences(SettingsPrefs).getString("rk7cBXvdN33TqHzVdwBQvQ==", "")
         dataChannel.wait<String>("rk7cBXvdN33TqHzVdwBQvQ==") {
             apps = it
             initList(apps)
@@ -38,13 +38,13 @@ object HookAppStartForbidden : YukiBaseHooker() {
         "com.android.server.am.OplusAppStartupConfig".toClassOrNull()?.resolve()?.apply {
             firstMethod { name = "isAppStartForbidden" }.hook {
                 after {
-                    val packName = args().first().string()
-                    if (isAppForbidden(packName)) resultTrue()
+                    val packName = firstArg().get<String>() ?: ""
+                    if (isAppForbidden(packName)) result = true
                 }
             }
             firstMethod { name = "handleAppStartForbidden" }.hook {
                 after {
-                    val packName = args().first().string()
+                    val packName = firstArg().get<String>() ?: ""
                     if (isAppForbidden(packName)) {
                         val curLanguage = firstMethod { name = "getCurrentLanguage" }.of(instance)
                             .invoke<String>() ?: ""
@@ -79,8 +79,8 @@ object HookAppStartForbidden : YukiBaseHooker() {
         "com.android.server.OplusListManagerImpl".toClassOrNull()?.resolve()?.apply {
             firstMethod { name = "isAppStartForbidden" }.hook {
                 after {
-                    val packName = args().first().string()
-                    if (isAppForbidden(packName)) resultTrue()
+                    val packName = firstArg().get<String>() ?: ""
+                    if (isAppForbidden(packName)) result = true
                 }
             }
         }
@@ -88,7 +88,7 @@ object HookAppStartForbidden : YukiBaseHooker() {
 
     private fun isAppForbidden(packName: String): Boolean {
         forbiddenApps.forEach {
-            if (it.lowercase() == packName.lowercase()) return true
+            if (it.equals(packName, ignoreCase = true)) return true
         }
         return false
     }

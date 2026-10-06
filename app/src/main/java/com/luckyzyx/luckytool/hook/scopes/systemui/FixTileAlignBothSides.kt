@@ -53,8 +53,8 @@ object FixTileAlignBothSides : YukiBaseHooker() {
     private object HookTileAlignHorizontal : YukiBaseHooker() {
         @SuppressLint("DiscouragedApi")
         override fun onHook() {
-            val isCustomTile = prefs(ModulePrefs).getBoolean("control_center_tile_enable", false)
-            val columnHorizontal = prefs(ModulePrefs).getInt("tile_columns_horizontal_c13", 4)
+            val isCustomTile = preferences(ModulePrefs).getBoolean("control_center_tile_enable", false)
+            val columnHorizontal = preferences(ModulePrefs).getInt("tile_columns_horizontal_c13", 4)
 
             val QSFragmentHelperCls = VariousClass(
                 "com.oplusos.systemui.qs.helper.QSFragmentHelper", //C13

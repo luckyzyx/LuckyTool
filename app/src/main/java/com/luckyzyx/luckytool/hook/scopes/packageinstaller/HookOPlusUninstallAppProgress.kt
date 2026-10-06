@@ -14,7 +14,7 @@ import org.luckypray.dexkit.result.MethodData
 @Obfuscate
 class HookOPlusUninstallAppProgress(val dexKitBridge: DexKitBridge) : YukiBaseHooker() {
 
-    val autoDone = prefs(ModulePrefs).getBoolean("auto_click_uninstall_button", false)
+    val autoDone = preferences(ModulePrefs).getBoolean("auto_click_uninstall_button", false)
 
     override fun onHook() {
         //Source OPlusUninstallAppProgress

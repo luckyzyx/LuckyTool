@@ -17,11 +17,11 @@ object RemoveNotificationPinNumberLimit : YukiBaseHooker() {
                         returnType = Boolean::class
                     }.hookAll {
                         before {
-                            val controller = args().first().any() ?: return@before
-                            val bool = args().last().boolean()
+                            val controller = firstArg().get() ?: return@before
+                            val bool = lastArg().get<Boolean>() ?: false
                             controller.asResolver().firstMethod { name = "onChange";superclass() }
                                 .invoke(bool)
-                            resultTrue()
+                            result = true
                         }
                     }
                 }

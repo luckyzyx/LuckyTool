@@ -11,7 +11,7 @@ import org.lsposed.lsparanoid.Obfuscate
 object SystemEnableVolumeKeyControlFlashlight : YukiBaseHooker() {
     override fun onHook() {
         if (getOSVersionCode < 27) return
-        val isEnable = prefs(ModulePrefs).getBoolean("enable_volume_key_control_flashlight", false)
+        val isEnable = preferences(ModulePrefs).getBoolean("enable_volume_key_control_flashlight", false)
 
         //Source OplusScreenOffTorchHelper
         "com.android.server.power.OplusScreenOffTorchHelper".toClassOrNull()?.resolve()?.apply {
@@ -21,7 +21,7 @@ object SystemEnableVolumeKeyControlFlashlight : YukiBaseHooker() {
             }.hook {
                 after {
                     if (!isEnable) return@after
-                    val context = args().first().cast<Context>() ?: return@after
+                    val context = firstArg().get<Context>() ?: return@after
 
                     if (result == null) result = firstConstructor {
                         parameters(Context::class)

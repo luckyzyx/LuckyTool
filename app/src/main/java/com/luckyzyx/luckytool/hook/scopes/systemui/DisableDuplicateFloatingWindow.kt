@@ -17,7 +17,7 @@ object DisableDuplicateFloatingWindow : YukiBaseHooker() {
             .apply {
                 firstMethodOrNull { name = "showSinglePreview" }?.hook {
                     after {
-                        args().first().cast<View>()?.isVisible = false
+                        firstArg().get<View>()?.isVisible = false
                         firstField { name = "mView" }.of(instance).get<View>()?.isVisible = false
                     }
                 }
@@ -29,7 +29,7 @@ object DisableDuplicateFloatingWindow : YukiBaseHooker() {
         "com.android.systemui.clipboardoverlay.ClipboardOverlayView".toClass().resolve().apply {
             firstMethodOrNull { name = "showSinglePreview" }?.hook {
                 after {
-                    args().first().cast<View>()?.isVisible = false
+                    firstArg().get<View>()?.isVisible = false
                     instance<View>().isVisible = false
                 }
             }

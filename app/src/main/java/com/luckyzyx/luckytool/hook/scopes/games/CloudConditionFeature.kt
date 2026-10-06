@@ -25,19 +25,19 @@ class CloudConditionFeature(
     private object HookOplusFeature : YukiBaseHooker() {
         override fun onHook() {
             //Source GpuSettingHelper
-            val gpuControl = prefs(ModulePrefs).getBoolean("enable_adreno_gpu_controller", false)
+            val gpuControl = preferences(ModulePrefs).getBoolean("enable_adreno_gpu_controller", false)
             //Source GameFrameInsertInfo
             val pickleFeature =
-                prefs(ModulePrefs).getBoolean("enable_increase_fps_limit_feature", false)
-            val fpsFeature = prefs(ModulePrefs).getBoolean("enable_increase_fps_feature", false)
-            val powerFeature = prefs(ModulePrefs).getBoolean("enable_optimise_power_feature", false)
+                preferences(ModulePrefs).getBoolean("enable_increase_fps_limit_feature", false)
+            val fpsFeature = preferences(ModulePrefs).getBoolean("enable_increase_fps_feature", false)
+            val powerFeature = preferences(ModulePrefs).getBoolean("enable_optimise_power_feature", false)
             //Source Feats
-            val gtMode = prefs(ModulePrefs).getBoolean("enable_gt_mode_feature", false)
+            val gtMode = preferences(ModulePrefs).getBoolean("enable_gt_mode_feature", false)
             //Source SuperResolutionHelper
             val superResolution =
-                prefs(ModulePrefs).getBoolean("enable_super_resolution_feature", false)
+                preferences(ModulePrefs).getBoolean("enable_super_resolution_feature", false)
             //Source CoolingBackClipHelper
-            val xMode = prefs(ModulePrefs).getBoolean("enable_x_mode_feature", false)
+            val xMode = preferences(ModulePrefs).getBoolean("enable_x_mode_feature", false)
 
             val companion = "com.oplus.addon.OplusFeatureHelper\$Companion".toClassOrNull()
             if (companion == null) {
@@ -48,32 +48,32 @@ class CloudConditionFeature(
                         returnType = Boolean::class
                     }.hook {
                         after {
-                            when (args().first().string()) {
+                            when (firstArg().get<String>() ?: "") {
                                 //feature -> isSupportFrameInsert
-                                "oplus.software.display.game.memc_enable" -> if (pickleFeature || fpsFeature || powerFeature) resultTrue()
+                                "oplus.software.display.game.memc_enable" -> if (pickleFeature || fpsFeature || powerFeature) result = true
                                 //插帧pickleFeature -> isSupportUniqueFrameInsert
-                                "oplus.software.display.game.memc_increase_fps_limit_mode" -> if (pickleFeature) resultTrue()
+                                "oplus.software.display.game.memc_increase_fps_limit_mode" -> if (pickleFeature) result = true
                                 //提升帧率feature -> isSupportIncreaseFps
-                                "oplus.software.display.game.memc_increase_fps_mode" -> if (fpsFeature) resultTrue()
+                                "oplus.software.display.game.memc_increase_fps_mode" -> if (fpsFeature) result = true
                                 //优化功耗feature -> isSupportOptimisePower
-                                "oplus.software.display.game.memc_optimise_power_mode" -> if (powerFeature) resultTrue()
+                                "oplus.software.display.game.memc_optimise_power_mode" -> if (powerFeature) result = true
                                 //GPU控制器 -> isSupportGpuControl
-                                "oplus.gpu.controlpanel.support" -> if (gpuControl) resultTrue()
+                                "oplus.gpu.controlpanel.support" -> if (gpuControl) result = true
                                 //GT模式 -> isSupportGtMode
-                                "oplus.software.support.gt.mode" -> if (gtMode) resultTrue()
+                                "oplus.software.support.gt.mode" -> if (gtMode) result = true
                                 //超级分辨率 -> issupportSupperResolution
-                                "oplus.software.display.game.sr_enable" -> if (superResolution) resultTrue()
+                                "oplus.software.display.game.sr_enable" -> if (superResolution) result = true
                                 //全超分辨率 -> isSupportFullSupperResolution
-                                "oplus.software.display.game.sr.fully_enable" -> if (superResolution) resultTrue()
+                                "oplus.software.display.game.sr.fully_enable" -> if (superResolution) result = true
                                 //X模式 -> isSupportBackClipFull
-                                "oplus.software.general.cooling.back.clip.enable" -> if (xMode) resultTrue()
+                                "oplus.software.general.cooling.back.clip.enable" -> if (xMode) result = true
 //                            //isSupportBackClipFull
 //                            "oplus.software.general.cooling.back.clip.enable" -> {
 //                                loggerD(msg = "isSupportBackClipFull")
-//                                resultFalse()
+//                                result = false
 //                            }
 //                            //极客性能面板 -> isSupportCpuSettingExtension
-//                            "oplus.software.performance_setting_extension" -> resultTrue()
+//                            "oplus.software.performance_setting_extension" -> result = true
 
                             }
                         }
@@ -88,32 +88,32 @@ class CloudConditionFeature(
                     returnType = Boolean::class
                 }.hook {
                     after {
-                        when (args().first().string()) {
+                        when (firstArg().get<String>() ?: "") {
                             //feature -> isSupportFrameInsert
-                            "oplus.software.display.game.memc_enable" -> if (pickleFeature || fpsFeature || powerFeature) resultTrue()
+                            "oplus.software.display.game.memc_enable" -> if (pickleFeature || fpsFeature || powerFeature) result = true
                             //插帧pickleFeature -> isSupportUniqueFrameInsert
-                            "oplus.software.display.game.memc_increase_fps_limit_mode" -> if (pickleFeature) resultTrue()
+                            "oplus.software.display.game.memc_increase_fps_limit_mode" -> if (pickleFeature) result = true
                             //提升帧率feature -> isSupportIncreaseFps
-                            "oplus.software.display.game.memc_increase_fps_mode" -> if (fpsFeature) resultTrue()
+                            "oplus.software.display.game.memc_increase_fps_mode" -> if (fpsFeature) result = true
                             //优化功耗feature -> isSupportOptimisePower
-                            "oplus.software.display.game.memc_optimise_power_mode" -> if (powerFeature) resultTrue()
+                            "oplus.software.display.game.memc_optimise_power_mode" -> if (powerFeature) result = true
                             //GPU控制器 -> isSupportGpuControl
-                            "oplus.gpu.controlpanel.support" -> if (gpuControl) resultTrue()
+                            "oplus.gpu.controlpanel.support" -> if (gpuControl) result = true
                             //GT模式 -> isSupportGtMode
-                            "oplus.software.support.gt.mode" -> if (gtMode) resultTrue()
+                            "oplus.software.support.gt.mode" -> if (gtMode) result = true
                             //超级分辨率 -> issupportSupperResolution
-                            "oplus.software.display.game.sr_enable" -> if (superResolution) resultTrue()
+                            "oplus.software.display.game.sr_enable" -> if (superResolution) result = true
                             //全超分辨率 -> isSupportFullSupperResolution
-                            "oplus.software.display.game.sr.fully_enable" -> if (superResolution) resultTrue()
+                            "oplus.software.display.game.sr.fully_enable" -> if (superResolution) result = true
                             //X模式 -> isSupportBackClipFull
-                            "oplus.software.general.cooling.back.clip.enable" -> if (xMode) resultTrue()
+                            "oplus.software.general.cooling.back.clip.enable" -> if (xMode) result = true
 //                            //isSupportBackClipFull
 //                            "oplus.software.general.cooling.back.clip.enable" -> {
 //                                loggerD(msg = "isSupportBackClipFull")
-//                                resultFalse()
+//                                result = false
 //                            }
 //                            //极客性能面板 -> isSupportCpuSettingExtension
-//                            "oplus.software.performance_setting_extension" -> resultTrue()
+//                            "oplus.software.performance_setting_extension" -> result = true
 
                         }
                     }
@@ -126,25 +126,25 @@ class CloudConditionFeature(
     private object HookCloudCondition : YukiBaseHooker() {
         override fun onHook() {
             //Source GpuSettingHelper
-            val gpuControl = prefs(ModulePrefs).getBoolean("enable_adreno_gpu_controller", false)
+            val gpuControl = preferences(ModulePrefs).getBoolean("enable_adreno_gpu_controller", false)
             //Source GameFrameInsertInfo
             val pickleFeature =
-                prefs(ModulePrefs).getBoolean("enable_increase_fps_limit_feature", false)
-            val fpsFeature = prefs(ModulePrefs).getBoolean("enable_increase_fps_feature", false)
-            val powerFeature = prefs(ModulePrefs).getBoolean("enable_optimise_power_feature", false)
+                preferences(ModulePrefs).getBoolean("enable_increase_fps_limit_feature", false)
+            val fpsFeature = preferences(ModulePrefs).getBoolean("enable_increase_fps_feature", false)
+            val powerFeature = preferences(ModulePrefs).getBoolean("enable_optimise_power_feature", false)
             //Source CoolingBackClipHelper
-            val xMode = prefs(ModulePrefs).getBoolean("enable_x_mode_feature", false)
+            val xMode = preferences(ModulePrefs).getBoolean("enable_x_mode_feature", false)
             //Source SuperResolutionHelper
             val superResolution =
-                prefs(ModulePrefs).getBoolean("enable_super_resolution_feature", false)
+                preferences(ModulePrefs).getBoolean("enable_super_resolution_feature", false)
             //Source CloudConditionUtil
             val oneplusCharacteristic =
-                prefs(ModulePrefs).getBoolean("enable_one_plus_characteristic", false)
+                preferences(ModulePrefs).getBoolean("enable_one_plus_characteristic", false)
             //Search magic_voice_config
             val magicVoice =
-                prefs(ModulePrefs).getBoolean("remove_game_voice_changer_whitelist", false)
+                preferences(ModulePrefs).getBoolean("remove_game_voice_changer_whitelist", false)
             //Source AIPlayFeature
-            val aiPlay = prefs(ModulePrefs).getBoolean("enable_game_ai_play", false)
+            val aiPlay = preferences(ModulePrefs).getBoolean("enable_game_ai_play", false)
 
             //Source CloudConditionUtil
             "com.coloros.gamespaceui.config.cloud.CloudConditionUtil".toClass().resolve().apply {
@@ -153,23 +153,23 @@ class CloudConditionFeature(
                     returnType = Boolean::class
                 }.hook {
                     before {
-                        when (args().first().string()) {
+                        when (firstArg().get<String>() ?: "") {
                             //pickle插帧云控 -> cloudFrameInsertEnable
-                            "frame_insert" -> if (pickleFeature) resultTrue()
+                            "frame_insert" -> if (pickleFeature) result = true
                             //提升帧率云控 -> cloudIncreaseFpsEnable
-                            "increase_fps" -> if (fpsFeature) resultTrue()
+                            "increase_fps" -> if (fpsFeature) result = true
                             //优化功耗云控 -> cloudOptimisePowerEnable
-                            "optimise_power" -> if (powerFeature) resultTrue()
+                            "optimise_power" -> if (powerFeature) result = true
                             //GPU控制器云控 -> isCloudSupportGpuControlPanel
-                            "gpu_control_panel" -> if (gpuControl) resultTrue()
+                            "gpu_control_panel" -> if (gpuControl) result = true
                             //X模式 -> isSupportXMode
-                            "cool_back_clip_blacklist" -> if (xMode) resultTrue()
+                            "cool_back_clip_blacklist" -> if (xMode) result = true
                             //OnePlus特性
-                            "one_plus_characteristic" -> if (oneplusCharacteristic) resultTrue()
+                            "one_plus_characteristic" -> if (oneplusCharacteristic) result = true
                             //游戏滤镜
-//                            "game_filter_config" -> resultTrue()
+//                            "game_filter_config" -> result = true
                             //AI辅助
-                            "game_ai_play_key" -> if (aiPlay) resultTrue()
+                            "game_ai_play_key" -> if (aiPlay) result = true
                         }
                     }
                 }
@@ -178,9 +178,9 @@ class CloudConditionFeature(
                     returnType = Boolean::class
                 }.hook {
                     before {
-                        when (args().first().string()) {
+                        when (firstArg().get<String>() ?: "") {
                             //超级分辨率云控 -> cloudSRSupport
-                            "super_resolution_config" -> if (superResolution) resultTrue()
+                            "super_resolution_config" -> if (superResolution) result = true
                         }
                     }
                 }
@@ -189,9 +189,9 @@ class CloudConditionFeature(
                     parameterCount = 3
                 }.hook {
                     after {
-                        when (args().first().string()) {
+                        when (firstArg().get<String>() ?: "") {
                             //游戏变声
-                            "magic_voice_config" -> if (magicVoice) resultTrue()
+                            "magic_voice_config" -> if (magicVoice) result = true
                         }
                     }
                 }
@@ -203,22 +203,22 @@ class CloudConditionFeature(
     private class HookCloudApiImpl(val dexKitBridge: DexKitBridge) : YukiBaseHooker() {
         override fun onHook() {
             //Source GpuSettingHelper
-            val gpuControl = prefs(ModulePrefs).getBoolean("enable_adreno_gpu_controller", false)
+            val gpuControl = preferences(ModulePrefs).getBoolean("enable_adreno_gpu_controller", false)
             //Source SuperResolutionHelper
             val superResolution =
-                prefs(ModulePrefs).getBoolean("enable_super_resolution_feature", false)
+                preferences(ModulePrefs).getBoolean("enable_super_resolution_feature", false)
             //Source CloudConditionUtil
             val oneplusCharacteristic =
-                prefs(ModulePrefs).getBoolean("enable_one_plus_characteristic", false)
+                preferences(ModulePrefs).getBoolean("enable_one_plus_characteristic", false)
 
             //Source CloudApiImpl
             dexKitBridge.findClass {
                 matcher {
                     usingStrings("cloudKey", "defaultDate", "spFileName")
                     methods {
-                        add { paramCount(0);returnType(List::class.java) }
-                        add { paramCount(1);returnType(List::class.java) }
-                        add { paramCount(2);returnType(Boolean::class.java) }
+                        add { paramCount(0);returnType(classOf<List<*>>()) }
+                        add { paramCount(1);returnType(classOf<List<*>>()) }
+                        add { paramCount(2);returnType(classOf<Boolean>()) }
                     }
                 }
             }.apply {
@@ -229,17 +229,17 @@ class CloudConditionFeature(
                         parameterCount = 2
                     }.hook {
                         before {
-                            when (args().first().string()) {
+                            when (firstArg().get<String>() ?: "") {
                                 //GPU控制器云控 -> isCloudSupportGpuControlPanel
-                                "gpu_control_panel" -> if (gpuControl) resultTrue()
+                                "gpu_control_panel" -> if (gpuControl) result = true
                                 //OnePlus特性
-                                "one_plus_characteristic" -> if (oneplusCharacteristic) resultTrue()
+                                "one_plus_characteristic" -> if (oneplusCharacteristic) result = true
                                 //超级分辨率云控 -> cloudSRSupport
-                                "super_resolution_config" -> if (superResolution) resultTrue()
+                                "super_resolution_config" -> if (superResolution) result = true
                                 //全超分辨率云控 -> isSupportFullSupperResolution
-                                "super_resolution_config_full" -> if (superResolution) resultTrue()
+                                "super_resolution_config_full" -> if (superResolution) result = true
                                 //游戏滤镜
-                                //"game_filter_config" -> resultTrue()
+                                //"game_filter_config" -> result = true
                             }
                         }
                     }

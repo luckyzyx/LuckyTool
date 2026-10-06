@@ -9,7 +9,7 @@ import org.lsposed.lsparanoid.Obfuscate
 @Obfuscate
 object HookAlphaBackupPro : YukiBaseHooker() {
     override fun onHook() {
-        val isPro = prefs(ModulePrefs).getBoolean("remove_check_license", false)
+        val isPro = preferences(ModulePrefs).getBoolean("remove_check_license", false)
         if (!isPro) return
         //Source HomeActivity
         "com.ruet_cse_1503050.ragib.appbackup.pro.activities.HomeActivity".toClass().resolve().apply {

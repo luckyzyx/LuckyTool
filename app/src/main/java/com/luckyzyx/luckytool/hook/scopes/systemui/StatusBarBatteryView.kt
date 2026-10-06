@@ -3,6 +3,7 @@ package com.luckyzyx.luckytool.hook.scopes.systemui
 import android.graphics.Typeface
 import android.util.TypedValue
 import android.widget.TextView
+import com.highcapable.betterandroid.ui.extension.view.textToString
 import com.highcapable.kavaref.KavaRef.Companion.resolve
 import com.highcapable.yukihookapi.hook.entity.YukiBaseHooker
 import com.luckyzyx.luckytool.utils.ModulePrefs
@@ -22,60 +23,32 @@ object StatusBarBatteryView : YukiBaseHooker() {
     object StatusBarPowerStyle : YukiBaseHooker() {
         override fun onHook() {
             val removePercent =
-                prefs(ModulePrefs).getBoolean("remove_statusbar_battery_percent", false)
-            val userTypeface = prefs(ModulePrefs).getBoolean("statusbar_power_user_typeface", false)
+                preferences(ModulePrefs).getBoolean("remove_statusbar_battery_percent", false)
+            val userTypeface =
+                preferences(ModulePrefs).getBoolean("statusbar_power_user_typeface", false)
             val useBoldFont =
-                prefs(ModulePrefs).getBoolean("statusbar_power_use_bold_font_style", false)
-            val customFontSize = prefs(ModulePrefs).getInt("statusbar_power_font_size", 0)
+                preferences(ModulePrefs).getBoolean("statusbar_power_use_bold_font_style", false)
+            val customFontSize = preferences(ModulePrefs).getInt("statusbar_power_font_size", 0)
             val applyToIcon =
-                prefs(ModulePrefs).getBoolean("statusbar_power_apply_to_battery_icon", false)
+                preferences(ModulePrefs).getBoolean("statusbar_power_apply_to_battery_icon", false)
 
             //Source BatteryViewBinder
             "com.oplus.systemui.statusbar.pipeline.battery.ui.binder.BatteryViewBinder".toClass()
                 .resolve().apply {
-                    firstMethodOrNull { name = "bind\$initView" }?.hook {
-                        after {
-                            args.filterIsInstance<TextView>().forEachIndexed { _, view ->
-                                view.handBatteryTextView(
-                                    removePercent,
-                                    userTypeface,
-                                    useBoldFont,
-                                    customFontSize,
-                                    applyToIcon
-                                )
-                            }
-                        }
-                    }
-                    firstMethodOrNull { name = "updateText" }?.hook {
-                        after {
-                            val view = args().first().cast<TextView>() ?: return@after
-                            view.handBatteryTextView(
-                                removePercent,
-                                userTypeface,
-                                useBoldFont,
-                                customFontSize,
-                                applyToIcon
+                    method {
+                        name {
+                            it in setOf(
+                                "bind\$initView",
+                                "updateText",
+                                "bind\$updateOldHorizontal",
+                                "bind\$updateOldHorizontalViewContent",
+                                "bind\$updatePercentOutView",
+                                "bind\$updateBatteryIconStyle"
                             )
                         }
-                    }
-
-                    firstMethodOrNull { name = "bind\$updateOldHorizontal" }?.hook {
+                    }.hookAll {
                         after {
-                            args.filterIsInstance<TextView>().forEachIndexed { _, view ->
-                                view.handBatteryTextView(
-                                    removePercent,
-                                    userTypeface,
-                                    useBoldFont,
-                                    customFontSize,
-                                    applyToIcon
-                                )
-                            }
-                        }
-                    }
-
-                    firstMethodOrNull { name = "bind\$updatePercentOutView" }?.hook {
-                        after {
-                            args.filterIsInstance<TextView>().forEachIndexed { _, view ->
+                            args.filterIsInstance<TextView>().forEach { view ->
                                 view.handBatteryTextView(
                                     removePercent,
                                     userTypeface,
@@ -103,13 +76,14 @@ object StatusBarBatteryView : YukiBaseHooker() {
     object StatusBarPowerStyleC13 : YukiBaseHooker() {
         override fun onHook() {
             val removePercent =
-                prefs(ModulePrefs).getBoolean("remove_statusbar_battery_percent", false)
-            val userTypeface = prefs(ModulePrefs).getBoolean("statusbar_power_user_typeface", false)
+                preferences(ModulePrefs).getBoolean("remove_statusbar_battery_percent", false)
+            val userTypeface =
+                preferences(ModulePrefs).getBoolean("statusbar_power_user_typeface", false)
             val useBoldFont =
-                prefs(ModulePrefs).getBoolean("statusbar_power_use_bold_font_style", false)
-            val customFontSize = prefs(ModulePrefs).getInt("statusbar_power_font_size", 0)
+                preferences(ModulePrefs).getBoolean("statusbar_power_use_bold_font_style", false)
+            val customFontSize = preferences(ModulePrefs).getInt("statusbar_power_font_size", 0)
             val applyToIcon =
-                prefs(ModulePrefs).getBoolean("statusbar_power_apply_to_battery_icon", false)
+                preferences(ModulePrefs).getBoolean("statusbar_power_apply_to_battery_icon", false)
 
             //Source StatBatteryMeterView
             "com.oplusos.systemui.statusbar.widget.StatBatteryMeterView".toClass().resolve().apply {
@@ -149,7 +123,7 @@ object StatusBarBatteryView : YukiBaseHooker() {
             "battery_percentage_view" -> {}
             else -> return
         }
-        if (removePercent) text = text.toString().replace("%", "")
+        if (removePercent) text = textToString().replace("%", "")
         if (userTypeface) {
             typeface = if (useBoldFont) Typeface.DEFAULT_BOLD else Typeface.DEFAULT
             setTextSize(

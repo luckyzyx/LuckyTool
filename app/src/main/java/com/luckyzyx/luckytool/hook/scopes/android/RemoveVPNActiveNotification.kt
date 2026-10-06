@@ -9,7 +9,7 @@ import org.lsposed.lsparanoid.Obfuscate
 @Obfuscate
 object RemoveVPNActiveNotification : YukiBaseHooker() {
     override fun onHook() {
-        val isEnable = prefs(ModulePrefs).getBoolean("remove_vpn_active_notification", false)
+        val isEnable = preferences(ModulePrefs).getBoolean("remove_vpn_active_notification", false)
 
         // Source OplusVpnHelper
         VariousClass(

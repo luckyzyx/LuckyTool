@@ -4,6 +4,7 @@ import android.content.Context
 import android.os.PowerManager
 import android.os.SystemProperties
 import com.highcapable.kavaref.KavaRef.Companion.resolve
+import com.highcapable.kavaref.extension.classOf
 import com.highcapable.yukihookapi.hook.entity.YukiBaseHooker
 import com.luckyzyx.luckytool.utils.DexkitUtils.checkDataList
 import org.lsposed.lsparanoid.Obfuscate
@@ -25,9 +26,9 @@ class RemoveOTALocalUpdateVerity(val dexKitBridge: DexKitBridge) : YukiBaseHooke
             dexKitBridge.findClass {
                 matcher {
                     methods {
-                        add { paramCount(0);returnType(Boolean::class.java) }
-                        add { paramTypes(File::class.java, String::class.java) }
-                        add { paramTypes(List::class.java) }
+                        add { paramCount(0); returnType(classOf<Boolean>()) }
+                        add { paramTypes(classOf<File>(), classOf<String>()) }
+                        add { paramTypes(classOf<List<*>>()) }
                     }
                     usingStrings("ABUpdateUtils")
                 }
@@ -36,7 +37,7 @@ class RemoveOTALocalUpdateVerity(val dexKitBridge: DexKitBridge) : YukiBaseHooke
                 single().name.toClass().resolve().apply {
                     firstMethod { parameters(File::class, String::class) }.hook {
                         after {
-                            val file = args().first().cast<File>() ?: return@after
+                            val file = firstArg().get<File>() ?: return@after
                             val list = result<java.util.ArrayList<String>>() ?: return@after
 
                             if (file.exists() && file.name.contains("downgrade")) {
@@ -66,14 +67,14 @@ class RemoveOTALocalUpdateVerity(val dexKitBridge: DexKitBridge) : YukiBaseHooke
             dexKitBridge.findClass {
                 matcher {
                     methods {
-                        add { returnType(Boolean::class.java) }
+                        add { returnType(classOf<Boolean>()) }
                         add {
-                            paramTypes(String::class.java)
-                            returnType(String::class.java)
+                            paramTypes(classOf<String>())
+                            returnType(classOf<String>())
                         }
                         add {
                             paramCount(4)
-                            returnType(Int::class.java)
+                            returnType(classOf<Int>())
                         }
                     }
                     usingStrings("LocalPcakgeInfoUtil")
@@ -83,12 +84,12 @@ class RemoveOTALocalUpdateVerity(val dexKitBridge: DexKitBridge) : YukiBaseHooke
                 single().name.toClass().resolve().apply {
                     firstMethod {
 //                        parameters(Context::class, String::class)
-                        parameters { it.contains(Context::class.java) && it.contains(String::class.java) }
+                        parameters { it.contains(classOf<Context>()) && it.contains(classOf<String>()) }
                         parameterCount(2)
-                        returnType { it == List::class.java || it == ArrayList::class.java }
+                        returnType { it == classOf<List<*>>() || it == classOf<ArrayList<*>>() }
                     }.hook {
                         after {
-                            val filePath = args(args.indexOfFirst { it is String }).string()
+                            val filePath = arg(args.indexOfFirst { it is String }).get<String>() ?: ""
                             val list = result<java.util.ArrayList<String>>() ?: return@after
 
                             if (filePath.contains("downgrade")) {
@@ -121,13 +122,13 @@ class RemoveOTALocalUpdateVerity(val dexKitBridge: DexKitBridge) : YukiBaseHooke
 //                        addForType(Context::class.java)
                         addForType("android.os.UpdateEngine")
 //                        addForType("android.os.UpdateEngineCallback")
-                        addForType(PowerManager.WakeLock::class.java)
+                        addForType(classOf<PowerManager.WakeLock>())
 
                     }
                     methods {
-                        add { paramCount(0);returnType(Int::class.java) }
+                        add { paramCount(0); returnType(classOf<Int>()) }
 //                        add { paramCount(0);returnType(Float::class.java) }
-                        add { paramCount(0);returnType(Void.TYPE) }
+                        add { paramCount(0); returnType(Void.TYPE) }
                         add {
 //                            paramTypes(
 //                                String::class.java, Long::class.java,
@@ -157,7 +158,7 @@ class RemoveOTALocalUpdateVerity(val dexKitBridge: DexKitBridge) : YukiBaseHooke
                             returnType(Void.TYPE)
                         }.hook {
                             before {
-                                val headers = args().last().array<String>()
+                                val headers = lastArg().get<Array<String>>() ?: emptyArray()
                                 headers.toMutableList().apply {
                                     removeIf { it.contains("forbid_ota_local_update") }
                                     removeIf { it.contains("ota_root_or_debug") }

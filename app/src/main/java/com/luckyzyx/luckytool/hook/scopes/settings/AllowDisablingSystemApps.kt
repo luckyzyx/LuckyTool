@@ -11,7 +11,7 @@ object AllowDisablingSystemApps : YukiBaseHooker() {
         "com.oplus.settings.adaptor.AppButtonsPreferenceControllerAdaptor".toClass().resolve().apply {
             firstMethod { name = "setUninstallButtonEnabled" }.hook {
                 before {
-                    args().first().setTrue()
+                    firstArg().set(true)
                 }
             }
         }

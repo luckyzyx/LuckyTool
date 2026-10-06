@@ -18,7 +18,7 @@ object HookPermissionController : YukiBaseHooker() {
         DexkitUtils.create(appInfo.sourceDir) { dexKitBridge ->
 
             val storageDialog =
-                prefs(ModulePrefs).getBoolean("remove_storage_permission_exception_dialog", false)
+                preferences(ModulePrefs).getBoolean("remove_storage_permission_exception_dialog", false)
             if (osCode < 37 && storageDialog) {
                 loadHooker(RemoveStoragePermissionExceptionDialog(dexKitBridge))
             }

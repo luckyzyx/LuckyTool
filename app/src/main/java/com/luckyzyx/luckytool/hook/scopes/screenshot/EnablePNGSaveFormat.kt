@@ -2,6 +2,7 @@ package com.luckyzyx.luckytool.hook.scopes.screenshot
 
 import android.graphics.Bitmap
 import com.highcapable.kavaref.KavaRef.Companion.resolve
+import com.highcapable.kavaref.extension.classOf
 import com.highcapable.yukihookapi.hook.entity.YukiBaseHooker
 import com.luckyzyx.luckytool.utils.DexkitUtils.checkDataList
 import org.lsposed.lsparanoid.Obfuscate
@@ -15,13 +16,13 @@ class EnablePNGSaveFormat(val dexKitBridge: DexKitBridge) : YukiBaseHooker() {
         dexKitBridge.findClass {
             matcher {
                 fields {
-                    addForType(String::class.java)
-                    addForType(Bitmap.CompressFormat::class.java)
+                    addForType(classOf<String>())
+                    addForType(classOf<Bitmap.CompressFormat>())
                 }
                 methods {
                     add { name("values") }
-                    add { returnType(String::class.java) }
-                    add { returnType(Bitmap.CompressFormat::class.java) }
+                    add { returnType(classOf<String>()) }
+                    add { returnType(classOf<Bitmap.CompressFormat>()) }
                 }
                 usingStrings("image/jpeg", "image/png")
             }
@@ -37,7 +38,7 @@ class EnablePNGSaveFormat(val dexKitBridge: DexKitBridge) : YukiBaseHooker() {
                         }
                     }
                 }
-                firstMethod { returnType = Bitmap.CompressFormat::class.java }.hook {
+                firstMethod { returnType = classOf<Bitmap.CompressFormat>() }.hook {
                     after {
                         result = when (result<Bitmap.CompressFormat>()) {
                             Bitmap.CompressFormat.JPEG -> Bitmap.CompressFormat.PNG

@@ -128,7 +128,7 @@ class DarkModeFragment : BaseFragment<FragmentDarkModeApplistLayoutBinding>(), M
                     item.appName.text = appInfo.name
                     item.packName.text = appInfo.packageName
 
-                    val data = allEnabledInfos.get(appInfo.packageName)
+                    val data = allEnabledInfos[appInfo.packageName]
 
                     item.switchview.setOnCheckedChangeListener(null)
                     item.switchview.isChecked = data != null

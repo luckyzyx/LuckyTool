@@ -10,7 +10,7 @@ object EnableLauncherIndicatorEntry : YukiBaseHooker() {
         //Source IndicatorEntry Companion
         "com.android.launcher3.search.IndicatorEntry\$Companion".toClass().resolve().apply {
             firstMethod { name = "isSupportIndicatorEntryMenu" }.hook {
-                replaceToTrue()
+                intercept(true)
             }
         }
     }

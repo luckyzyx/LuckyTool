@@ -15,7 +15,6 @@ import com.luckyzyx.luckytool.data.AppInfo
 import org.lsposed.lsparanoid.Obfuscate
 import java.io.File
 
-@Suppress("MemberVisibilityCanBePrivate")
 @Obfuscate
 class PackageUtils(private val packageManager: PackageManager) {
 

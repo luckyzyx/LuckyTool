@@ -87,10 +87,12 @@
     <string name="menu_search">搜索菜单</string>
     <string name="menu_settings">设置菜单</string>
     <string name="restart_scope">重启作用域</string>
+    <string name="reload_hooker">重载进程Hooker</string>
     <string name="re_optimize_dex">重新优化Dex</string>
     <string name="need_restart_scope">需要重启作用域</string>
     <string name="need_restart_system">需要重启系统</string>
     <string name="restart_scope_message">确定要重启除系统框架以外的所有作用域？\n模块不生效时使用！\n请确保已勾选所有对应作用域！</string>
+    <string name="reload_hooker_message">确定要重载所有作用域Hooker？ 模块不生效时使用！</string>
     <string name="re_optimize_dex_message">重新优化所有作用域Dex？</string>
     <string name="re_optimize_dex_completed">优化完成，建议重启作用域或系统</string>
     <string name="re_optimize_dex_failed">优化失败</string>
@@ -99,6 +101,7 @@
     <string name="optimize_dex_after_system_update">系统更新后必须优化Dex</string>
     <string name="optimize_only_this_page_scope">仅优化此页作用域Dex</string>
     <string name="restart_only_this_page_scope">仅重启此页作用域</string>
+    <string name="reload_only_this_page_hooker">仅重载此页Hooker</string>
     <string name="reboot">重启系统</string>
     <string name="fast_reboot">快速重启</string>
     <string name="menu_versioninfo">版本信息</string>
@@ -125,21 +128,28 @@
     <string name="ColorOSCorePatchTip">ColorOS官方安装器需要另外开启其他功能使用\n功能列表-应用相关-应用安装相关</string>
     <string name="corepatch">核心破解</string>
     <string name="corepatch_summary">解除安装限制,支持 Android %1$s</string>
-    <string name="downgr">允许降级安装应用</string>
-    <string name="downgr_summary">允许应用在安装新版本的情况下直接覆盖安装旧版本</string>
-    <string name="authcreak">禁用软件包管理器签名验证</string>
-    <string name="authcreak_summary">关闭安装应用时的签名验证, 可以安装被篡改的应用</string>
-    <string name="digestCreak">禁用APK签名验证</string>
-    <string name="digestCreak_summary">允许直接覆盖安装同包名不同签名的应用</string>
-    <string name="exactSigCheck_summary">禁用多个 APK 之间的唯一签名匹配，从而允许安装应用时每个分包 APK 使用不同签名。仅在确有必要时再启用此项功能</string>
-    <string name="UsePreSig">安装时始终使用已装APP的签名</string>
-    <string name="UsePreSig_summary">不是一般的!危险! 仅在绝对需要时启用</string>
-    <string name="usepresig_warn">!! 所有安装包可以覆盖已安装的App! \n安装未知的安装包时请务必小心</string>
-    <string name="bypassBlock_summary">绕过某些设备如 Nothing Phone 上的黑名单</string>
-    <string name="shared_user_title">绕过共享用户签名验证</string>
-    <string name="shared_user_summary">允许安装与其共享用户签名不同的 App(<b>需要同时打开“禁用APK签名验证”</b>)</string>
-    <string name="disable_verification_agent_title">禁用安装包验证代理</string>
-    <string name="disable_verification_agent_summary">例如 Google Play 商店的保护机制</string>
+    <string name="bypass_downgrade">允許降版安裝應用程式</string>
+    <string name="bypass_downgrade_summary">允許應用程式在安裝新版本的情況下直接覆蓋安裝舊版本</string>
+    <string name="bypass_verification">停用套裝安裝程式簽名驗證</string>
+    <string name="bypass_verification_summary">停用安裝應用程式時的簽名驗證，可以安裝被修改的應用程式</string>
+    <string name="bypass_resource_arsc_restrictions">略過 resources.arsc 對齊限制</string>
+    <string name="bypass_resource_arsc_restrictions_summary">允許在 Android 11 及更新版本安裝 resources.arsc 已壓縮或未按 4 位元組對齊的 APK</string>
+    <string name="bypass_digest">停用 APK 簽名驗證</string>
+    <string name="bypass_digest_summary">允許直接覆蓋安裝同套件名稱但不同簽名的應用程式</string>
+    <string name="bypass_exact_signature_match">略過完全簽章比對</string>
+    <string name="bypass_exact_signature_match_summary">允許分割 APK 使用不同的簽章。</string>
+    <string name="use_previous_signatures">安裝時總是使用已安裝應用程式的簽名</string>
+    <string name="use_previous_signatures_summary">不是一般的<b>危險</b>，只在絕對需要時啟用</string>
+    <string name="use_previous_signatures_warning">！！所有安裝檔可以覆蓋已安裝的應用程式！！\n安裝未知的安裝檔時請務必小心</string>
+    <string name="allow_hidden_apis_for_system_apps">允許系統應用程式使用隱藏 API</string>
+    <string name="allow_hidden_apis_for_system_apps_summary">允許與平台簽章不一致的系統應用程式任意使用隱藏 API</string>
+    <string name="miui_usepresig_warn">小米/Redmi 使用者請勿啟用此選項，否則裝置可能無法開機。</string>
+    <string name="bypass_shared_user">略過共用使用者驗證</string>
+    <string name="bypass_shared_user_summary">允許套件使用與共用使用者不同的簽章。</string>
+    <string name="disable_verification_agent">停用套件驗證代理程式</string>
+    <string name="disable_verification_agent_summary">例如 Google Play 安全防護。</string>
+    <string name="bypass_block">繞過黑名單</string>
+    <string name="bypass_block_summary">繞過某些裝置如 Nothing Phone 上的黑名單</string>
     <!--Status Bar-->
     <string name="StatusBar">状态栏相关</string>
     <string name="StatusbarEvents">状态栏事件</string>
@@ -254,7 +264,7 @@
     <string name="fix_control_center_date_display_suammry">修复日期无法完整显示的问题</string>
     <string name="remove_control_center_carriers">移除控制中心运营商</string>
     <string name="ControlCenterNotificationCenter">控制中心通知中心</string>
-    <string name="enable_notification_align_both_sides">启用通知两侧对齐</string>
+    <string name="custom__notification_side_spacing_horizontal">自定义通知两侧间距(横屏)</string>
     <string name="remove_notification_cleanup_button">移除通知清理按钮</string>
     <string name="enable_notification_importance_classification">启用通知重要性分类</string>
     <string name="custom_notification_background_transparency">自定义通知背景透明度</string>
@@ -566,6 +576,8 @@
     <string name="allow_disabling_system_apps_summary">由于用户操作导致无法恢复系统应用，本模块概不负责!</string>
     <string name="remove_app_uninstall_button_blacklist">移除应用卸载按钮黑名单</string>
     <string name="enable_custom_app_language">启用自定义应用语言</string>
+    <string name="disable_app_archiving">自動釋放應用空間預設關閉</string>
+    <string name="disable_app_archiving_summary">空間不足時不再自動解除安裝應用（解除安裝但保留資料），預設對所有應用關閉</string>
     <!--FloatingWindowDialogRelated-->
     <string name="FloatingWindowDialogRelated">悬浮窗/对话框相关</string>
     <string name="disable_duplicate_floating_window">禁用复制悬浮窗</string>
@@ -862,6 +874,10 @@
     <string name="replace_side_slider_icon_on_left">替换左侧侧滑图标</string>
     <string name="replace_side_slider_icon_on_right">替换右侧侧滑图标</string>
     <!--OplusMMS-->
+    <string name="CustomActionButton">自定义快捷键</string>
+    <string name="action_button_nothing_enable">替换无操作事件</string>
+    <string name="action_button_ring_cycle_enable">替换响铃循环事件</string>
+    <string name="action_button_ring_cycle_mode">设置响铃循环模式</string>
     <string name="remove_verification_code_floating_window">移除验证码悬浮窗</string>
     <!--OplusPhone-->
     <string name="remove_mms_bottom_input_box_menu">移除短信底部输入框菜单</string>
@@ -886,6 +902,7 @@
     <string name="remove_market_splash_page_app_recommend">移除商店启动页应用推荐</string>
     <string name="remove_market_update_download_page_app_recommend">移除商店更新下载页应用推荐</string>
     <string name="remove_market_mine_page_app_recommend">移除商店我的页面应用推荐</string>
+    <string name="default_expand_update_list">默认展开更新列表</string>
     <!--OplusWeather-->
     <string name="disable_weather_jump_browser">禁用天气跳转浏览器</string>
     <string name="remove_weather_some_page_bottom_ads">移除天气部分页面底部广告</string>
@@ -1159,8 +1176,8 @@
     <string name="add_repeat">重复添加</string>
     <string name="import_">导入</string>
     <string name="remove_word_limit_for_compress_files">移除压缩文件字数限制</string>
-    <string name="exactSigCheck">禁用唯一签名匹配</string>
-    <string name="bypassBlock">绕过黑名单</string>
     <string name="disable_start_app_detail">禁用启动AppDetail</string>
     <string name="remove_multi_app_created_num_limit_for_users">单个应用可以分身的数量</string>
+    <string name="enable_notification_side_spacing">启用通知两侧间距</string>
+    <string name="custom_notification_side_spacing_vertical">自定义通知两侧间距(竖屏)</string>
 </resources>

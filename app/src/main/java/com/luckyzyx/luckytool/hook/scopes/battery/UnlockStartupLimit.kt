@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import com.highcapable.kavaref.KavaRef.Companion.resolve
+import com.highcapable.kavaref.extension.classOf
 import com.highcapable.yukihookapi.hook.entity.YukiBaseHooker
 import com.luckyzyx.luckytool.utils.DexkitUtils.checkDataList
 import org.lsposed.lsparanoid.Obfuscate
@@ -20,15 +21,15 @@ class UnlockStartupLimit(val dexKitBridge: DexKitBridge) : YukiBaseHooker() {
         dexKitBridge.findMethod {
             matcher {
                 declaredClass {
-                    addFieldForType(Context::class.java)
+                addFieldForType(classOf<Context>())
                     addFieldForType(recordDatabase)
                     usingStrings("StartupManager")
-                    addMethod { paramCount(0);returnType(Int::class.java) }
-                    addMethod { paramTypes(Intent::class.java);returnType(Void.TYPE) }
-                    addMethod { paramTypes(Bundle::class.java);returnType(Void.TYPE) }
+                    addMethod { paramCount(0);returnType(classOf<Int>()) }
+                    addMethod { paramTypes(classOf<Intent>());returnType(Void.TYPE) }
+                    addMethod { paramTypes(classOf<Bundle>());returnType(Void.TYPE) }
                 }
                 paramCount(0)
-                returnType(Int::class.java)
+                returnType(classOf<Int>())
                 usingNumbers(5, 20)
             }
         }.apply {
@@ -39,7 +40,7 @@ class UnlockStartupLimit(val dexKitBridge: DexKitBridge) : YukiBaseHooker() {
                     emptyParameters()
                     returnType = Int::class
                 }.hook {
-                    replaceTo(999)
+                    intercept(999)
                 }
             }
         }

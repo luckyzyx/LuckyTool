@@ -13,10 +13,11 @@ import androidx.navigation.fragment.findNavController
 import androidx.preference.DropDownPreference
 import androidx.preference.Preference
 import androidx.preference.PreferenceCategory
+import androidx.preference.PreferenceFragmentCompat
 import androidx.preference.SwitchPreference
 import com.google.android.material.color.DynamicColors
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
-import com.highcapable.yukihookapi.hook.xposed.prefs.ui.ModulePreferenceFragment
+import com.highcapable.kavaref.extension.classOf
 import com.luckyzyx.luckytool.R
 import com.luckyzyx.luckytool.ui.activity.MainActivity
 import com.luckyzyx.luckytool.ui.application.MyApplication
@@ -29,7 +30,9 @@ import com.luckyzyx.luckytool.utils.IntentUtils
 import com.luckyzyx.luckytool.utils.LogUtils
 import com.luckyzyx.luckytool.utils.ModulePrefs
 import com.luckyzyx.luckytool.utils.OtherPrefs
+import com.luckyzyx.luckytool.utils.RemotePreferenceDataStore
 import com.luckyzyx.luckytool.utils.SettingsPrefs
+import com.luckyzyx.luckytool.utils.appPrefs
 import com.luckyzyx.luckytool.utils.backupAllPrefs
 import com.luckyzyx.luckytool.utils.base64Decode
 import com.luckyzyx.luckytool.utils.base64Encode
@@ -56,7 +59,7 @@ import java.io.IOException
 import kotlin.system.exitProcess
 
 @Obfuscate
-class SettingsFragment : ModulePreferenceFragment() {
+class SettingsFragment : PreferenceFragmentCompat() {
     private val backupData = registerForActivityResult(
         ActivityResultContracts.CreateDocument("application/json")
     ) {
@@ -166,8 +169,9 @@ class SettingsFragment : ModulePreferenceFragment() {
         (activity as MainActivity).restart()
     }
 
-    override fun onCreatePreferencesInModuleApp(savedInstanceState: Bundle?, rootKey: String?) {
-        preferenceManager.sharedPreferencesName = SettingsPrefs
+    override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
+        preferenceManager.preferenceDataStore =
+            RemotePreferenceDataStore(requireContext().appPrefs(SettingsPrefs))
         preferenceScreen = preferenceManager.createPreferenceScreen(requireActivity()).apply {
             //主题
             addPreference(PreferenceCategory(context).apply {
@@ -217,7 +221,7 @@ class SettingsFragment : ModulePreferenceFragment() {
                 title = getString(R.string.enable_biometric_unlock_verification)
                 setDefaultValue(false)
                 isVisible =
-                    requireActivity().getSystemService(KeyguardManager::class.java).isDeviceSecure
+                    requireActivity().getSystemService(classOf<KeyguardManager>()).isDeviceSecure
                 isIconSpaceReserved = false
                 setOnPreferenceChangeListener { _, any ->
                     val enable = any as Boolean

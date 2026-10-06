@@ -27,6 +27,7 @@ dependencyResolutionManagement {
     repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
     repositories {
         mavenLocal {
+            content { includeGroup("com.highcapable.yukihookapi") }
             content { includeGroup("com.highcapable.kavaref") }
             content { includeGroup("com.highcapable.hikage") }
         }

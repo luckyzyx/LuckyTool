@@ -9,7 +9,7 @@ import org.lsposed.lsparanoid.Obfuscate
 @Obfuscate
 object ADBInstallConfirm : YukiBaseHooker() {
     override fun onHook() {
-        val isEnable = prefs(ModulePrefs).getBoolean("remove_adb_install_confirm", false)
+        val isEnable = preferences(ModulePrefs).getBoolean("remove_adb_install_confirm", false)
 
         //Source OplusPackageInstallInterceptManager
         VariousClass(
@@ -17,7 +17,9 @@ object ADBInstallConfirm : YukiBaseHooker() {
             "com.android.server.pm.OplusPackageInstallInterceptManager"
         ).toClass().resolve().apply {
             firstMethod { name = "allowInterceptAdbInstallInInstallStage" }.hook {
-                if (isEnable) replaceToFalse()
+                if (isEnable) {
+                    intercept(false)
+                }
             }
         }
     }

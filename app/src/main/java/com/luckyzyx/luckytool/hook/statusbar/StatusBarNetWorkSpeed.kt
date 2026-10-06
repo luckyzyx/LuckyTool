@@ -35,7 +35,7 @@ object StatusBarNetWorkSpeed : YukiBaseHooker() {
     @Obfuscate
     object NetWorkSpeedDelay : YukiBaseHooker() {
         override fun onHook() {
-            var networkSpeed = prefs(ModulePrefs).getBoolean("set_network_speed", false)
+            var networkSpeed = preferences(ModulePrefs).getBoolean("set_network_speed", false)
             dataChannel.wait<Boolean>("set_network_speed") { networkSpeed = it }
 
             //Search postUpdateNetworkSpeedDelay
@@ -44,16 +44,36 @@ object StatusBarNetWorkSpeed : YukiBaseHooker() {
                 "com.oplus.systemui.statusbar.phone.netspeed.OplusNetworkSpeedControllExImpl", //C13
                 "com.oplus.systemui.statusbar.phone.netspeed.OplusNetworkSpeedControllerExImpl" //C14 C15
             ).toClass().resolve().apply {
+                val updateNetworkSpeed = firstMethodOrNull { name = "updateNetworkSpeed" }
+                if (updateNetworkSpeed == null) {
+                    // ColorOS 17 将更新逻辑合入静态 access$updateNetworkSpeed。
+                    // 只调整调度间隔，保留系统新增的暂停、挂起与销售模式判断。
+                    val schedule = firstMethodOrNull {
+                        name = "postUpdateNetworkSpeedDelay"
+                        parameters(Long::class)
+                    }
+                    if (schedule != null) {
+                        schedule.hook {
+                            before {
+                                if (networkSpeed && (arg(0).get<Long>() ?: 0L) > 1000L)
+                                    arg(0).set(1000L)
+                            }
+                        }
+                        return@apply
+                    }
+                }
+
                 val bgHandler = firstField { name = "bgHandler" }
                 val uiHandler = firstField { name = "uiHandler" }
                 val lastTime = firstField { name = "lastTime" }
                 val lastTotalBytes = firstField { name = "lastTotalBytes" }
 
-                (firstMethodOrNull { name = "updateNetworkSpeed" }
-                    ?: firstMethod { name { it.contains("updateNetworkSpeed") } }).hook {
+                (updateNetworkSpeed ?: firstMethod {
+                    name { it.contains("updateNetworkSpeed") }
+                }).hook {
                     before {
                         if (!networkSpeed) return@before
-                        val instance = instanceOrNull ?: args().first().any()
+                        val instance = instanceOrNull ?: firstArg().get()
 
                         val obtain = Message.obtain()
                         obtain.what = 100000
@@ -98,7 +118,7 @@ object StatusBarNetWorkSpeed : YukiBaseHooker() {
                             lastTime.copy().of(instance).set(0L)
                             lastTotalBytes.copy().of(instance).set(0L)
                         }
-                        resultNull()
+                        result = null
                     }
                 }
             }
@@ -107,16 +127,19 @@ object StatusBarNetWorkSpeed : YukiBaseHooker() {
 
     @Obfuscate
     object NetWorkSpeedView : YukiBaseHooker() {
-        var layoutMode = prefs(ModulePrefs).getString("statusbar_network_layout", "0")
-        var userTypeface = prefs(ModulePrefs).getBoolean("statusbar_network_user_typeface", false)
+        var layoutMode = preferences(ModulePrefs).getString("statusbar_network_layout", "0")
+        var userTypeface =
+            preferences(ModulePrefs).getBoolean("statusbar_network_user_typeface", false)
         var useBoldFont =
-            prefs(ModulePrefs).getBoolean("statusbar_network_use_bold_font_style", false)
-        var noSpace = prefs(ModulePrefs).getBoolean("statusbar_network_no_space", false)
-        var noSecond = prefs(ModulePrefs).getBoolean("statusbar_network_no_second", false)
-        var noUnit = prefs(ModulePrefs).getBoolean("statusbar_network_no_unit", false)
-        var getDoubleSize = prefs(ModulePrefs).getInt("set_network_speed_font_size", 7)
-        var getBottomPadding = prefs(ModulePrefs).getInt("set_network_speed_padding_bottom", 0)
-        var setInterval = prefs(ModulePrefs).getInt("set_network_speed_double_row_spacing", -1)
+            preferences(ModulePrefs).getBoolean("statusbar_network_use_bold_font_style", false)
+        var noSpace = preferences(ModulePrefs).getBoolean("statusbar_network_no_space", false)
+        var noSecond = preferences(ModulePrefs).getBoolean("statusbar_network_no_second", false)
+        var noUnit = preferences(ModulePrefs).getBoolean("statusbar_network_no_unit", false)
+        var getDoubleSize = preferences(ModulePrefs).getInt("set_network_speed_font_size", 7)
+        var getBottomPadding =
+            preferences(ModulePrefs).getInt("set_network_speed_padding_bottom", 0)
+        var setInterval =
+            preferences(ModulePrefs).getInt("set_network_speed_double_row_spacing", -1)
 
         var bMargin = 0
         var tMargin = 0
@@ -139,6 +162,8 @@ object StatusBarNetWorkSpeed : YukiBaseHooker() {
             ).toClass()
 
             var defaultTypeface: Typeface? = null
+
+            if (layoutMode == "0") return
 
             //Source NetworkSpeedView
             VariousClass(
@@ -199,7 +224,7 @@ object StatusBarNetWorkSpeed : YukiBaseHooker() {
                             if (layoutMode == "0") return@before
 
                             val viewGroup = instance<ViewGroup>()
-                            val state = args().first().any()
+                            val state = firstArg().get()
                             if (state == null) {
                                 viewGroup.isVisible = false
                                 mState.copy().of(instance).set(null)
@@ -285,7 +310,7 @@ object StatusBarNetWorkSpeed : YukiBaseHooker() {
                                     }
                                 }
                             }
-                            resultNull()
+                            result = null
                         }
                     }
                 }

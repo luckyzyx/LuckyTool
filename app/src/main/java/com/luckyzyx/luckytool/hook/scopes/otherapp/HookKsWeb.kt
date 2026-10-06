@@ -3,6 +3,7 @@ package com.luckyzyx.luckytool.hook.scopes.otherapp
 import android.content.Context
 import android.content.SharedPreferences
 import com.highcapable.kavaref.KavaRef.Companion.resolve
+import com.highcapable.kavaref.extension.classOf
 import com.highcapable.yukihookapi.hook.entity.YukiBaseHooker
 import com.luckyzyx.luckytool.utils.DexkitUtils
 import com.luckyzyx.luckytool.utils.DexkitUtils.checkDataList
@@ -12,22 +13,22 @@ import org.lsposed.lsparanoid.Obfuscate
 @Obfuscate
 object HookKsWeb : YukiBaseHooker() {
     override fun onHook() {
-        val isPro = prefs(ModulePrefs).getBoolean("ksweb_remove_check_license", false)
+        val isPro = preferences(ModulePrefs).getBoolean("ksweb_remove_check_license", false)
         if (!isPro) return
         //Source EXTEND TO PRO VERSION / CHECK SERIAL KEY / KSWEB PRO / KSWEB STANDARD
         DexkitUtils.create(appInfo.sourceDir) { dexKitBridge ->
             dexKitBridge.findClass {
                 matcher {
                     fields {
-                        addForType(Int::class.java)
-                        addForType(Boolean::class.java)
-                        addForType(SharedPreferences::class.java)
+                    addForType(classOf<Int>())
+                        addForType(classOf<Boolean>())
+                        addForType(classOf<SharedPreferences>())
                     }
                     methods {
-                        add { paramCount(0);returnType(Int::class.java) }
-                        add { paramCount(0);returnType(Boolean::class.java) }
-                        add { paramTypes(Int::class.java);returnType(Void.TYPE) }
-                        add { paramTypes(Context::class.java);returnType(Void.TYPE) }
+                    add { paramCount(0);returnType(classOf<Int>()) }
+                        add { paramCount(0);returnType(classOf<Boolean>()) }
+                        add { paramTypes(classOf<Int>());returnType(Void.TYPE) }
+                        add { paramTypes(classOf<Context>());returnType(Void.TYPE) }
                     }
                     usingStrings(
                         "EXTEND TO PRO VERSION",

@@ -30,7 +30,7 @@ object ForceDisplayClockStyleOptionsV13 : YukiBaseHooker() {
                     }.invoke<Boolean>() ?: false
                     if (!isFlavorTwoDevice) return@before
 
-                    val list = args().first().cast<ArrayList<Any>>()
+                    val list = firstArg().get<ArrayList<Any>>()
                     val context = firstMethod { name = "getContext";superclass() }.of(instance)
                         .invoke<Context>()
                     val clockTitle = context?.getString(
@@ -53,7 +53,7 @@ object ForceDisplayClockStyleOptionsV13 : YukiBaseHooker() {
                         hashMap, key, keyguardLandClockPf
                     )
                     keyguardLandClockPf?.let { list?.add(it) }
-                    resultNull()
+                    result = null
                 }
             }
         }

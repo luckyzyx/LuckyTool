@@ -15,7 +15,7 @@ import org.lsposed.lsparanoid.Obfuscate
 @Obfuscate
 object EnableVolumeBarPercentDisplay : YukiBaseHooker() {
     override fun onHook() {
-        var color = prefs(ModulePrefs).getString("custom_volume_bar_percent_color", "#FFFFFFFF")
+        var color = preferences(ModulePrefs).getString("custom_volume_bar_percent_color", "#FFFFFFFF")
         dataChannel.wait<String>("custom_volume_bar_percent_color") { color = it }
 
         //Source OplusVolumeSeekBar
@@ -26,7 +26,7 @@ object EnableVolumeBarPercentDisplay : YukiBaseHooker() {
             }.hook {
                 after {
                     val view = instance<View>()
-                    val canvas = args().first().cast<Canvas>() ?: return@after
+                    val canvas = firstArg().get<Canvas>() ?: return@after
                     val progress = firstMethod { name = "getProgress"; superclass() }
                         .of(instance).invoke<Int>() ?: return@after
                     val max = firstMethod { name = "getMax"; superclass() }.of(instance)

@@ -8,7 +8,13 @@ import android.os.RemoteException;
 
 public interface IOplusMirageDisplayObserver extends IInterface {
     
-    public static final String DESCRIPTOR = "com.oplus.miragewindow.IOplusMirageDisplayObserver";
+    abstract class Stub extends Binder implements IOplusMirageDisplayObserver {
+        
+        public static IOplusMirageDisplayObserver asInterface(IBinder obj) {
+            throw new RuntimeException("STUB");
+        }
+        
+    }
     
     void onMirageDisplayCastFailed(int i) throws RemoteException;
     
@@ -22,53 +28,4 @@ public interface IOplusMirageDisplayObserver extends IInterface {
     
     void onMirageDisplayTopActivityUidChanged(int i, int i2) throws RemoteException;
     
-    public static class Default implements IOplusMirageDisplayObserver {
-        @Override
-        public void onMirageDisplayCastFailed(int i) throws RemoteException {
-        
-        }
-        
-        @Override
-        public void onMirageDisplayCastSuccess(OplusMirageDisplayCastInfo oplusMirageDisplayCastInfo, int i) throws RemoteException {
-        
-        }
-        
-        @Override
-        public void onMirageDisplayConfigChanged(OplusMirageDisplayCastInfo oplusMirageDisplayCastInfo, int i) throws RemoteException {
-        
-        }
-        
-        @Override
-        public void onMirageDisplayExit(int i) throws RemoteException {
-        
-        }
-        
-        @Override
-        public void onMirageDisplayToastEvent(int i, int i2, Bundle bundle) throws RemoteException {
-        
-        }
-        
-        @Override
-        public void onMirageDisplayTopActivityUidChanged(int i, int i2) throws RemoteException {
-        
-        }
-        
-        @Override
-        public IBinder asBinder() {
-            return null;
-        }
-    }
-    
-    public static abstract class Stub extends Binder implements IOplusMirageDisplayObserver {
-        
-        public Stub() {
-            attachInterface(this, IOplusMirageDisplayObserver.DESCRIPTOR);
-        }
-        
-        @Override
-        public IBinder asBinder() {
-            return this;
-        }
-        
-    }
 }

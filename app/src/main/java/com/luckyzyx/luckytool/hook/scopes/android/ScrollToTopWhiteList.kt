@@ -8,15 +8,15 @@ import org.lsposed.lsparanoid.Obfuscate
 @Obfuscate
 object ScrollToTopWhiteList : YukiBaseHooker() {
     override fun onHook() {
-        val mode = prefs(ModulePrefs).getString("set_click_statusbar_scroll_to_top_mode", "0")
+        val mode = preferences(ModulePrefs).getString("set_click_statusbar_scroll_to_top_mode", "0")
 
         //Source OplusScrollToTopRusHelper -> OplusScrollToTopSystemManager
         "com.android.server.OplusScrollToTopRusHelper".toClass().resolve().apply {
             firstMethodOrNull { name = "isInWhiteList" }?.hook {
                 before {
                     when (mode) {
-                        "1" -> resultFalse()
-                        "2" -> resultTrue()
+                        "1" -> result = false
+                        "2" -> result = true
                     }
                 }
             }

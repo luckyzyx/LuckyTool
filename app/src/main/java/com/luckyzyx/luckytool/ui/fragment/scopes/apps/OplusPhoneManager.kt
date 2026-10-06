@@ -14,7 +14,7 @@ import org.lsposed.lsparanoid.Obfuscate
 
 @Obfuscate
 class OplusPhoneManager : BaseScopePreferenceFeagment() {
-    override val scopes = arrayOf("com.coloros.phonemanager", "com.coloros.securepay")
+    override val scopes = arrayOf("com.coloros.phonemanager")
 
     override val isEnableRestartMenu: Boolean = true
 
@@ -43,12 +43,6 @@ class OplusPhoneManager : BaseScopePreferenceFeagment() {
             add(SwitchPreference(this@loadPreferences).apply {
                 title = getString(R.string.remove_virus_risk_notification_in_phone_manager)
                 key = "remove_virus_risk_notification_in_phone_manager"
-                setDefaultValue(false)
-                isIconSpaceReserved = false
-            })
-            add(SwitchPreference(this@loadPreferences).apply {
-                title = getString(R.string.remove_secure_pay_found_virus_dialog)
-                key = "remove_secure_pay_found_virus_dialog"
                 setDefaultValue(false)
                 isIconSpaceReserved = false
             })

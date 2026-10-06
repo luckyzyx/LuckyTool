@@ -15,9 +15,9 @@ object RemoveDeviceNameChangeLimit : YukiBaseHooker() {
             .apply {
                 firstMethod { name = "activeVerifyPhoneName" }.hook {
                     before {
-                        val callback = args().last().any() ?: return@before
+                        val callback = lastArg().get() ?: return@before
                         callback.asResolver().firstMethod { name = "onSuccess" }.invoke(null)
-                        resultNull()
+                        result = null
                     }
                 }
                 firstMethod { name = "timeScheduleVerifyPhoneName" }.hook {
@@ -29,9 +29,9 @@ object RemoveDeviceNameChangeLimit : YukiBaseHooker() {
         "com.oplus.settings.utils.WirelessDeviceVerifyUtils".toClass().resolve().apply {
             firstMethod { name = "activeVerifyPhoneName" }.hook {
                 before {
-                    val callback = args().last().any() ?: return@before
+                    val callback = lastArg().get() ?: return@before
                     callback.asResolver().firstMethod { name = "onSuccess" }.invoke(null)
-                    resultNull()
+                    result = null
                 }
             }
         }
@@ -39,7 +39,7 @@ object RemoveDeviceNameChangeLimit : YukiBaseHooker() {
         //Source OplusDeviceInfoUtils
         "com.oplus.settings.utils.OplusDeviceInfoUtils".toClass().resolve().apply {
             firstMethod { name = "getVerifyNameCondition" }.hook {
-                replaceToFalse()
+                intercept(false)
             }
         }
     }

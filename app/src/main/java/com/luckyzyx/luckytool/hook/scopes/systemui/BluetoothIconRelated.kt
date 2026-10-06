@@ -17,7 +17,7 @@ object BluetoothIconRelated : YukiBaseHooker() {
         "com.android.systemui.statusbar.phone.ui.StatusBarIconController"
 
     override fun onHook() {
-        var isHide = prefs(ModulePrefs).getBoolean("hide_icon_when_bluetooth_not_connected", false)
+        var isHide = preferences(ModulePrefs).getBoolean("hide_icon_when_bluetooth_not_connected", false)
         dataChannel.wait<Boolean>("hide_icon_when_bluetooth_not_connected") { isHide = it }
 
         //Source PhoneStatusBarPolicyEx
@@ -28,7 +28,7 @@ object BluetoothIconRelated : YukiBaseHooker() {
             firstMethodOrNull { name = "updateBluetoothIcon";parameterCount = 4 }?.hook {
                 before {
                     if (!isHide) return@before
-                    val isBluetoothEnabled = args().last().boolean()
+                    val isBluetoothEnabled = lastArg().get<Boolean>() ?: false
                     val controller = firstField {
                         type = BluetoothController
                         if (SDK < A14) superclass()
@@ -36,7 +36,7 @@ object BluetoothIconRelated : YukiBaseHooker() {
                     val isBluetoothConnected = controller.asResolver().firstMethod {
                         name = "isBluetoothConnected"
                     }.invoke<Boolean>() ?: return@before
-                    args().last().set(isBluetoothEnabled && isBluetoothConnected)
+                    lastArg().set(isBluetoothEnabled && isBluetoothConnected)
                 }
             } ?: run {
                 (firstMethodOrNull {
@@ -65,7 +65,7 @@ object BluetoothIconRelated : YukiBaseHooker() {
                             statusBarIconController.asResolver().firstMethod {
                                 name = "setIconVisibility"
                             }.invoke(slotBluetooth, false)
-                            resultNull()
+                            result = null
                         }
                     }
                 }

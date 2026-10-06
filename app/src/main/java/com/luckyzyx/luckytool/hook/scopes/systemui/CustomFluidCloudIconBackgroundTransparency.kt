@@ -10,7 +10,7 @@ import org.lsposed.lsparanoid.Obfuscate
 object CustomFluidCloudIconBackgroundTransparency : YukiBaseHooker() {
     override fun onHook() {
         var customAlpha =
-            prefs(ModulePrefs).getInt("custom_fluid_cloud_icon_background_transparency", -1)
+            preferences(ModulePrefs).getInt("custom_fluid_cloud_icon_background_transparency", -1)
         dataChannel.wait<Int>("custom_fluid_cloud_icon_background_transparency") {
             customAlpha = it
         }

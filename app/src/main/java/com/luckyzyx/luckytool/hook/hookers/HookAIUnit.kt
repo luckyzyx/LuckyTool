@@ -15,7 +15,8 @@ object HookAIUnit : YukiBaseHooker() {
                     val list = result<List<Any>>()?.takeIf { it.isNotEmpty() } ?: return@after
                     list.forEachIndexed { _, it ->
 //                            YLog.info("$index -> ${it.toString()}")
-                        val unitName = it.asResolver().firstMethod { name = "getUnitName" }.invoke<String>()
+                        val unitName =
+                            it.asResolver().firstMethod { name = "getUnitName" }.invoke<String>()
                         when (unitName) {
                             "cloud_aigc_segmentation" -> {
                                 it.asResolver().firstMethod { name = "setDisabled" }.invoke(false)

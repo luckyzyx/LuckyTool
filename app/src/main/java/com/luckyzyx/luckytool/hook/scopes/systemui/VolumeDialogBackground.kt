@@ -34,7 +34,7 @@ class VolumeDialogBackground(val dexKitBridge: DexKitBridge) : YukiBaseHooker() 
     object VolumeDialog : YukiBaseHooker() {
         override fun onHook() {
             var customAlpha =
-                prefs(ModulePrefs).getInt("custom_volume_dialog_background_transparency", -1)
+                preferences(ModulePrefs).getInt("custom_volume_dialog_background_transparency", -1)
             dataChannel.wait<Int>("custom_volume_dialog_background_transparency") {
                 customAlpha = it
             }
@@ -121,7 +121,7 @@ class VolumeDialogBackground(val dexKitBridge: DexKitBridge) : YukiBaseHooker() 
     class VolumeDialogV15(val dexKitBridge: DexKitBridge) : YukiBaseHooker() {
         override fun onHook() {
             var customAlpha =
-                prefs(ModulePrefs).getInt("custom_volume_dialog_background_transparency", -1)
+                preferences(ModulePrefs).getInt("custom_volume_dialog_background_transparency", -1)
             dataChannel.wait<Int>("custom_volume_dialog_background_transparency") {
                 customAlpha = it
             }
@@ -135,7 +135,7 @@ class VolumeDialogBackground(val dexKitBridge: DexKitBridge) : YukiBaseHooker() 
 
             volumnDialogClazz.resolve().apply {
                 firstMethodOrNull { name = "isSurrealQualityOn" }?.hook {
-                    replaceToFalse()
+                    intercept(false)
                 }
 
                 firstMethod { name { it.startsWith("initDialog") } }.hook {
@@ -334,7 +334,7 @@ class VolumeDialogBackground(val dexKitBridge: DexKitBridge) : YukiBaseHooker() 
     object VolumeDialogV14 : YukiBaseHooker() {
         override fun onHook() {
             var customAlpha =
-                prefs(ModulePrefs).getInt("custom_volume_dialog_background_transparency", -1)
+                preferences(ModulePrefs).getInt("custom_volume_dialog_background_transparency", -1)
             dataChannel.wait<Int>("custom_volume_dialog_background_transparency") {
                 customAlpha = it
             }
@@ -348,7 +348,7 @@ class VolumeDialogBackground(val dexKitBridge: DexKitBridge) : YukiBaseHooker() 
 
             volumnDialogClazz.resolve().apply {
                 firstMethodOrNull { name = "isSurrealQualityOn" }?.hook {
-                    replaceToFalse()
+                    intercept(false)
                 }
 
                 firstMethod { parameters(DialogInterface::class) }.hook {

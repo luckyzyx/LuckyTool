@@ -28,9 +28,9 @@ object LongPressTileOpenThePage : YukiBaseHooker() {
                 firstMethod { name = "longClick";parameterCount = 1 }.hook {
                     before {
                         firstField { name = "mHandler" }.of(instance).get<Handler>()
-                            ?.obtainMessage(4, 0, 0, WeakReference(args().first().any()))
+                            ?.obtainMessage(4, 0, 0, WeakReference(firstArg().get()))
                             ?.sendToTarget()
-                        resultNull()
+                        result = null
                     }
                 }
             }
@@ -46,7 +46,7 @@ object LongPressTileOpenThePage : YukiBaseHooker() {
                     before {
                         firstField { name = "mClickHandler" }.of(instance).get<Handler>()
                             ?.sendEmptyMessage(4)
-                        resultNull()
+                        result = null
                     }
                 }
             }

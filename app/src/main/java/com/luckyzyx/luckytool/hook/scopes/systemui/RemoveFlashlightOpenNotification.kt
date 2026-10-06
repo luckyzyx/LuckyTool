@@ -14,7 +14,10 @@ object RemoveFlashlightOpenNotification : YukiBaseHooker() {
             "com.oplus.systemui.statusbar.notification.flashlight.FlashlightNotification", //C14
             "com.oplus.systemui.notification.flashlight.FlashlightNotification" //C15.0.1
         ).toClass().resolve().apply {
-            firstMethod { name = "sendNotification";parameterCount = 1 }.hook {
+            firstMethod {
+                name { it.startsWith("sendNotification") }
+                parameterCount = 1
+            }.hook {
                 intercept()
             }
         }

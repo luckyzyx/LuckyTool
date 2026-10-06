@@ -21,7 +21,7 @@ class CorePatch : BaseScopePreferenceFeagment() {
     override fun Context.loadRootPreference(): Preference {
         return Preference(this).apply {
             title = getString(R.string.corepatch)
-            summary = getString(R.string.corepatch_summary,"11-16")
+            summary = getString(R.string.corepatch_summary, "11-17")
             key = "CorePatch"
             isIconSpaceReserved = false
         }
@@ -39,44 +39,52 @@ class CorePatch : BaseScopePreferenceFeagment() {
                 key = "CorePatch"
                 isIconSpaceReserved = false
             })
+            //上游 org.lsposed.corepatch 配置键（ModulePrefs 组，键名与默认值对齐上游）
             add(SwitchPreference(this@loadPreferences).apply {
-                setTitle(R.string.downgr)
-                setSummary(R.string.downgr_summary)
+                setTitle(R.string.bypass_downgrade)
+                setSummary(R.string.bypass_downgrade_summary)
                 key = "downgrade"
-                setDefaultValue(true)
-                isIconSpaceReserved = false
-            })
-            add(SwitchPreference(this@loadPreferences).apply {
-                setTitle(R.string.authcreak)
-                setSummary(R.string.authcreak_summary)
-                key = "authcreak"
                 setDefaultValue(false)
                 isIconSpaceReserved = false
             })
             add(SwitchPreference(this@loadPreferences).apply {
-                setTitle(R.string.digestCreak)
-                setSummary(R.string.digestCreak_summary)
-                key = "digestCreak"
-                setDefaultValue(true)
-                isIconSpaceReserved = false
-            })
-            add(SwitchPreference(this@loadPreferences).apply {
-                setTitle(R.string.exactSigCheck)
-                setSummary(R.string.exactSigCheck_summary)
-                key = "exactSigCheck"
+                setTitle(R.string.bypass_verification)
+                setSummary(R.string.bypass_verification_summary)
+                key = "bypass_verification"
                 setDefaultValue(false)
                 isIconSpaceReserved = false
             })
             add(SwitchPreference(this@loadPreferences).apply {
-                setTitle(R.string.UsePreSig)
-                setSummary(R.string.UsePreSig_summary)
-                key = "UsePreSig"
+                setTitle(R.string.bypass_resource_arsc_restrictions)
+                setSummary(R.string.bypass_resource_arsc_restrictions_summary)
+                key = "bypass_resource_arsc_restrictions"
+                setDefaultValue(false)
+                isIconSpaceReserved = false
+            })
+            add(SwitchPreference(this@loadPreferences).apply {
+                setTitle(R.string.bypass_digest)
+                setSummary(R.string.bypass_digest_summary)
+                key = "bypass_digest"
+                setDefaultValue(false)
+                isIconSpaceReserved = false
+            })
+            add(SwitchPreference(this@loadPreferences).apply {
+                setTitle(R.string.bypass_exact_signature_match)
+                setSummary(R.string.bypass_exact_signature_match_summary)
+                key = "bypass_exact_sig_match"
+                setDefaultValue(false)
+                isIconSpaceReserved = false
+            })
+            add(SwitchPreference(this@loadPreferences).apply {
+                setTitle(R.string.use_previous_signatures)
+                setSummary(R.string.use_previous_signatures_summary)
+                key = "use_previous_signatures"
                 setDefaultValue(false)
                 isIconSpaceReserved = false
                 setOnPreferenceChangeListener { _, newValue ->
                     if (newValue == true) {
                         MaterialAlertDialogBuilder(this@loadPreferences, dialogCentered).apply {
-                            setMessage(R.string.usepresig_warn)
+                            setMessage(R.string.use_previous_signatures_warning)
                             setPositiveButton(android.R.string.ok, null)
                             show()
                         }
@@ -85,24 +93,31 @@ class CorePatch : BaseScopePreferenceFeagment() {
                 }
             })
             add(SwitchPreference(this@loadPreferences).apply {
-                setTitle(R.string.bypassBlock)
-                setSummary(R.string.bypassBlock_summary)
-                key = "bypassBlock"
-                setDefaultValue(true)
-                isIconSpaceReserved = false
-            })
-            add(SwitchPreference(this@loadPreferences).apply {
-                setTitle(R.string.shared_user_title)
-                setSummary(R.string.shared_user_summary)
-                key = "sharedUser"
+                setTitle(R.string.allow_hidden_apis_for_system_apps)
+                setSummary(R.string.allow_hidden_apis_for_system_apps_summary)
+                key = "allow_hidden_apis_for_system_apps"
                 setDefaultValue(false)
                 isIconSpaceReserved = false
             })
             add(SwitchPreference(this@loadPreferences).apply {
-                setTitle(R.string.disable_verification_agent_title)
+                setTitle(R.string.bypass_shared_user)
+                setSummary(R.string.bypass_shared_user_summary)
+                key = "bypass_shared_user"
+                setDefaultValue(false)
+                isIconSpaceReserved = false
+            })
+            add(SwitchPreference(this@loadPreferences).apply {
+                setTitle(R.string.disable_verification_agent)
                 setSummary(R.string.disable_verification_agent_summary)
-                key = "disableVerificationAgent"
-                setDefaultValue(true)
+                key = "disable_verification_agent"
+                setDefaultValue(false)
+                isIconSpaceReserved = false
+            })
+            add(SwitchPreference(this@loadPreferences).apply {
+                setTitle(R.string.bypass_block)
+                setSummary(R.string.bypass_block_summary)
+                key = "bypass_block"
+                setDefaultValue(false)
                 isIconSpaceReserved = false
             })
         }

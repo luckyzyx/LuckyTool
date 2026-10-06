@@ -13,6 +13,7 @@ import android.os.Parcelable
 import android.os.UserHandle
 import com.highcapable.kavaref.KavaRef.Companion.asResolver
 import com.highcapable.kavaref.KavaRef.Companion.resolve
+import com.highcapable.kavaref.extension.classOf
 import com.highcapable.yukihookapi.hook.entity.YukiBaseHooker
 import com.luckyzyx.luckytool.hook.utils.OplusMirageDisplayManagerUtils
 import com.luckyzyx.luckytool.utils.ModulePrefs
@@ -24,7 +25,7 @@ import org.lsposed.lsparanoid.Obfuscate
 object HookFloatMirageWindow : YukiBaseHooker() {
 
     override fun onHook() {
-        if (prefs(ModulePrefs).getBoolean("run_floating_window_tasks_in_foreground", false)) {
+        if (preferences(ModulePrefs).getBoolean("run_floating_window_tasks_in_foreground", false)) {
 //            if (SDK >= A15) loadHooker(FloatWindowBackRun)
             loadHooker(MultiAppFloatWindowBackRun)
         }
@@ -45,7 +46,7 @@ object HookFloatMirageWindow : YukiBaseHooker() {
             "com.android.server.wm.FlexibleTaskController".toClass().resolve().apply {
                 firstMethod { name = "notifyFlexibleTaskEvent" }.hook {
                     before {
-                        taskId = args().first().int()
+                        taskId = firstArg().get<Int>() ?: 0
                         val mAtms = firstField { type = ActivityTaskManagerService }.of(instance)
                             .get() ?: return@before
                         val mRootWindowContainer = mAtms.asResolver().firstField {
@@ -64,7 +65,7 @@ object HookFloatMirageWindow : YukiBaseHooker() {
                 (firstMethodOrNull { name = "onFloatHandleEnter" }
                     ?: firstMethod { name = "startMinimize" }).hook {
                     after {
-                        val info = args().first().any() ?: return@after
+                        val info = firstArg().get() ?: return@after
                         val curTaskId = info.asResolver().firstField { name = "taskId" }.get<Int>()
                             ?: -1
                         val curUserId = info.asResolver().firstField { name = "userId" }.get<Int>()
@@ -75,7 +76,7 @@ object HookFloatMirageWindow : YukiBaseHooker() {
 
                         val taskInfo = task.asResolver().firstMethod {
                             name = "getTaskInfo"
-                            returnType = RunningTaskInfo::class.java
+                            returnType = classOf<RunningTaskInfo>()
                         }.invoke<RunningTaskInfo>() ?: return@after
 
                         val baseIntent = taskInfo.asResolver().firstField {
@@ -93,10 +94,10 @@ object HookFloatMirageWindow : YukiBaseHooker() {
             "com.android.server.wm.OplusMirageWindowManagerService".toClass().resolve().apply {
                 firstMethod { name = "moveTaskToBack" }.hook {
                     before {
-                        val curTask = args().first().any() ?: return@before
+                        val curTask = firstArg().get() ?: return@before
                         val mTaskId = curTask.asResolver().firstField { name = "mTaskId" }.get<Int>()
                             ?: -1
-                        if (taskId == mTaskId) resultNull()
+                        if (taskId == mTaskId) result = null
                     }
                 }
             }
@@ -113,9 +114,9 @@ object HookFloatMirageWindow : YukiBaseHooker() {
             "com.android.server.wm.OplusMirageWindowManagerService".toClass().resolve().apply {
                 firstMethod { name = "startActivityToMirageDisplay" }.hook {
                     before {
-                        val parcelable = args().first().cast<Parcelable>()
-                        val displayId = args(1).int()
-                        val startOptions = args().last().cast<Bundle>()
+                        val parcelable = firstArg().get<Parcelable>()
+                        val displayId = arg(1).get<Int>() ?: 0
+                        val startOptions = lastArg().get<Bundle>()
 
                         val mAtms = firstField { type = activityTaskManagerService }.of(instance)
                             .get() ?: return@before
@@ -180,7 +181,7 @@ object HookFloatMirageWindow : YukiBaseHooker() {
                                             .set(displayId)
                                     }
                                 }
-                                OplusMirageDisplayManagerUtils(appClassLoader).apply {
+                                OplusMirageDisplayManagerUtils(hostClassLoader!!).apply {
                                     val ins = getInstance() ?: return@post
                                     notifyCastSuccess(ins, displayId)
                                 }
@@ -188,7 +189,7 @@ object HookFloatMirageWindow : YukiBaseHooker() {
 
                             }
                         }
-                        resultNull()
+                        result = null
                     }
                 }
             }

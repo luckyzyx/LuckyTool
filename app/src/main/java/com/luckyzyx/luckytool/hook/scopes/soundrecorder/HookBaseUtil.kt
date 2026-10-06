@@ -10,7 +10,7 @@ object HookBaseUtil : YukiBaseHooker() {
         //Source BaseUtil
         "com.soundrecorder.base.utils.BaseUtil".toClass().resolve().apply {
             firstMethod { name = "isRealme" }.hook {
-                replaceToTrue()
+                intercept(true)
             }
         }
     }

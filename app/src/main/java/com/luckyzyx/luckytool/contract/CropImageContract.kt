@@ -8,6 +8,7 @@ import androidx.activity.result.contract.ActivityResultContract
 import com.canhub.cropper.CropImage
 import com.canhub.cropper.CropImageView
 import com.canhub.cropper.parcelable
+import com.highcapable.betterandroid.system.extension.component.Intent
 import com.luckyzyx.luckytool.data.CropImageContractOptions
 import com.luckyzyx.luckytool.ui.activity.CropImageActivity
 import org.lsposed.lsparanoid.Obfuscate
@@ -19,7 +20,7 @@ class CropImageContract :
     override fun createIntent(
         context: Context, input: Pair<String, CropImageContractOptions>
     ): Intent {
-        return Intent(context, CropImageActivity::class.java).apply {
+        return Intent<CropImageActivity>(context).apply {
             putExtra(
                 CropImage.CROP_IMAGE_EXTRA_BUNDLE,
                 Bundle(3).apply {

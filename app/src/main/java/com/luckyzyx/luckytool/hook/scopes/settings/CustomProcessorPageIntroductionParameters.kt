@@ -21,16 +21,16 @@ import org.lsposed.lsparanoid.Obfuscate
 object CustomProcessorPageIntroductionParameters : YukiBaseHooker() {
     override fun onHook() {
         val replaceImage =
-            prefs(ModulePrefs).getBoolean("custom_processor_image_path_switch", false)
-        val imagePath = prefs(ModulePrefs).getString("customize_processor_image_path", "")
-        val replaceText = prefs(ModulePrefs).getBoolean("custom_processor_introduction_text", false)
+            preferences(ModulePrefs).getBoolean("custom_processor_image_path_switch", false)
+        val imagePath = preferences(ModulePrefs).getString("customize_processor_image_path", "")
+        val replaceText = preferences(ModulePrefs).getBoolean("custom_processor_introduction_text", false)
 
         //Source ProcessorDetailPreference
         "com.oplus.settings.feature.deviceinfo.processordetail.ProcessorDetailPreference".toClass()
             .resolve().apply {
                 firstMethod { name = "onBindViewHolder" }.hook {
                     after {
-                        val viewHolder = args().first().any() ?: return@after
+                        val viewHolder = firstArg().get() ?: return@after
                         val context = firstMethod { name = "getContext";superclass() }.of(instance)
                             .invoke<Context>() ?: return@after
 
@@ -102,7 +102,7 @@ object CustomProcessorPageIntroductionParameters : YukiBaseHooker() {
         setOnClickListener {
             var editText: EditText? = null
             var dialog: Any? = null
-            COUIAlertDialogBuilder(context, "COUIAlertDialog.SingleInput", appClassLoader).apply {
+            COUIAlertDialogBuilder(context, "COUIAlertDialog.SingleInput", hostClassLoader).apply {
                 setTitle(text)
                 setNegativeButton(android.R.string.cancel, null)
                 setPositiveButton(android.R.string.ok) { _, _ ->

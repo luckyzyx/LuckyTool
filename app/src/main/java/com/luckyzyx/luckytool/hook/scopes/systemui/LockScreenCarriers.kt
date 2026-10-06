@@ -20,11 +20,11 @@ object LockScreenCarriers : YukiBaseHooker() {
     @Obfuscate
     private object LockScreenCarrier : YukiBaseHooker() {
         override fun onHook() {
-            val isRemove = prefs(ModulePrefs).getBoolean("remove_statusbar_carriers", false)
+            val isRemove = preferences(ModulePrefs).getBoolean("remove_statusbar_carriers", false)
             val customText =
-                prefs(ModulePrefs).getString("statusbar_custom_carrier_display_text", "")
+                preferences(ModulePrefs).getString("statusbar_custom_carrier_display_text", "")
             val userFont =
-                prefs(ModulePrefs).getBoolean("statusbar_carriers_use_user_typeface", false)
+                preferences(ModulePrefs).getBoolean("statusbar_carriers_use_user_typeface", false)
 
 
             //Source OplusCarrierTextCallbackInfo
@@ -49,7 +49,7 @@ object LockScreenCarriers : YukiBaseHooker() {
                     }
                     firstMethod { name = "setVisible" }.hook {
                         before {
-                            if (isRemove) args().first().setFalse()
+                            if (isRemove) firstArg().set(false)
                         }
                     }
                     firstMethod { name = "updateCarrierInfo" }.hook {
@@ -81,10 +81,10 @@ object LockScreenCarriers : YukiBaseHooker() {
     private object LockScreenCarrierV13 : YukiBaseHooker() {
         override fun onHook() {
             val userFont =
-                prefs(ModulePrefs).getBoolean("statusbar_carriers_use_user_typeface", false)
-            val isRemove = prefs(ModulePrefs).getBoolean("remove_statusbar_carriers", false)
+                preferences(ModulePrefs).getBoolean("statusbar_carriers_use_user_typeface", false)
+            val isRemove = preferences(ModulePrefs).getBoolean("remove_statusbar_carriers", false)
             val customText =
-                prefs(ModulePrefs).getString("statusbar_custom_carrier_display_text", "")
+                preferences(ModulePrefs).getString("statusbar_custom_carrier_display_text", "")
 
             //Source StatOperatorNameView
             "com.oplusos.systemui.statusbar.widget.StatOperatorNameView".toClass().resolve().apply {

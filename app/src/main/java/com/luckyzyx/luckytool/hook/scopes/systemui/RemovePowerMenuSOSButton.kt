@@ -14,7 +14,7 @@ object RemovePowerMenuSOSButton : YukiBaseHooker() {
             "com.oplusos.systemui.common.util.GlobalActionsUtils" //C14 C15
         ).toClass().resolve().apply {
             firstMethodOrNull { name = "isShowSosButton" }?.hook {
-                replaceToFalse()
+                intercept(false)
             }
         }
 
@@ -24,7 +24,7 @@ object RemovePowerMenuSOSButton : YukiBaseHooker() {
             "com.oplus.systemui.shutdown.OplusShutdownView"
         ).toClass().resolve().apply {
             firstMethod { name = "isShowEmergency" }.hook {
-                replaceToFalse()
+                intercept(false)
             }
         }
     }

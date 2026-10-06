@@ -15,7 +15,7 @@ object DisableLongPressAppIconSecondaryMenu : YukiBaseHooker() {
                 returnType = List::class
             }.hook {
                 before {
-                    val itemInfo = args().first().any() ?: return@before
+                    val itemInfo = firstArg().get() ?: return@before
                     itemInfo.asResolver().firstField {
                         name = "mAddShortcutCount"; superclass()
                     }.set(0)

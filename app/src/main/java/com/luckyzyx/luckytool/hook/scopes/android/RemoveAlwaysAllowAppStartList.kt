@@ -10,7 +10,7 @@ import org.lsposed.lsparanoid.Obfuscate
 @Obfuscate
 object RemoveAlwaysAllowAppStartList : YukiBaseHooker() {
     override fun onHook() {
-        val isEnable = prefs(ModulePrefs).getBoolean("enable_always_allow_app_start_dialog", false)
+        val isEnable = preferences(ModulePrefs).getBoolean("enable_always_allow_app_start_dialog", false)
         if (!isEnable) return
 
         var controller: Any? = null

@@ -14,7 +14,7 @@ object RemoveControlCenterUserSwitcher : YukiBaseHooker() {
                 emptyParameters()
                 returnType = Boolean::class
             }.hook {
-                replaceToFalse()
+                intercept(false)
             }
         }
     }

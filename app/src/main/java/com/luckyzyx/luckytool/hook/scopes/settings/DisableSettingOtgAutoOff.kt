@@ -17,7 +17,7 @@ object DisableSettingOtgAutoOff : YukiBaseHooker() {
         ).toClass().resolve().apply {
             firstMethod { name = "isPreferenceSupport" }.hook {
                 before {
-                    val context = args().first().cast<Context>() ?: return@before
+                    val context = firstArg().get<Context>() ?: return@before
                     val isUSBOtgDisabled =
                         OplusCustomizeRestrictionManager.getInstance(context).isUSBOtgDisabled
                     result = !isUSBOtgDisabled

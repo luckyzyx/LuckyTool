@@ -3,7 +3,6 @@ package com.luckyzyx.luckytool.ui.fragment.scopes.related
 import android.content.Context
 import androidx.preference.Preference
 import androidx.preference.SwitchPreference
-import org.lsposed.lsparanoid.Obfuscate
 import com.luckyzyx.luckytool.R
 import com.luckyzyx.luckytool.ui.fragment.base.BaseScopePreferenceFeagment
 import com.luckyzyx.luckytool.utils.A12
@@ -13,14 +12,14 @@ import com.luckyzyx.luckytool.utils.ModulePrefs
 import com.luckyzyx.luckytool.utils.SDK
 import com.luckyzyx.luckytool.utils.arraySummaryDot
 import com.luckyzyx.luckytool.utils.setPrefsIconRes
+import org.lsposed.lsparanoid.Obfuscate
 
 @Obfuscate
 class Miscellaneous : BaseScopePreferenceFeagment() {
     override val scopes = arrayOf(
         "com.android.systemui",
         "com.android.externalstorage",
-        "com.oplus.exsystemservice",
-        "com.coloros.securepay"
+        "com.oplus.exsystemservice"
     )
 
     override val isEnableRestartMenu: Boolean = true

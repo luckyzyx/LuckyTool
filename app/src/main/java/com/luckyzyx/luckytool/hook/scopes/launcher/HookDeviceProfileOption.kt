@@ -3,19 +3,22 @@ package com.luckyzyx.luckytool.hook.scopes.launcher
 import com.highcapable.kavaref.KavaRef.Companion.resolve
 import com.highcapable.yukihookapi.hook.entity.YukiBaseHooker
 import com.luckyzyx.luckytool.utils.ModulePrefs
+import com.luckyzyx.luckytool.utils.getOSVersionCode
 import org.lsposed.lsparanoid.Obfuscate
 
 @Obfuscate
 object HookDeviceProfileOption : YukiBaseHooker() {
     override fun onHook() {
-        val enableFolder = prefs(ModulePrefs).getBoolean("enable_folder_layout_adjustment", false)
-        val folderRow = prefs(ModulePrefs).getInt("set_icon_rows_in_folder", 4)
-        val folderColumn = prefs(ModulePrefs).getInt("set_icon_columns_in_folder", 3)
-        val syncPreview =
-            prefs(ModulePrefs).getBoolean("sync_folder_icon_column_number_preview", false)
+        val osCode = getOSVersionCode
 
-        val enableDrawer = prefs(ModulePrefs).getBoolean("enable_drawer_layout_adjustment", false)
-        val drawerColumn = prefs(ModulePrefs).getInt("set_icon_columns_in_drawer", 4)
+        val enableFolder = preferences(ModulePrefs).getBoolean("enable_folder_layout_adjustment", false)
+        val folderRow = preferences(ModulePrefs).getInt("set_icon_rows_in_folder", 4)
+        val folderColumn = preferences(ModulePrefs).getInt("set_icon_columns_in_folder", 3)
+        val syncPreview =
+            preferences(ModulePrefs).getBoolean("sync_folder_icon_column_number_preview", false)
+
+        val enableDrawer = preferences(ModulePrefs).getBoolean("enable_drawer_layout_adjustment", false)
+        val drawerColumn = preferences(ModulePrefs).getInt("set_icon_columns_in_drawer", 4)
 
         //Source InvariantDeviceProfile
         "com.android.launcher3.InvariantDeviceProfile".toClass().resolve().apply {
@@ -52,7 +55,8 @@ object HookDeviceProfileOption : YukiBaseHooker() {
 
         //Source OplusInvariantDeviceProfile
         "com.android.launcher3.OplusInvariantDeviceProfile".toClass().resolve().apply {
-            method { name { it.startsWith("injectInitGrid") } }.hookAll {
+            (if (osCode >= 40) method { name { it.startsWith("initGrid") } }
+            else method { name { it.startsWith("injectInitGrid") } }).hookAll {
                 after {
                     if (enableFolder) {
 //                        field { name = "numFolderRows" }.get(instance).set(3)

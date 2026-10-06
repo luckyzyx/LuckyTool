@@ -3,8 +3,9 @@ package com.luckyzyx.luckytool.hook.scopes.settings
 import android.annotation.SuppressLint
 import android.content.Context
 import com.highcapable.kavaref.KavaRef.Companion.resolve
+import com.highcapable.kavaref.extension.classOf
 import com.highcapable.yukihookapi.hook.entity.YukiBaseHooker
-import com.highcapable.yukihookapi.hook.factory.injectModuleAppResources
+import com.highcapable.yukihookapi.hook.factory.injectModuleResources
 import com.luckyzyx.luckytool.BuildConfig
 import com.luckyzyx.luckytool.utils.DexkitUtils.checkDataList
 import com.luckyzyx.luckytool.utils.safeOfNull
@@ -24,7 +25,7 @@ class FixAppSpecificMediaVolumePage(val dexKitBridge: DexKitBridge) : YukiBaseHo
             }
         }.findMethod {
             matcher {
-                paramTypes(Context::class.java, String::class.java, String::class.java)
+                paramTypes(classOf<Context>(), classOf<String>(), classOf<String>())
                 usingStrings(".zip", ".lottie")
             }
         }.apply {
@@ -36,15 +37,15 @@ class FixAppSpecificMediaVolumePage(val dexKitBridge: DexKitBridge) : YukiBaseHo
                     parameters(Context::class, String::class, String::class)
                 }.hook {
                     before {
-                        val context = args().first().cast<Context>() ?: return@before
-                        val path = args(1).string()
-                        val key = args().last().string()
+                        val context = firstArg().get<Context>() ?: return@before
+                        val path = arg(1).get<String>() ?: ""
+                        val key = lastArg().get<String>() ?: ""
                         if (path.contains("multi_app_volume").not()) return@before
 
                         val assetsInputStream = safeOfNull { context.assets.open(path) }
                         if (assetsInputStream != null) return@before
 
-                        context.injectModuleAppResources()
+                        context.injectModuleResources()
                         if (!path.endsWith(".zip") && !path.endsWith(".lottie")) {
                             val resName = path.substringAfter("/").substringBefore(".json")
                             val resId = context.resources.getIdentifier(

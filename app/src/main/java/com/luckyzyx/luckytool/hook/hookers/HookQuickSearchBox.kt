@@ -16,14 +16,14 @@ object HookQuickSearchBox : YukiBaseHooker() {
             loadHooker(HookQuickSearchBoxMMKV(dexKitBridge))
 
             //全局搜索默认搜索本地Tab
-            if (prefs(ModulePrefs).getBoolean("searchbox_default_search_local_tab", false)) {
+            if (preferences(ModulePrefs).getBoolean("searchbox_default_search_local_tab", false)) {
                 loadHooker(SearchboxDefaultSearchLocalTab(dexKitBridge))
             }
 
         }
 
         //移除应用推广卡片
-        if (prefs(ModulePrefs).getBoolean("remove_searchbox_app_recommend_card", false)) {
+        if (preferences(ModulePrefs).getBoolean("remove_searchbox_app_recommend_card", false)) {
             loadHooker(RemoveSearchBoxAppRecommendCard)
         }
     }

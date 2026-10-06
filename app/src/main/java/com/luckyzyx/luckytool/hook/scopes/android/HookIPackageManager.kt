@@ -5,7 +5,7 @@ import android.content.pm.ParceledListSlice
 import android.content.pm.ResolveInfo
 import android.util.ArraySet
 import com.highcapable.kavaref.KavaRef.Companion.resolve
-import com.highcapable.yukihookapi.hook.core.YukiMemberHookCreator
+import com.highcapable.yukihookapi.hook.core.YukiHookCreator
 import com.highcapable.yukihookapi.hook.entity.YukiBaseHooker
 import com.highcapable.yukihookapi.hook.log.YLog
 import com.luckyzyx.luckytool.data.AppIntentInfo
@@ -23,7 +23,7 @@ class HookIPackageManager : YukiBaseHooker() {
     val allIntent = ArraySet<AppIntentInfo>()
     private val allEnabledApps = ArraySet<String>()
 
-    var isEnable = prefs(IntentPrefs).getBoolean("custom_config_app_intent_list", false)
+    var isEnable = preferences(IntentPrefs).getBoolean("custom_config_app_intent_list", false)
 
     val types = arrayOf(
         IntentType.SINGLE_SHARE, IntentType.MULTI_SHARE, IntentType.PROCESS_TEXT,
@@ -45,9 +45,9 @@ class HookIPackageManager : YukiBaseHooker() {
         allIntent.clear()
         allEnabledApps.clear()
 
-        allEnabledApps.addAll(prefs(IntentPrefs).getStringSet("enable_app_hide_list", ArraySet()))
+        allEnabledApps.addAll(preferences(IntentPrefs).getStringSet("enable_app_hide_list", ArraySet()))
         allEnabledApps.forEachIndexed { _, packName ->
-            prefs(IntentPrefs).getStringSet(packName, ArraySet()).forEachIndexed { _, js ->
+            preferences(IntentPrefs).getStringSet(packName, ArraySet()).forEachIndexed { _, js ->
                 val info = safeOfNull { Json.decodeFromString<AppIntentInfo>(js) }
                     ?: return@forEachIndexed
                 allIntent.add(info)
@@ -63,7 +63,7 @@ class HookIPackageManager : YukiBaseHooker() {
         }
         dataChannel.wait<String>("custom_config_app_intent_list_update_app_config") { its ->
             val old = allIntent.filter { it.packName == its }
-            val new = prefs(IntentPrefs).getStringSet(its, ArraySet())
+            val new = preferences(IntentPrefs).getStringSet(its, ArraySet())
 
             allIntent.removeIf { it.packName == its }
             new.forEachIndexed { _, js ->
@@ -79,10 +79,10 @@ class HookIPackageManager : YukiBaseHooker() {
         }
     }
 
-    fun YukiMemberHookCreator.MemberHookCreator.hookAfter() {
+    fun YukiHookCreator.ClassicMemberHooker.hookAfter() {
         after {
             if (!isEnable) return@after
-            val intent = args().first().cast<Intent>() ?: return@after
+            val intent = firstArg().get<Intent>() ?: return@after
             val action = intent.action ?: return@after
 //            val data = if (action == Intent.ACTION_VIEW)
 

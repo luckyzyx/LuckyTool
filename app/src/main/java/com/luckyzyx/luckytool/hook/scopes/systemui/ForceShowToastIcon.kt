@@ -17,7 +17,7 @@ object ForceShowToastIcon : YukiBaseHooker() {
                 after {
                     val context = firstField { type = Context::class }.of(instance)
                         .get<Context>() ?: return@after
-                    val packName = args(3).string()
+                    val packName = arg(3).get<String>() ?: ""
                     val mIconView = firstField { type = ImageView::class }.of(instance)
                         .get<ImageView>() ?: return@after
                     val icon = PackageUtils(context.packageManager).getApplicationIcon(packName)

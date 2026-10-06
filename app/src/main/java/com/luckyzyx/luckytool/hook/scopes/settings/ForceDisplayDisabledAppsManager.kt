@@ -11,7 +11,7 @@ object ForceDisplayDisabledAppsManager : YukiBaseHooker() {
         "com.android.settings.applications.disableapps.DisabledAppsPreferenceController".toClass()
             .resolve().apply {
                 firstMethod { name = "getAvailabilityStatus" }.hook {
-                    replaceTo(0)
+                    intercept(0)
                 }
             }
     }

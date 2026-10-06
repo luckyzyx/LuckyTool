@@ -11,7 +11,7 @@ import org.lsposed.lsparanoid.Obfuscate
 object SetAodNotificationIconStyle : YukiBaseHooker() {
 
     override fun onHook() {
-        val mode = prefs(ModulePrefs).getString("set_aod_notification_icon_style", "0")
+        val mode = preferences(ModulePrefs).getString("set_aod_notification_icon_style", "0")
         if (mode == "0") return
 
         //Source ProductFlavorOption
@@ -20,8 +20,12 @@ object SetAodNotificationIconStyle : YukiBaseHooker() {
                 name = if (SDK >= A14) "isFlavorTwoDeviceExp" else "isFlavorTwoDevice"
             }.hook {
                 when (mode) {
-                    "1" -> replaceToTrue()
-                    "2" -> replaceToFalse()
+                    "1" -> {
+                        intercept(true)
+                    }
+                    "2" -> {
+                        intercept(false)
+                    }
                 }
             }
         }
