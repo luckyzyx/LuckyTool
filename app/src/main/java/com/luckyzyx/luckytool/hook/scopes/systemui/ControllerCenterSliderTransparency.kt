@@ -23,7 +23,7 @@ object ControllerCenterSliderTransparency : YukiBaseHooker() {
         VariousClass(
             "com.oplusos.systemui.qs.widget.OplusToggleSliderView", //C13
             "com.oplus.systemui.qs.widget.OplusToggleSliderView", //C14.0
-        ).loadOrNull(hostClassLoader)?.resolve()?.apply {
+        ).toClassOrNull()?.resolve()?.apply {
             firstMethod { name = "setupSliderProgressDrawable" }.hook {
                 after {
                     if (customAlpha < 0) return@after

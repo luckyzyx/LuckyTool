@@ -14,7 +14,7 @@ object AllowLongPressNotificationModifiable : YukiBaseHooker() {
             "com.oplusos.systemui.notification.settingspanel.NotificationSettingsModel", //C13
             "com.oplusos.systemui.notification.settingspanel.controller.NotificationController", //C13.1
             "com.oplus.systemui.statusbar.notification.settingspanel.controller.NotificationController" //C14
-        ).loadOrNull(hostClassLoader)?.resolve()?.apply {
+        ).toClassOrNull()?.resolve()?.apply {
             firstMethod {
                 name { it.startsWith("resolve") && it.contains("Mode") }
                 parameterCount = 1

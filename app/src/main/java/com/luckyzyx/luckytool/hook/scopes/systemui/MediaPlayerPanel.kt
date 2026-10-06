@@ -24,7 +24,7 @@ object MediaPlayerPanel : YukiBaseHooker() {
         val isAutoDisplay = VariousClass(
             "com.oplusos.systemui.qs.OplusQSTileMediaContainer", //C13.1
             "com.oplus.systemui.qs.OplusQSTileMediaContainer" //C14
-        ).loadOrNull(hostClassLoader)?.let {
+        ).toClassOrNull(hostClassLoader)?.let {
             it.resolve().firstMethodOrNull { name = "setMediaMode" } != null
         } ?: true
 

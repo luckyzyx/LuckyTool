@@ -47,7 +47,7 @@ class RemoveControlCenterTileCountLimit(val dexKitBridge: DexKitBridge) : YukiBa
             val clazz = VariousClass(
                 "com.oplusos.systemui.qs.customize.OplusQSCustomizer", //C12 C13
                 "com.oplus.systemui.qs.customize.OplusQSCustomizer" //C14
-            ).loadOrNull(hostClassLoader!!) ?: return
+            ).toClassOrNull() ?: return
 
             dexKitBridge.findClass {
                 matcher {
@@ -93,7 +93,7 @@ class RemoveControlCenterTileCountLimit(val dexKitBridge: DexKitBridge) : YukiBa
             val clazz = VariousClass(
                 "com.oplusos.systemui.qs.customize.OplusQSCustomizer", //C12 C13
                 "com.oplus.systemui.qs.customize.OplusQSCustomizer" //C14
-            ).loadOrNull(hostClassLoader!!) ?: return
+            ).toClassOrNull() ?: return
 
             dexKitBridge.findClass {
                 matcher {

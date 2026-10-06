@@ -24,7 +24,7 @@ object RemoveTopLockScreenIcon : YukiBaseHooker() {
         val lockIconView = VariousClass(
             "com.android.keyguard.LockIconView",
             "com.android.keyguard.OplusLockIconView"
-        ).loadOrNull(hostClassLoader) ?: return
+        ).toClassOrNull() ?: return
 
         lockIconView.resolve().apply {
             //构造完成即隐藏图标本体与背景圆, 覆盖初始可见的场景
