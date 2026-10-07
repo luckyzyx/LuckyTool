@@ -13,7 +13,6 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Switch
@@ -30,18 +29,21 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.viewinterop.AndroidView
 import com.drake.net.Get
 import com.luckyzyx.luckytool.R
 import com.luckyzyx.luckytool.data.DonateDetailInfo
 import com.luckyzyx.luckytool.data.DonateInfo
-import com.luckyzyx.luckytool.ui.components.SimpleTable
 import com.luckyzyx.luckytool.ui.compose.scopes.ScopePageSpec
 import com.luckyzyx.luckytool.utils.AESCrypt
 import com.luckyzyx.luckytool.utils.LogUtils
 import com.luckyzyx.luckytool.utils.SettingsPrefs
 import com.luckyzyx.luckytool.utils.formatDate
+import com.luckyzyx.luckytool.utils.formatStringAuto
 import com.luckyzyx.luckytool.utils.safeOfNull
 import com.luckyzyx.luckytool.utils.showToast
+import io.noties.markwon.Markwon
+import io.noties.markwon.ext.tables.TablePlugin
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -53,7 +55,7 @@ import java.text.DecimalFormat
 /**
  * Donate 页（旧 ui.fragment.settings.DonateFragment 的 Compose 等价物）。
  * 捐赠数据经 GitHub API 检查更新、GitMirror 下载、AESCrypt 加密缓存后由
- * 自绘 Compose 表格渲染（替代 Markwon+TablePlugin）；筛选/排序选项在 ModalBottomSheet 中。
+ * Markwon(+TablePlugin) 渲染为 Markdown 表格；筛选/排序选项在 ModalBottomSheet 中。
  * 下拉刷新（onRefresh）重跑 initData 管线。
  */
 object DonatePage {
@@ -88,7 +90,7 @@ object DonatePage {
             var sortMode by remember { mutableStateOf(0) }
             var showDetail by remember { mutableStateOf(state.getBoolean(showDetailedKey, false)) }
             var otherCurrency by remember { mutableStateOf(state.getBoolean(showOtherCurrencyKey, false)) }
-            var tableData by remember { mutableStateOf<List<List<String>>>(emptyList()) }
+            var markdown by remember { mutableStateOf("") }
             var ready by remember { mutableStateOf(false) }
             var showSheet by remember { mutableStateOf(false) }
 
@@ -96,7 +98,7 @@ object DonatePage {
 
             // ---- 数据管线（对齐旧 DonateFragment；网络/文件 IO 放 IO 调度器） ----
 
-            suspend fun loadJson(): List<List<String>>? {
+            suspend fun loadJson(): String? {
                 val dd = File(appContext.filesDir, "dd")
                 val jsonObject = withContext(Dispatchers.IO) {
                     safeOfNull {
@@ -109,14 +111,14 @@ object DonatePage {
                     c.showToast(c.getString(R.string.donate_data_decode_error))
                     return null
                 }
-                val tableRows = ArrayList<List<String>>()
+                val markdownList = ArrayList<String>()
                 val datas = jsonObject.optJSONArray("datas") ?: JSONArray()
                 if (!showDetail) {
-                    formatUserInfo(datas, tableRows, otherCurrency, sortMode, isReverse, filterString, develop)
+                    formatUserInfo(datas, markdownList, otherCurrency, sortMode, isReverse, filterString, develop)
                 } else {
-                    formatUserDetailInfo(datas, tableRows, otherCurrency, sortMode, isReverse, filterString, develop)
+                    formatUserDetailInfo(datas, markdownList, otherCurrency, sortMode, isReverse, filterString, develop)
                 }
-                return tableRows
+                return formatStringAuto(markdownList, "\n")
             }
 
             suspend fun downloadJson(date: String) {
@@ -135,7 +137,7 @@ object DonatePage {
                             file.delete()
                         }
                         state.set(lastUpdateKey, date)
-                        loadJson()?.let { tableData = it }
+                        loadJson()?.let { markdown = it }
                     }
                 } catch (e: Exception) {
                     c.showToast("Exception while download data!")
@@ -150,7 +152,7 @@ object DonatePage {
                     if (date.isBlank()) return
                     val lastUpdateDate = state.getString(lastUpdateKey, "null")
                     if (date != lastUpdateDate) downloadJson(date)
-                    else loadJson()?.let { tableData = it }
+                    else loadJson()?.let { markdown = it }
                 } catch (e: Exception) {
                     c.showToast("Exception while checking data!")
                     LogUtils.e("checkDonateData", "checking", e.toString(), true)
@@ -181,7 +183,7 @@ object DonatePage {
             // ---- UI（旧布局顺序：搜索框在上，Markdown 内容在下） ----
 
             val rerunFilter: () -> Unit = {
-                scope.launch { loadJson()?.let { tableData = it } }
+                scope.launch { loadJson()?.let { markdown = it } }
             }
 
             Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp)) {
@@ -207,18 +209,17 @@ object DonatePage {
                     modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp),
                 )
 
-                if (tableData.isNotEmpty()) {
-                    SimpleTable(
-                        rows = tableData,
-                        modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
-                    )
-                } else if (ready) {
-                    Text(
-                        text = c.getString(R.string.donate_data_decode_error),
-                        color = MaterialTheme.colorScheme.error,
-                        modifier = Modifier.padding(top = 8.dp),
-                    )
+                val markwon = remember {
+                    Markwon.builder(appContext).usePlugin(TablePlugin.create(appContext)).build()
                 }
+                AndroidView(
+                    factory = { ctx -> android.widget.TextView(ctx) },
+                    modifier = Modifier.fillMaxWidth(),
+                    update = { tv ->
+                        tv.setTextIsSelectable(true)
+                        if (markdown.isNotBlank()) markwon.setMarkdown(tv, markdown)
+                    },
+                )
             }
 
             if (showSheet) {
@@ -300,14 +301,15 @@ object DonatePage {
     /** 简表：按用户聚合（Name/Money） */
     private fun formatUserInfo(
         jsonArray: JSONArray,
-        rows: ArrayList<List<String>>,
+        markdownList: ArrayList<String>,
         otherCurrency: Boolean,
         sortMode: Int,
         isReverse: Boolean,
         filterString: String,
         develop: Boolean,
     ) {
-        rows.add(listOf("Name", "Money"))
+        markdownList.add("| Name | Money |")
+        markdownList.add("| :------: | :------: |")
         val userInfoList = ArrayList<DonateInfo>()
         var totalRmbCount = 0.0
         var totalOtherCount = 0.0
@@ -361,7 +363,7 @@ object DonatePage {
         }
         for (info in userInfoList) {
             if (filterString.isBlank() || info.name.contains(filterString, true)) {
-                rows.add(listOf(info.name, "${info.money} ${info.unit}"))
+                markdownList.add("| ${info.name} | ${info.money} ${info.unit} |")
             }
         }
     }
@@ -369,14 +371,15 @@ object DonatePage {
     /** 详表：逐条明细（Name/Time/Money/Channel） */
     private fun formatUserDetailInfo(
         jsonArray: JSONArray,
-        rows: ArrayList<List<String>>,
+        markdownList: ArrayList<String>,
         otherCurrency: Boolean,
         sortMode: Int,
         isReverse: Boolean,
         filterString: String,
         develop: Boolean,
     ) {
-        rows.add(listOf("Name", "Time", "Money", "Channel"))
+        markdownList.add("| Name | Time | Money | Channel |")
+        markdownList.add("| :------: | :------: | :------: | :------: |")
         val userInfoList = ArrayList<DonateDetailInfo>()
         var totalRmbCount = 0.0
         var totalOtherCount = 0.0
@@ -421,7 +424,7 @@ object DonatePage {
         }
         for (info in userInfoList) {
             if (filterString.isBlank() || info.name.contains(filterString)) {
-                rows.add(listOf(info.name, info.time, "${info.money} ${info.unit}", info.channel))
+                markdownList.add("| ${info.name} | ${info.time} | ${info.money} ${info.unit} | ${info.channel} |")
             }
         }
     }

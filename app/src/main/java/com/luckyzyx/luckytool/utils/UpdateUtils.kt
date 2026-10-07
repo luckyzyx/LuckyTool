@@ -7,6 +7,8 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -18,6 +20,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.FileProvider
 import androidx.core.net.toUri
 import com.drake.net.Get
@@ -27,6 +30,7 @@ import com.drake.net.scope.NetCoroutineScope
 import com.drake.net.utils.scopeNet
 import com.highcapable.betterandroid.ui.extension.view.toast
 import com.luckyzyx.luckytool.R
+import io.noties.markwon.Markwon
 import org.json.JSONArray
 import org.json.JSONObject
 import org.lsposed.lsparanoid.Obfuscate
@@ -139,10 +143,20 @@ fun UpdateChangelogDialog(
     val time = "${context.getString(R.string.update_time)}: ${info.updateTime}"
     val finalText =
         "# LuckyTool v${info.name}\n- $version\n- $count\n- $size\n- $time\n${info.changeLog}"
+    val markwon = remember(context) { Markwon.create(context) }
     AlertDialog(
         onDismissRequest = { if (isDev) onDismiss() },
         title = { Text(context.getString(R.string.check_update_hint)) },
-        text = { Text(finalText) },
+        text = {
+            AndroidView(
+                factory = { ctx -> android.widget.TextView(ctx) },
+                modifier = Modifier.fillMaxWidth().verticalScroll(rememberScrollState()),
+                update = { tv ->
+                    tv.setTextIsSelectable(true)
+                    markwon.setMarkdown(tv, finalText)
+                },
+            )
+        },
         confirmButton = {
             TextButton(onClick = onDownload) { Text(context.getString(R.string.direct_update)) }
         },

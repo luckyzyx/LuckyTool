@@ -2,18 +2,19 @@
 
 package com.luckyzyx.luckytool.ui.theme
 
+import android.app.Activity
 import android.content.Context
 import android.os.Build
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialExpressiveTheme
 import androidx.compose.material3.MotionScheme
-import androidx.compose.material3.darkColorScheme
-import androidx.compose.material3.dynamicDarkColorScheme
-import androidx.compose.material3.dynamicLightColorScheme
-import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalView
+import androidx.core.view.WindowCompat
 import com.luckyzyx.luckytool.utils.SettingsPrefs
 import com.luckyzyx.luckytool.utils.ThemeUtils
 import com.luckyzyx.luckytool.utils.getString
@@ -37,14 +38,17 @@ enum class LuckyDarkTheme(val prefValue: String) {
     }
 }
 
+/** 关闭动态取色时的种子色：M3 基线紫，观感对齐旧 light/darkColorScheme() 默认值。 */
+private val DefaultSeedColor = Color(0xFF6750A4)
+
 /**
  * LuckyTool 统一 Compose 主题：Material 3 Expressive（material3 1.5.0-alpha29，
  * Google 官方 Expressive 线；1.4.0 稳定版不含公开 Expressive API，故按用户确认选 alpha29）。
  *
- * - 动态取色沿用 View 时代偏好 use_dynamic_color（默认开），Android 12+ 可用时走
- *   dynamicXxxColorScheme，否则回落到 M3 基线色（与 res/values/colors.xml 的 md_theme_*
- *   基线紫调色板一致，即默认 light/darkColorScheme()）。
- * - 深色模式沿用 dark_theme 偏好；不再依赖 AppCompat 的 setDefaultNightMode 代理。
+ * 取色管线对齐 KernelSU（material-kolor 5.0.1，TonalSpot + SPEC_2025）：
+ * - use_dynamic_color 开启且 Android 12+ 时以系统 primary 为种子动态取色；
+ * - 否则使用默认种子色生成稳定色板；
+ * - 主题切换时全色板弹性动画过渡，并同步系统栏前景色（对齐 KernelSU MaterialKernelSUTheme）。
  *
  * 注意：dark_theme / use_dynamic_color 修改后按既有约定触发 Activity recreate（见 SettingsScreen），
  * 因此主题参数在每次组合树重建时重新读取偏好即可，无需运行时监听。
@@ -55,18 +59,33 @@ fun LuckyTheme(
     dynamicColor: Boolean = ThemeUtils.isDynamicColorsEnabled(LocalContext.current),
     content: @Composable () -> Unit,
 ) {
-    val colorScheme = when {
-        dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
-            val context = LocalContext.current
-            if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
+    val colorScheme = rememberLuckyColorScheme(
+        seedColor = if (dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            Color.Unspecified
+        } else {
+            DefaultSeedColor
+        },
+        isDark = darkTheme,
+    )
+    val animatedColorScheme = colorScheme.animateAsState()
+
+    // 对齐 KernelSU：深色切换时同步状态栏 / 导航栏前景色
+    val view = LocalView.current
+    if (!view.isInEditMode) {
+        LaunchedEffect(darkTheme) {
+            val window = (view.context as? Activity)?.window ?: return@LaunchedEffect
+            WindowCompat.getInsetsController(window, view).apply {
+                isAppearanceLightStatusBars = !darkTheme
+                isAppearanceLightNavigationBars = !darkTheme
+            }
         }
-        darkTheme -> darkColorScheme()
-        else -> lightColorScheme()
     }
+
     // material3 1.5.0-alpha29：Expressive 公开入口（1.4.0 稳定版中该 API 为 internal 不可用）
     MaterialExpressiveTheme(
-        colorScheme = colorScheme,
+        colorScheme = animatedColorScheme,
         motionScheme = MotionScheme.expressive(),
+        typography = Typography,
         content = content,
     )
 }

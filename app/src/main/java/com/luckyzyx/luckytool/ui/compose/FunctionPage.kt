@@ -39,6 +39,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.viewinterop.AndroidView
 import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -47,7 +48,6 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
 import com.luckyzyx.luckytool.R
 import com.luckyzyx.luckytool.ui.activity.MainActivity
-import com.luckyzyx.luckytool.ui.components.SimpleTable
 import com.luckyzyx.luckytool.ui.components.preference.PrefIndexItem
 import com.luckyzyx.luckytool.ui.components.preference.PrefScopeBuilder
 import com.luckyzyx.luckytool.ui.components.preference.ScopeScreen
@@ -57,7 +57,11 @@ import com.luckyzyx.luckytool.ui.compose.scopes.ScopePageSpec
 import com.luckyzyx.luckytool.utils.AppUtils
 import com.luckyzyx.luckytool.utils.PrefState
 import com.luckyzyx.luckytool.utils.RestartMenuUtils
+import com.luckyzyx.luckytool.utils.formatStringAuto
 import com.luckyzyx.luckytool.utils.sendPrefsValue
+import io.noties.markwon.Markwon
+import io.noties.markwon.ext.tables.TablePlugin
+import java.util.Arrays
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.Serializable
@@ -436,31 +440,39 @@ private fun ScopePageHost(
     }
 }
 
-/** 版本信息对话框：xposed_scope 各包版本表（对齐旧 showBottomDialog 内容，Compose 表格替代 Markwon） */
+/** 版本信息对话框：xposed_scope 各包版本表（对齐旧 showBottomDialog，Markwon 渲染） */
 @Composable
 private fun VersionInfoDialog(onDismiss: () -> Unit) {
     val context = LocalContext.current
-    val rows = remember(context) {
-        val pkgs = context.resources.getStringArray(R.array.xposed_scope).sorted()
-        buildList {
-            add(listOf("name", "package", "version"))
-            pkgs.forEach { pkg ->
-                AppUtils(context).getAppVerInfo(pkg)?.let { info ->
-                    add(listOf(info.name, pkg, "${info.versionName}(${info.versionCode})[${info.versionCommit}]"))
-                }
+    val markdown = remember(context) {
+        val list = ArrayList<String>().apply {
+            add("| name | package | version |")
+            add("| ------ | ------ | ------ |")
+        }
+        val pkgs = context.resources.getStringArray(R.array.xposed_scope)
+        Arrays.sort(pkgs)
+        pkgs.forEach { pkg ->
+            AppUtils(context).getAppVerInfo(pkg)?.let { info ->
+                list.add("| ${info.name} | $pkg | ${info.versionName}(${info.versionCode})[${info.versionCommit}] |")
             }
         }
+        formatStringAuto(list, "\n")
+    }
+    val markwon = remember(context) {
+        Markwon.builder(context).usePlugin(TablePlugin.create(context)).build()
     }
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text(stringResource(R.string.menu_versioninfo)) },
         text = {
-            Column(Modifier.verticalScroll(rememberScrollState())) {
-                SimpleTable(
-                    rows = rows,
-                    columnWidths = listOf(120.dp, 220.dp, 220.dp),
-                )
-            }
+            AndroidView(
+                factory = { ctx -> android.widget.TextView(ctx) },
+                modifier = Modifier.fillMaxWidth().verticalScroll(rememberScrollState()),
+                update = { tv ->
+                    tv.setTextIsSelectable(true)
+                    markwon.setMarkdown(tv, markdown)
+                },
+            )
         },
         confirmButton = {
             TextButton(onClick = onDismiss) { Text(stringResource(android.R.string.ok)) }

@@ -144,6 +144,12 @@ dependencies {
     implementation(libs.androidx.compose.ui.tooling.preview)
     implementation(libs.androidx.compose.foundation)
     implementation(libs.androidx.compose.material3)
+    implementation(libs.material.kolor)
+    //Markdown 渲染（Markwon，供捐赠数据/版本信息/更新日志使用）
+    implementation(libs.markwon.core)
+    implementation(libs.markwon.html)
+    implementation(libs.markwon.image)
+    implementation(libs.markwon.ext.tables)
     debugImplementation(libs.androidx.compose.ui.tooling)
     implementation(libs.coil.compose)
     implementation(libs.coil.network.okhttp)

@@ -4,9 +4,9 @@ package com.luckyzyx.luckytool.ui.components.preference
 
 import android.content.Context
 import androidx.compose.animation.animateColorAsState
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -15,6 +15,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyItemScope
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ListItem
@@ -22,6 +23,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Slider
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -75,6 +77,25 @@ internal class PrefEntry(
     val pageTarget: String?,
     val render: @Composable (slot: Int) -> Unit,
 )
+
+/**
+ * KernelSU 风格条目卡片：surfaceBright 底色 + 16dp 圆角 + 1dp tonal 阴影
+ * （对应 KernelSU SegmentedColumn 外观；LuckyTool 偏好项按单条目分组）。
+ */
+@Composable
+private fun PrefItemCard(
+    modifier: Modifier = Modifier,
+    highlight: Color = Color.Transparent,
+    content: @Composable () -> Unit,
+) {
+    Surface(
+        modifier = modifier.fillMaxWidth(),
+        color = if (highlight != Color.Transparent) highlight else MaterialTheme.colorScheme.surfaceBright,
+        shape = RoundedCornerShape(16.dp),
+        tonalElevation = 1.dp,
+        content = content,
+    )
+}
 
 /**
  * 偏好页声明式 DSL —— 旧 BaseScopePreferenceFeagment 程序化 PreferenceScreen 的 Compose 等价物。
@@ -186,17 +207,17 @@ class PrefScopeBuilder internal constructor(
             if (notify) sendValue(key, newValue)
             onChange?.invoke(newValue)
         }
-        ListItem(
-            onClick = { if (enabled) apply(!checked) },
-            supportingContent = summary?.let { { Text(it) } },
-            trailingContent = {
-                Switch(checked = checked, enabled = enabled, onCheckedChange = ::apply)
-            },
-            modifier = Modifier
-                .fillMaxWidth()
-                .background(bg),
-            enabled = enabled,
-        ) { Text(title) }
+        PrefItemCard(highlight = bg, modifier = Modifier.padding(horizontal = 16.dp)) {
+            ListItem(
+                onClick = { if (enabled) apply(!checked) },
+                supportingContent = summary?.let { { Text(it) } },
+                trailingContent = {
+                    Switch(checked = checked, enabled = enabled, onCheckedChange = ::apply)
+                },
+                modifier = Modifier.fillMaxWidth(),
+                enabled = enabled,
+            ) { Text(title) }
+        }
     }
 
     /** 单选列表（对应 DropDownPreference：条目文字 + entryValues 存储值） */
@@ -215,14 +236,14 @@ class PrefScopeBuilder internal constructor(
         var showDialog by remember { mutableStateOf(false) }
         val currentLabel = entries.getOrNull(entryValues.indexOf(current)) ?: current
         val bg = highlightColor(slot)
-        ListItem(
-            onClick = { showDialog = true },
-            supportingContent = { Text(summary?.replace("%s", currentLabel) ?: currentLabel) },
-            modifier = Modifier
-                .fillMaxWidth()
-                .background(bg),
-            enabled = enabled,
-        ) { Text(title) }
+        PrefItemCard(highlight = bg, modifier = Modifier.padding(horizontal = 16.dp)) {
+            ListItem(
+                onClick = { showDialog = true },
+                supportingContent = { Text(summary?.replace("%s", currentLabel) ?: currentLabel) },
+                modifier = Modifier.fillMaxWidth(),
+                enabled = enabled,
+            ) { Text(title) }
+        }
         if (showDialog) {
             var selected by remember {
                 mutableIntStateOf(
@@ -296,45 +317,46 @@ class PrefScopeBuilder internal constructor(
         }
         val current = sliderState.value.roundToInt()
         val bg = highlightColor(slot)
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .background(bg)
-                .padding(horizontal = 16.dp, vertical = 8.dp),
-        ) {
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                Text(title, style = MaterialTheme.typography.bodyLarge)
-                Text(
-                    valueLabel?.invoke(current) ?: current.toString(),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.primary,
+        PrefItemCard(highlight = bg, modifier = Modifier.padding(horizontal = 16.dp)) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 8.dp),
+            ) {
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                    Text(title, style = MaterialTheme.typography.bodyLarge)
+                    Text(
+                        valueLabel?.invoke(current) ?: current.toString(),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.primary,
+                    )
+                }
+                summary?.let {
+                    Text(
+                        it,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+                Slider(
+                    state = sliderState,
+                    onValueChange = {
+                        dragging = true
+                        sliderState.value = it
+                    },
+                    onValueChangeFinished = {
+                        dragging = false
+                        val min = valueRange.first
+                        val stepped = (((sliderState.value - min) / step).roundToInt() * step + min)
+                            .coerceIn(valueRange.first, valueRange.last)
+                        sliderState.value = stepped.toFloat()
+                        state.set(key, stepped)
+                        if (notify) sendValue(key, stepped)
+                        onChange?.invoke(stepped)
+                    },
+                    enabled = enabled,
                 )
             }
-            summary?.let {
-                Text(
-                    it,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
-            Slider(
-                state = sliderState,
-                onValueChange = {
-                    dragging = true
-                    sliderState.value = it
-                },
-                onValueChangeFinished = {
-                    dragging = false
-                    val min = valueRange.first
-                    val stepped = (((sliderState.value - min) / step).roundToInt() * step + min)
-                        .coerceIn(valueRange.first, valueRange.last)
-                    sliderState.value = stepped.toFloat()
-                    state.set(key, stepped)
-                    if (notify) sendValue(key, stepped)
-                    onChange?.invoke(stepped)
-                },
-                enabled = enabled,
-            )
         }
     }
 
@@ -354,14 +376,14 @@ class PrefScopeBuilder internal constructor(
         val current by state.stringFlow(key, default).collectAsStateWithLifecycle()
         var showDialog by remember { mutableStateOf(false) }
         val bg = highlightColor(slot)
-        ListItem(
-            onClick = { showDialog = true },
-            supportingContent = { Text(current.ifBlank { summary ?: "" }) },
-            modifier = Modifier
-                .fillMaxWidth()
-                .background(bg),
-            enabled = enabled,
-        ) { Text(title) }
+        PrefItemCard(highlight = bg, modifier = Modifier.padding(horizontal = 16.dp)) {
+            ListItem(
+                onClick = { showDialog = true },
+                supportingContent = { Text(current.ifBlank { summary ?: "" }) },
+                modifier = Modifier.fillMaxWidth(),
+                enabled = enabled,
+            ) { Text(title) }
+        }
         if (showDialog) {
             var text by remember { mutableStateOf(current) }
             AlertDialog(
@@ -412,14 +434,17 @@ class PrefScopeBuilder internal constructor(
         summary: String? = null,
         enabled: Boolean = true,
     ) = emit("page:$target", "page:$target", title, summary, pageTarget = target) { slot ->
-        ListItem(
-            onClick = { navigate?.invoke(target, title) },
-            supportingContent = summary?.let { { Text(it) } },
-            modifier = Modifier
-                .fillMaxWidth()
-                .background(highlightColor(slot)),
-            enabled = enabled,
-        ) { Text(title) }
+        PrefItemCard(
+            highlight = highlightColor(slot),
+            modifier = Modifier.padding(horizontal = 16.dp),
+        ) {
+            ListItem(
+                onClick = { navigate?.invoke(target, title) },
+                supportingContent = summary?.let { { Text(it) } },
+                modifier = Modifier.fillMaxWidth(),
+                enabled = enabled,
+            ) { Text(title) }
+        }
     }
 
     /** 逃生舱：任意自定义 Composable（ColorPicker、应用选择器等特殊控件用），receiver 可访问 state/restart 等 */
@@ -478,7 +503,12 @@ fun ScopeScreen(
     }
 
     val list: @Composable (Modifier) -> Unit = { listModifier ->
-        LazyColumn(modifier = listModifier, state = listState) {
+        LazyColumn(
+            modifier = listModifier,
+            state = listState,
+            contentPadding = PaddingValues(bottom = 8.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
             if (fullContent != null) {
                 item(key = "full") { fullContent(this, builder) }
             } else {
