@@ -71,6 +71,7 @@ import com.luckyzyx.luckytool.ui.compose.scopes.others.KsWebPage
  * @param packName       宿主包名（sendPrefsValue 通知目标）
  * @param scopes         Xposed 作用域包名列表（重启作用域对话框用）
  * @param restartEnabled 是否显示"重启作用域"菜单
+ * @param onRefresh      下拉刷新回调（null = 无下拉刷新；如 OTA 提取、捐赠数据页）
  * @param content        页面内容 DSL（每次重组重跑，条件可见性写 Kotlin if）
  */
 class ScopePageSpec(
@@ -79,6 +80,7 @@ class ScopePageSpec(
     val packName: String,
     val scopes: Array<String>,
     val restartEnabled: Boolean,
+    val onRefresh: (suspend () -> Unit)? = null,
     val content: PrefScopeBuilder.() -> Unit,
 )
 
