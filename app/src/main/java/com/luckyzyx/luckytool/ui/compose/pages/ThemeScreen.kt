@@ -1,7 +1,6 @@
 package com.luckyzyx.luckytool.ui.compose.pages
 
 import android.annotation.SuppressLint
-import android.app.Activity
 import android.os.Build
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateFloatAsState
@@ -42,7 +41,6 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.rounded.MenuOpen
 import androidx.compose.material.icons.filled.Brightness1
 import androidx.compose.material.icons.filled.Brightness3
 import androidx.compose.material.icons.filled.Brightness4
@@ -55,7 +53,6 @@ import androidx.compose.material.icons.rounded.DesignServices
 import androidx.compose.material.icons.rounded.Pin
 import androidx.compose.material.icons.rounded.Style
 import androidx.compose.material.icons.rounded.Swipe
-import androidx.compose.material.icons.rounded.ViewCarousel
 import androidx.compose.material3.ButtonGroupDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LargeFlexibleTopAppBar
@@ -108,7 +105,6 @@ import com.luckyzyx.luckytool.ui.theme.keyColorOptions
 import com.luckyzyx.luckytool.ui.theme.rememberLuckyColorScheme
 import com.luckyzyx.luckytool.ui.theme.rememberSeedColor
 import com.luckyzyx.luckytool.ui.theme.resolveDarkTheme
-import com.luckyzyx.luckytool.utils.PredictiveBackUtils
 import com.luckyzyx.luckytool.utils.SettingsPrefs
 import com.luckyzyx.luckytool.utils.getBoolean
 import com.luckyzyx.luckytool.utils.getFloat
@@ -161,16 +157,8 @@ fun ThemeScreen(onBack: () -> Unit) {
     var navigationBadge by remember {
         mutableStateOf(context.getBoolean(SettingsPrefs, ShellSettingsController.KEY_NAVIGATION_BADGE, true))
     }
-    var predictiveBack by remember {
-        mutableStateOf(context.getBoolean(SettingsPrefs, ShellSettingsController.KEY_PREDICTIVE_BACK, false))
-    }
     var swipeDismiss by remember {
         mutableStateOf(context.getBoolean(SettingsPrefs, ShellSettingsController.KEY_SWIPE_DISMISS, true))
-    }
-    var pagerMode by remember {
-        mutableIntStateOf(
-            context.getInt(SettingsPrefs, ShellSettingsController.KEY_PAGER_MODE, 1).coerceIn(0, 2)
-        )
     }
     var pageScale by remember {
         mutableFloatStateOf(
@@ -388,48 +376,33 @@ fun ThemeScreen(onBack: () -> Unit) {
                 }
             }
 
-            // 导航角标 / 预测性返回（对齐 KernelSU ColorPaletteScreenMaterial 的对应分段项）
+            // 导航角标（对齐 KernelSU ColorPaletteScreenMaterial 的对应分段项）
             item {
-                val entries = mutableListOf<@Composable () -> Unit>(
-                    {
-                        SegmentedSwitchItem(
-                            icon = Icons.Rounded.Pin,
-                            title = stringResource(R.string.settings_navigation_badge),
-                            summary = stringResource(R.string.settings_navigation_badge_summary),
-                            checked = navigationBadge,
-                            onCheckedChange = {
-                                navigationBadge = it
-                                context.putBoolean(SettingsPrefs, ShellSettingsController.KEY_NAVIGATION_BADGE, it)
-                                ThemePrefs.notifyChanged()
-                            },
-                        )
-                    },
-                )
-                // 预测性返回需要 Android 14+ 的框架能力（对齐 KernelSU 的 SDK 判断）
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
-                    entries += {
-                        SegmentedSwitchItem(
-                            icon = Icons.AutoMirrored.Rounded.MenuOpen,
-                            title = stringResource(R.string.settings_enable_predictive_back),
-                            summary = stringResource(R.string.settings_enable_predictive_back_summary),
-                            checked = predictiveBack,
-                            onCheckedChange = {
-                                predictiveBack = it
-                                context.putBoolean(SettingsPrefs, ShellSettingsController.KEY_PREDICTIVE_BACK, it)
-                                PredictiveBackUtils.apply(context, it)
-                                // 与 KernelSU 一致：该开关需要重建 Activity 才会被系统重新读取
-                                (context as? Activity)?.recreate()
-                            },
-                        )
-                    }
-                }
                 SegmentedColumn(
                     modifier = Modifier.padding(horizontal = 16.dp),
-                    content = entries,
+                    content = listOf(
+                        {
+                            SegmentedSwitchItem(
+                                icon = Icons.Rounded.Pin,
+                                title = stringResource(R.string.settings_navigation_badge),
+                                summary = stringResource(R.string.settings_navigation_badge_summary),
+                                checked = navigationBadge,
+                                onCheckedChange = {
+                                    navigationBadge = it
+                                    context.putBoolean(
+                                        SettingsPrefs,
+                                        ShellSettingsController.KEY_NAVIGATION_BADGE,
+                                        it
+                                    )
+                                    ThemePrefs.notifyChanged()
+                                },
+                            )
+                        },
+                    ),
                 )
             }
 
-            // 横移返回 + 页面切换手势（对齐 KernelSU 同一分段列表中的两项）
+            // 横移返回（对齐 KernelSU 同名项；Material 外壳无翻页手势，故不提供“翻页手势”下拉）
             item {
                 SegmentedColumn(
                     modifier = Modifier.padding(horizontal = 16.dp),
@@ -443,24 +416,6 @@ fun ThemeScreen(onBack: () -> Unit) {
                                 onCheckedChange = {
                                     swipeDismiss = it
                                     context.putBoolean(SettingsPrefs, ShellSettingsController.KEY_SWIPE_DISMISS, it)
-                                    ThemePrefs.notifyChanged()
-                                },
-                            )
-                        },
-                        {
-                            val modeLabels = listOf(
-                                stringResource(R.string.settings_pager_gesture_native),
-                                stringResource(R.string.settings_pager_gesture_cross_axis),
-                                stringResource(R.string.settings_pager_gesture_ios_like),
-                            )
-                            SegmentedDropdownItem(
-                                icon = Icons.Rounded.ViewCarousel,
-                                title = stringResource(R.string.settings_pager_gesture_mode),
-                                items = modeLabels,
-                                selectedIndex = pagerMode,
-                                onItemSelected = { index ->
-                                    pagerMode = index
-                                    context.putInt(SettingsPrefs, ShellSettingsController.KEY_PAGER_MODE, index)
                                     ThemePrefs.notifyChanged()
                                 },
                             )
