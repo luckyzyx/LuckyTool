@@ -1,103 +1,210 @@
 package com.luckyzyx.luckytool.ui.compose
 
-import android.view.View
+import android.content.Context
 import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.text.selection.SelectionContainer
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.ListItem
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SearchBar
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.produceState
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.viewinterop.AndroidView
-import androidx.fragment.app.FragmentContainerView
-import androidx.navigation.NavController
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.dp
+import androidx.navigation.NavDestination.Companion.hasRoute
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
-import androidx.navigation.fragment.NavHostFragment
-import com.highcapable.betterandroid.ui.extension.component.fragmentManager
+import androidx.navigation.compose.rememberNavController
+import androidx.navigation.toRoute
 import com.luckyzyx.luckytool.R
 import com.luckyzyx.luckytool.ui.activity.MainActivity
-import com.luckyzyx.luckytool.ui.fragment.scopes.XposedFragment
+import com.luckyzyx.luckytool.ui.components.preference.PrefIndexItem
+import com.luckyzyx.luckytool.ui.components.preference.PrefScopeBuilder
+import com.luckyzyx.luckytool.ui.components.preference.ScopeScreen
+import com.luckyzyx.luckytool.ui.components.preference.ScrollTarget
+import com.luckyzyx.luckytool.ui.compose.scopes.ScopePageRegistry
+import com.luckyzyx.luckytool.ui.compose.scopes.ScopePageSpec
+import com.luckyzyx.luckytool.utils.AppUtils
+import com.luckyzyx.luckytool.utils.PrefState
 import com.luckyzyx.luckytool.utils.RestartMenuUtils
+import com.luckyzyx.luckytool.utils.sendPrefsValue
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import kotlinx.serialization.Serializable
+
+// Function 子树类型安全路由（迁移方案 §7：ScopeRoute(scopeId, key, position) 等价物）
+// 注意：FunctionRoute 是 shell 级 tab 路由（MainShell），此处是 Function tab 内部导航。
+
+@Serializable
+data object FunctionTreeRoute
+
+@Serializable
+data object SearchRoute
+
+@Serializable
+data class ScopeRoute(
+    val pageKey: String,
+    val title: String = "",
+    val scrollKey: String = "",
+    val scrollPosition: Int = -1,
+)
 
 /**
- * Function tab：以 AndroidView 承载旧 NavHostFragment 子树（P2 过渡，P3 迁移完成后移除）。
- * TopAppBar 标题/返回/搜索/重启/版本信息对齐旧 XposedFragment 行为。
+ * Function tab：Compose 功能树 + 全屏搜索 + 作用域页宿主（P3 终局，替代旧
+ * XposedFragment/ComposeScopeFragment + function_nav.xml 子树）。
  */
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun FunctionPage(
-    activity: MainActivity,
-    functionNavController: NavController,
-    onShellBack: () -> Boolean,
-) {
-    val backStackEntry by functionNavController.currentBackStackEntryAsState()
-    val destination = backStackEntry?.destination
-    val atRoot = destination?.id == R.id.nav_function
+fun FunctionPage(activity: MainActivity, onShellBack: () -> Unit) {
+    val navController = rememberNavController()
+    val backStackEntry by navController.currentBackStackEntryAsState()
+    val atRoot = backStackEntry?.destination?.hasRoute<FunctionTreeRoute>() == true
 
-    // 返回键：子树优先；根时回上一 tab；无可回则退出（与旧版语义一致）
-    BackHandler {
-        if (!atRoot) {
-            functionNavController.popBackStack()
-        } else if (!onShellBack()) {
-            activity.finish()
+    var showVersionInfo by remember { mutableStateOf(false) }
+
+    // 跨 tab 跳转请求（OtherPage/SettingPage → 作用域页）：MainShell 负责切 tab，这里消费执行
+    LaunchedEffect(Unit) {
+        activity.functionNavRequests.collect { request ->
+            if (request != null) {
+                activity.functionNavRequests.value = null
+                navController.navigate(ScopeRoute(request.pageKey, request.title ?: "", "", -1)) {
+                    launchSingleTop = true
+                }
+            }
         }
     }
 
-    // 目的地 label 形如 "{title_text}"，用导航参数替换占位符（等价旧 NavigationUI 标题解析）
-    val title = destination?.let { dest ->
-        val label = dest.label?.toString().orEmpty()
-        val args = backStackEntry?.arguments
-        if (label.contains("{")) {
-            Regex("\\{(.+?)\\}").replace(label) { match ->
-                args?.getString(match.groupValues[1]).orEmpty()
-            }
-        } else {
-            label
+    // 返回键：非根退回上一页，根交还 shell（切回上一 tab 或退出）
+    BackHandler {
+        if (atRoot) onShellBack() else navController.popBackStack()
+    }
+
+    if (showVersionInfo) {
+        VersionInfoDialog(onDismiss = { showVersionInfo = false })
+    }
+
+    NavHost(
+        navController = navController,
+        startDestination = FunctionTreeRoute,
+        modifier = Modifier.fillMaxSize(),
+    ) {
+        composable<FunctionTreeRoute> {
+            FunctionTreeScreen(
+                onOpenPage = { key, title -> navController.navigate(ScopeRoute(key, title)) },
+                onOpenSearch = { navController.navigate(SearchRoute) },
+                onShowVersionInfo = { showVersionInfo = true },
+                onShowRestartMenu = { RestartMenuUtils.showMainRestartMenu(activity) },
+            )
         }
-    }.orEmpty()
+        composable<SearchRoute> {
+            FunctionSearchScreen(
+                onBack = { navController.popBackStack() },
+                onOpen = { route -> navController.navigate(route) },
+            )
+        }
+        composable<ScopeRoute> { entry ->
+            val route = entry.toRoute<ScopeRoute>()
+            ScopePageHost(
+                activity = activity,
+                route = route,
+                onBack = { navController.popBackStack() },
+                onNavigate = { key, title -> navController.navigate(ScopeRoute(key, title ?: "", "", -1)) },
+            )
+        }
+    }
+}
+
+/** 页标题：对齐旧功能树 root 标题（apps/others = App 标签；related/statusbar = 覆盖表） */
+private fun pageTitle(context: Context, spec: ScopePageSpec): String {
+    ScopePageRegistry.treeTitleRes[spec.pageKey]?.let { return context.getString(it) }
+    val pack = if (spec.pageKey == "android_related") "android" else spec.packName
+    return AppUtils(context).getAppLabel(pack).toString()
+}
+
+/**
+ * headless 构建一页的搜索索引（等价旧 getAllPrefsItem：条件可见性已由 Kotlin if 应用，
+ * 空索引 = 该页不可见）。构建是纯记录（emit 不渲染），可在任意线程运行。
+ */
+private fun buildIndex(context: Context, spec: ScopePageSpec): List<PrefIndexItem> {
+    val state = PrefState.of(context.applicationContext, spec.prefsName)
+    val builder = PrefScopeBuilder(state)
+    builder.context = context.applicationContext
+    builder.beginBuild()
+    spec.content(builder)
+    return builder.snapshotIndex()
+}
+
+private data class TreeRow(val pageKey: String, val title: String, val summary: String?)
+
+/** 功能树：49 页固定顺序（ScopePageRegistry.treeOrder），空索引页隐藏 */
+@Composable
+private fun FunctionTreeScreen(
+    onOpenPage: (pageKey: String, title: String) -> Unit,
+    onOpenSearch: () -> Unit,
+    onShowVersionInfo: () -> Unit,
+    onShowRestartMenu: () -> Unit,
+) {
+    val context = LocalContext.current
+    val rows by produceState(initialValue = emptyList<TreeRow>(), key1 = Unit) {
+        value = withContext(Dispatchers.IO) {
+            ScopePageRegistry.treeOrder.mapNotNull { key ->
+                val spec = ScopePageRegistry[key] ?: return@mapNotNull null
+                val index = buildIndex(context, spec)
+                if (index.isEmpty()) return@mapNotNull null
+                val summary = index.mapNotNull { it.title }.take(3).joinToString(" · ").ifEmpty { null }
+                TreeRow(key, pageTitle(context, spec), summary)
+            }
+        }
+    }
 
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(title.ifEmpty { stringResource(R.string.nav_function) }) },
-                navigationIcon = {
-                    if (!atRoot) {
-                        IconButton(onClick = { functionNavController.popBackStack() }) {
-                            Icon(
-                                painterResource(R.drawable.ic_baseline_arrow_back_24),
-                                contentDescription = null,
-                            )
-                        }
-                    }
-                },
+                title = { Text(stringResource(R.string.nav_function)) },
                 actions = {
-                    IconButton(onClick = {
-                        XposedFragment.currentInstance?.showSearchFromShell(activity)
-                    }) {
+                    IconButton(onClick = onOpenSearch) {
                         Icon(
                             painterResource(R.drawable.ic_baseline_search_24),
                             contentDescription = stringResource(R.string.menu_search),
                         )
                     }
-                    IconButton(onClick = {
-                        RestartMenuUtils.showMainRestartMenu(activity)
-                    }) {
+                    IconButton(onClick = onShowRestartMenu) {
                         Icon(
                             painterResource(R.drawable.ic_baseline_refresh_24),
                             contentDescription = stringResource(R.string.menu_reboot),
                         )
                     }
-                    IconButton(onClick = {
-                        XposedFragment.currentInstance?.showVersionInfoFromShell(activity)
-                    }) {
+                    IconButton(onClick = onShowVersionInfo) {
                         Icon(
                             painterResource(R.drawable.ic_baseline_extension_24),
                             contentDescription = stringResource(R.string.menu_versioninfo),
@@ -105,97 +212,252 @@ fun FunctionPage(
                     }
                 },
             )
-        }
+        },
     ) { padding ->
-        FunctionHost(
-            activity = activity,
+        LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding),
-            onReady = activity::notifyFunctionHostReady,
+        ) {
+            items(rows, key = { it.pageKey }) { row ->
+                ListItem(
+                    headlineContent = { Text(row.title) },
+                    supportingContent = {
+                        row.summary?.let { Text(it, maxLines = 2, overflow = TextOverflow.Ellipsis) }
+                    },
+                    trailingContent = {
+                        Icon(painterResource(R.drawable.ic_baseline_chevron_right_24), contentDescription = null)
+                    },
+                    modifier = Modifier.clickable { onOpenPage(row.pageKey, row.title) },
+                )
+                HorizontalDivider()
+            }
+        }
+    }
+}
+
+private data class SearchEntry(val pageKey: String, val pageTitle: String, val item: PrefIndexItem)
+
+/** 全屏搜索：索引 = 全部已注册页 headless 构建，过滤平移旧 SearchResultAdapter 规则 */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun FunctionSearchScreen(onBack: () -> Unit, onOpen: (ScopeRoute) -> Unit) {
+    val context = LocalContext.current
+    var query by rememberSaveable { mutableStateOf("") }
+
+    val entries by produceState(initialValue = emptyList<SearchEntry>(), key1 = Unit) {
+        value = withContext(Dispatchers.IO) {
+            ScopePageRegistry.all().flatMap { spec ->
+                buildIndex(context, spec).map { item -> SearchEntry(spec.pageKey, pageTitle(context, spec), item) }
+            }
+        }
+    }
+
+    // 过滤规则对齐 SearchResultAdapter.getFilter：key/title/summary contains(ignoreCase)
+    val filtered = remember(entries, query) {
+        if (query.isBlank()) emptyList() else entries.filter { entry ->
+            entry.item.key.contains(query, ignoreCase = true) ||
+                entry.item.title?.contains(query, ignoreCase = true) == true ||
+                entry.item.summary?.contains(query, ignoreCase = true) == true
+        }
+    }
+
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text(stringResource(R.string.menu_search)) },
+                navigationIcon = {
+                    IconButton(onClick = onBack) {
+                        Icon(
+                            painterResource(R.drawable.ic_baseline_arrow_back_24),
+                            contentDescription = stringResource(R.string.back),
+                        )
+                    }
+                },
+            )
+        },
+    ) { padding ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(padding),
+        ) {
+            SearchBar(
+                query = query,
+                onQueryChange = { query = it },
+                onSearch = {},
+                active = true,
+                onActiveChange = {},
+                placeholder = { Text(stringResource(R.string.menu_search)) },
+                leadingIcon = {
+                    Icon(painterResource(R.drawable.ic_baseline_search_24), contentDescription = null)
+                },
+                trailingIcon = if (query.isNotEmpty()) {
+                    {
+                        IconButton(onClick = { query = "" }) {
+                            Icon(painterResource(R.drawable.ic_baseline_close_24), contentDescription = stringResource(R.string.clear))
+                        }
+                    }
+                } else {
+                    null
+                },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 8.dp),
+            ) {}
+            LazyColumn(modifier = Modifier.fillMaxSize()) {
+                items(filtered, key = { "${it.pageKey}/${it.item.key}" }) { entry ->
+                    ListItem(
+                        headlineContent = { Text(entry.item.title ?: entry.item.key) },
+                        supportingContent = {
+                            Column {
+                                if (!entry.item.summary.isNullOrBlank()) {
+                                    Text(entry.item.summary, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                                }
+                                Text(
+                                    entry.pageTitle,
+                                    style = MaterialTheme.typography.labelMedium,
+                                    color = MaterialTheme.colorScheme.primary,
+                                )
+                            }
+                        },
+                        trailingContent = {
+                            Icon(painterResource(R.drawable.ic_baseline_chevron_right_24), contentDescription = null)
+                        },
+                        modifier = Modifier.clickable {
+                            // page DSL 命中 → 跳目标页；普通偏好命中 → 本页滚动定位
+                            val targetSpec = entry.item.pageTarget
+                                ?.let { ScopePageRegistry.pageTargetMap[it] }
+                                ?.let { ScopePageRegistry[it] }
+                            if (targetSpec != null) {
+                                onOpen(ScopeRoute(targetSpec.pageKey, pageTitle(context, targetSpec)))
+                            } else {
+                                onOpen(
+                                    ScopeRoute(
+                                        entry.pageKey,
+                                        entry.pageTitle,
+                                        entry.item.key,
+                                        entry.item.slot,
+                                    )
+                                )
+                            }
+                        },
+                    )
+                    HorizontalDivider()
+                }
+            }
+        }
+    }
+}
+
+/** 作用域页宿主：类型安全 ScopeRoute → 任意已注册 ScopePageSpec */
+@Composable
+private fun ScopePageHost(
+    activity: MainActivity,
+    route: ScopeRoute,
+    onBack: () -> Unit,
+    onNavigate: (pageKey: String, title: String?) -> Unit,
+) {
+    val context = LocalContext.current
+    val spec = ScopePageRegistry[route.pageKey]
+
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = {
+                    Text(route.title.ifBlank { spec?.let { pageTitle(context, it) } ?: route.pageKey })
+                },
+                navigationIcon = {
+                    IconButton(onClick = onBack) {
+                        Icon(
+                            painterResource(R.drawable.ic_baseline_arrow_back_24),
+                            contentDescription = stringResource(R.string.back),
+                        )
+                    }
+                },
+                actions = {
+                    if (spec?.restartEnabled == true) {
+                        IconButton(
+                            onClick = {
+                                RestartMenuUtils.showRestartScopeDialog(activity, spec.scopes, true)
+                            }
+                        ) {
+                            Icon(
+                                painterResource(R.drawable.ic_baseline_refresh_24),
+                                contentDescription = stringResource(R.string.menu_reboot),
+                            )
+                        }
+                    }
+                },
+            )
+        },
+    ) { padding ->
+        if (spec == null) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(padding),
+                contentAlignment = Alignment.Center,
+            ) {
+                Text("Unknown page: ${route.pageKey}", color = MaterialTheme.colorScheme.error)
+            }
+            return@Scaffold
+        }
+        val state = remember(spec) { PrefState.of(context.applicationContext, spec.prefsName) }
+        ScopeScreen(
+            state = state,
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(padding),
+            sendValue = { key, value -> context.sendPrefsValue(spec.packName, key, value) },
+            scrollTarget = if (route.scrollKey.isNotBlank() && route.scrollPosition >= 0) {
+                ScrollTarget(route.scrollKey, route.scrollPosition)
+            } else {
+                null
+            },
+            onNavigate = { target, title ->
+                ScopePageRegistry.pageTargetMap[target]?.let { onNavigate(it, title) }
+            },
+            onRestart = if (spec.restartEnabled) ({ activity.restart() }) else null,
+            onRefresh = spec.onRefresh,
+            fullContent = spec.fullContent,
+            content = spec.content,
         )
     }
 }
 
-/**
- * 旧功能树子树宿主：负责把 MainActivity 里 headless 创建（或恢复隐藏）的 NavHostFragment
- * 收养进容器并设为 primary navigation fragment；离开 Function tab 时隐藏（状态保留在 FM）。
- */
+/** 版本信息对话框：xposed_scope 各包版本表（对齐旧 showBottomDialog 内容，去 Markwon） */
 @Composable
-fun FunctionHost(
-    activity: MainActivity,
-    modifier: Modifier = Modifier,
-    onReady: () -> Unit,
-) {
-    AndroidView(
-        modifier = modifier,
-        factory = { context ->
-            FragmentContainerView(context).apply { id = R.id.function_nav_host }
-        },
-        update = { container ->
-            val fm = activity.fragmentManager()
-            val fragment = fm.findFragmentByTag(MainActivity.FUNCTION_NAV_TAG) as? NavHostFragment
-            if (fragment == null) {
-                // 首次进入 Function tab：直接在容器内创建子树
-                val created = NavHostFragment.create(R.navigation.function_nav)
-                fm.beginTransaction()
-                    .add(container.id, created, MainActivity.FUNCTION_NAV_TAG)
-                    .setPrimaryNavigationFragment(created)
-                    .commitNow()
-                onReady()
-                return@AndroidView
-            }
-            val view = fragment.view
-            if (view != null && view.parent === container && !fragment.isHidden) {
-                onReady()
-                return@AndroidView
-            }
-            if (fragment.isHidden || view == null) {
-                // 恢复/回切：显示回容器（容器可能尚未附着，等 attach 再提交）
-                fun show() {
-                    fm.beginTransaction()
-                        .show(fragment)
-                        .setPrimaryNavigationFragment(fragment)
-                        .commitNow()
-                    onReady()
+private fun VersionInfoDialog(onDismiss: () -> Unit) {
+    val context = LocalContext.current
+    val text = remember(context) {
+        val pkgs = context.resources.getStringArray(R.array.xposed_scope).sorted()
+        buildString {
+            append("| name | package | version |\n")
+            append("| :--- | :--- | :--- |\n")
+            pkgs.forEach { pkg ->
+                AppUtils(context).getAppVerInfo(pkg)?.let { info ->
+                    append("| ${info.name} | $pkg | ${info.versionName}(${info.versionCode})[${info.versionCommit}] |\n")
                 }
-                if (container.isAttachedToWindow) {
-                    show()
-                } else {
-                    container.addOnAttachStateChangeListener(object : View.OnAttachStateChangeListener {
-                        override fun onViewAttachedToWindow(v: View) {
-                            v.removeOnAttachStateChangeListener(this)
-                            show()
-                        }
-
-                        override fun onViewDetachedFromWindow(v: View) = Unit
-                    })
-                }
-                return@AndroidView
-            }
-            // headless 实例（containerId=0）首次收养进容器：保留导航状态迁移
-            val state = fm.saveFragmentInstanceState(fragment)
-            fm.beginTransaction().remove(fragment).commitNow()
-            fragment.setInitialSavedState(state)
-            fm.beginTransaction()
-                .add(container.id, fragment, MainActivity.FUNCTION_NAV_TAG)
-                .show(fragment)
-                .setPrimaryNavigationFragment(fragment)
-                .commitNow()
-            onReady()
-        },
-    )
-    // 离开 Function tab：隐藏子树（FM 保留状态；实例保存前 hide 见 MainActivity.onSaveInstanceState）
-    DisposableEffect(Unit) {
-        onDispose {
-            val fm = activity.fragmentManager()
-            val fragment = fm.findFragmentByTag(MainActivity.FUNCTION_NAV_TAG) as? NavHostFragment
-            if (fragment != null && fragment.isAdded && !fragment.isHidden) {
-                fm.beginTransaction()
-                    .hide(fragment)
-                    .setPrimaryNavigationFragment(null)
-                    .commitNow()
             }
         }
     }
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(R.string.menu_versioninfo)) },
+        text = {
+            Column(Modifier.verticalScroll(rememberScrollState())) {
+                SelectionContainer {
+                    Text(
+                        text,
+                        fontFamily = FontFamily.Monospace,
+                        style = MaterialTheme.typography.bodySmall,
+                    )
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onDismiss) { Text(stringResource(android.R.string.ok)) }
+        },
+    )
 }

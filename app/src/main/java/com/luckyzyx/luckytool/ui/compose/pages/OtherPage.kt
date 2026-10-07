@@ -123,7 +123,7 @@ fun OtherPage(activity: MainActivity) {
                     summary = stringResource(R.string.quick_entry_summary),
                     onClick = {
                         activity.requestFunctionNavigation(
-                            R.id.systemQuickEntry, context.getString(R.string.quick_entry)
+                            "quick_entry", context.getString(R.string.quick_entry)
                         )
                     },
                 )
@@ -151,7 +151,7 @@ fun OtherPage(activity: MainActivity) {
                     summary = stringResource(R.string.fps_summary),
                     onClick = {
                         activity.requestFunctionNavigation(
-                            R.id.forceFpsFragment, context.getString(R.string.fps_title)
+                            "force_fps", context.getString(R.string.fps_title)
                         )
                     },
                 )

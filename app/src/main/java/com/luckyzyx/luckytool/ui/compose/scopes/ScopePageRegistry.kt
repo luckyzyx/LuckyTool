@@ -2,6 +2,7 @@ package com.luckyzyx.luckytool.ui.compose.scopes
 
 import androidx.compose.foundation.lazy.LazyItemScope
 import androidx.compose.runtime.Composable
+import com.luckyzyx.luckytool.R
 import com.luckyzyx.luckytool.ui.components.preference.PrefScopeBuilder
 import com.luckyzyx.luckytool.ui.compose.scopes.apps.OplusAlarmClockPage
 import com.luckyzyx.luckytool.ui.compose.scopes.apps.OplusBatteryPage
@@ -103,6 +104,115 @@ object ScopePageRegistry {
     }
 
     operator fun get(key: String): ScopePageSpec? = pages[key]
+
+    /** 全部已注册页（搜索索引用） */
+    fun all(): List<ScopePageSpec> = pages.values.toList()
+
+    /** 功能树页面顺序（对齐旧 XposedFragment.loadPreferences 的 addFragmentPreference 顺序，49 页） */
+    val treeOrder: List<String> = listOf(
+        "android_related", "statusbar", "launcher", "aod", "lock_screen", "application", "miscellaneous",
+        "oplus_screenshot", "oplus_battery", "oplus_alarm_clock", "oplus_settings",
+        "oplus_wireless_settings", "oplus_tele_service", "oplus_mms", "oplus_browser",
+        "oplus_camera", "oplus_gallery", "oplus_games", "theme_store", "oplus_market",
+        "oplus_cloud_service", "oplus_ota", "oplus_pictorial", "oplus_gesture",
+        "oplus_speech_assist", "oplus_direct_ui", "oplus_search_box", "oplus_weather",
+        "oplus_calendar", "oplus_smart_sidebar", "oplus_phone_manager", "oplus_health",
+        "oplus_sound_recorder", "oplus_eye_protect", "oplus_beacon_link", "oplus_nfc",
+        "oplus_oshare", "oplus_permission_controller", "oplus_linker",
+        "oplus_securityp_permission", "oplus_file_manager", "oplus_engineer_mode",
+        "oplus_my_devices", "oplus_mcs", "claw", "alpha_backup_pro", "ks_web", "adm",
+        "gps_joy_stick",
+    )
+
+    /**
+     * 树标题覆盖表（pageKey → 字符串资源）：对齐旧功能树 root 标题。
+     * 其余页标题 = AppUtils.getAppLabel(packName)（旧 root key == packName）；
+     * android_related 特殊：旧标题 = getAppLabel("android")（见 FunctionPage.pageTitle）。
+     */
+    val treeTitleRes: Map<String, Int> = mapOf(
+        "statusbar" to R.string.StatusBar,
+        "launcher" to R.string.Desktop,
+        "aod" to R.string.AodRelated,
+        "lock_screen" to R.string.LockScreen,
+        "application" to R.string.Application,
+        "miscellaneous" to R.string.Miscellaneous,
+    )
+
+    /** DSL page(target=...) 的旧 nav id 名 → pageKey（tools/p3_nav_switch.ps1 $pairs + $specialPairs + P1 两页） */
+    val pageTargetMap: Map<String, String> = mapOf(
+        "statusBarClock" to "statusbar_clock",
+        "statusBar" to "statusbar",
+        "oplusAlarmClock" to "oplus_alarm_clock",
+        "oplusBattery" to "oplus_battery",
+        "oplusBeaconLink" to "oplus_beacon_link",
+        "oplusBrowser" to "oplus_browser",
+        "oplusCalendar" to "oplus_calendar",
+        "oplusCamera" to "oplus_camera",
+        "oplusCloudService" to "oplus_cloud_service",
+        "oplusDirectUI" to "oplus_direct_ui",
+        "oplusEngineerMode" to "oplus_engineer_mode",
+        "oplusEyeProtect" to "oplus_eye_protect",
+        "oplusFileManager" to "oplus_file_manager",
+        "oplusGallery" to "oplus_gallery",
+        "oplusGames" to "oplus_games",
+        "oplusGesture" to "oplus_gesture",
+        "oplusHealth" to "oplus_health",
+        "oplusLinker" to "oplus_linker",
+        "oplusMarket" to "oplus_market",
+        "oplusMMS" to "oplus_mms",
+        "oplusMcs" to "oplus_mcs",
+        "oplusMyDevices" to "oplus_my_devices",
+        "oplusNfc" to "oplus_nfc",
+        "oplusOShare" to "oplus_oshare",
+        "oplusOta" to "oplus_ota",
+        "oplusPermissionController" to "oplus_permission_controller",
+        "oplusPhoneManager" to "oplus_phone_manager",
+        "oplusPictorial" to "oplus_pictorial",
+        "oplusScreenshot" to "oplus_screenshot",
+        "oplusSearchBox" to "oplus_search_box",
+        "oplusSecuritypPermission" to "oplus_securityp_permission",
+        "oplusSettings" to "oplus_settings",
+        "oplusSmartSidebar" to "oplus_smart_sidebar",
+        "oplusSoundRecorder" to "oplus_sound_recorder",
+        "oplusSpeechAssist" to "oplus_speech_assist",
+        "oplusTeleService" to "oplus_tele_service",
+        "themeStore" to "theme_store",
+        "oplusWeather" to "oplus_weather",
+        "oplusWirelessSettings" to "oplus_wireless_settings",
+        "statusBarNotify" to "statusbar_notify",
+        "statusBarIcon" to "statusbar_icon",
+        "statusBarControlCenter" to "statusbar_control_center",
+        "statusBarLayout" to "statusbar_layout",
+        "statusBarBattery" to "statusbar_battery",
+        "statusBarNetWorkSpeed" to "statusbar_network_speed",
+        "statusBarTiles" to "statusbar_tiles",
+        "statusBarNotifyRemoval" to "statusbar_notify_removal",
+        "androidRelated" to "android_related",
+        "launcher" to "launcher",
+        "lockScreen" to "lock_screen",
+        "application" to "application",
+        "miscellaneous" to "miscellaneous",
+        "dialogRelated" to "dialog_related",
+        "fingerPrintRelated" to "finger_print_related",
+        "soundRelated" to "sound_related",
+        "aod" to "aod",
+        "corePatch" to "core_patch",
+        "alphaBackupPro" to "alpha_backup_pro",
+        "claw" to "claw",
+        "ksWeb" to "ks_web",
+        "adm" to "adm",
+        "gpsJoyStick" to "gps_joy_stick",
+        "multiAppFragment" to "multi_app",
+        "zoomWindowFragment" to "zoom_window",
+        "darkModeFragment" to "dark_mode",
+        "forceFpsFragment" to "force_fps",
+        "extractOTAFragment" to "extract_ota",
+        "memcConfigFragment" to "memc_config",
+        "hideAppIntentFragment" to "hide_app_intent",
+        "batteryInfoFragment" to "battery_info",
+        "donateFragment" to "donate",
+        "systemQuickEntry" to "quick_entry",
+    )
 
     init {
         register(StatusBarClockPage.spec)

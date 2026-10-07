@@ -116,6 +116,8 @@
     <string name="reboot">Restart System</string>
     <string name="fast_reboot">Fast reboot</string>
     <string name="menu_versioninfo">Version Information</string>
+    <string name="back">Back</string>
+    <string name="clear">Clear</string>
     <string name="scope_version_info">Scope version information</string>
     <string name="show_system_app">Show system APP</string>
     

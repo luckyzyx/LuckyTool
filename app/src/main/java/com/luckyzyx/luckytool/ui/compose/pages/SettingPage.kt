@@ -296,7 +296,7 @@ fun SettingPage(activity: MainActivity) {
                                     0, 1, 2 -> DonateUtils.showQRCode(context, which)
                                     3 -> if (zh) {
                                         activity.requestFunctionNavigation(
-                                            R.id.donateFragment,
+                                            "donate",
                                             context.getString(R.string.donation_list),
                                         )
                                     } else {
@@ -305,7 +305,7 @@ fun SettingPage(activity: MainActivity) {
 
                                     4 -> context.openUrl("https://paypal.me/luckyzyx")
                                     5 -> activity.requestFunctionNavigation(
-                                        R.id.donateFragment,
+                                        "donate",
                                         context.getString(R.string.donation_list),
                                     )
                                 }

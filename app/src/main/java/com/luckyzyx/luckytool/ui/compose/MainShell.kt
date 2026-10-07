@@ -44,6 +44,9 @@ data object LogRoute
 @Serializable
 data object SettingRoute
 
+/** 跨 tab 跳转请求：pageKey = ScopePageRegistry 页键，title = 目标页标题（可空） */
+data class FunctionRequest(val pageKey: String, val title: String?)
+
 private data class ShellTab(val labelRes: Int, val iconRes: Int, val route: Any)
 
 @Composable
@@ -62,12 +65,10 @@ fun MainShell(activity: MainActivity) {
     // Function tab 由子树处理返回键：关闭 Compose 侧自动返回，避免双处理
     LaunchedEffect(onFunctionTab) { navController.enableOnBackPressed(!onFunctionTab) }
 
-    // 跨 tab 跳转请求（Compose 页面 → 旧功能树页面）：先收养子树再导航
+    // 跨 tab 跳转请求（Compose 页面 → Function 子树作用域页）：只切 tab，FunctionPage 消费执行
     LaunchedEffect(Unit) {
         activity.functionNavRequests.collect { request ->
             if (request != null) {
-                activity.setPendingFunctionNavigation(request.first, request.second)
-                activity.functionNavRequests.value = null
                 navController.navigate(FunctionRoute) {
                     popUpTo(navController.graph.findStartDestination().id) { saveState = true }
                     launchSingleTop = true
@@ -117,7 +118,6 @@ fun MainShell(activity: MainActivity) {
             composable<FunctionRoute> {
                 FunctionPage(
                     activity = activity,
-                    functionNavController = activity.functionNavController,
                     onShellBack = { navController.popBackStack() },
                 )
             }
