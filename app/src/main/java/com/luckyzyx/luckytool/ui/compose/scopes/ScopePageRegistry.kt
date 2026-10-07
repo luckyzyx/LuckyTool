@@ -56,6 +56,11 @@ import com.luckyzyx.luckytool.ui.compose.scopes.related.LauncherRelatedPage
 import com.luckyzyx.luckytool.ui.compose.scopes.related.LockScreenRelatedPage
 import com.luckyzyx.luckytool.ui.compose.scopes.related.MiscellaneousPage
 import com.luckyzyx.luckytool.ui.compose.scopes.related.SoundRelatedPage
+import com.luckyzyx.luckytool.ui.compose.scopes.others.ADMPage
+import com.luckyzyx.luckytool.ui.compose.scopes.others.AlphaBackupProPage
+import com.luckyzyx.luckytool.ui.compose.scopes.others.ClawPage
+import com.luckyzyx.luckytool.ui.compose.scopes.others.GpsJoyStickPage
+import com.luckyzyx.luckytool.ui.compose.scopes.others.KsWebPage
 
 /**
  * 一个 Compose 作用域页的声明——旧 [BaseScopePreferenceFeagment] 子类中
@@ -147,5 +152,10 @@ object ScopePageRegistry {
         register(LockScreenRelatedPage.spec)
         register(MiscellaneousPage.spec)
         register(SoundRelatedPage.spec)
+        register(ADMPage.spec)
+        register(AlphaBackupProPage.spec)
+        register(ClawPage.spec)
+        register(GpsJoyStickPage.spec)
+        register(KsWebPage.spec)
     }
 }
