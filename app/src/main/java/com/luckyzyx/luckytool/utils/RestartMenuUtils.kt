@@ -1,20 +1,28 @@
 package com.luckyzyx.luckytool.utils
 
-import android.annotation.SuppressLint
 import android.content.Context
-import android.content.DialogInterface
 import android.os.Process
 import android.os.RemoteException
-import android.widget.TextView
 import androidx.collection.ArrayMap
 import androidx.collection.arrayMapOf
-import com.drake.net.utils.scope
-import com.google.android.material.dialog.MaterialAlertDialogBuilder
-import com.highcapable.betterandroid.ui.extension.view.layoutInflater
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
 import com.highcapable.betterandroid.ui.extension.view.toast
 import com.luckyzyx.luckytool.IPackageServiceController
 import com.luckyzyx.luckytool.R
-import com.luckyzyx.luckytool.databinding.DialogReoptimizeDexLayoutBinding
 import com.luckyzyx.luckytool.service.ActivityManagerService
 import com.luckyzyx.luckytool.service.PackagesService
 import com.luckyzyx.luckytool.service.PowerService
@@ -37,113 +45,194 @@ object RestartMenuUtils {
     private val coroutineScope = CoroutineScope(Dispatchers.Main + SupervisorJob())
 
     /**
-     * 重启作用域对话框
-     * @receiver Context
+     * 重启主菜单 Compose 对话框（5 项）
      */
-    fun showMainRestartMenu(context: Context) {
-        val list = arrayOf(
+    @Composable
+    fun RestartMenuDialog(context: Context, onDismiss: () -> Unit) {
+        val items = listOf(
             context.getString(R.string.restart_scope),
             context.getString(R.string.re_optimize_dex),
             context.getString(R.string.reload_hooker),
             context.getString(R.string.reboot),
             context.getString(R.string.fast_reboot)
         )
-        MaterialAlertDialogBuilder(context, dialogCentered).apply {
-            setCancelable(true)
-            setItems(list) { _: DialogInterface?, i: Int ->
-                when (i) {
-                    0 -> showRestartAllScopeDialog(context)
-                    1 -> showOptimizeAllDexDialog(context)
-                    2 -> showRestartAllHookerDialog(context)
-                    3 -> {
-                        PowerService.get(context) { controller ->
-                            controller?.reboot(false, null, false)
+        var showConfirmScope by remember { mutableStateOf(false) }
+        var showConfirmHooker by remember { mutableStateOf(false) }
+        var showOptimize by remember { mutableStateOf(false) }
+        when {
+            showConfirmScope -> ConfirmRestartAllScopeDialog(context, onDismiss)
+            showConfirmHooker -> ConfirmRestartAllHookerDialog(context, onDismiss)
+            showOptimize -> OptimizeDexDialog(
+                context,
+                buildScopeMaps(context, context.resources.getStringArray(R.array.xposed_scope)),
+                confirmFirst = true,
+                onDismiss
+            )
+            else -> AlertDialog(
+                onDismissRequest = onDismiss,
+                text = {
+                    Column {
+                        items.forEachIndexed { index, label ->
+                            Text(
+                                label,
+                                Modifier.fillMaxWidth().clickable {
+                                    when (index) {
+                                        0 -> showConfirmScope = true
+                                        1 -> showOptimize = true
+                                        2 -> showConfirmHooker = true
+                                        3 -> {
+                                            PowerService.get(context) { controller ->
+                                                controller?.reboot(false, null, false)
+                                            }
+                                            onDismiss()
+                                        }
+                                        else -> {
+                                            ShellUtils.fastCmd(CommandUtils.killzygote)
+                                            onDismiss()
+                                        }
+                                    }
+                                }.padding(horizontal = 24.dp, vertical = 14.dp)
+                            )
                         }
                     }
-
-                    4 -> ShellUtils.fastCmd(CommandUtils.killzygote)
-                }
-            }
-            show()
+                },
+                confirmButton = {}
+            )
         }
     }
 
     /**
-     * 重启部分作用域对话框
-     * @receiver Context
+     * 重启部分作用域 Compose 对话框
      * @param scopes Array<String>
      */
-    fun showRestartScopeDialog(context: Context, scopes: Array<String>, isSystem: Boolean = false) {
+    @Composable
+    fun RestartScopeDialog(
+        context: Context,
+        scopes: Array<String>,
+        isSystem: Boolean = false,
+        onDismiss: () -> Unit
+    ) {
         if (scopes.isEmpty()) return
-        val list = if (isSystem && scopes.first() == "system") {
+        val isSystemPage = isSystem && scopes.first() == "system"
+        val items = if (isSystemPage) {
             arrayOf(
-                context.getString(R.string.reload_hooker),
-                context.getString(R.string.reload_only_this_page_hooker),
-            )
+                R.string.reload_hooker,
+                R.string.reload_only_this_page_hooker
+            ).map { context.getString(it) }
         } else {
             arrayOf(
-                context.getString(R.string.restart_scope),
-                context.getString(R.string.re_optimize_dex),
-                context.getString(R.string.reload_hooker),
-                context.getString(R.string.restart_only_this_page_scope),
-                context.getString(R.string.optimize_only_this_page_scope),
-                context.getString(R.string.reload_only_this_page_hooker),
+                R.string.restart_scope,
+                R.string.re_optimize_dex,
+                R.string.reload_hooker,
+                R.string.restart_only_this_page_scope,
+                R.string.optimize_only_this_page_scope,
+                R.string.reload_only_this_page_hooker
+            ).map { context.getString(it) }
+        }
+        var showConfirmScope by remember { mutableStateOf(false) }
+        var showConfirmHooker by remember { mutableStateOf(false) }
+        var showOptimize by remember { mutableStateOf(false) }
+        var optimizeScopes by remember { mutableStateOf(arrayMapOf<String, CharSequence>()) }
+        var optimizeConfirmFirst by remember { mutableStateOf(false) }
+        when {
+            showConfirmScope -> ConfirmRestartAllScopeDialog(context, onDismiss)
+            showConfirmHooker -> ConfirmRestartAllHookerDialog(context, onDismiss)
+            showOptimize -> OptimizeDexDialog(context, optimizeScopes, optimizeConfirmFirst, onDismiss)
+            else -> AlertDialog(
+                onDismissRequest = onDismiss,
+                text = {
+                    Column {
+                        items.forEachIndexed { index, label ->
+                            Text(
+                                label,
+                                Modifier.fillMaxWidth().clickable {
+                                    if (isSystemPage) {
+                                        when (index) {
+                                            0 -> showConfirmHooker = true
+                                            else -> {
+                                                restartHooker(context, scopes)
+                                                onDismiss()
+                                            }
+                                        }
+                                    } else {
+                                        when (index) {
+                                            0 -> showConfirmScope = true
+                                            1 -> {
+                                                optimizeScopes = buildScopeMaps(
+                                                    context,
+                                                    context.resources.getStringArray(R.array.xposed_scope)
+                                                )
+                                                optimizeConfirmFirst = true
+                                                showOptimize = true
+                                            }
+                                            2 -> showConfirmHooker = true
+                                            3 -> {
+                                                restartScope(context, scopes)
+                                                onDismiss()
+                                            }
+                                            4 -> {
+                                                optimizeScopes = buildScopeMaps(context, scopes)
+                                                optimizeConfirmFirst = false
+                                                showOptimize = true
+                                            }
+                                            else -> {
+                                                restartHooker(context, scopes)
+                                                onDismiss()
+                                            }
+                                        }
+                                    }
+                                }.padding(horizontal = 24.dp, vertical = 14.dp)
+                            )
+                        }
+                    }
+                },
+                confirmButton = {}
             )
         }
-        MaterialAlertDialogBuilder(context, dialogCentered).apply {
-            setItems(list) { _, which ->
-                if (isSystem && scopes.first() == "system") {
-                    when (which) {
-                        0 -> showRestartAllHookerDialog(context)
-                        1 -> restartHooker(context, scopes)
-                    }
-                } else {
-                    when (which) {
-                        0 -> showRestartAllScopeDialog(context)
-                        1 -> showOptimizeAllDexDialog(context)
-                        2 -> showRestartAllHookerDialog(context)
-                        3 -> restartScope(context, scopes)
-                        4 -> optimizeScope(context, scopes)
-                        5 -> restartHooker(context, scopes)
-                    }
-                }
-            }
-            show()
-        }
     }
 
     /**
-     * 重启全部作用域
-     * @receiver Context
+     * 重启全部作用域确认对话框
      */
-    private fun showRestartAllScopeDialog(context: Context) {
-        val xposedScope = context.resources.getStringArray(R.array.xposed_scope)
-        MaterialAlertDialogBuilder(context).apply {
-            setMessage(context.getString(R.string.restart_scope_message))
-            setPositiveButton(context.getString(android.R.string.ok)) { _: DialogInterface?, _: Int ->
-                scope(Dispatchers.Default) {
-                    restartScope(context, xposedScope)
-                }
+    @Composable
+    private fun ConfirmRestartAllScopeDialog(context: Context, onDismiss: () -> Unit) {
+        val xposedScope = remember { context.resources.getStringArray(R.array.xposed_scope) }
+        AlertDialog(
+            onDismissRequest = onDismiss,
+            text = { Text(context.getString(R.string.restart_scope_message)) },
+            confirmButton = {
+                TextButton(onClick = {
+                    coroutineScope.launch(Dispatchers.Default) {
+                        restartScope(context, xposedScope)
+                    }
+                    onDismiss()
+                }) { Text(context.getString(android.R.string.ok)) }
+            },
+            dismissButton = {
+                TextButton(onClick = onDismiss) { Text(context.getString(android.R.string.cancel)) }
             }
-            setNeutralButton(context.getString(android.R.string.cancel), null)
-            show()
-        }
+        )
     }
 
     /**
-     * 重载全部作用域Hooker
-     * @receiver Context
+     * 重载全部作用域 Hooker 确认对话框
      */
-    private fun showRestartAllHookerDialog(context: Context) {
-        val xposedScope = context.resources.getStringArray(R.array.xposed_scope)
-        MaterialAlertDialogBuilder(context).apply {
-            setMessage(context.getString(R.string.reload_hooker_message))
-            setPositiveButton(context.getString(android.R.string.ok)) { _: DialogInterface?, _: Int ->
-                restartHooker(context, xposedScope)
+    @Composable
+    private fun ConfirmRestartAllHookerDialog(context: Context, onDismiss: () -> Unit) {
+        val xposedScope = remember { context.resources.getStringArray(R.array.xposed_scope) }
+        AlertDialog(
+            onDismissRequest = onDismiss,
+            text = { Text(context.getString(R.string.reload_hooker_message)) },
+            confirmButton = {
+                TextButton(onClick = {
+                    restartHooker(context, xposedScope)
+                    onDismiss()
+                }) { Text(context.getString(android.R.string.ok)) }
+            },
+            dismissButton = {
+                TextButton(onClick = onDismiss) { Text(context.getString(android.R.string.cancel)) }
             }
-            setNeutralButton(context.getString(android.R.string.cancel), null)
-            show()
-        }
+        )
     }
 
     /**
@@ -202,80 +291,119 @@ object RestartMenuUtils {
     }
 
     /**
-     * 重新优化全部作用域Dex
-     * @receiver Context
+     * 构建作用域映射（包名 -> 应用名），过滤 android/system 与未安装应用
      */
-    fun showOptimizeAllDexDialog(context: Context, isForce: Boolean = false) {
-        val scopeMaps = arrayMapOf<String, CharSequence>()
-        context.resources.getStringArray(R.array.xposed_scope).toMutableList().apply {
-            removeIf { it == "android" || it == "system" }
-            removeIf { PackageUtils(context.packageManager).getPackageInfo(it, 0) == null }
-            forEachIndexed { _, it ->
-                val name = PackageUtils(context.packageManager).getApplicationInfo(it, 0)
-                    ?.loadLabel(context.packageManager)
-                scopeMaps[it] = name
-            }
-        }
-
-        if (isForce) optimizeScopeDex(context, scopeMaps)
-        else {
-            MaterialAlertDialogBuilder(context).apply {
-                setMessage(context.getString(R.string.re_optimize_dex_message))
-                setPositiveButton(context.getString(android.R.string.ok)) { _: DialogInterface?, _: Int ->
-                    optimizeScopeDex(context, scopeMaps)
-                }
-                setNeutralButton(context.getString(android.R.string.cancel), null)
-                show()
-            }
-        }
-    }
-
-    /**
-     * 优化部分作用域
-     * @receiver Context
-     * @param scopes Array<String>
-     */
-    fun optimizeScope(context: Context, scopes: Array<String>) {
+    fun buildScopeMaps(context: Context, scopes: Array<String>): ArrayMap<String, CharSequence> {
         val scopeMaps = arrayMapOf<String, CharSequence>()
         scopes.toMutableList().apply {
             removeIf { it == "android" || it == "system" }
             removeIf { PackageUtils(context.packageManager).getPackageInfo(it, 0) == null }
-            forEachIndexed { _, it ->
+            forEach { it ->
                 val name = PackageUtils(context.packageManager).getApplicationInfo(it, 0)
                     ?.loadLabel(context.packageManager)
                 scopeMaps[it] = name
             }
         }
-
-        optimizeScopeDex(context, scopeMaps)
+        return scopeMaps
     }
 
-    private fun optimizeScopeDex(
+    /**
+     * 优化 Dex 进度 Compose 对话框
+     * @param confirmFirst 是否先弹出确认对话框
+     */
+    @Composable
+    fun OptimizeDexDialog(
         context: Context,
-        scopes: ArrayMap<String, CharSequence>
+        scopes: ArrayMap<String, CharSequence>,
+        confirmFirst: Boolean = false,
+        onDismiss: () -> Unit
     ) {
-        val binding = DialogReoptimizeDexLayoutBinding.inflate(context.layoutInflater)
-        val progressDialog = MaterialAlertDialogBuilder(context, dialogCentered).apply {
-            setTitle(context.getString(R.string.re_optimize_dex_optimizing))
-            setView(binding.root)
-            setCancelable(false)
-        }.create()
-        val textView = binding.tv
+        var stage by remember {
+            mutableStateOf(if (confirmFirst) OptimizeStage.Confirm else OptimizeStage.Running)
+        }
+        var current by remember { mutableStateOf(scopes) }
+        var progressText by remember { mutableStateOf("") }
+        var failedApps by remember { mutableStateOf(arrayMapOf<String, CharSequence>()) }
+        fun launch(target: ArrayMap<String, CharSequence>) {
+            current = target
+            failedApps = arrayMapOf()
+            stage = OptimizeStage.Running
+        }
+        when (stage) {
+            OptimizeStage.Confirm -> AlertDialog(
+                onDismissRequest = onDismiss,
+                text = { Text(context.getString(R.string.re_optimize_dex_message)) },
+                confirmButton = {
+                    TextButton(onClick = { launch(current) }) {
+                        Text(context.getString(android.R.string.ok))
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = onDismiss) {
+                        Text(context.getString(android.R.string.cancel))
+                    }
+                }
+            )
+            OptimizeStage.Running -> {
+                LaunchedEffect(Unit) {
+                    runOptimize(context, current, { progressText = it }) { failed ->
+                        if (failed.isNotEmpty()) {
+                            failedApps = failed
+                            stage = OptimizeStage.Failed
+                        } else {
+                            context.showToast(context.getString(R.string.re_optimize_dex_completed))
+                            onDismiss()
+                        }
+                    }
+                }
+                AlertDialog(
+                    onDismissRequest = {},
+                    title = { Text(context.getString(R.string.re_optimize_dex_optimizing)) },
+                    text = { Text(progressText) },
+                    confirmButton = {}
+                )
+            }
+            OptimizeStage.Failed -> AlertDialog(
+                onDismissRequest = onDismiss,
+                title = { Text(context.getString(R.string.re_optimize_dex_failed)) },
+                text = {
+                    Text(
+                        context.getString(
+                            R.string.re_optimize_dex_faile_message,
+                            failedApps.values.joinToString("\n")
+                        )
+                    )
+                },
+                confirmButton = {
+                    TextButton(onClick = { launch(failedApps) }) {
+                        Text(context.getString(android.R.string.ok))
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = onDismiss) {
+                        Text(context.getString(android.R.string.cancel))
+                    }
+                }
+            )
+        }
+    }
 
+    private enum class OptimizeStage { Confirm, Running, Failed }
+
+    /**
+     * 执行 Dex 优化，进度与结果经回调返回
+     */
+    private fun runOptimize(
+        context: Context,
+        scopes: ArrayMap<String, CharSequence>,
+        onProgress: (String) -> Unit,
+        onDone: (ArrayMap<String, CharSequence>) -> Unit
+    ) {
         PackagesService.get(context) { controller ->
             coroutineScope.launch {
-                progressDialog.show()
-                val failedApps = try {
-                    AppUtils(context).getAllAppVerInfo(scopes.keys.toTypedArray(), true)
-                    optimizeApps(controller, scopes, textView)
-                } finally {
-                    progressDialog.dismiss()
-                }
-                if (failedApps.isNotEmpty()) {
-                    showDexRetryDialog(context, failedApps)
-                } else {
-                    context.showToast(context.getString(R.string.re_optimize_dex_completed))
-                }
+                AppUtils(context).getAllAppVerInfo(scopes.keys.toTypedArray(), true)
+                val failedApps = optimizeApps(controller, scopes, onProgress)
+                onDone(failedApps)
             }
         }
     }
@@ -283,17 +411,17 @@ object RestartMenuUtils {
     /**
      * 优化多个应用，动态更新进度信息
      */
-    @SuppressLint("SetTextI18n")
     private suspend fun optimizeApps(
         controller: IPackageServiceController?,
-        scopes: ArrayMap<String, CharSequence>, textView: TextView
+        scopes: ArrayMap<String, CharSequence>,
+        onProgress: (String) -> Unit
     ): ArrayMap<String, CharSequence> {
         val failedApps = arrayMapOf<String, CharSequence>()
         withContext(Dispatchers.IO) {
             scopes.keys.forEachIndexed { index, pack ->
                 val name = scopes[pack] ?: pack
                 withContext(Dispatchers.Main) {
-                    textView.text = "$name (${index + 1}/${scopes.size})"
+                    onProgress("$name (${index + 1}/${scopes.size})")
                 }
                 val success = try {
                     controller?.clearApplicationProfileData(pack)
@@ -312,28 +440,4 @@ object RestartMenuUtils {
         }
         return failedApps
     }
-
-    /**
-     * 显示重新优化对话框
-     */
-    private fun showDexRetryDialog(
-        context: Context,
-        failedApps: ArrayMap<String, CharSequence>
-    ) {
-        MaterialAlertDialogBuilder(context, dialogCentered).apply {
-            setTitle(context.getString(R.string.re_optimize_dex_failed))
-            setMessage(
-                context.getString(
-                    R.string.re_optimize_dex_faile_message,
-                    failedApps.values.joinToString("\n")
-                )
-            )
-            setPositiveButton(context.getString(android.R.string.ok)) { _, _ ->
-                optimizeScopeDex(context, failedApps)
-            }
-            setNeutralButton(context.getString(android.R.string.cancel), null)
-            show()
-        }
-    }
-
 }

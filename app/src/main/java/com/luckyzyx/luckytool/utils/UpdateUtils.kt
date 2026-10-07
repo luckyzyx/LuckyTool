@@ -1,26 +1,32 @@
 package com.luckyzyx.luckytool.utils
 
-import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
 import android.provider.Settings
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
 import androidx.core.content.FileProvider
 import androidx.core.net.toUri
-import androidx.core.view.isVisible
 import com.drake.net.Get
 import com.drake.net.component.Progress
 import com.drake.net.interfaces.ProgressListener
 import com.drake.net.scope.NetCoroutineScope
 import com.drake.net.utils.scopeNet
-import com.google.android.material.dialog.MaterialAlertDialogBuilder
-import com.highcapable.betterandroid.ui.extension.view.layoutInflater
-import com.highcapable.betterandroid.ui.extension.view.updatePadding
-import com.highcapable.hikage.extension.setView
-import com.highcapable.hikage.widget.androidx.core.widget.NestedScrollView
-import com.highcapable.hikage.widget.com.google.android.material.textview.MaterialTextView
+import com.highcapable.betterandroid.ui.extension.view.toast
 import com.luckyzyx.luckytool.R
-import com.luckyzyx.luckytool.databinding.DialogDownloadLayoutBinding
-import io.noties.markwon.Markwon
 import org.json.JSONArray
 import org.json.JSONObject
 import org.lsposed.lsparanoid.Obfuscate
@@ -33,8 +39,19 @@ class UpdateUtils(val context: Context, private val isDev: Boolean = false) {
     val coolmarketUrl =
         "https://dl.coolapk.com/down?pn=com.coolapk.market&id=NDU5OQ&h=46bb9d98&from=from-web"
 
-    @SuppressLint("SetTextI18n")
-    fun checkUpdate(result: (String, Int, () -> Unit) -> Unit) {
+    data class UpdateInfo(
+        val name: String,
+        val code: Int,
+        val changeLog: String,
+        val fileName: String,
+        val downloadUrl: String,
+        val downloadPage: String,
+        val downloadCount: String,
+        val fileSize: Float,
+        val updateTime: String
+    )
+
+    fun checkUpdate(result: (UpdateInfo) -> Unit) {
         scopeNet {
             val latestUrl =
                 "https://api.github.com/repos/Xposed-Modules-Repo/com.luckyzyx.luckytool/releases/latest"
@@ -52,42 +69,12 @@ class UpdateUtils(val context: Context, private val isDev: Boolean = false) {
                 val downloadCount = firstFile.optString("download_count")
                 val fileSize = firstFile.optString("size").toFloat()
 
-                result(name, code.toInt()) {
-                    MaterialAlertDialogBuilder(context, dialogCentered).apply {
-                        setTitle(context.getString(R.string.check_update_hint))
-                        setCancelable(isDev)
-                        setView {
-                            NestedScrollView {
-                                MaterialTextView(
-                                    lparams = LayoutParams(widthMatchParent = true),
-                                    init = {
-                                        updatePadding(horizontal = 20.dp)
-                                        val version =
-                                            "${context.getString(R.string.version_name)}: $name($code)"
-                                        val count =
-                                            "${context.getString(R.string.download_count)}: $downloadCount"
-                                        val size = "${context.getString(R.string.file_size)}: " +
-                                                formatFileSize(fileSize)
-                                        val time =
-                                            "${context.getString(R.string.update_time)}: $updateTime"
-                                        val finalText =
-                                            "# LuckyTool v$name\r\n- $version\r\n- $count\r\n- $size\r\n- $time\r\n$changeLog"
-                                        Markwon.create(context).setMarkdown(this, finalText)
-                                    }
-                                )
-                            }
-                        }
-                        setNeutralButton(context.getString(R.string.go_download_page)) { _, _ ->
-                            context.startActivity(
-                                Intent(Intent.ACTION_VIEW, downloadPage.toUri())
-                            )
-                        }
-                        setPositiveButton(context.getString(R.string.direct_update)) { _, _ ->
-                            readyDownload(context, fileName, downloadUrl)
-                        }
-                        show()
-                    }
-                }
+                result(
+                    UpdateInfo(
+                        name, code.toInt(), changeLog, fileName, downloadUrl,
+                        downloadPage, downloadCount, fileSize, updateTime
+                    )
+                )
             }
         }.catch {
             it.printStackTrace()
@@ -95,121 +82,27 @@ class UpdateUtils(val context: Context, private val isDev: Boolean = false) {
         }
     }
 
-    private fun showDownloadItems(context: Context, apkFile: File, downloadUrl: String) {
-        val items = arrayListOf("Github")
-        val urls = arrayListOf(downloadUrl)
-        mapOf(
-            "Ucdn" to "https://wget.la/",
-            "Catmak" to "https://gh.catmak.name/",
-            "Fastly" to "https://cdn.gh-proxy.org/",
-            "JSDelivr" to "https://fastly.jsdelivr.net/gh/",
-            "FastGit" to "https://fastgit.cc/",
-        ).forEach { (k, v) ->
-            items.add(k)
-            urls.add(v)
-        }
-
-        MaterialAlertDialogBuilder(context, dialogCentered).apply {
-            setTitle(context.getString(R.string.select_download_source))
-            setCancelable(isDev)
-            setItems(items.toTypedArray()) { _, which ->
-                downloadFile(context, apkFile, urls[which])
-            }
-        }.show()
-    }
-
-    private fun readyDownload(context: Context, fileName: String, downloadUrl: String) {
-        val toolDir = FileUtils.checkDownloadDir(context, "LuckyTool")
-        val apkFile = File(toolDir, fileName).apply {
+    /**
+     * 准备下载文件路径
+     */
+    fun prepareApkFile(fileName: String): File =
+        File(FileUtils.checkDownloadDir(context, "LuckyTool"), fileName).apply {
             if (isDirectory) delete()
         }
-        if (apkFile.exists()) {
-            val size = FileUtils.getFileSize(apkFile)
-            val formatSize = formatFileSize(size.toFloat())
 
-            MaterialAlertDialogBuilder(context, dialogCentered).apply {
-                setTitle(R.string.downloaded)
-                setMessage("${apkFile.name}\n${formatSize}")
-                setNeutralButton(context.getString(R.string.download_again)) { _, _ ->
-                    apkFile.delete()
-                    showDownloadItems(context, apkFile, downloadUrl)
-                }
-                setPositiveButton(context.getString(R.string.install)) { _, _ ->
-                    installApk(context, apkFile)
-                }
-                show()
-            }
-            return
-        }
-        showDownloadItems(context, apkFile, downloadUrl)
-    }
+    /**
+     * 下载源列表（Github 直链 + 5 个镜像加速）
+     */
+    fun downloadSources(downloadUrl: String): List<Pair<String, String>> = listOf(
+        "Github" to downloadUrl,
+        "Ucdn" to "https://wget.la/$downloadUrl",
+        "Catmak" to "https://gh.catmak.name/$downloadUrl",
+        "Fastly" to "https://cdn.gh-proxy.org/$downloadUrl",
+        "JSDelivr" to "https://fastly.jsdelivr.net/gh/$downloadUrl",
+        "FastGit" to "https://fastgit.cc/$downloadUrl"
+    )
 
-    @SuppressLint("ClickableViewAccessibility")
-    fun downloadFile(context: Context, apkFile: File, url: String) {
-        var downloadScope: NetCoroutineScope? = null
-        val binding = DialogDownloadLayoutBinding.inflate(context.layoutInflater)
-        val downloadDialog = MaterialAlertDialogBuilder(context, dialogCentered).apply {
-            setTitle(context.getString(R.string.downloading))
-            setCancelable(false)
-            setView(binding.root)
-        }.show()
-        downloadScope = scopeNet {
-            if (apkFile.exists()) {
-                installApk(context, apkFile)
-                downloadDialog.dismiss()
-                return@scopeNet
-            }
-            binding.cancelButton.apply {
-                text = context.getString(R.string.cancel_button)
-                setOnClickListener {
-                    apkFile.delete()
-                    downloadScope?.cancel()
-                    downloadDialog.dismiss()
-                }
-            }
-            val downProgress = binding.downProgress
-            val downTv = binding.downTv
-            val downFile = Get<File>(url) {
-                setDownloadDir(apkFile)
-                setDownloadMd5Verify()
-                addDownloadListener(object : ProgressListener(100) {
-                    @SuppressLint("SetTextI18n")
-                    override fun onProgress(p: Progress) {
-                        downProgress.post {
-                            val ps = p.progress()
-                            downProgress.apply {
-                                isIndeterminate = true
-                                if (ps > 0) {
-                                    isIndeterminate = false
-                                    progress = ps
-                                }
-                            }
-                            downTv.text = """
-                                ${context.getString(R.string.download_progress)}: $ps%
-                                ${context.getString(R.string.download_speed)}: ${p.speedSize()}
-                                ${context.getString(R.string.remain_size)}: ${p.remainSize()}
-                                ${context.getString(R.string.downloaded)}: ${p.currentSize()} / ${p.totalSize()}
-                                ${context.getString(R.string.used_time)}: ${p.useTime()}
-                                ${context.getString(R.string.remain_time)}: ${p.remainTime()}
-                            """.trimIndent()
-                        }
-                    }
-                })
-            }.await()
-            binding.installButton.apply {
-                isVisible = true
-                text = context.getString(R.string.install_button)
-                setOnClickListener {
-                    downloadDialog.setCancelable(true)
-                    installApk(context, downFile)
-                }
-            }
-            installApk(context, downFile)
-            downloadDialog.dismiss()
-        }
-    }
-
-    private fun installApk(context: Context, apkFile: File) {
+    fun installApk(apkFile: File) {
         if (context.packageManager.canRequestPackageInstalls()) {
             val intent = Intent(Intent.ACTION_VIEW)
             intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
@@ -227,4 +120,151 @@ class UpdateUtils(val context: Context, private val isDev: Boolean = false) {
             context.startActivity(intent)
         }
     }
+}
+
+/**
+ * 更新日志 Compose 对话框
+ */
+@Composable
+fun UpdateChangelogDialog(
+    context: Context,
+    info: UpdateUtils.UpdateInfo,
+    isDev: Boolean,
+    onDismiss: () -> Unit,
+    onDownload: () -> Unit
+) {
+    val version = "${context.getString(R.string.version_name)}: ${info.name}(${info.code})"
+    val count = "${context.getString(R.string.download_count)}: ${info.downloadCount}"
+    val size = "${context.getString(R.string.file_size)}: ${formatFileSize(info.fileSize)}"
+    val time = "${context.getString(R.string.update_time)}: ${info.updateTime}"
+    val finalText =
+        "# LuckyTool v${info.name}\n- $version\n- $count\n- $size\n- $time\n${info.changeLog}"
+    AlertDialog(
+        onDismissRequest = { if (isDev) onDismiss() },
+        title = { Text(context.getString(R.string.check_update_hint)) },
+        text = { Text(finalText) },
+        confirmButton = {
+            TextButton(onClick = onDownload) { Text(context.getString(R.string.direct_update)) }
+        },
+        dismissButton = {
+            TextButton(onClick = {
+                context.startActivity(Intent(Intent.ACTION_VIEW, info.downloadPage.toUri()))
+            }) { Text(context.getString(R.string.go_download_page)) }
+        }
+    )
+}
+
+/**
+ * 下载源选择 Compose 对话框
+ */
+@Composable
+fun UpdateDownloadSourceDialog(
+    context: Context,
+    downloadUrl: String,
+    isDev: Boolean,
+    onDismiss: () -> Unit,
+    onSelect: (String) -> Unit
+) {
+    val sources = remember(downloadUrl) { UpdateUtils(context).downloadSources(downloadUrl) }
+    AlertDialog(
+        onDismissRequest = { if (isDev) onDismiss() },
+        title = { Text(context.getString(R.string.select_download_source)) },
+        text = {
+            Column {
+                sources.forEach { (name, url) ->
+                    Text(
+                        name,
+                        Modifier.fillMaxWidth().clickable { onSelect(url) }
+                            .padding(horizontal = 24.dp, vertical = 14.dp)
+                    )
+                }
+            }
+        },
+        confirmButton = {}
+    )
+}
+
+/**
+ * 已下载安装 Compose 对话框
+ */
+@Composable
+fun UpdateDownloadedDialog(
+    context: Context,
+    apkFile: File,
+    isDev: Boolean,
+    onDismiss: () -> Unit,
+    onDownloadAgain: () -> Unit,
+    onInstall: () -> Unit
+) {
+    val size = formatFileSize(FileUtils.getFileSize(apkFile).toFloat())
+    AlertDialog(
+        onDismissRequest = { if (isDev) onDismiss() },
+        title = { Text(context.getString(R.string.downloaded)) },
+        text = { Text("${apkFile.name}\n$size") },
+        confirmButton = {
+            TextButton(onClick = onInstall) { Text(context.getString(R.string.install)) }
+        },
+        dismissButton = {
+            TextButton(onClick = onDownloadAgain) {
+                Text(context.getString(R.string.download_again))
+            }
+        }
+    )
+}
+
+/**
+ * 下载进度 Compose 对话框（完成后自动安装）
+ */
+@Composable
+fun UpdateDownloadProgressDialog(
+    context: Context,
+    apkFile: File,
+    url: String,
+    onDismiss: () -> Unit
+) {
+    var progressText by remember { mutableStateOf("") }
+    var downloadScope by remember { mutableStateOf<NetCoroutineScope?>(null) }
+    LaunchedEffect(Unit) {
+        downloadScope = scopeNet {
+            if (apkFile.exists()) {
+                UpdateUtils(context).installApk(apkFile)
+                onDismiss()
+                return@scopeNet
+            }
+            val downFile = Get<File>(url) {
+                setDownloadDir(apkFile)
+                setDownloadMd5Verify()
+                addDownloadListener(object : ProgressListener(100) {
+                    override fun onProgress(p: Progress) {
+                        val ps = p.progress()
+                        progressText = """
+                            ${context.getString(R.string.download_progress)}: $ps%
+                            ${context.getString(R.string.download_speed)}: ${p.speedSize()}
+                            ${context.getString(R.string.remain_size)}: ${p.remainSize()}
+                            ${context.getString(R.string.downloaded)}: ${p.currentSize()} / ${p.totalSize()}
+                            ${context.getString(R.string.used_time)}: ${p.useTime()}
+                            ${context.getString(R.string.remain_time)}: ${p.remainTime()}
+                        """.trimIndent()
+                    }
+                })
+            }.await()
+            UpdateUtils(context).installApk(downFile)
+            onDismiss()
+        }
+    }
+    AlertDialog(
+        onDismissRequest = {},
+        title = { Text(context.getString(R.string.downloading)) },
+        text = {
+            Column {
+                Text(progressText)
+                TextButton(onClick = {
+                    downloadScope?.cancel()
+                    apkFile.delete()
+                    onDismiss()
+                }) { Text(context.getString(R.string.cancel_button)) }
+            }
+        },
+        confirmButton = {}
+    )
 }

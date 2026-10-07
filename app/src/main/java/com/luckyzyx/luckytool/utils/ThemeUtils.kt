@@ -4,8 +4,8 @@ package com.luckyzyx.luckytool.utils
 
 import android.content.Context
 import android.content.res.Configuration
+import android.os.Build
 import androidx.appcompat.app.AppCompatDelegate
-import com.google.android.material.color.DynamicColors
 import org.lsposed.lsparanoid.Obfuscate
 
 @Obfuscate
@@ -13,7 +13,7 @@ object ThemeUtils {
 
     fun isDynamicColorsEnabled(context: Context): Boolean {
         val enable = context.getBoolean(SettingsPrefs, "use_dynamic_color", true)
-        return enable && DynamicColors.isDynamicColorAvailable()
+        return enable && Build.VERSION.SDK_INT >= 31
     }
 
     fun setDynamicColorsEnabled(context: Context, enabled: Boolean) {

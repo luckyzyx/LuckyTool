@@ -18,7 +18,6 @@ import android.graphics.Color
 import android.graphics.Paint
 import android.graphics.drawable.Drawable
 import android.os.Build
-import android.os.Bundle
 import android.os.IBinder
 import android.os.PowerManager
 import android.os.SystemClock
@@ -31,34 +30,15 @@ import android.text.style.ForegroundColorSpan
 import android.util.ArrayMap
 import android.util.Base64
 import android.util.TypedValue
-import android.view.Menu
-import android.view.MenuInflater
-import android.view.MenuItem
 import android.view.View
 import android.widget.Toast
-import androidx.annotation.MenuRes
 import androidx.core.graphics.createBitmap
-import androidx.core.graphics.drawable.RoundedBitmapDrawableFactory
-import androidx.core.graphics.drawable.toBitmap
-import androidx.core.graphics.drawable.toBitmapOrNull
 import androidx.core.graphics.drawable.toDrawable
-import androidx.core.graphics.scale
 import androidx.core.net.toUri
-import androidx.core.view.MenuHost
-import androidx.core.view.MenuProvider
-import androidx.fragment.app.Fragment
-import androidx.lifecycle.Lifecycle
-import androidx.navigation.NavController
-import androidx.navigation.NavOptions
-import androidx.preference.EditTextPreference
-import androidx.preference.ListPreference
-import androidx.preference.Preference
 import com.drake.net.utils.withDefault
-import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.highcapable.betterandroid.system.extension.component.clipboardManager
 import com.highcapable.betterandroid.system.extension.component.copy
 import com.highcapable.betterandroid.system.extension.component.sendBroadcast
-import com.highcapable.betterandroid.ui.extension.component.base.getDrawableCompat
 import com.highcapable.betterandroid.ui.extension.graphics.decodeToBitmapOrNull
 import com.highcapable.betterandroid.ui.extension.view.toast
 import com.highcapable.kavaref.KavaRef.Companion.asResolver
@@ -377,59 +357,6 @@ fun base64ToBitmap(code: String): Bitmap? {
 }
 
 /**
- * 返回MaterialDialog Title居中样式
- */
-val dialogCentered get() = com.google.android.material.R.style.ThemeOverlay_Material3_MaterialAlertDialog_Centered
-
-/**
- * 设置Preference图标显示
- * @receiver Context 上下文
- * @param resource Any? 传入对象
- * @param result Function2<Drawable?, Boolean, Unit> 输出
- */
-fun Preference.setPrefsIconRes(resource: Any?, result: (Drawable?, Boolean) -> Unit) {
-    if (context.getBoolean(SettingsPrefs, "hide_function_page_icon", false)) {
-        result(null, false)
-        return
-    }
-    val image: Drawable? = when (resource) {
-        is Int -> context.resources.getDrawableCompat(resource, null)
-        is Drawable -> resource
-        is String -> AppUtils(context).getAppIcon(resource)
-        else -> null
-    }
-    if (image == null || image.intrinsicWidth <= 0 || image.intrinsicHeight <= 0) {
-        val icon =
-            context.resources.getDrawableCompat(android.R.mipmap.sym_def_app_icon, null)
-        result(icon, true)
-        return
-    }
-
-    val bitmap = image.toBitmapOrNull(48.dp, 48.dp, null)
-    if (bitmap == null) {
-        result(null, false)
-        return
-    }
-
-    val drawable = RoundedBitmapDrawableFactory.create(context.resources, bitmap)
-    drawable.setAntiAlias(true)
-    drawable.cornerRadius = 30F
-    result(drawable, true)
-}
-
-/**
- * 修复Icon显示大小
- * @receiver Preference
- * @param icon Drawable?
- * @return Drawable?
- */
-fun Preference.fixIconSize(icon: Drawable?): Drawable? {
-    return if (icon != null && ((icon.intrinsicWidth < 48.dp) || (icon.intrinsicHeight < 48.dp))) {
-        context.zoomDrawable(icon, 48.dp, 48.dp)
-    } else icon
-}
-
-/**
  * 格式化Summary添加逗号
  * @param string Array<out String?>
  * @return String
@@ -653,46 +580,6 @@ fun showRefreshRate(status: Boolean) {
 }
 
 /**
- * 判断上下文跳转fragment设置标题
- * @receiver NavController
- * @param fragemntId Int
- * @param title CharSequence?
- */
-fun NavController.navigatePage(fragemntId: Int, title: CharSequence?) = try {
-    val bundle = Bundle().apply {
-        if (!title.isNullOrBlank()) putCharSequence("title_text", title)
-    }
-    val navOptions = NavOptions.Builder().apply {
-        setEnterAnim(R.anim.fragment_enter)
-        setExitAnim(R.anim.fragment_exit)
-        setPopEnterAnim(R.anim.fragment_enter_pop)
-        setPopExitAnim(R.anim.fragment_exit_pop)
-    }.build()
-    navigate(fragemntId, bundle, navOptions)
-} catch (_: IllegalArgumentException) {
-
-}
-
-/**
- * 跳转fragment传递参数 用于功能搜索适配器
- * @receiver NavController
- * @param action Int
- * @param bundle Bundle?
- */
-fun NavController.navigatePage(action: Int, bundle: Bundle?) = try {
-    val navOptions = NavOptions.Builder().apply {
-        setEnterAnim(R.anim.fragment_enter)
-        setExitAnim(R.anim.fragment_exit)
-        setPopEnterAnim(R.anim.fragment_enter_pop)
-        setPopExitAnim(R.anim.fragment_exit_pop)
-    }.build()
-    navigate(action, bundle, navOptions)
-} catch (_: IllegalArgumentException) {
-
-}
-
-
-/**
  * 获取屏幕状态
  * (true -> 竖屏 ORIENTATION_PORTRAIT)
  * (false -> 横屏 ORIENTATION_LANDSCAPE)
@@ -768,20 +655,6 @@ fun getCharSpans(char: CharSequence): Array<out ForegroundColorSpan>? {
     return if (colorSpans == null || colorSpans.isEmpty()) null else colorSpans
 }
 
-/**
- * 缩放Drawable
- * @receiver Context
- * @param drawable Drawable
- * @param width Int
- * @param height Int
- * @return Drawable
- */
-fun Context.zoomDrawable(drawable: Drawable, width: Int, height: Int): Drawable {
-    val oldBmp = drawable.toBitmap()
-    val newBmp = oldBmp.scale(width, height)
-    return newBmp.toDrawable(resources)
-}
-
 fun Context.verityPackage() = safeOf({ exitModule() }) {
     val packInfo =
         PackageUtils(packageManager).getPackageInfo(BuildConfig.APPLICATION_ID, 0) ?: return@safeOf
@@ -816,31 +689,6 @@ fun closeScreen(context: Context) {
         parameters(Long::class)
     }.invoke(SystemClock.uptimeMillis())
 }
-
-/**
- * Fragment快捷设置MenuProvider
- * @receiver Fragment
- * @param menuId Int Menu Resource ID
- * @param onMenuSelected Function1<MenuItem, Boolean>
- */
-fun Fragment.setupMenuProvider(@MenuRes menuId: Int, onMenuSelected: (MenuItem) -> Boolean) =
-    (requireActivity() as MenuHost).addMenuProvider(object : MenuProvider {
-        override fun onCreateMenu(menu: Menu, menuInflater: MenuInflater) =
-            menuInflater.inflate(menuId, menu)
-
-        override fun onMenuItemSelected(menuItem: MenuItem) = onMenuSelected(menuItem)
-    }, viewLifecycleOwner, Lifecycle.State.RESUMED)
-
-/**
- * Fragment快捷设置MenuProvider
- * @receiver Fragment
- * @param menuProvider MenuProvider
- */
-fun Fragment.setupMenuProvider(menuProvider: MenuProvider) =
-    (requireActivity() as MenuHost).addMenuProvider(
-        menuProvider, viewLifecycleOwner, Lifecycle.State.RESUMED
-    )
-
 
 fun logcatToFile(file: File): Boolean {
     return try {
@@ -879,19 +727,6 @@ fun stringReverse(str: String): String {
 }
 
 /**
- * 创建并显示BottomSheetDialog
- * @receiver Context
- * @param rootView View?
- * @return BottomSheetDialog
- */
-fun Context.showBottomSheet(rootView: View? = null): BottomSheetDialog {
-    return BottomSheetDialog(this).apply {
-        if (rootView != null) setContentView(rootView)
-        show()
-    }
-}
-
-/**
  * 打开链接
  * @receiver Context
  * @param url String
@@ -927,18 +762,6 @@ fun String.convertList(): ArrayList<String> {
         list.addAll(tmp)
     }
     return list
-}
-
-fun setSummaryProvider(preference: Preference) {
-    when (preference) {
-        is EditTextPreference -> preference.setSummaryProvider {
-            EditTextPreference.SimpleSummaryProvider.getInstance().provideSummary(preference)
-        }
-
-        is ListPreference -> preference.setSummaryProvider {
-            ListPreference.SimpleSummaryProvider.getInstance().provideSummary(preference)
-        }
-    }
 }
 
 fun getManifestEndVersion(string: String?): String {

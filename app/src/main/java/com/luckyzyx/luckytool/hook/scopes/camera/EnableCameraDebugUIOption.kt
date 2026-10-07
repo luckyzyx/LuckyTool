@@ -3,7 +3,6 @@ package com.luckyzyx.luckytool.hook.scopes.camera
 import android.app.Activity
 import android.content.Context
 import androidx.core.content.edit
-import androidx.preference.PreferenceManager
 import com.highcapable.kavaref.KavaRef.Companion.resolve
 import com.highcapable.kavaref.extension.classOf
 import com.highcapable.yukihookapi.hook.entity.YukiBaseHooker
@@ -80,7 +79,7 @@ class EnableCameraDebugUIOption(val dexKitBridge: DexKitBridge) : YukiBaseHooker
             firstMethod { name = "onCreate" }.hook {
                 before {
                     val activity = instance<Activity>()
-                    val sp = PreferenceManager.getDefaultSharedPreferences(activity)
+                    val sp = activity.getSharedPreferences("${activity.packageName}_preferences", Context.MODE_PRIVATE)
                     sp.edit(commit = true) { putBoolean("key_has_checked_auth_connection", true) }
                 }
             }
