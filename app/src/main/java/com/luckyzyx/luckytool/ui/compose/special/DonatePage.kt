@@ -8,17 +8,16 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -30,14 +29,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.drake.net.Get
 import com.luckyzyx.luckytool.R
 import com.luckyzyx.luckytool.data.DonateDetailInfo
 import com.luckyzyx.luckytool.data.DonateInfo
+import com.luckyzyx.luckytool.ui.components.SimpleTable
 import com.luckyzyx.luckytool.ui.compose.scopes.ScopePageSpec
 import com.luckyzyx.luckytool.utils.AESCrypt
 import com.luckyzyx.luckytool.utils.LogUtils
@@ -211,9 +208,15 @@ object DonatePage {
                 )
 
                 if (tableData.isNotEmpty()) {
-                    DonateTable(
+                    SimpleTable(
                         rows = tableData,
                         modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
+                    )
+                } else if (ready) {
+                    Text(
+                        text = c.getString(R.string.donate_data_decode_error),
+                        color = MaterialTheme.colorScheme.error,
+                        modifier = Modifier.padding(top = 8.dp),
                     )
                 }
             }
@@ -419,35 +422,6 @@ object DonatePage {
         for (info in userInfoList) {
             if (filterString.isBlank() || info.name.contains(filterString)) {
                 rows.add(listOf(info.name, info.time, "${info.money} ${info.unit}", info.channel))
-            }
-        }
-    }
-
-    /** 简易表格渲染（旧 Markwon TablePlugin 的 Compose 等价物）；列宽按列数预设，表头加粗居中 */
-    @Composable
-    private fun DonateTable(rows: List<List<String>>, modifier: Modifier = Modifier) {
-        val columnWidths = when (rows.firstOrNull()?.size) {
-            4 -> listOf(110.dp, 140.dp, 96.dp, 110.dp)
-            else -> listOf(150.dp, 110.dp)
-        }
-        Column(modifier.horizontalScroll(rememberScrollState())) {
-            rows.forEachIndexed { rowIndex, row ->
-                val isHeader = rowIndex == 0
-                Row {
-                    row.forEachIndexed { colIndex, cell ->
-                        Text(
-                            text = cell,
-                            textAlign = if (isHeader) TextAlign.Center else TextAlign.Start,
-                            fontWeight = if (isHeader) FontWeight.SemiBold else FontWeight.Normal,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
-                            modifier = Modifier
-                                .width(columnWidths.getOrElse(colIndex) { 110.dp })
-                                .padding(horizontal = 8.dp, vertical = 6.dp),
-                        )
-                    }
-                }
-                if (isHeader) HorizontalDivider()
             }
         }
     }

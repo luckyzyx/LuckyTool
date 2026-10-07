@@ -11,7 +11,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -38,7 +37,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavDestination.Companion.hasRoute
@@ -49,6 +47,7 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
 import com.luckyzyx.luckytool.R
 import com.luckyzyx.luckytool.ui.activity.MainActivity
+import com.luckyzyx.luckytool.ui.components.SimpleTable
 import com.luckyzyx.luckytool.ui.components.preference.PrefIndexItem
 import com.luckyzyx.luckytool.ui.components.preference.PrefScopeBuilder
 import com.luckyzyx.luckytool.ui.components.preference.ScopeScreen
@@ -437,18 +436,17 @@ private fun ScopePageHost(
     }
 }
 
-/** 版本信息对话框：xposed_scope 各包版本表（对齐旧 showBottomDialog 内容，去 Markwon） */
+/** 版本信息对话框：xposed_scope 各包版本表（对齐旧 showBottomDialog 内容，Compose 表格替代 Markwon） */
 @Composable
 private fun VersionInfoDialog(onDismiss: () -> Unit) {
     val context = LocalContext.current
-    val text = remember(context) {
+    val rows = remember(context) {
         val pkgs = context.resources.getStringArray(R.array.xposed_scope).sorted()
-        buildString {
-            append("| name | package | version |\n")
-            append("| :--- | :--- | :--- |\n")
+        buildList {
+            add(listOf("name", "package", "version"))
             pkgs.forEach { pkg ->
                 AppUtils(context).getAppVerInfo(pkg)?.let { info ->
-                    append("| ${info.name} | $pkg | ${info.versionName}(${info.versionCode})[${info.versionCommit}] |\n")
+                    add(listOf(info.name, pkg, "${info.versionName}(${info.versionCode})[${info.versionCommit}]"))
                 }
             }
         }
@@ -458,13 +456,10 @@ private fun VersionInfoDialog(onDismiss: () -> Unit) {
         title = { Text(stringResource(R.string.menu_versioninfo)) },
         text = {
             Column(Modifier.verticalScroll(rememberScrollState())) {
-                SelectionContainer {
-                    Text(
-                        text,
-                        fontFamily = FontFamily.Monospace,
-                        style = MaterialTheme.typography.bodySmall,
-                    )
-                }
+                SimpleTable(
+                    rows = rows,
+                    columnWidths = listOf(120.dp, 220.dp, 220.dp),
+                )
             }
         },
         confirmButton = {
