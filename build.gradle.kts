@@ -23,10 +23,13 @@ extra["minSdkVersion"] = 30
 
 extra["jdkVersion"] = 21
 
-extra["storeFile"] = keystoreProperties["storeFile"]
-extra["storePassword"] = keystoreProperties["storePassword"]
-extra["keyAlias"] = keystoreProperties["keyAlias"]
-extra["keyPassword"] = keystoreProperties["keyPassword"]
+// Only expose keystore properties when available; CI debug builds skip custom signing
+if (keystorePropertiesFile.exists()) {
+    extra["storeFile"] = keystoreProperties["storeFile"]
+    extra["storePassword"] = keystoreProperties["storePassword"]
+    extra["keyAlias"] = keystoreProperties["keyAlias"]
+    extra["keyPassword"] = keystoreProperties["keyPassword"]
+}
 
 buildscript {
     dependencies {
