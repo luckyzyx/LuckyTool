@@ -3,24 +3,22 @@ package com.luckyzyx.luckytool.ui.compose.special
 import android.util.ArraySet
 import androidx.collection.ArrayMap
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.ListItem
+import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Slider
-import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -33,8 +31,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
@@ -43,6 +43,11 @@ import androidx.core.graphics.drawable.toBitmap
 import com.luckyzyx.luckytool.R
 import com.luckyzyx.luckytool.data.AppInfo
 import com.luckyzyx.luckytool.data.DarkModeInfo
+import com.luckyzyx.luckytool.ui.compose.components.material.ExpressiveSwitch
+import com.luckyzyx.luckytool.ui.compose.components.material.SegmentedItem
+import com.luckyzyx.luckytool.ui.compose.components.material.SegmentedItemContainer
+import com.luckyzyx.luckytool.ui.compose.components.material.SegmentedListItem
+import com.luckyzyx.luckytool.ui.compose.components.material.SegmentedSwitchItem
 import com.luckyzyx.luckytool.ui.compose.scopes.ScopePageSpec
 import com.luckyzyx.luckytool.utils.IntentUtils
 import com.luckyzyx.luckytool.utils.ModulePrefs
@@ -170,32 +175,26 @@ object DarkModePage {
             }
 
             Column(Modifier.fillParentMaxHeight()) {
-                Column(Modifier.padding(horizontal = 16.dp)) {
-                    ListItem(
-                        headlineContent = {
-                            Text(stringResource(R.string.enable_dark_mode_list))
-                        },
-                        trailingContent = {
-                            Switch(
-                                checked = context.getBoolean(ModulePrefs, ENABLE_KEY, false),
-                                onCheckedChange = { v ->
-                                    context.putBoolean(ModulePrefs, ENABLE_KEY, v)
-                                    context.sendPrefsValue("android", ENABLE_KEY, v)
-                                },
-                            )
-                        },
-                        modifier = Modifier.clickable {
-                            val v = !context.getBoolean(ModulePrefs, ENABLE_KEY, false)
-                            context.putBoolean(ModulePrefs, ENABLE_KEY, v)
-                            context.sendPrefsValue("android", ENABLE_KEY, v)
-                        },
-                    )
-                    ListItem(
-                        headlineContent = { Text(stringResource(R.string.open)) },
-                        modifier = Modifier.clickable {
-                            IntentUtils(context).jumpDarkMode()
-                        },
-                    )
+                Column(
+                    modifier = Modifier.padding(horizontal = 16.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    SegmentedItem(index = 0, count = 1) {
+                        SegmentedSwitchItem(
+                            title = stringResource(R.string.enable_dark_mode_list),
+                            checked = context.getBoolean(ModulePrefs, ENABLE_KEY, false),
+                            onCheckedChange = { v ->
+                                context.putBoolean(ModulePrefs, ENABLE_KEY, v)
+                                context.sendPrefsValue("android", ENABLE_KEY, v)
+                            },
+                        )
+                    }
+                    SegmentedItem(index = 0, count = 1) {
+                        SegmentedListItem(
+                            onClick = { IntentUtils(context).jumpDarkMode() },
+                            headlineContent = { Text(stringResource(R.string.open)) },
+                        )
+                    }
                     OutlinedTextField(
                         value = query,
                         onValueChange = { q ->
@@ -222,26 +221,32 @@ object DarkModePage {
                         modifier = Modifier.fillMaxWidth(),
                     )
                 }
-                LazyColumn(Modifier.weight(1f)) {
-                    items(filterAppInfos, key = { it.packageName }) { info ->
-                        DarkModeAppRow(
-                            info = info,
-                            enabled = allEnabledInfos.containsKey(info.packageName),
-                            curType = allEnabledInfos[info.packageName]?.curType ?: 0,
-                            onToggle = { v ->
-                                allEnabledInfos.remove(info.packageName)
-                                if (v) {
-                                    allEnabledInfos[info.packageName] = DarkModeInfo(info.packageName)
-                                }
-                                allEnabledInfos = ArrayMap(allEnabledInfos)
-                                saveEnableList()
-                            },
-                            onTypeChange = { t ->
-                                allEnabledInfos[info.packageName]?.curType = t
-                                allEnabledInfos = ArrayMap(allEnabledInfos)
-                                saveEnableList()
-                            },
-                        )
+                LazyColumn(
+                    modifier = Modifier.weight(1f),
+                    contentPadding = PaddingValues(start = 16.dp, end = 16.dp, bottom = 16.dp),
+                    verticalArrangement = Arrangement.spacedBy(ListItemDefaults.SegmentedGap),
+                ) {
+                    itemsIndexed(filterAppInfos, key = { _, info -> info.packageName }) { index, info ->
+                        SegmentedItem(index = index, count = filterAppInfos.size) {
+                            DarkModeAppRow(
+                                info = info,
+                                enabled = allEnabledInfos.containsKey(info.packageName),
+                                curType = allEnabledInfos[info.packageName]?.curType ?: 0,
+                                onToggle = { v ->
+                                    allEnabledInfos.remove(info.packageName)
+                                    if (v) {
+                                        allEnabledInfos[info.packageName] = DarkModeInfo(info.packageName)
+                                    }
+                                    allEnabledInfos = ArrayMap(allEnabledInfos)
+                                    saveEnableList()
+                                },
+                                onTypeChange = { t ->
+                                    allEnabledInfos[info.packageName]?.curType = t
+                                    allEnabledInfos = ArrayMap(allEnabledInfos)
+                                    saveEnableList()
+                                },
+                            )
+                        }
                     }
                 }
             }
@@ -276,61 +281,69 @@ private fun DarkModeAppRow(
     onToggle: (Boolean) -> Unit,
     onTypeChange: (Int) -> Unit,
 ) {
-    Column {
-        Row(
-            Modifier
-                .fillMaxWidth()
-                .clickable { onToggle(!enabled) }
-                .padding(horizontal = 16.dp, vertical = 12.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Box(Modifier.size(48.dp)) {
-                info.icon?.let { d ->
-                    Image(
-                        remember(info) { d.toBitmap().asImageBitmap() },
-                        contentDescription = null,
-                        contentScale = ContentScale.Crop,
-                        modifier = Modifier.size(48.dp),
+    val haptic = LocalHapticFeedback.current
+    val interactionSource = remember { MutableInteractionSource() }
+    SegmentedItemContainer {
+        Column {
+            SegmentedListItem(
+                onClick = {
+                    haptic.performHapticFeedback(HapticFeedbackType.VirtualKey)
+                    onToggle(!enabled)
+                },
+                interactionSource = interactionSource,
+                headlineContent = {
+                    Text(
+                        info.name,
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                },
+                supportingContent = {
+                    Text(
+                        info.packageName,
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                },
+                leadingContent = {
+                    info.icon?.let { d ->
+                        Image(
+                            remember(info) { d.toBitmap().asImageBitmap() },
+                            contentDescription = null,
+                            contentScale = ContentScale.Crop,
+                            modifier = Modifier.size(48.dp),
+                        )
+                    }
+                },
+                trailingContent = {
+                    ExpressiveSwitch(
+                        checked = enabled,
+                        onCheckedChange = null,
+                        interactionSource = interactionSource,
+                    )
+                },
+            )
+            if (enabled) {
+                Row(
+                    Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 8.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    var sliderValue by remember(info) { mutableStateOf(curType.toFloat()) }
+                    Slider(
+                        value = sliderValue,
+                        onValueChange = { sliderValue = it },
+                        onValueChangeFinished = { onTypeChange(sliderValue.toInt()) },
+                        valueRange = 0f..4f,
+                        steps = 3,
+                        modifier = Modifier.weight(1f),
+                    )
+                    Text(
+                        curType.toString(),
+                        style = MaterialTheme.typography.bodyMedium,
                     )
                 }
-            }
-            Spacer(Modifier.width(16.dp))
-            Column(Modifier.weight(1f)) {
-                Text(
-                    info.name,
-                    style = MaterialTheme.typography.bodyLarge,
-                    maxLines = 2,
-                    overflow = TextOverflow.Ellipsis,
-                )
-                Text(
-                    info.packageName,
-                    style = MaterialTheme.typography.bodyMedium,
-                    maxLines = 2,
-                    overflow = TextOverflow.Ellipsis,
-                )
-            }
-            Switch(checked = enabled, onCheckedChange = onToggle)
-        }
-        if (enabled) {
-            Row(
-                Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                var sliderValue by remember(info) { mutableStateOf(curType.toFloat()) }
-                Slider(
-                    value = sliderValue,
-                    onValueChange = { sliderValue = it },
-                    onValueChangeFinished = { onTypeChange(sliderValue.toInt()) },
-                    valueRange = 0f..4f,
-                    steps = 3,
-                    modifier = Modifier.weight(1f),
-                )
-                Text(
-                    curType.toString(),
-                    style = MaterialTheme.typography.bodyMedium,
-                )
             }
         }
     }

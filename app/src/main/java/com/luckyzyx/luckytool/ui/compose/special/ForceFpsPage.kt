@@ -3,14 +3,11 @@ package com.luckyzyx.luckytool.ui.compose.special
 import android.app.Activity
 import android.content.Context
 import android.content.ContextWrapper
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
-import androidx.compose.material3.ListItem
-import androidx.compose.material3.RadioButton
-import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -18,7 +15,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -26,6 +22,9 @@ import com.luckyzyx.luckytool.IRefreshRateController
 import com.luckyzyx.luckytool.R
 import com.luckyzyx.luckytool.data.DisplayMode
 import com.luckyzyx.luckytool.service.RefreshRateService
+import com.luckyzyx.luckytool.ui.compose.components.PrefGroup
+import com.luckyzyx.luckytool.ui.compose.components.PrefSwitchCard
+import com.luckyzyx.luckytool.ui.compose.components.material.SegmentedRadioItem
 import com.luckyzyx.luckytool.ui.compose.scopes.ScopePageSpec
 import com.luckyzyx.luckytool.utils.GlobalKeyValue.keyFpsAutoStart
 import com.luckyzyx.luckytool.utils.GlobalKeyValue.keyFpsCur
@@ -87,16 +86,19 @@ object ForceFpsPage {
             val fpsCur = state.getInt(keyFpsCur, -1)
             val fpsAutostart = state.getBoolean(keyFpsAutoStart, false)
 
-            Column(Modifier.fillMaxWidth().padding(horizontal = 10.dp, vertical = 8.dp)) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 8.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
                 // fpsSelfStart（旧逻辑：controller!=null 且 !isUnsupport 且 fpsCur!=-1 才可用）
-                Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                    Text(c.getString(R.string.fps_autostart), Modifier.weight(1f))
-                    Switch(
-                        checked = fpsAutostart,
-                        enabled = controller != null && !isUnsupport && fpsCur != -1,
-                        onCheckedChange = { v -> state.set(keyFpsAutoStart, v) },
-                    )
-                }
+                PrefSwitchCard(
+                    title = c.getString(R.string.fps_autostart),
+                    checked = fpsAutostart,
+                    enabled = controller != null && !isUnsupport && fpsCur != -1,
+                    onCheckedChange = { v -> state.set(keyFpsAutoStart, v) },
+                )
                 if (isUnsupport) {
                     Text(
                         c.getString(R.string.fps_no_data),
@@ -105,29 +107,28 @@ object ForceFpsPage {
                     )
                 } else {
                     // 模式单选列表（旧 ListView CHOICE_MODE_SINGLE；id 即 index）
-                    modes.forEachIndexed { index, mode ->
-                        ListItem(
-                            leadingContent = {
-                                RadioButton(selected = index == fpsCur, onClick = null)
-                            },
-                            onClick = {
-                                state.set(keyFpsCur, index)
-                                controller?.setRefreshRateMode(index)
-                            },
-                        ) {
-                            Text("${mode.id}   ${mode.width} x ${mode.height}   ${mode.refreshRate}")
+                    PrefGroup {
+                        modes.forEachIndexed { index, mode ->
+                            item {
+                                SegmentedRadioItem(
+                                    title = "${mode.id}   ${mode.width} x ${mode.height}   ${mode.refreshRate}",
+                                    selected = index == fpsCur,
+                                    onClick = {
+                                        state.set(keyFpsCur, index)
+                                        controller?.setRefreshRateMode(index)
+                                    },
+                                )
+                            }
                         }
                     }
                 }
                 // fpsShow（旧代码 isPressed 守卫 → M3 Switch onCheckedChange 仅用户手势触发）
-                Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                    Text(c.getString(R.string.display_refresh_rate), Modifier.weight(1f))
-                    Switch(
-                        checked = controller?.refreshRateDisplay == true,
-                        enabled = controller != null,
-                        onCheckedChange = { v -> controller?.refreshRateDisplay = v },
-                    )
-                }
+                PrefSwitchCard(
+                    title = c.getString(R.string.display_refresh_rate),
+                    checked = controller?.refreshRateDisplay == true,
+                    enabled = controller != null,
+                    onCheckedChange = { v -> controller?.refreshRateDisplay = v },
+                )
                 // fpsRecover（旧 resetRefreshRate：持久化 -1 + 重置模式；开关可用性随 fpsCur==-1 自动失效）
                 Button(
                     onClick = {
@@ -135,7 +136,7 @@ object ForceFpsPage {
                         controller?.resetRefreshRateMode()
                     },
                     enabled = controller != null,
-                    modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
+                    modifier = Modifier.fillMaxWidth(),
                 ) { Text(c.getString(R.string.restore_default_refresh_rate)) }
                 Text(
                     c.getString(R.string.fps_tips),

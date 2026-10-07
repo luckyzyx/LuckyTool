@@ -7,18 +7,22 @@ import android.util.ArraySet
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.ListItem
+import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Tab
@@ -44,6 +48,11 @@ import com.luckyzyx.luckytool.R
 import com.luckyzyx.luckytool.data.MemcConfigActivity
 import com.luckyzyx.luckytool.data.MemcConfigPackage
 import com.luckyzyx.luckytool.ui.components.AppPickerDialog
+import com.luckyzyx.luckytool.ui.compose.components.PrefCard
+import com.luckyzyx.luckytool.ui.compose.components.PrefGroup
+import com.luckyzyx.luckytool.ui.compose.components.PrefRow
+import com.luckyzyx.luckytool.ui.compose.components.material.SegmentedItem
+import com.luckyzyx.luckytool.ui.compose.components.material.SegmentedListItem
 import com.luckyzyx.luckytool.ui.compose.scopes.ScopePageSpec
 import com.luckyzyx.luckytool.utils.CommandUtils
 import com.luckyzyx.luckytool.utils.FileUtils
@@ -112,20 +121,22 @@ private fun MemcConfigContent() {
     }
 
     Column(Modifier.fillMaxSize()) {
-        Column(Modifier.padding(horizontal = 16.dp)) {
-            ListItem(
-                headlineContent = {
-                    Text(stringResource(R.string.import_) + " Xml")
-                },
-                modifier = Modifier.clickable {
-                    FileUtils.checkDownloadDir(context, "LuckyTool")
-                    importLauncher.launch("text/xml")
-                },
-            )
-            ListItem(
-                headlineContent = { Text(stringResource(R.string.reset)) },
-                modifier = Modifier.clickable { showResetConfirm = true },
-            )
+        PrefGroup(modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) {
+            item {
+                PrefRow(
+                    title = stringResource(R.string.import_) + " Xml",
+                    onClick = {
+                        FileUtils.checkDownloadDir(context, "LuckyTool")
+                        importLauncher.launch("text/xml")
+                    },
+                )
+            }
+            item {
+                PrefRow(
+                    title = stringResource(R.string.reset),
+                    onClick = { showResetConfirm = true },
+                )
+            }
         }
         TabRow(selectedTabIndex = tabIndex) {
             Tab(
@@ -374,7 +385,10 @@ private fun MemcPackagePanel(
     modifier: Modifier = Modifier,
     onEdit: (MemcConfigPackage?) -> Unit,
 ) {
-    Column(modifier) {
+    Column(
+        modifier = modifier,
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
         OutlinedTextField(
             value = state.pkgQuery,
             onValueChange = { state.applyPkgQuery(it) },
@@ -388,9 +402,10 @@ private fun MemcPackagePanel(
                 .fillMaxWidth()
                 .padding(horizontal = 16.dp),
         )
-        ListItem(
-            headlineContent = { Text("＋ Add") },
-            modifier = Modifier.clickable { onEdit(null) },
+        PrefCard(
+            title = "＋ Add",
+            onClick = { onEdit(null) },
+            modifier = Modifier.padding(horizontal = 16.dp),
         )
         if (state.pkgFilter.isEmpty() && !state.pkgLoading) {
             Box(
@@ -402,19 +417,27 @@ private fun MemcPackagePanel(
                 Text(stringResource(R.string.no_memc_data))
             }
         } else {
-            LazyColumn(Modifier.weight(1f)) {
-                items(state.pkgFilter, key = { "${it.packName}|${it.rate}|${it.type}" }) { info ->
-                    ListItem(
-                        headlineContent = { Text(info.packName) },
-                        supportingContent = {
-                            Column {
-                                Text("Rate: ${info.rate}")
-                                Text("Type: ${info.type}")
-                            }
-                        },
-                        modifier = Modifier.clickable { onEdit(info) },
-                    )
-                    HorizontalDivider()
+            LazyColumn(
+                modifier = Modifier.weight(1f),
+                contentPadding = PaddingValues(start = 16.dp, end = 16.dp, bottom = 16.dp),
+                verticalArrangement = Arrangement.spacedBy(ListItemDefaults.SegmentedGap),
+            ) {
+                itemsIndexed(
+                    state.pkgFilter,
+                    key = { _, info -> "${info.packName}|${info.rate}|${info.type}" },
+                ) { index, info ->
+                    SegmentedItem(index = index, count = state.pkgFilter.size) {
+                        SegmentedListItem(
+                            onClick = { onEdit(info) },
+                            headlineContent = { Text(info.packName) },
+                            supportingContent = {
+                                Column {
+                                    Text("Rate: ${info.rate}")
+                                    Text("Type: ${info.type}")
+                                }
+                            },
+                        )
+                    }
                 }
             }
         }
@@ -427,7 +450,10 @@ private fun MemcActivityPanel(
     modifier: Modifier = Modifier,
     onEdit: (MemcConfigActivity?) -> Unit,
 ) {
-    Column(modifier) {
+    Column(
+        modifier = modifier,
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
         OutlinedTextField(
             value = state.actQuery,
             onValueChange = { state.applyActQuery(it) },
@@ -441,9 +467,10 @@ private fun MemcActivityPanel(
                 .fillMaxWidth()
                 .padding(horizontal = 16.dp),
         )
-        ListItem(
-            headlineContent = { Text("＋ Add") },
-            modifier = Modifier.clickable { onEdit(null) },
+        PrefCard(
+            title = "＋ Add",
+            onClick = { onEdit(null) },
+            modifier = Modifier.padding(horizontal = 16.dp),
         )
         if (state.actFilter.isEmpty() && !state.actLoading) {
             Box(
@@ -455,26 +482,31 @@ private fun MemcActivityPanel(
                 Text(stringResource(R.string.no_memc_data))
             }
         } else {
-            LazyColumn(Modifier.weight(1f)) {
-                items(
+            LazyColumn(
+                modifier = Modifier.weight(1f),
+                contentPadding = PaddingValues(start = 16.dp, end = 16.dp, bottom = 16.dp),
+                verticalArrangement = Arrangement.spacedBy(ListItemDefaults.SegmentedGap),
+            ) {
+                itemsIndexed(
                     state.actFilter,
-                    key = { "${it.packName}|${it.activity}|${it.type}" },
-                ) { info ->
-                    ListItem(
-                        headlineContent = { Text(info.packName) },
-                        supportingContent = {
-                            Column {
-                                Text(
-                                    info.activity,
-                                    maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis,
-                                )
-                                Text("Type: ${info.type}")
-                            }
-                        },
-                        modifier = Modifier.clickable { onEdit(info) },
-                    )
-                    HorizontalDivider()
+                    key = { _, info -> "${info.packName}|${info.activity}|${info.type}" },
+                ) { index, info ->
+                    SegmentedItem(index = index, count = state.actFilter.size) {
+                        SegmentedListItem(
+                            onClick = { onEdit(info) },
+                            headlineContent = { Text(info.packName) },
+                            supportingContent = {
+                                Column {
+                                    Text(
+                                        info.activity,
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis,
+                                    )
+                                    Text("Type: ${info.type}")
+                                }
+                            },
+                        )
+                    }
                 }
             }
         }

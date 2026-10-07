@@ -2,9 +2,9 @@ package com.luckyzyx.luckytool.ui.compose.special
 
 import android.content.Intent
 import android.provider.Settings
-import androidx.compose.material3.ListItem
 import androidx.compose.material3.Text
 import com.luckyzyx.luckytool.R
+import com.luckyzyx.luckytool.ui.compose.components.material.SegmentedListItem
 import com.luckyzyx.luckytool.ui.compose.scopes.ScopePageSpec
 import com.luckyzyx.luckytool.utils.IntentUtils
 import com.luckyzyx.luckytool.utils.SettingsPrefs
@@ -29,7 +29,10 @@ object QuickEntryPage {
         fun entry(title: String, visible: Boolean = true, onClick: () -> Unit) {
             if (!visible) return
             custom(key = null, title = title) {
-                ListItem(onClick = onClick) { Text(title) }
+                SegmentedListItem(
+                    onClick = onClick,
+                    headlineContent = { Text(title) },
+                )
             }
         }
 

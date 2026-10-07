@@ -15,7 +15,6 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -34,6 +33,7 @@ import com.drake.net.Get
 import com.luckyzyx.luckytool.R
 import com.luckyzyx.luckytool.data.DonateDetailInfo
 import com.luckyzyx.luckytool.data.DonateInfo
+import com.luckyzyx.luckytool.ui.compose.components.material.ExpressiveSwitch
 import com.luckyzyx.luckytool.ui.compose.scopes.ScopePageSpec
 import com.luckyzyx.luckytool.utils.AESCrypt
 import com.luckyzyx.luckytool.utils.LogUtils
@@ -237,7 +237,7 @@ object DonatePage {
                         ) {
                             Text(c.getString(R.string.appinfo_sort_by), Modifier.weight(1f))
                             Text(c.getString(R.string.appinfo_reverse))
-                            Switch(
+                            ExpressiveSwitch(
                                 checked = isReverse,
                                 onCheckedChange = {
                                     isReverse = it

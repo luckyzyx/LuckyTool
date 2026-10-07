@@ -8,10 +8,12 @@ import androidx.collection.ArrayMap
 import androidx.collection.arrayMapOf
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -21,18 +23,18 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.ListItem
+import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.SuggestionChip
-import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberModalBottomSheetState
@@ -60,6 +62,12 @@ import com.luckyzyx.luckytool.R
 import com.luckyzyx.luckytool.data.AppInfo
 import com.luckyzyx.luckytool.data.AppIntentInfo
 import com.luckyzyx.luckytool.enums.IntentType
+import com.luckyzyx.luckytool.ui.compose.components.PrefGroup
+import com.luckyzyx.luckytool.ui.compose.components.PrefRow
+import com.luckyzyx.luckytool.ui.compose.components.material.SegmentedItem
+import com.luckyzyx.luckytool.ui.compose.components.material.SegmentedItemContainer
+import com.luckyzyx.luckytool.ui.compose.components.material.SegmentedListItem
+import com.luckyzyx.luckytool.ui.compose.components.material.SegmentedSwitchItem
 import com.luckyzyx.luckytool.ui.compose.scopes.ScopePageSpec
 import com.luckyzyx.luckytool.utils.IntentPrefs
 import com.luckyzyx.luckytool.utils.IntentUtils
@@ -323,26 +331,20 @@ object HideAppIntentPage {
             }
 
             Column(Modifier.fillParentMaxHeight()) {
-                Column(Modifier.padding(horizontal = 16.dp)) {
-                    ListItem(
-                        headlineContent = {
-                            Text(stringResource(R.string.custom_config_app_intent_list))
-                        },
-                        trailingContent = {
-                            Switch(
-                                checked = context.getBoolean(IntentPrefs, ENABLE_KEY, false),
-                                onCheckedChange = { v ->
-                                    context.putBoolean(IntentPrefs, ENABLE_KEY, v)
-                                    context.sendPrefsValue("android", ENABLE_KEY, v)
-                                },
-                            )
-                        },
-                        modifier = Modifier.clickable {
-                            val v = !context.getBoolean(IntentPrefs, ENABLE_KEY, false)
-                            context.putBoolean(IntentPrefs, ENABLE_KEY, v)
-                            context.sendPrefsValue("android", ENABLE_KEY, v)
-                        },
-                    )
+                Column(
+                    modifier = Modifier.padding(horizontal = 16.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    SegmentedItem(index = 0, count = 1) {
+                        SegmentedSwitchItem(
+                            title = stringResource(R.string.custom_config_app_intent_list),
+                            checked = context.getBoolean(IntentPrefs, ENABLE_KEY, false),
+                            onCheckedChange = { v ->
+                                context.putBoolean(IntentPrefs, ENABLE_KEY, v)
+                                context.sendPrefsValue("android", ENABLE_KEY, v)
+                            },
+                        )
+                    }
                     OutlinedTextField(
                         value = query,
                         onValueChange = { q ->
@@ -368,45 +370,70 @@ object HideAppIntentPage {
                         },
                         modifier = Modifier.fillMaxWidth(),
                     )
-                    ListItem(
-                        headlineContent = { Text(stringResource(R.string.select_all_share_intent)) },
-                        modifier = Modifier.clickable {
-                            selectAllInfos(IntentType.SINGLE_SHARE, IntentType.MULTI_SHARE)
-                        },
-                    )
-                    ListItem(
-                        headlineContent = { Text(stringResource(R.string.select_all_text_intent)) },
-                        modifier = Modifier.clickable {
-                            selectAllInfos(IntentType.PROCESS_TEXT)
-                        },
-                    )
-                    ListItem(
-                        headlineContent = { Text(stringResource(R.string.select_all_open_intent)) },
-                        modifier = Modifier.clickable {
-                            selectAllInfos(IntentType.CONTENT, IntentType.FILE)
-                        },
-                    )
-                    ListItem(
-                        headlineContent = {
-                            Text(stringResource(R.string.select_all_browser_intent))
-                        },
-                        modifier = Modifier.clickable {
-                            selectAllInfos(IntentType.HTTP_LINK, IntentType.HTTPS_LINK)
-                        },
-                    )
-                    ListItem(
-                        headlineContent = { Text(stringResource(R.string.clear_all_data)) },
-                        modifier = Modifier.clickable { showClearDialog = true },
-                    )
+                    PrefGroup {
+                        item {
+                            PrefRow(
+                                title = stringResource(R.string.select_all_share_intent),
+                                onClick = {
+                                    selectAllInfos(
+                                        IntentType.SINGLE_SHARE,
+                                        IntentType.MULTI_SHARE,
+                                    )
+                                },
+                            )
+                        }
+                        item {
+                            PrefRow(
+                                title = stringResource(R.string.select_all_text_intent),
+                                onClick = { selectAllInfos(IntentType.PROCESS_TEXT) },
+                            )
+                        }
+                        item {
+                            PrefRow(
+                                title = stringResource(R.string.select_all_open_intent),
+                                onClick = {
+                                    selectAllInfos(IntentType.CONTENT, IntentType.FILE)
+                                },
+                            )
+                        }
+                        item {
+                            PrefRow(
+                                title = stringResource(R.string.select_all_browser_intent),
+                                onClick = {
+                                    selectAllInfos(
+                                        IntentType.HTTP_LINK,
+                                        IntentType.HTTPS_LINK,
+                                    )
+                                },
+                            )
+                        }
+                    }
+                    PrefGroup {
+                        item {
+                            PrefRow(
+                                title = stringResource(R.string.clear_all_data),
+                                onClick = { showClearDialog = true },
+                            )
+                        }
+                    }
                 }
-                LazyColumn(Modifier.weight(1f)) {
-                    items(filterAppInfos, key = { it.packageName }) { info ->
-                        IntentAppRow(
-                            info = info,
-                            allIntentInfos = allIntentInfos,
-                            allEnabledInfos = allEnabledInfos,
-                            onOpenDialog = ::openSelectDialog,
-                        )
+                LazyColumn(
+                    modifier = Modifier.weight(1f),
+                    contentPadding = PaddingValues(start = 16.dp, end = 16.dp, bottom = 16.dp),
+                    verticalArrangement = Arrangement.spacedBy(ListItemDefaults.SegmentedGap),
+                ) {
+                    itemsIndexed(
+                        filterAppInfos,
+                        key = { _, info -> info.packageName },
+                    ) { index, info ->
+                        SegmentedItem(index = index, count = filterAppInfos.size) {
+                            IntentAppRow(
+                                info = info,
+                                allIntentInfos = allIntentInfos,
+                                allEnabledInfos = allEnabledInfos,
+                                onOpenDialog = ::openSelectDialog,
+                            )
+                        }
                     }
                 }
             }
@@ -550,71 +577,67 @@ private fun IntentAppRow(
     val intentInfo = allIntentInfos.filter { it.packName == info.packageName }
     val enabledInfo = allEnabledInfos.filter { it.packName == info.packageName }
 
-    Column {
-        Row(
-            Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 12.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Box(Modifier.size(48.dp)) {
-                info.icon?.let { d ->
-                    Image(
-                        remember(info) { d.toBitmap().asImageBitmap() },
-                        contentDescription = null,
-                        contentScale = ContentScale.Crop,
-                        modifier = Modifier.size(48.dp),
+    SegmentedItemContainer {
+        Column {
+            SegmentedListItem(
+                headlineContent = {
+                    Text(
+                        info.name,
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis,
                     )
+                },
+                supportingContent = {
+                    Text(
+                        info.packageName,
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                },
+                leadingContent = {
+                    info.icon?.let { d ->
+                        Image(
+                            remember(info) { d.toBitmap().asImageBitmap() },
+                            contentDescription = null,
+                            contentScale = ContentScale.Crop,
+                            modifier = Modifier.size(48.dp),
+                        )
+                    }
+                },
+            )
+            Row(
+                Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 12.dp, vertical = 4.dp),
+            ) {
+                val shareTypes = arrayOf(IntentType.SINGLE_SHARE, IntentType.MULTI_SHARE)
+                val shareFilter = IntentUtils.getIntentFilter(*shareTypes)
+                val shareAll = intentInfo.filter(shareFilter)
+                val shareEnabled = enabledInfo.filter(shareFilter)
+                IntentCountChip(shareAll, shareEnabled) {
+                    onOpenDialog(info.packageName, shareAll, shareEnabled, shareTypes)
                 }
-            }
-            Spacer(Modifier.width(16.dp))
-            Column(Modifier.weight(1f)) {
-                Text(
-                    info.name,
-                    style = MaterialTheme.typography.bodyLarge,
-                    maxLines = 2,
-                    overflow = TextOverflow.Ellipsis,
-                )
-                Text(
-                    info.packageName,
-                    style = MaterialTheme.typography.bodyMedium,
-                    maxLines = 2,
-                    overflow = TextOverflow.Ellipsis,
-                )
-            }
-        }
-        Row(
-            Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 12.dp),
-        ) {
-            val shareTypes = arrayOf(IntentType.SINGLE_SHARE, IntentType.MULTI_SHARE)
-            val shareFilter = IntentUtils.getIntentFilter(*shareTypes)
-            val shareAll = intentInfo.filter(shareFilter)
-            val shareEnabled = enabledInfo.filter(shareFilter)
-            IntentCountChip(shareAll, shareEnabled) {
-                onOpenDialog(info.packageName, shareAll, shareEnabled, shareTypes)
-            }
-            val textTypes = arrayOf(IntentType.PROCESS_TEXT)
-            val textFilter = IntentUtils.getIntentFilter(*textTypes)
-            val textAll = intentInfo.filter(textFilter)
-            val textEnabled = enabledInfo.filter(textFilter)
-            IntentCountChip(textAll, textEnabled) {
-                onOpenDialog(info.packageName, textAll, textEnabled, textTypes)
-            }
-            val openTypes = arrayOf(IntentType.CONTENT, IntentType.FILE)
-            val openFilter = IntentUtils.getIntentFilter(*openTypes)
-            val openAll = intentInfo.filter(openFilter)
-            val openEnabled = enabledInfo.filter(openFilter)
-            IntentCountChip(openAll, openEnabled) {
-                onOpenDialog(info.packageName, openAll, openEnabled, openTypes)
-            }
-            val browserTypes = arrayOf(IntentType.HTTP_LINK, IntentType.HTTPS_LINK)
-            val browserFilter = IntentUtils.getIntentFilter(*browserTypes)
-            val browserAll = intentInfo.filter(browserFilter)
-            val browserEnabled = enabledInfo.filter(browserFilter)
-            IntentCountChip(browserAll, browserEnabled) {
-                onOpenDialog(info.packageName, browserAll, browserEnabled, browserTypes)
+                val textTypes = arrayOf(IntentType.PROCESS_TEXT)
+                val textFilter = IntentUtils.getIntentFilter(*textTypes)
+                val textAll = intentInfo.filter(textFilter)
+                val textEnabled = enabledInfo.filter(textFilter)
+                IntentCountChip(textAll, textEnabled) {
+                    onOpenDialog(info.packageName, textAll, textEnabled, textTypes)
+                }
+                val openTypes = arrayOf(IntentType.CONTENT, IntentType.FILE)
+                val openFilter = IntentUtils.getIntentFilter(*openTypes)
+                val openAll = intentInfo.filter(openFilter)
+                val openEnabled = enabledInfo.filter(openFilter)
+                IntentCountChip(openAll, openEnabled) {
+                    onOpenDialog(info.packageName, openAll, openEnabled, openTypes)
+                }
+                val browserTypes = arrayOf(IntentType.HTTP_LINK, IntentType.HTTPS_LINK)
+                val browserFilter = IntentUtils.getIntentFilter(*browserTypes)
+                val browserAll = intentInfo.filter(browserFilter)
+                val browserEnabled = enabledInfo.filter(browserFilter)
+                IntentCountChip(browserAll, browserEnabled) {
+                    onOpenDialog(info.packageName, browserAll, browserEnabled, browserTypes)
+                }
             }
         }
     }
