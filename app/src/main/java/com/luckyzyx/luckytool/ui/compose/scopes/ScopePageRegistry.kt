@@ -46,6 +46,16 @@ import com.luckyzyx.luckytool.ui.compose.scopes.statusbar.StatusBarNetWorkSpeedP
 import com.luckyzyx.luckytool.ui.compose.scopes.statusbar.StatusBarNotifyPage
 import com.luckyzyx.luckytool.ui.compose.scopes.statusbar.StatusBarNotifyRemovalPage
 import com.luckyzyx.luckytool.ui.compose.scopes.statusbar.StatusBarTilesPage
+import com.luckyzyx.luckytool.ui.compose.scopes.related.AndroidRelatedPage
+import com.luckyzyx.luckytool.ui.compose.scopes.related.AodRelatedPage
+import com.luckyzyx.luckytool.ui.compose.scopes.related.ApplicationRelatedPage
+import com.luckyzyx.luckytool.ui.compose.scopes.related.CorePatchPage
+import com.luckyzyx.luckytool.ui.compose.scopes.related.DialogRelatedPage
+import com.luckyzyx.luckytool.ui.compose.scopes.related.FingerPrintRelatedPage
+import com.luckyzyx.luckytool.ui.compose.scopes.related.LauncherRelatedPage
+import com.luckyzyx.luckytool.ui.compose.scopes.related.LockScreenRelatedPage
+import com.luckyzyx.luckytool.ui.compose.scopes.related.MiscellaneousPage
+import com.luckyzyx.luckytool.ui.compose.scopes.related.SoundRelatedPage
 
 /**
  * 一个 Compose 作用域页的声明——旧 [BaseScopePreferenceFeagment] 子类中
@@ -127,5 +137,15 @@ object ScopePageRegistry {
         register(StatusBarNotifyPage.spec)
         register(StatusBarNotifyRemovalPage.spec)
         register(StatusBarTilesPage.spec)
+        register(AndroidRelatedPage.spec)
+        register(AodRelatedPage.spec)
+        register(ApplicationRelatedPage.spec)
+        register(CorePatchPage.spec)
+        register(DialogRelatedPage.spec)
+        register(FingerPrintRelatedPage.spec)
+        register(LauncherRelatedPage.spec)
+        register(LockScreenRelatedPage.spec)
+        register(MiscellaneousPage.spec)
+        register(SoundRelatedPage.spec)
     }
 }
