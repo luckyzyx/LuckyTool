@@ -5,6 +5,7 @@ package com.luckyzyx.luckytool.ui.components.preference
 import android.content.Context
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -14,17 +15,16 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyItemScope
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.selection.selectable
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowRight
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.ListItem
+import androidx.compose.material3.Icon
+import androidx.compose.material3.ListItemColors
+import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Slider
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
@@ -45,6 +45,12 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.luckyzyx.luckytool.ui.compose.components.material.SegmentedDropdownItem
+import com.luckyzyx.luckytool.ui.compose.components.material.SegmentedItem
+import com.luckyzyx.luckytool.ui.compose.components.material.SegmentedItemContainer
+import com.luckyzyx.luckytool.ui.compose.components.material.SegmentedListItem
+import com.luckyzyx.luckytool.ui.compose.components.material.SegmentedSwitchItem
+import com.luckyzyx.luckytool.ui.compose.components.material.defaultSegmentedColors
 import com.luckyzyx.luckytool.utils.PrefState
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -67,7 +73,12 @@ data class PrefIndexItem(
     val pageTarget: String? = null,
 )
 
-/** 渲染单元：一个 LazyColumn item 槽位 */
+/**
+ * 渲染单元：一个 LazyColumn item 槽位。
+ *
+ * [segIndex]/[segCount] 用于把相邻条目合并成 KernelSU 分段卡片（首条 16dp 外圆角、中间 4dp 内圆角、
+ * 组内间距 2dp）；[groupable] = false 的条目（分类标题、滑条、自定义控件）独占一张卡片。
+ */
 internal class PrefEntry(
     val slot: Int,
     val itemKey: String,
@@ -75,26 +86,11 @@ internal class PrefEntry(
     val indexTitle: String?,
     val indexSummary: String?,
     val pageTarget: String?,
+    val groupable: Boolean,
     val render: @Composable (slot: Int) -> Unit,
-)
-
-/**
- * KernelSU 风格条目卡片：surfaceBright 底色 + 16dp 圆角 + 1dp tonal 阴影
- * （对应 KernelSU SegmentedColumn 外观；LuckyTool 偏好项按单条目分组）。
- */
-@Composable
-private fun PrefItemCard(
-    modifier: Modifier = Modifier,
-    highlight: Color = Color.Transparent,
-    content: @Composable () -> Unit,
 ) {
-    Surface(
-        modifier = modifier.fillMaxWidth(),
-        color = if (highlight != Color.Transparent) highlight else MaterialTheme.colorScheme.surfaceBright,
-        shape = RoundedCornerShape(16.dp),
-        tonalElevation = 1.dp,
-        content = content,
-    )
+    var segIndex: Int = 0
+    var segCount: Int = 1
 }
 
 /**
@@ -157,12 +153,24 @@ class PrefScopeBuilder internal constructor(
         ).value
     }
 
+    /** 高亮（搜索跳转命中）时把卡片容器换成 primaryContainer */
+    @Composable
+    internal fun itemColors(slot: Int): ListItemColors {
+        val bg = highlightColor(slot)
+        return if (bg == Color.Transparent) {
+            defaultSegmentedColors()
+        } else {
+            defaultSegmentedColors(containerColor = bg)
+        }
+    }
+
     private fun emit(
         itemKey: String?,
         indexKey: String?,
         indexTitle: String?,
         indexSummary: String?,
         pageTarget: String? = null,
+        groupable: Boolean = true,
         render: @Composable (slot: Int) -> Unit,
     ) {
         val slot = entries.size
@@ -173,25 +181,50 @@ class PrefScopeBuilder internal constructor(
             indexTitle,
             indexSummary,
             pageTarget,
+            groupable,
             render
         )
+    }
+
+    /**
+     * 计算分段分组：连续且 [PrefEntry.groupable] 的条目合并为一组
+     * （分类标题 / 滑条 / 自定义控件强制独占一张卡片）。
+     */
+    internal fun computeSegments() {
+        var i = 0
+        while (i < entries.size) {
+            if (!entries[i].groupable) {
+                entries[i].segIndex = 0
+                entries[i].segCount = 1
+                i++
+                continue
+            }
+            var j = i
+            while (j + 1 < entries.size && entries[j + 1].groupable) j++
+            val count = j - i + 1
+            for (k in i..j) {
+                entries[k].segIndex = k - i
+                entries[k].segCount = count
+            }
+            i = j + 1
+        }
     }
 
     // ---------------- DSL 项 ----------------
 
     /** 分类标题（对应旧 addCategory / categoryPreference） */
-    fun category(title: String) = emit(null, null, null, null) { _ ->
+    fun category(title: String) = emit(null, null, null, null, groupable = false) { _ ->
         Text(
             text = title,
             style = MaterialTheme.typography.titleSmall,
             color = MaterialTheme.colorScheme.primary,
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(start = 16.dp, top = 20.dp, bottom = 4.dp),
+                .padding(start = 16.dp, top = 12.dp, bottom = 4.dp),
         )
     }
 
-    /** 开关（对应 SwitchPreference + setOnPreferenceChangeListener） */
+    /** 开关（对应 SwitchPreference + setOnPreferenceChangeListener）：整行点击 + Expressive 开关 */
     fun switch(
         key: String,
         title: String,
@@ -201,26 +234,24 @@ class PrefScopeBuilder internal constructor(
         onChange: ((Boolean) -> Unit)? = null,
     ) = emit(key, key, title, summary) { slot ->
         val checked by state.booleanFlow(key).collectAsStateWithLifecycle()
-        val bg = highlightColor(slot)
         fun apply(newValue: Boolean) {
             state.set(key, newValue)
             if (notify) sendValue(key, newValue)
             onChange?.invoke(newValue)
         }
-        PrefItemCard(highlight = bg, modifier = Modifier.padding(horizontal = 16.dp)) {
-            ListItem(
-                onClick = { if (enabled) apply(!checked) },
-                supportingContent = summary?.let { { Text(it) } },
-                trailingContent = {
-                    Switch(checked = checked, enabled = enabled, onCheckedChange = ::apply)
-                },
-                modifier = Modifier.fillMaxWidth(),
+        Box(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
+            SegmentedSwitchItem(
+                title = title,
+                summary = summary,
+                colors = itemColors(slot),
+                checked = checked,
                 enabled = enabled,
-            ) { Text(title) }
+                onCheckedChange = ::apply,
+            )
         }
     }
 
-    /** 单选列表（对应 DropDownPreference：条目文字 + entryValues 存储值） */
+    /** 单选列表（对应 DropDownPreference：条目文字 + entryValues 存储值），尾部显示当前值 */
     fun list(
         key: String,
         title: String,
@@ -233,59 +264,20 @@ class PrefScopeBuilder internal constructor(
         onChange: ((String) -> Unit)? = null,
     ) = emit(key, key, title, summary) { slot ->
         val current by state.stringFlow(key, default).collectAsStateWithLifecycle()
-        var showDialog by remember { mutableStateOf(false) }
         val currentLabel = entries.getOrNull(entryValues.indexOf(current)) ?: current
-        val bg = highlightColor(slot)
-        PrefItemCard(highlight = bg, modifier = Modifier.padding(horizontal = 16.dp)) {
-            ListItem(
-                onClick = { showDialog = true },
-                supportingContent = { Text(summary?.replace("%s", currentLabel) ?: currentLabel) },
-                modifier = Modifier.fillMaxWidth(),
+        Box(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
+            SegmentedDropdownItem(
+                title = title,
+                summary = summary?.replace("%s", currentLabel),
+                items = entries.toList(),
+                colors = itemColors(slot),
                 enabled = enabled,
-            ) { Text(title) }
-        }
-        if (showDialog) {
-            var selected by remember {
-                mutableIntStateOf(
-                    entryValues.indexOf(current).coerceAtLeast(0)
-                )
-            }
-            AlertDialog(
-                onDismissRequest = { showDialog = false },
-                title = { Text(title) },
-                text = {
-                    Column {
-                        entries.forEachIndexed { i, label ->
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .selectable(
-                                        selected = i == selected,
-                                        onClick = { selected = i })
-                                    .padding(vertical = 4.dp),
-                                verticalAlignment = Alignment.CenterVertically,
-                            ) {
-                                RadioButton(selected = i == selected, onClick = null)
-                                Text(label, Modifier.padding(start = 8.dp))
-                            }
-                        }
-                    }
-                },
-                confirmButton = {
-                    TextButton(
-                        onClick = {
-                            showDialog = false
-                            val newValue = entryValues.getOrNull(selected) ?: return@TextButton
-                            state.set(key, newValue)
-                            if (notify) sendValue(key, newValue)
-                            onChange?.invoke(newValue)
-                        },
-                    ) { Text(stringResource(android.R.string.ok)) }
-                },
-                dismissButton = {
-                    TextButton(onClick = {
-                        showDialog = false
-                    }) { Text(stringResource(android.R.string.cancel)) }
+                selectedIndex = entryValues.indexOf(current).coerceAtLeast(0),
+                onItemSelected = { index ->
+                    val newValue = entryValues.getOrNull(index) ?: return@SegmentedDropdownItem
+                    state.set(key, newValue)
+                    if (notify) sendValue(key, newValue)
+                    onChange?.invoke(newValue)
                 },
             )
         }
@@ -303,7 +295,7 @@ class PrefScopeBuilder internal constructor(
         enabled: Boolean = true,
         notify: Boolean = false,
         onChange: ((Int) -> Unit)? = null,
-    ) = emit(key, key, title, summary) { slot ->
+    ) = emit(key, key, title, summary, groupable = false) { slot ->
         val stored by state.intFlow(key, default ?: valueRange.first).collectAsStateWithLifecycle()
         val sliderState = rememberSliderState(
             value = stored.coerceIn(valueRange.first, valueRange.last).toFloat(),
@@ -316,46 +308,52 @@ class PrefScopeBuilder internal constructor(
             sliderState.value = stored.coerceIn(valueRange.first, valueRange.last).toFloat()
         }
         val current = sliderState.value.roundToInt()
-        val bg = highlightColor(slot)
-        PrefItemCard(highlight = bg, modifier = Modifier.padding(horizontal = 16.dp)) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 8.dp),
-            ) {
-                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                    Text(title, style = MaterialTheme.typography.bodyLarge)
-                    Text(
-                        valueLabel?.invoke(current) ?: current.toString(),
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.primary,
+        Box(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
+            SegmentedItemContainer(modifier = Modifier.fillMaxWidth()) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 12.dp),
+                    verticalArrangement = Arrangement.spacedBy(4.dp),
+                ) {
+                    Row(
+                        Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Text(title, style = MaterialTheme.typography.titleMedium)
+                        Text(
+                            valueLabel?.invoke(current) ?: current.toString(),
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.primary,
+                        )
+                    }
+                    summary?.let {
+                        Text(
+                            it,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                    Slider(
+                        state = sliderState,
+                        onValueChange = {
+                            dragging = true
+                            sliderState.value = it
+                        },
+                        onValueChangeFinished = {
+                            dragging = false
+                            val min = valueRange.first
+                            val stepped = (((sliderState.value - min) / step).roundToInt() * step + min)
+                                .coerceIn(valueRange.first, valueRange.last)
+                            sliderState.value = stepped.toFloat()
+                            state.set(key, stepped)
+                            if (notify) sendValue(key, stepped)
+                            onChange?.invoke(stepped)
+                        },
+                        enabled = enabled,
                     )
                 }
-                summary?.let {
-                    Text(
-                        it,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
-                Slider(
-                    state = sliderState,
-                    onValueChange = {
-                        dragging = true
-                        sliderState.value = it
-                    },
-                    onValueChangeFinished = {
-                        dragging = false
-                        val min = valueRange.first
-                        val stepped = (((sliderState.value - min) / step).roundToInt() * step + min)
-                            .coerceIn(valueRange.first, valueRange.last)
-                        sliderState.value = stepped.toFloat()
-                        state.set(key, stepped)
-                        if (notify) sendValue(key, stepped)
-                        onChange?.invoke(stepped)
-                    },
-                    enabled = enabled,
-                )
             }
         }
     }
@@ -375,14 +373,14 @@ class PrefScopeBuilder internal constructor(
     ) = emit(key, key, title, summary) { slot ->
         val current by state.stringFlow(key, default).collectAsStateWithLifecycle()
         var showDialog by remember { mutableStateOf(false) }
-        val bg = highlightColor(slot)
-        PrefItemCard(highlight = bg, modifier = Modifier.padding(horizontal = 16.dp)) {
-            ListItem(
+        Box(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
+            SegmentedListItem(
                 onClick = { showDialog = true },
-                supportingContent = { Text(current.ifBlank { summary ?: "" }) },
-                modifier = Modifier.fillMaxWidth(),
                 enabled = enabled,
-            ) { Text(title) }
+                colors = itemColors(slot),
+                headlineContent = { Text(title) },
+                supportingContent = { Text(current.ifBlank { summary ?: "" }) },
+            )
         }
         if (showDialog) {
             var text by remember { mutableStateOf(current) }
@@ -434,16 +432,21 @@ class PrefScopeBuilder internal constructor(
         summary: String? = null,
         enabled: Boolean = true,
     ) = emit("page:$target", "page:$target", title, summary, pageTarget = target) { slot ->
-        PrefItemCard(
-            highlight = highlightColor(slot),
-            modifier = Modifier.padding(horizontal = 16.dp),
-        ) {
-            ListItem(
+        Box(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
+            SegmentedListItem(
                 onClick = { navigate?.invoke(target, title) },
-                supportingContent = summary?.let { { Text(it) } },
-                modifier = Modifier.fillMaxWidth(),
                 enabled = enabled,
-            ) { Text(title) }
+                colors = itemColors(slot),
+                headlineContent = { Text(title) },
+                supportingContent = summary?.let { { Text(it) } },
+                trailingContent = {
+                    Icon(
+                        Icons.AutoMirrored.Rounded.KeyboardArrowRight,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                },
+            )
         }
     }
 
@@ -453,7 +456,7 @@ class PrefScopeBuilder internal constructor(
         title: String? = null,
         summary: String? = null,
         content: @Composable PrefScopeBuilder.(slot: Int) -> Unit,
-    ) = emit(key, key, title, summary, render = { slot -> content(this, slot) })
+    ) = emit(key, key, title, summary, groupable = false, render = { slot -> content(this, slot) })
 }
 
 /**
@@ -486,6 +489,7 @@ fun ScopeScreen(
     builder.context = LocalContext.current.applicationContext
     builder.beginBuild()
     builder.content()
+    builder.computeSegments()
 
     val listState = rememberLazyListState()
     LaunchedEffect(scrollTarget) {
@@ -507,13 +511,26 @@ fun ScopeScreen(
             modifier = listModifier,
             state = listState,
             contentPadding = PaddingValues(bottom = 8.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             if (fullContent != null) {
                 item(key = "full") { fullContent(this, builder) }
             } else {
                 builder.entries.forEach { entry ->
-                    item(key = entry.itemKey) { entry.render(entry.slot) }
+                    item(key = entry.itemKey) {
+                        SegmentedItem(index = entry.segIndex, count = entry.segCount) {
+                            Box(
+                                modifier = Modifier.padding(
+                                    top = when {
+                                        entry.slot == 0 -> 0.dp
+                                        entry.segIndex == 0 -> 8.dp
+                                        else -> ListItemDefaults.SegmentedGap
+                                    }
+                                )
+                            ) {
+                                entry.render(entry.slot)
+                            }
+                        }
+                    }
                 }
             }
         }
