@@ -53,6 +53,7 @@ import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Outline
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.SolidColor
@@ -84,10 +85,13 @@ private const val SegmentedSpringDamping = 0.9f
 @DslMarker
 annotation class SegmentedColumnDsl
 
+/** 分段条目配色（containerColor 可覆盖，用于搜索跳转高亮等场景） */
 @Composable
-private fun defaultSegmentedColors(): ListItemColors = ListItemDefaults.segmentedColors(
-    containerColor = colorScheme.surfaceBright,
-    disabledContainerColor = colorScheme.surfaceBright,
+fun defaultSegmentedColors(
+    containerColor: Color = colorScheme.surfaceBright,
+): ListItemColors = ListItemDefaults.segmentedColors(
+    containerColor = containerColor,
+    disabledContainerColor = containerColor,
     supportingContentColor = colorScheme.onSurfaceVariant,
 )
 
