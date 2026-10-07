@@ -23,7 +23,6 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.ListItem
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -44,6 +43,7 @@ import androidx.compose.ui.unit.dp
 import androidx.core.graphics.createBitmap
 import com.luckyzyx.luckytool.R
 import com.luckyzyx.luckytool.data.AppInfo
+import com.luckyzyx.luckytool.ui.compose.components.material.SegmentedListItem
 import com.luckyzyx.luckytool.utils.PackageUtils
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -168,6 +168,7 @@ fun AppPickerDialog(
                         .fillMaxWidth()
                         .weight(1f, fill = false)
                         .heightIn(max = 420.dp),
+                    verticalArrangement = Arrangement.spacedBy(2.dp),
                 ) {
                     items(filtered, key = { it.packageName }) { app ->
                         AppRow(
@@ -186,7 +187,6 @@ fun AppPickerDialog(
                                 }
                             },
                         )
-                        HorizontalDivider()
                     }
                 }
             }
@@ -216,8 +216,10 @@ private fun AppRow(
     checked: Boolean,
     onSelect: () -> Unit,
 ) {
-    ListItem(
+    // 与全局 Expressive 分段卡片一致的条目外观
+    SegmentedListItem(
         onClick = { onSelect() },
+        headlineContent = { Text(app.name) },
         supportingContent = { Text(app.packageName) },
         leadingContent = {
             val painter = rememberAppIconPainter(app.icon)
@@ -233,7 +235,7 @@ private fun AppRow(
             }
         },
         modifier = Modifier.fillMaxWidth(),
-    ) { Text(app.name) }
+    )
 }
 
 private fun comparatorOf(mode: AppSortMode, reverse: Boolean): Comparator<AppInfo> {
