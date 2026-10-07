@@ -405,13 +405,73 @@ object StatusBarBatteryInfoNotify : YukiBaseHooker() {
                 it.queryChargeInfo(oplusCharger)
             } ?: ""
 //            YLog.d("getChargeInfo -> queryChargeInfo : $queryChargeInfo")
-            Properties().apply {
-                if (queryChargeInfo.isNotBlank()) load(StringReader(queryChargeInfo))
+            val properties = Properties()
+            if (queryChargeInfo.isNotBlank()) {
+                properties.load(StringReader(queryChargeInfo))
+            } else {
+                // Fallback to BatteryManager for Android 15+ / ColorOS 17+
+                YLog.warn("StatusBarBatteryInfoNotify -> ICharger returned empty, using BatteryManager fallback")
+                return getChargeInfoFromBatteryManager()
             }
+            properties
         } catch (e: Exception) {
-            YLog.error("StatusBarBatteryInfoNotify -> getChargeInfo", e)
-            Properties()
+            YLog.error("StatusBarBatteryInfoNotify -> getChargeInfo from ICharger failed", e)
+            // Fallback to BatteryManager
+            try {
+                getChargeInfoFromBatteryManager()
+            } catch (e2: Exception) {
+                YLog.error("StatusBarBatteryInfoNotify -> BatteryManager fallback also failed", e2)
+                Properties()
+            }
         }
+    }
+
+    private fun getChargeInfoFromBatteryManager(): Properties {
+        val intent = hostApplication.registerReceiver(null, android.content.IntentFilter(Intent.ACTION_BATTERY_CHANGED))
+        val properties = Properties()
+        intent?.let {
+            // Basic battery info
+            properties.setProperty("battery_status", it.getIntExtra(android.os.BatteryManager.EXTRA_STATUS, 1).toString())
+            properties.setProperty("battery_health", it.getIntExtra(android.os.BatteryManager.EXTRA_HEALTH, 1).toString())
+            properties.setProperty("battery_present", it.getBooleanExtra(android.os.BatteryManager.EXTRA_PRESENT, true).toString())
+            properties.setProperty("battery_capacity", it.getIntExtra(android.os.BatteryManager.EXTRA_LEVEL, 0).toString())
+            properties.setProperty("battery_scale", it.getIntExtra(android.os.BatteryManager.EXTRA_SCALE, 100).toString())
+            properties.setProperty("battery_voltage_now", it.getIntExtra(android.os.BatteryManager.EXTRA_VOLTAGE, 0).toString())
+            properties.setProperty("battery_temp", it.getIntExtra(android.os.BatteryManager.EXTRA_TEMPERATURE, 0).toString())
+            properties.setProperty("battery_technology", it.getStringExtra(android.os.BatteryManager.EXTRA_TECHNOLOGY) ?: "Li-ion")
+            
+            // Plugged status
+            val plugged = it.getIntExtra(android.os.BatteryManager.EXTRA_PLUGGED, 0)
+            properties.setProperty("chargerAcOnline", (plugged == android.os.BatteryManager.BATTERY_PLUGGED_AC).toString())
+            properties.setProperty("chargerUSBOnline", (plugged == android.os.BatteryManager.BATTERY_PLUGGED_USB).toString())
+            properties.setProperty("chargerWirelessOnline", (plugged == android.os.BatteryManager.BATTERY_PLUGGED_WIRELESS).toString())
+            
+            // Try to get current from BatteryManager
+            try {
+                val batteryManager = hostApplication.getSystemService(android.content.Context.BATTERY_SERVICE) as? android.os.BatteryManager
+                batteryManager?.let { bm ->
+                    val currentNow = bm.getIntProperty(android.os.BatteryManager.BATTERY_PROPERTY_CURRENT_NOW)
+                    val chargeCounter = bm.getIntProperty(android.os.BatteryManager.BATTERY_PROPERTY_CHARGE_COUNTER)
+                    properties.setProperty("battery_current_now", currentNow.toString())
+                    properties.setProperty("battery_charge_counter", chargeCounter.toString())
+                }
+            } catch (e: Exception) {
+                YLog.warn("StatusBarBatteryInfoNotify -> Failed to get current from BatteryManager", e)
+            }
+            
+            // Set default values for missing OPLUS-specific fields
+            properties.setProperty("sub_soc", "0")
+            properties.setProperty("battery_temp_not_plug", properties.getProperty("battery_temp", "0"))
+            properties.setProperty("battery_voltage_min", properties.getProperty("battery_voltage_now", "0"))
+            properties.setProperty("sub_voltage", "0")
+            properties.setProperty("battery_charge_now", "0")
+            properties.setProperty("charger_type", "")
+            properties.setProperty("usb_fast_chg_type", "0")
+            properties.setProperty("wireless_enable_tx", "0")
+            properties.setProperty("wireless_current_now", "0")
+            properties.setProperty("wireless_voltage_now", "0")
+        }
+        return properties
     }
 
     private fun getPlugType(properties: Properties): Int {
