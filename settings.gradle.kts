@@ -20,7 +20,29 @@ pluginManagement {
 }
 
 plugins {
+    id("com.highcapable.gropify") version "1.0.2"
     id("org.gradle.toolchains.foojay-resolver-convention") version "1.0.0"
+}
+
+gropify {
+    isEnabled = true
+    debugMode = false
+    global {
+        sourceCode {
+            includeKeys("^project\\..*$".toRegex())
+            isRestrictedAccessEnabled = true
+        }
+    }
+    rootProject {
+        common {
+            isEnabled = true
+        }
+    }
+    projects(":app", ":hidden-api-stub") {
+        common {
+            isEnabled = true
+        }
+    }
 }
 
 dependencyResolutionManagement {
