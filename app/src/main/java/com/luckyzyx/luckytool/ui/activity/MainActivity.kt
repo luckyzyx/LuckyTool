@@ -6,12 +6,12 @@ import android.content.Intent
 import android.os.Bundle
 import android.os.Process
 import androidx.activity.compose.setContent
-import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import com.highcapable.betterandroid.system.extension.component.Intent
 import com.highcapable.betterandroid.ui.extension.view.toast
 import com.highcapable.kavaref.extension.classOf
 import com.luckyzyx.luckytool.BuildConfig
@@ -67,7 +67,7 @@ open class MainActivity : AppCompatActivity() {
     private var checkSuDialog: AlertDialog? = null
 
     private fun newIntent(context: Context): Intent {
-        return Intent(context, MainActivity::class.java)
+        return Intent<MainActivity>(context)
     }
 
     private fun newIntent(savedInstanceState: Bundle, context: Context): Intent {
@@ -78,8 +78,6 @@ open class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
 
         ThemeUtils.initTheme(this)
-        enableEdgeToEdge()
-        window.isNavigationBarContrastEnforced = false
         ActivityLifecycleManager.registerActivity(this)
 
         verityPackage()
