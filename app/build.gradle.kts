@@ -145,6 +145,7 @@ dependencies {
     implementation(libs.androidx.compose.foundation)
     implementation(libs.androidx.compose.material3)
     implementation(libs.material.kolor)
+    implementation(libs.androidx.compose.material.icons.extended)
     //Markdown 渲染（Markwon，供捐赠数据/版本信息/更新日志使用）
     implementation(libs.markwon.core)
     implementation(libs.markwon.html)
