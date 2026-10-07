@@ -5,16 +5,20 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Badge
 import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.dp
 import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.NavHost
@@ -24,6 +28,7 @@ import androidx.navigation.compose.rememberNavController
 import com.luckyzyx.luckytool.R
 import com.luckyzyx.luckytool.ui.activity.MainActivity
 import com.luckyzyx.luckytool.ui.compose.components.EdgeSwipeDismiss
+import com.luckyzyx.luckytool.ui.compose.components.material.LocalBottomBarPresent
 import com.luckyzyx.luckytool.ui.compose.pages.HomePage
 import com.luckyzyx.luckytool.ui.compose.pages.LogPage
 import com.luckyzyx.luckytool.ui.compose.pages.OtherPage
@@ -92,9 +97,13 @@ fun MainShell(activity: MainActivity) {
     }
 
     Scaffold(
+        containerColor = MaterialTheme.colorScheme.surfaceContainer,
         bottomBar = {
             if (!onThemePage) {
-                NavigationBar {
+                NavigationBar(
+                    containerColor = MaterialTheme.colorScheme.surfaceContainer,
+                    tonalElevation = 0.dp,
+                ) {
                     val tabs = listOf(
                         ShellTab(R.string.nav_other, R.drawable.ic_baseline_dashboard_24, OtherRoute),
                         ShellTab(R.string.nav_function, R.drawable.ic_baseline_extension_24, FunctionRoute),
@@ -120,7 +129,14 @@ fun MainShell(activity: MainActivity) {
                             },
                             icon = {
                                 if (showBadge) {
-                                    BadgedBox(badge = { Badge { Text("1") } }) {
+                                    BadgedBox(
+                                        badge = {
+                                            Badge(
+                                                containerColor = MaterialTheme.colorScheme.primary,
+                                                contentColor = MaterialTheme.colorScheme.onPrimary,
+                                            ) { Text("1") }
+                                        },
+                                    ) {
                                         Icon(painterResource(tab.iconRes), contentDescription = null)
                                     }
                                 } else {
@@ -128,40 +144,50 @@ fun MainShell(activity: MainActivity) {
                                 }
                             },
                             label = { Text(stringResource(tab.labelRes)) },
+                            colors = NavigationBarItemDefaults.colors(
+                                indicatorColor = MaterialTheme.colorScheme.primaryContainer,
+                                selectedIconColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                                selectedTextColor = MaterialTheme.colorScheme.onSurface,
+                                unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                                unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                            ),
                         )
                     }
                 }
             }
         }
     ) { innerPadding ->
-        NavHost(
-            navController = navController,
-            startDestination = HomeRoute,
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(innerPadding),
-        ) {
-            composable<HomeRoute> { HomePage(activity) }
-            composable<OtherRoute> { OtherPage(activity) }
-            composable<FunctionRoute> {
-                FunctionPage(
-                    activity = activity,
-                    onShellBack = { navController.popBackStack() },
-                )
-            }
-            composable<LogRoute> { LogPage() }
-            composable<SettingRoute> {
-                SettingPage(
-                    activity = activity,
-                    onOpenTheme = { navController.navigate(ThemeRoute) { launchSingleTop = true } },
-                )
-            }
-            composable<ThemeRoute> {
-                EdgeSwipeDismiss(
-                    enabled = LocalEnableSwipeDismiss.current,
-                    onDismiss = { navController.popBackStack() },
-                ) {
-                    ThemeScreen(onBack = { navController.popBackStack() })
+        // 底部导航栏已消费系统导航栏 inset：告知页面列表不要重复叠加底部内边距
+        CompositionLocalProvider(LocalBottomBarPresent provides !onThemePage) {
+            NavHost(
+                navController = navController,
+                startDestination = HomeRoute,
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(innerPadding),
+            ) {
+                composable<HomeRoute> { HomePage(activity) }
+                composable<OtherRoute> { OtherPage(activity) }
+                composable<FunctionRoute> {
+                    FunctionPage(
+                        activity = activity,
+                        onShellBack = { navController.popBackStack() },
+                    )
+                }
+                composable<LogRoute> { LogPage() }
+                composable<SettingRoute> {
+                    SettingPage(
+                        activity = activity,
+                        onOpenTheme = { navController.navigate(ThemeRoute) { launchSingleTop = true } },
+                    )
+                }
+                composable<ThemeRoute> {
+                    EdgeSwipeDismiss(
+                        enabled = LocalEnableSwipeDismiss.current,
+                        onDismiss = { navController.popBackStack() },
+                    ) {
+                        ThemeScreen(onBack = { navController.popBackStack() })
+                    }
                 }
             }
         }
