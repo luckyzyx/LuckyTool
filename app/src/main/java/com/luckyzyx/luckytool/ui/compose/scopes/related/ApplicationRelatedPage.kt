@@ -1,9 +1,9 @@
 package com.luckyzyx.luckytool.ui.compose.scopes.related
 
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -14,6 +14,8 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.luckyzyx.luckytool.R
 import com.luckyzyx.luckytool.ui.components.AppPickerDialog
+import com.luckyzyx.luckytool.ui.compose.components.material.SegmentedListItem
+import com.luckyzyx.luckytool.ui.compose.components.material.SegmentedSwitchItem
 import com.luckyzyx.luckytool.ui.compose.scopes.ScopePageSpec
 import com.luckyzyx.luckytool.utils.A13
 import com.luckyzyx.luckytool.utils.A14
@@ -285,27 +287,21 @@ object ApplicationRelatedPage {
                 key = archivingKey,
                 title = c.getString(R.string.disable_app_archiving),
                 summary = c.getString(R.string.disable_app_archiving_summary),
-            ) {
+            ) { slot ->
                 val checked by state.booleanFlow(archivingKey, true).collectAsStateWithLifecycle()
-                ListItem(
-                    onClick = {
-                        val v = !checked
-                        state.set(archivingKey, v)
-                        c.sendPrefsValue("android", archivingKey, v)
-                        c.sendPrefsValue("com.android.settings", archivingKey, v)
-                    },
-                    supportingContent = { Text(c.getString(R.string.disable_app_archiving_summary)) },
-                    trailingContent = {
-                        Switch(
-                            checked = checked,
-                            onCheckedChange = { v ->
-                                state.set(archivingKey, v)
-                                c.sendPrefsValue("android", archivingKey, v)
-                                c.sendPrefsValue("com.android.settings", archivingKey, v)
-                            },
-                        )
-                    },
-                ) { Text(c.getString(R.string.disable_app_archiving)) }
+                Box(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
+                    SegmentedSwitchItem(
+                        title = c.getString(R.string.disable_app_archiving),
+                        summary = c.getString(R.string.disable_app_archiving_summary),
+                        checked = checked,
+                        colors = itemColors(slot),
+                        onCheckedChange = { v ->
+                            state.set(archivingKey, v)
+                            c.sendPrefsValue("android", archivingKey, v)
+                            c.sendPrefsValue("com.android.settings", archivingKey, v)
+                        },
+                    )
+                }
             }
         }
     }
@@ -318,13 +314,17 @@ object ApplicationRelatedPage {
             "custom_wlan_sla_whitelist" -> c.getString(R.string.custom_wlan_sla_whitelist)
             else -> c.getString(R.string.custom_wlan_sla_game_whitelist)
         }
-        custom(key = key, title = title) {
+        custom(key = key, title = title) { slot ->
             var showPicker by remember { mutableStateOf(false) }
             val current = state.getStringSet(key).toString()
-            ListItem(
-                onClick = { showPicker = true },
-                supportingContent = { Text(current) },
-            ) { Text(title) }
+            Box(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
+                SegmentedListItem(
+                    onClick = { showPicker = true },
+                    supportingContent = { Text(current) },
+                    colors = itemColors(slot),
+                    headlineContent = { Text(title) },
+                )
+            }
             if (showPicker) {
                 AppPickerDialog(
                     title = title,

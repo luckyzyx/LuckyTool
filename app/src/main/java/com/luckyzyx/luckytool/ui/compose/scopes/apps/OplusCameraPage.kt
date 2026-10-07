@@ -3,13 +3,13 @@ package com.luckyzyx.luckytool.ui.compose.scopes.apps
 import android.content.Context
 import android.os.Build
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Checkbox
-import androidx.compose.material3.ListItem
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -25,6 +25,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.luckyzyx.luckytool.R
 import com.luckyzyx.luckytool.data.CameraFilter
 import com.luckyzyx.luckytool.ui.components.AppPickerDialog
+import com.luckyzyx.luckytool.ui.compose.components.material.SegmentedListItem
 import com.luckyzyx.luckytool.ui.compose.scopes.ScopePageSpec
 import com.luckyzyx.luckytool.utils.A13
 import com.luckyzyx.luckytool.utils.CameraUtils
@@ -63,17 +64,22 @@ object OplusCameraPage {
             custom(
                 key = "custom_camera_open_gallery_by_default",
                 title = c.getString(R.string.custom_camera_open_gallery_by_default),
-            ) {
+            ) { slot ->
                 val current by state.stringFlow("custom_camera_open_gallery_by_default")
                     .collectAsStateWithLifecycle()
                 var show by remember { mutableStateOf(false) }
-                ListItem(
-                    onClick = { show = true },
-                    supportingContent = {
-                        Text(arraySummaryLine(current.ifBlank { c.getString(R.string.not_set) }))
-                    },
-                    modifier = Modifier.fillMaxWidth(),
-                ) { Text(c.getString(R.string.custom_camera_open_gallery_by_default)) }
+                Box(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
+                    SegmentedListItem(
+                        onClick = { show = true },
+                        supportingContent = {
+                            Text(arraySummaryLine(current.ifBlank { c.getString(R.string.not_set) }))
+                        },
+                        colors = itemColors(slot),
+                        headlineContent = {
+                            Text(c.getString(R.string.custom_camera_open_gallery_by_default))
+                        },
+                    )
+                }
                 if (show) {
                     AppPickerDialog(
                         title = c.getString(R.string.custom_camera_open_gallery_by_default),
@@ -145,19 +151,24 @@ object OplusCameraPage {
             custom(
                 key = "camera_universal_filter_settings",
                 title = c.getString(R.string.camera_universal_filter_settings),
-            ) {
+            ) { slot ->
                 var showDialog by remember { mutableStateOf(false) }
                 val saved = state.getStringSet("camera_universal_filter_settings")
                 val filters = CameraUtils.getCameraFilters(c).apply {
                     forEach { it.isEnable = it.key in saved }
                 }
-                ListItem(
-                    onClick = { showDialog = true },
-                    supportingContent = {
-                        Text(filters.filter { it.isEnable }.map { it.title }.toString())
-                    },
-                    modifier = Modifier.fillMaxWidth(),
-                ) { Text(c.getString(R.string.camera_universal_filter_settings)) }
+                Box(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
+                    SegmentedListItem(
+                        onClick = { showDialog = true },
+                        supportingContent = {
+                            Text(filters.filter { it.isEnable }.map { it.title }.toString())
+                        },
+                        colors = itemColors(slot),
+                        headlineContent = {
+                            Text(c.getString(R.string.camera_universal_filter_settings))
+                        },
+                    )
+                }
                 if (showDialog) {
                     CameraFilterDialog(
                         c = c,
@@ -180,19 +191,24 @@ object OplusCameraPage {
             custom(
                 key = "camera_portrait_filter_settings",
                 title = c.getString(R.string.camera_portrait_filter_settings),
-            ) {
+            ) { slot ->
                 var showDialog by remember { mutableStateOf(false) }
                 val saved = state.getStringSet("camera_portrait_filter_settings")
                 val filters = CameraUtils.getPortraitCameraFilters(c).apply {
                     forEach { it.isEnable = it.key in saved }
                 }
-                ListItem(
-                    onClick = { showDialog = true },
-                    supportingContent = {
-                        Text(filters.filter { it.isEnable }.map { it.title }.toString())
-                    },
-                    modifier = Modifier.fillMaxWidth(),
-                ) { Text(c.getString(R.string.camera_portrait_filter_settings)) }
+                Box(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
+                    SegmentedListItem(
+                        onClick = { showDialog = true },
+                        supportingContent = {
+                            Text(filters.filter { it.isEnable }.map { it.title }.toString())
+                        },
+                        colors = itemColors(slot),
+                        headlineContent = {
+                            Text(c.getString(R.string.camera_portrait_filter_settings))
+                        },
+                    )
+                }
                 if (showDialog) {
                     CameraFilterDialog(
                         c = c,
@@ -210,19 +226,24 @@ object OplusCameraPage {
             custom(
                 key = "camera_video_filter_settings",
                 title = c.getString(R.string.camera_video_filter_settings),
-            ) {
+            ) { slot ->
                 var showDialog by remember { mutableStateOf(false) }
                 val saved = state.getStringSet("camera_video_filter_settings")
                 val filters = CameraUtils.getVideoCameraFilters(c).apply {
                     forEach { it.isEnable = it.key in saved }
                 }
-                ListItem(
-                    onClick = { showDialog = true },
-                    supportingContent = {
-                        Text(filters.filter { it.isEnable }.map { it.title }.toString())
-                    },
-                    modifier = Modifier.fillMaxWidth(),
-                ) { Text(c.getString(R.string.camera_video_filter_settings)) }
+                Box(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
+                    SegmentedListItem(
+                        onClick = { showDialog = true },
+                        supportingContent = {
+                            Text(filters.filter { it.isEnable }.map { it.title }.toString())
+                        },
+                        colors = itemColors(slot),
+                        headlineContent = {
+                            Text(c.getString(R.string.camera_video_filter_settings))
+                        },
+                    )
+                }
                 if (showDialog) {
                     CameraFilterDialog(
                         c = c,

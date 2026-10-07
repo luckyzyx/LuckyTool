@@ -3,8 +3,9 @@ package com.luckyzyx.luckytool.ui.compose.scopes.apps
 import android.app.Activity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.material3.ListItem
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Text
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -12,9 +13,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.luckyzyx.luckytool.R
 import com.luckyzyx.luckytool.ui.components.AppPickerDialog
+import com.luckyzyx.luckytool.ui.compose.components.material.SegmentedListItem
 import com.luckyzyx.luckytool.ui.compose.scopes.ScopePageSpec
 import com.luckyzyx.luckytool.utils.A13
 import com.luckyzyx.luckytool.utils.FileUtils
@@ -64,24 +67,29 @@ object OplusGesturePage {
             custom(
                 key = "custom_aon_gesture_scroll_page_whitelist_list",
                 title = c.getString(R.string.custom_aon_gesture_scroll_page_whitelist),
-            ) {
+            ) { slot ->
                 val saved by state
                     .stringSetFlow("custom_aon_gesture_scroll_page_whitelist_list")
                     .collectAsStateWithLifecycle()
                 var show by remember { mutableStateOf(false) }
-                ListItem(
-                    onClick = { show = true },
-                    supportingContent = {
-                        Text(
-                            arraySummaryLine(
-                                c.getString(R.string.custom_aon_gesture_whitelist_tips),
-                                saved.toString(),
+                Box(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
+                    SegmentedListItem(
+                        onClick = { show = true },
+                        supportingContent = {
+                            Text(
+                                arraySummaryLine(
+                                    c.getString(R.string.custom_aon_gesture_whitelist_tips),
+                                    saved.toString(),
+                                )
                             )
-                        )
-                    },
-                    modifier = Modifier.fillMaxWidth(),
-                    enabled = c.checkPackName("com.aiunit.aon"),
-                ) { Text(c.getString(R.string.custom_aon_gesture_scroll_page_whitelist)) }
+                        },
+                        enabled = c.checkPackName("com.aiunit.aon"),
+                        colors = itemColors(slot),
+                        headlineContent = {
+                            Text(c.getString(R.string.custom_aon_gesture_scroll_page_whitelist))
+                        },
+                    )
+                }
                 if (show) {
                     AppPickerDialog(
                         title = c.getString(R.string.custom_aon_gesture_scroll_page_whitelist),
@@ -131,7 +139,7 @@ object OplusGesturePage {
             custom(
                 key = "replace_side_slider_icon_on_left",
                 title = c.getString(R.string.replace_side_slider_icon_on_left),
-            ) {
+            ) { slot ->
                 val path by state.stringFlow("replace_side_slider_icon_on_left")
                     .collectAsStateWithLifecycle()
                 val activity = LocalContext.current as? Activity
@@ -146,16 +154,21 @@ object OplusGesturePage {
                     }
                     restart?.invoke()
                 }
-                ListItem(
-                    onClick = { pickMedia.launch("image/*") },
-                    supportingContent = { Text(path.ifBlank { "Null" }) },
-                    modifier = Modifier.fillMaxWidth(),
-                ) { Text(c.getString(R.string.replace_side_slider_icon_on_left)) }
+                Box(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
+                    SegmentedListItem(
+                        onClick = { pickMedia.launch("image/*") },
+                        supportingContent = { Text(path.ifBlank { "Null" }) },
+                        colors = itemColors(slot),
+                        headlineContent = {
+                            Text(c.getString(R.string.replace_side_slider_icon_on_left))
+                        },
+                    )
+                }
             }
             custom(
                 key = "replace_side_slider_icon_on_right",
                 title = c.getString(R.string.replace_side_slider_icon_on_right),
-            ) {
+            ) { slot ->
                 val path by state.stringFlow("replace_side_slider_icon_on_right")
                     .collectAsStateWithLifecycle()
                 val activity = LocalContext.current as? Activity
@@ -170,11 +183,16 @@ object OplusGesturePage {
                     }
                     restart?.invoke()
                 }
-                ListItem(
-                    onClick = { pickMedia.launch("image/*") },
-                    supportingContent = { Text(path.ifBlank { "Null" }) },
-                    modifier = Modifier.fillMaxWidth(),
-                ) { Text(c.getString(R.string.replace_side_slider_icon_on_right)) }
+                Box(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
+                    SegmentedListItem(
+                        onClick = { pickMedia.launch("image/*") },
+                        supportingContent = { Text(path.ifBlank { "Null" }) },
+                        colors = itemColors(slot),
+                        headlineContent = {
+                            Text(c.getString(R.string.replace_side_slider_icon_on_right))
+                        },
+                    )
+                }
             }
         }
         // 自定义快捷键

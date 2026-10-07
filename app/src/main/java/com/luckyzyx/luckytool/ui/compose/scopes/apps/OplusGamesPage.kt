@@ -1,17 +1,20 @@
 package com.luckyzyx.luckytool.ui.compose.scopes.apps
 
 import android.content.Intent
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.material3.ListItem
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Text
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.luckyzyx.luckytool.R
 import com.luckyzyx.luckytool.ui.components.AppPickerDialog
+import com.luckyzyx.luckytool.ui.compose.components.material.SegmentedListItem
 import com.luckyzyx.luckytool.ui.compose.scopes.ScopePageSpec
 import com.luckyzyx.luckytool.utils.A14
 import com.luckyzyx.luckytool.utils.AppUtils
@@ -52,18 +55,21 @@ object OplusGamesPage {
                 )
             )
         ) {
-            custom(title = c.getString(R.string.game_assistant_page)) {
-                ListItem(
-                    onClick = {
-                        launchShell(
-                            "com.oplus.games/business.compact.activity.GameBoxCoverActivity"
-                        )
-                    },
-                    supportingContent = {
-                        Text("(${appUtils.getAppLabel("com.oplus.games")})")
-                    },
-                    modifier = Modifier.fillMaxWidth(),
-                ) { Text(c.getString(R.string.game_assistant_page)) }
+            custom(title = c.getString(R.string.game_assistant_page)) { slot ->
+                Box(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
+                    SegmentedListItem(
+                        onClick = {
+                            launchShell(
+                                "com.oplus.games/business.compact.activity.GameBoxCoverActivity"
+                            )
+                        },
+                        supportingContent = {
+                            Text("(${appUtils.getAppLabel("com.oplus.games")})")
+                        },
+                        colors = itemColors(slot),
+                        headlineContent = { Text(c.getString(R.string.game_assistant_page)) },
+                    )
+                }
             }
         }
         // 游戏空间页面入口
@@ -74,19 +80,22 @@ object OplusGamesPage {
                 )
             )
         ) {
-            custom(title = c.getString(R.string.game_space_page)) {
-                ListItem(
-                    onClick = {
-                        launchShell(
-                            "com.nearme.gamecenter/" +
-                                "com.nearme.gamespace.desktopspace.ui.DesktopSpaceMainActivity"
-                        )
-                    },
-                    supportingContent = {
-                        Text("(${appUtils.getAppLabel("com.nearme.gamecenter")})")
-                    },
-                    modifier = Modifier.fillMaxWidth(),
-                ) { Text(c.getString(R.string.game_space_page)) }
+            custom(title = c.getString(R.string.game_space_page)) { slot ->
+                Box(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
+                    SegmentedListItem(
+                        onClick = {
+                            launchShell(
+                                "com.nearme.gamecenter/" +
+                                    "com.nearme.gamespace.desktopspace.ui.DesktopSpaceMainActivity"
+                            )
+                        },
+                        supportingContent = {
+                            Text("(${appUtils.getAppLabel("com.nearme.gamecenter")})")
+                        },
+                        colors = itemColors(slot),
+                        headlineContent = { Text(c.getString(R.string.game_space_page)) },
+                    )
+                }
             }
         }
         // 布局
@@ -127,34 +136,42 @@ object OplusGamesPage {
         )
         if (state.getBoolean("enable_developer_page")) {
             if (c.checkPackName("com.oplus.games")) {
-                custom(title = c.getString(R.string.game_assistant_develop_page)) {
-                    ListItem(
-                        onClick = {
-                            launchShell(
-                                "com.oplus.games/" +
-                                    "business.compact.activity.GameDevelopOptionsActivity"
-                            )
-                        },
-                        supportingContent = {
-                            Text("(${appUtils.getAppLabel("com.oplus.games")})")
-                        },
-                        modifier = Modifier.fillMaxWidth(),
-                    ) { Text(c.getString(R.string.game_assistant_develop_page)) }
+                custom(title = c.getString(R.string.game_assistant_develop_page)) { slot ->
+                    Box(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
+                        SegmentedListItem(
+                            onClick = {
+                                launchShell(
+                                    "com.oplus.games/" +
+                                        "business.compact.activity.GameDevelopOptionsActivity"
+                                )
+                            },
+                            supportingContent = {
+                                Text("(${appUtils.getAppLabel("com.oplus.games")})")
+                            },
+                            colors = itemColors(slot),
+                            headlineContent = {
+                                Text(c.getString(R.string.game_assistant_develop_page))
+                            },
+                        )
+                    }
                 }
             }
         }
         custom(
             key = "custom_media_player_support_list",
             title = c.getString(R.string.custom_media_player_support),
-        ) {
+        ) { slot ->
             val saved by state.stringSetFlow("custom_media_player_support_list")
                 .collectAsStateWithLifecycle()
             var show by remember { mutableStateOf(false) }
-            ListItem(
-                onClick = { show = true },
-                supportingContent = { Text(saved.toString()) },
-                modifier = Modifier.fillMaxWidth(),
-            ) { Text(c.getString(R.string.custom_media_player_support)) }
+            Box(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
+                SegmentedListItem(
+                    onClick = { show = true },
+                    supportingContent = { Text(saved.toString()) },
+                    colors = itemColors(slot),
+                    headlineContent = { Text(c.getString(R.string.custom_media_player_support)) },
+                )
+            }
             if (show) {
                 AppPickerDialog(
                     title = c.getString(R.string.custom_media_player_support),
@@ -174,16 +191,21 @@ object OplusGamesPage {
         custom(
             key = "custom_barrage_notification_whitelist_list",
             title = c.getString(R.string.custom_barrage_notification_whitelist),
-        ) {
+        ) { slot ->
             val saved by state
                 .stringSetFlow("custom_barrage_notification_whitelist_list")
                 .collectAsStateWithLifecycle()
             var show by remember { mutableStateOf(false) }
-            ListItem(
-                onClick = { show = true },
-                supportingContent = { Text(saved.toString()) },
-                modifier = Modifier.fillMaxWidth(),
-            ) { Text(c.getString(R.string.custom_barrage_notification_whitelist)) }
+            Box(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
+                SegmentedListItem(
+                    onClick = { show = true },
+                    supportingContent = { Text(saved.toString()) },
+                    colors = itemColors(slot),
+                    headlineContent = {
+                        Text(c.getString(R.string.custom_barrage_notification_whitelist))
+                    },
+                )
+            }
             if (show) {
                 AppPickerDialog(
                     title = c.getString(R.string.custom_barrage_notification_whitelist),

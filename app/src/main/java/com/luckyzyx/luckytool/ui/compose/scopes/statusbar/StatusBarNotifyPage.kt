@@ -1,17 +1,19 @@
 package com.luckyzyx.luckytool.ui.compose.scopes.statusbar
 
-import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.material3.ListItem
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Text
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.luckyzyx.luckytool.R
 import com.luckyzyx.luckytool.ui.components.AppPickerDialog
+import com.luckyzyx.luckytool.ui.compose.components.material.SegmentedListItem
 import com.luckyzyx.luckytool.ui.compose.scopes.ScopePageSpec
 import com.luckyzyx.luckytool.utils.ModulePrefs
 import com.luckyzyx.luckytool.utils.arraySummaryLine
@@ -68,20 +70,22 @@ object StatusBarNotifyPage {
                     val blacklist by state.stringSetFlow("set_small_window_reply_blacklist_list")
                         .collectAsStateWithLifecycle()
                     var showPicker by remember { mutableStateOf(false) }
-                    val bg = highlightColor(slot)
-                    ListItem(
-                        onClick = { showPicker = true },
-                        supportingContent = {
-                            Text(
-                                arraySummaryLine(
-                                    c.getString(R.string.set_small_window_reply_blacklist_message),
-                                    blacklist.toString(),
+                    Box(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
+                        SegmentedListItem(
+                            onClick = { showPicker = true },
+                            supportingContent = {
+                                Text(
+                                    arraySummaryLine(
+                                        c.getString(R.string.set_small_window_reply_blacklist_message),
+                                        blacklist.toString(),
+                                    )
                                 )
-                            )
-                        },
-                        modifier = Modifier.fillMaxWidth().background(bg),
-                    ) {
-                        Text(c.getString(R.string.set_small_window_reply_blacklist))
+                            },
+                            colors = itemColors(slot),
+                            headlineContent = {
+                                Text(c.getString(R.string.set_small_window_reply_blacklist))
+                            },
+                        )
                     }
                     if (showPicker) {
                         AppPickerDialog(

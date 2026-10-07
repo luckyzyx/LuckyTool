@@ -3,9 +3,9 @@ package com.luckyzyx.luckytool.ui.compose.scopes.statusbar
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material3.ListItem
 import androidx.compose.material3.Text
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -18,6 +18,7 @@ import androidx.core.graphics.toColorInt
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.luckyzyx.luckytool.R
 import com.luckyzyx.luckytool.ui.components.ColorPickerDialog
+import com.luckyzyx.luckytool.ui.compose.components.material.SegmentedListItem
 import com.luckyzyx.luckytool.ui.compose.scopes.ScopePageSpec
 import com.luckyzyx.luckytool.utils.A13
 import com.luckyzyx.luckytool.utils.ModulePrefs
@@ -204,7 +205,7 @@ object StatusBarControlCenterPage {
             custom(
                 key = PROGRESS_COLOR_KEY,
                 title = c.getString(R.string.custom_control_center_progress_percent_color),
-            ) { _ ->
+            ) { slot ->
                 val hex by state.stringFlow(PROGRESS_COLOR_KEY, "#FFFFFFFF")
                     .collectAsStateWithLifecycle()
                 val color = remember(hex) {
@@ -215,20 +216,25 @@ object StatusBarControlCenterPage {
                     }
                 }
                 var showPicker by remember { mutableStateOf(false) }
-                ListItem(
-                    onClick = { showPicker = true },
-                    supportingContent = {
-                        Text(c.getString(R.string.current_color, hex))
-                    },
-                    trailingContent = {
-                        Box(
-                            modifier = Modifier
-                                .size(24.dp)
-                                .background(color, CircleShape)
-                        )
-                    },
-                    modifier = Modifier.fillMaxWidth(),
-                ) { Text(c.getString(R.string.custom_control_center_progress_percent_color)) }
+                Box(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
+                    SegmentedListItem(
+                        onClick = { showPicker = true },
+                        supportingContent = {
+                            Text(c.getString(R.string.current_color, hex))
+                        },
+                        trailingContent = {
+                            Box(
+                                modifier = Modifier
+                                    .size(24.dp)
+                                    .background(color, CircleShape)
+                            )
+                        },
+                        colors = itemColors(slot),
+                        headlineContent = {
+                            Text(c.getString(R.string.custom_control_center_progress_percent_color))
+                        },
+                    )
+                }
                 if (showPicker) {
                     ColorPickerDialog(
                         initialHex = hex,

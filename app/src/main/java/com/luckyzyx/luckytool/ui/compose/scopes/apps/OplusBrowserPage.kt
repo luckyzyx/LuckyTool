@@ -1,9 +1,14 @@
 package com.luckyzyx.luckytool.ui.compose.scopes.apps
 
 import android.content.Intent
-import androidx.compose.material3.ListItem
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Text
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
 import com.luckyzyx.luckytool.R
+import com.luckyzyx.luckytool.ui.compose.components.material.SegmentedListItem
 import com.luckyzyx.luckytool.ui.compose.scopes.ScopePageSpec
 import com.luckyzyx.luckytool.utils.ModulePrefs
 import com.luckyzyx.luckytool.utils.checkPackName
@@ -23,30 +28,32 @@ object OplusBrowserPage {
     ) {
         val c = requireNotNull(context) { "ScopeScreen 未注入 Context" }
         if (c.checkPackName("com.heytap.browser")) {
-            custom(title = c.getString(R.string.browser_concise_mode)) {
-                ListItem(
-                    onClick = {
-                        try {
-                            Intent().apply {
-                                setClassName(
-                                    "com.heytap.browser",
-                                    "com.heytap.browser.settings.component.BrowserPreferenceActivity"
-                                )
-                                putExtra(
-                                    "key.fragment.name",
-                                    "com.heytap.browser.settings.homepage.HomepagePreferenceFragment"
-                                )
-                                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                                addFlags(Intent.FLAG_ACTIVITY_MULTIPLE_TASK)
-                                addFlags(Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED)
-                                c.startActivity(this)
+            custom(title = c.getString(R.string.browser_concise_mode)) { slot ->
+                Box(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
+                    SegmentedListItem(
+                        onClick = {
+                            try {
+                                Intent().apply {
+                                    setClassName(
+                                        "com.heytap.browser",
+                                        "com.heytap.browser.settings.component.BrowserPreferenceActivity"
+                                    )
+                                    putExtra(
+                                        "key.fragment.name",
+                                        "com.heytap.browser.settings.homepage.HomepagePreferenceFragment"
+                                    )
+                                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                                    addFlags(Intent.FLAG_ACTIVITY_MULTIPLE_TASK)
+                                    addFlags(Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED)
+                                    c.startActivity(this)
+                                }
+                            } catch (_: Exception) {
+                                c.showToast("Error: Please check your browser version!")
                             }
-                        } catch (_: Exception) {
-                            c.showToast("Error: Please check your browser version!")
-                        }
-                    },
-                ) {
-                    Text(c.getString(R.string.browser_concise_mode))
+                        },
+                        colors = itemColors(slot),
+                        headlineContent = { Text(c.getString(R.string.browser_concise_mode)) },
+                    )
                 }
             }
         }

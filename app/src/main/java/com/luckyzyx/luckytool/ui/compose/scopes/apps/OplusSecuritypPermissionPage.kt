@@ -1,12 +1,12 @@
 package com.luckyzyx.luckytool.ui.compose.scopes.apps
 
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.ListItem
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -20,6 +20,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.luckyzyx.luckytool.R
 import com.luckyzyx.luckytool.service.UserService
+import com.luckyzyx.luckytool.ui.compose.components.material.SegmentedListItem
 import com.luckyzyx.luckytool.ui.compose.scopes.ScopePageSpec
 import com.luckyzyx.luckytool.utils.ModulePrefs
 import com.luckyzyx.luckytool.utils.getOSVersionCode
@@ -68,30 +69,34 @@ object OplusSecuritypPermissionPage {
         )
         if (state.getBoolean("enable_always_allow_app_start_dialog")) {
             val removeListTitle = c.getString(R.string.remove_always_allow_app_start_list)
-            custom(key = "remove_always_allow_app_start_list", title = removeListTitle) {
+            custom(key = "remove_always_allow_app_start_list", title = removeListTitle) { slot ->
                 var userDialogData by remember { mutableStateOf<UserDialogData?>(null) }
                 var curUserId by remember { mutableStateOf(arrayListOf<Int>()) }
-                ListItem(
-                    onClick = {
-                        UserService.get(c) {
-                            val users = it?.users
-                            if (users.isNullOrEmpty()) {
-                                c.showToast("userId is null")
-                                return@get
+                Box(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
+                    SegmentedListItem(
+                        onClick = {
+                            UserService.get(c) {
+                                val users = it?.users
+                                if (users.isNullOrEmpty()) {
+                                    c.showToast("userId is null")
+                                    return@get
+                                }
+                                val items = arrayListOf(Pair("All", -1))
+                                users.forEach { info ->
+                                    items.add(Pair("${info.name} [${info.id}]", info.id))
+                                }
+                                curUserId = ArrayList(users.map { info -> info.id })
+                                userDialogData = UserDialogData(
+                                    title = removeListTitle,
+                                    items = items,
+                                    allUserIds = users.map { info -> info.id },
+                                )
                             }
-                            val items = arrayListOf(Pair("All", -1))
-                            users.forEach { info ->
-                                items.add(Pair("${info.name} [${info.id}]", info.id))
-                            }
-                            curUserId = ArrayList(users.map { info -> info.id })
-                            userDialogData = UserDialogData(
-                                title = removeListTitle,
-                                items = items,
-                                allUserIds = users.map { info -> info.id },
-                            )
-                        }
-                    },
-                ) { Text(removeListTitle) }
+                        },
+                        colors = itemColors(slot),
+                        headlineContent = { Text(removeListTitle) },
+                    )
+                }
 
                 userDialogData?.let { data ->
                     AlertDialog(

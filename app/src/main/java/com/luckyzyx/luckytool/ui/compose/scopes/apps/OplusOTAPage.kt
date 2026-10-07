@@ -1,12 +1,17 @@
 package com.luckyzyx.luckytool.ui.compose.scopes.apps
 
 import android.os.SystemProperties
-import androidx.compose.material3.ListItem
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Text
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.drake.net.utils.scopeLife
 import com.drake.net.utils.withDefault
 import com.luckyzyx.luckytool.R
+import com.luckyzyx.luckytool.ui.compose.components.material.SegmentedListItem
 import com.luckyzyx.luckytool.ui.compose.scopes.ScopePageSpec
 import com.luckyzyx.luckytool.utils.CommandUtils
 import com.luckyzyx.luckytool.utils.ModulePrefs
@@ -45,31 +50,41 @@ object OplusOTAPage {
             ",", false,
         )
         val verifySummary = c.getString(R.string.get_ota_verify_result_summary, verifyImgs)
-        custom(key = "get_ota_verify_result", title = verifyTitle, summary = verifySummary) {
-            ListItem(supportingContent = { Text(verifySummary) }) { Text(verifyTitle) }
+        custom(key = "get_ota_verify_result", title = verifyTitle, summary = verifySummary) { slot ->
+            Box(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
+                SegmentedListItem(
+                    supportingContent = { Text(verifySummary) },
+                    colors = itemColors(slot),
+                    headlineContent = { Text(verifyTitle) },
+                )
+            }
         }
         // 解锁本地升级（原 Preference 点击执行 shell 命令序列）
         custom(
             key = "unlock_local_upgrade",
             title = c.getString(R.string.unlock_local_upgrade),
             summary = c.getString(R.string.unlock_local_upgrade_summary),
-        ) {
+        ) { slot ->
             val lifecycleOwner = LocalLifecycleOwner.current
-            ListItem(
-                onClick = {
-                    lifecycleOwner.scopeLife {
-                        val command = arrayOf(
-                            "settings put global development_settings_enabled 1",
-                            "pm clear com.oplus.ota",
-                            "settings put global airplane_mode_on 1",
-                            "am broadcast --user all -a android.intent.action.AIRPLANE_MODE --ez 'state' 'true'",
-                            "am start com.oplus.ota/com.oplus.otaui.activity.EntryActivity"
-                        )
-                        withDefault { ShellUtils.fastCmd(*command) }
-                    }
-                },
-                supportingContent = { Text(c.getString(R.string.unlock_local_upgrade_summary)) },
-            ) { Text(c.getString(R.string.unlock_local_upgrade)) }
+            Box(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
+                SegmentedListItem(
+                    onClick = {
+                        lifecycleOwner.scopeLife {
+                            val command = arrayOf(
+                                "settings put global development_settings_enabled 1",
+                                "pm clear com.oplus.ota",
+                                "settings put global airplane_mode_on 1",
+                                "am broadcast --user all -a android.intent.action.AIRPLANE_MODE --ez 'state' 'true'",
+                                "am start com.oplus.ota/com.oplus.otaui.activity.EntryActivity"
+                            )
+                            withDefault { ShellUtils.fastCmd(*command) }
+                        }
+                    },
+                    supportingContent = { Text(c.getString(R.string.unlock_local_upgrade_summary)) },
+                    colors = itemColors(slot),
+                    headlineContent = { Text(c.getString(R.string.unlock_local_upgrade)) },
+                )
+            }
         }
         switch(
             key = "remove_ota_local_update_verity",

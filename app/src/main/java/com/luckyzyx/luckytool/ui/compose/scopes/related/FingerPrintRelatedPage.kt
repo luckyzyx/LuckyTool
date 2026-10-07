@@ -5,9 +5,10 @@ import android.graphics.BitmapFactory
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.material3.ListItem
 import androidx.compose.material3.Text
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
@@ -20,6 +21,7 @@ import com.luckyzyx.luckytool.BuildConfig
 import com.luckyzyx.luckytool.R
 import com.luckyzyx.luckytool.contract.CropImageContract
 import com.luckyzyx.luckytool.data.CropImageContractOptions
+import com.luckyzyx.luckytool.ui.compose.components.material.SegmentedListItem
 import com.luckyzyx.luckytool.ui.compose.scopes.ScopePageSpec
 import com.luckyzyx.luckytool.utils.FileUtils
 import com.luckyzyx.luckytool.utils.LogUtils
@@ -64,7 +66,7 @@ object FingerPrintRelatedPage {
                 key = "replace_fingerprint_icon_path",
                 title = pathTitle,
                 summary = pathSummary,
-            ) {
+            ) { slot ->
                 val launcher = rememberLauncherForActivityResult(CropImageContract()) {
                     if (it.second.isSuccessful) {
                         val uri = it.second.uriContent
@@ -84,42 +86,45 @@ object FingerPrintRelatedPage {
                 val bitmap = remember(path) {
                     if (path.isBlank()) null else BitmapFactory.decodeFile(path)
                 }
-                ListItem(
-                    onClick = {
-                        val cacheImageFile = FileUtils.createCacheFile(c, "png")
-                        val cacheImageUri = FileProvider.getUriForFile(
-                            c, "${BuildConfig.APPLICATION_ID}.FileProvider", cacheImageFile
-                        )
-                        launcher.launch(
-                            "replace_fingerprint_icon_path" to CropImageContractOptions(
-                                null, CropImageOptions().apply {
-                                    activityTitle = pathTitle
-                                    cropShape = CropImageView.CropShape.RECTANGLE
-                                    guidelines = CropImageView.Guidelines.ON_TOUCH
-                                    aspectRatioX = 216
-                                    aspectRatioY = 216
-                                    maxCropResultWidth = 216
-                                    maxCropResultHeight = 216
-                                    fixAspectRatio = true
-                                    customOutputUri = cacheImageUri
-                                    outputCompressFormat = Bitmap.CompressFormat.PNG
-                                    outputCompressQuality = 100
-                                }
+                Box(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
+                    SegmentedListItem(
+                        onClick = {
+                            val cacheImageFile = FileUtils.createCacheFile(c, "png")
+                            val cacheImageUri = FileProvider.getUriForFile(
+                                c, "${BuildConfig.APPLICATION_ID}.FileProvider", cacheImageFile
                             )
-                        )
-                    },
-                    leadingContent = {
-                        bitmap?.let {
-                            Image(
-                                it.asImageBitmap(),
-                                contentDescription = null,
-                                modifier = Modifier.size(36.dp),
+                            launcher.launch(
+                                "replace_fingerprint_icon_path" to CropImageContractOptions(
+                                    null, CropImageOptions().apply {
+                                        activityTitle = pathTitle
+                                        cropShape = CropImageView.CropShape.RECTANGLE
+                                        guidelines = CropImageView.Guidelines.ON_TOUCH
+                                        aspectRatioX = 216
+                                        aspectRatioY = 216
+                                        maxCropResultWidth = 216
+                                        maxCropResultHeight = 216
+                                        fixAspectRatio = true
+                                        customOutputUri = cacheImageUri
+                                        outputCompressFormat = Bitmap.CompressFormat.PNG
+                                        outputCompressQuality = 100
+                                    }
+                                )
                             )
-                        }
-                    },
-                    supportingContent = { Text(pathSummary) },
-                    modifier = Modifier.fillMaxWidth(),
-                ) { Text(pathTitle) }
+                        },
+                        leadingContent = {
+                            bitmap?.let {
+                                Image(
+                                    it.asImageBitmap(),
+                                    contentDescription = null,
+                                    modifier = Modifier.size(36.dp),
+                                )
+                            }
+                        },
+                        supportingContent = { Text(pathSummary) },
+                        colors = itemColors(slot),
+                        headlineContent = { Text(pathTitle) },
+                    )
+                }
             }
         }
     }
