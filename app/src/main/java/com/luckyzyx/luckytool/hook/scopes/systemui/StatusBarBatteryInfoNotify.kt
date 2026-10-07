@@ -450,9 +450,11 @@ object StatusBarBatteryInfoNotify : YukiBaseHooker() {
             try {
                 val batteryManager = hostApplication.getSystemService(android.content.Context.BATTERY_SERVICE) as? android.os.BatteryManager
                 batteryManager?.let { bm ->
-                    val currentNow = bm.getIntProperty(android.os.BatteryManager.BATTERY_PROPERTY_CURRENT_NOW)
+                    // BATTERY_PROPERTY_CURRENT_NOW is in µA; ICharger returns mA — convert
+                    val currentNowUa = bm.getIntProperty(android.os.BatteryManager.BATTERY_PROPERTY_CURRENT_NOW)
+                    val currentNowMa = currentNowUa / 1000
                     val chargeCounter = bm.getIntProperty(android.os.BatteryManager.BATTERY_PROPERTY_CHARGE_COUNTER)
-                    properties.setProperty("battery_current_now", currentNow.toString())
+                    properties.setProperty("battery_current_now", currentNowMa.toString())
                     properties.setProperty("battery_charge_counter", chargeCounter.toString())
                 }
             } catch (e: Exception) {
