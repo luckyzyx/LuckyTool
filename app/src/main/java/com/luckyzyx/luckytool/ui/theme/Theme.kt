@@ -101,8 +101,39 @@ data class AppSettings(
 
 /** 主题偏好读取（对应 KernelSU `ThemeController` 的 SettingsRepository 读取） */
 object ThemeController {
+
+    /** 界面风格偏好键（与 KernelSU 一致：ui_mode，取值 "miuix" / "material"） */
+    const val KEY_UI_MODE = "ui_mode"
+
+    /** Miuix 外观线的 Monet 开关（与 KernelSU 一致：miuix_monet，默认关闭） */
+    const val KEY_MIUIX_MONET = "miuix_monet"
+
+    fun getUiMode(context: Context): UiMode = UiMode.fromValue(
+        context.getString(SettingsPrefs, KEY_UI_MODE, UiMode.DEFAULT_VALUE) ?: UiMode.DEFAULT_VALUE
+    )
+
+    /**
+     * 读取主题设置。
+     *
+     * 对齐 KernelSU `ThemeController.getAppSettings`：在 Miuix 外观线下，
+     * 「启用 Monet」开关会把当前明暗模式在 MONET_* 与普通模式之间双向改写
+     * （Miuix 的取色由 Monet 决定，Material 由 key_color / use_dynamic_color 决定）。
+     */
     fun getAppSettings(context: Context): AppSettings {
-        val colorMode = ColorMode.fromValue(context.getString(SettingsPrefs, "dark_theme", "0")?.toIntOrNull() ?: 0)
+        val uiMode = getUiMode(context)
+        val rawColorMode = ColorMode.fromValue(
+            context.getString(SettingsPrefs, "dark_theme", "0")?.toIntOrNull() ?: 0
+        )
+        val colorMode = if (uiMode == UiMode.Miuix) {
+            val miuixMonet = context.getBoolean(SettingsPrefs, KEY_MIUIX_MONET, false)
+            when {
+                !miuixMonet && rawColorMode.isMonet -> rawColorMode.toNonMonetMode()
+                miuixMonet && !rawColorMode.isMonet -> rawColorMode.toMonetMode()
+                else -> rawColorMode
+            }
+        } else {
+            rawColorMode
+        }
         val keyColor = context.getInt(SettingsPrefs, "key_color", 0)
         val paletteStyle = PaletteStyle.entries.firstOrNull {
             it.name == context.getString(SettingsPrefs, "palette_style", PaletteStyle.TonalSpot.name)

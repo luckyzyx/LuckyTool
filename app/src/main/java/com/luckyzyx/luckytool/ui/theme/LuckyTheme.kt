@@ -18,6 +18,9 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.unit.Density
 import androidx.core.view.WindowCompat
+import com.luckyzyx.luckytool.ui.shell.LocalEnableBlur
+import com.luckyzyx.luckytool.ui.shell.LocalEnableFloatingBottomBar
+import com.luckyzyx.luckytool.ui.shell.LocalEnableFloatingBottomBarBlur
 import com.luckyzyx.luckytool.ui.shell.LocalEnableNavigationBadge
 import com.luckyzyx.luckytool.ui.shell.LocalEnableSwipeDismiss
 import com.luckyzyx.luckytool.ui.shell.LocalModuleDescriptionMaxLines
@@ -69,7 +72,7 @@ fun ColorMode.resolveDarkTheme(): Boolean = when {
  * - 主题切换时全色板弹性动画过渡，并同步系统栏前景色（对齐 KernelSU MaterialKernelSUTheme）。
  */
 @Composable
-fun LuckyTheme(
+fun MaterialLuckyTheme(
     appSettings: AppSettings,
     content: @Composable () -> Unit,
 ) {
@@ -103,9 +106,24 @@ fun LuckyTheme(
     }
 }
 
+/**
+ * 主题分发（对齐 KernelSU `KernelSUTheme`）：按 [uiMode] 选择 Miuix 或 Material 外观线。
+ */
+@Composable
+fun LuckyTheme(
+    appSettings: AppSettings,
+    uiMode: UiMode = LocalUiMode.current,
+    content: @Composable () -> Unit,
+) {
+    when (uiMode) {
+        UiMode.Miuix -> MiuixLuckyTheme(appSettings = appSettings, content = content)
+        UiMode.Material -> MaterialLuckyTheme(appSettings = appSettings, content = content)
+    }
+}
+
 /** 深色切换时同步状态栏 / 导航栏前景色（对齐 KernelSU） */
 @Composable
-private fun themeWindowAppearance(darkTheme: Boolean) {
+internal fun themeWindowAppearance(darkTheme: Boolean) {
     val view = LocalView.current
     if (view.isInEditMode) return
     LaunchedEffect(darkTheme) {
@@ -134,6 +152,7 @@ fun LuckyAppTheme(content: @Composable () -> Unit) {
     val revision = ThemePrefs.revision
     val appSettings = remember(context, revision) { ThemeController.getAppSettings(context) }
     val shellSettings = remember(context, revision) { ShellSettingsController.get(context) }
+    val uiMode = remember(context, revision) { ThemeController.getUiMode(context) }
 
     val systemDensity = LocalDensity.current
     val density = remember(systemDensity, shellSettings.pageScale) {
@@ -142,12 +161,16 @@ fun LuckyAppTheme(content: @Composable () -> Unit) {
 
     CompositionLocalProvider(
         LocalDensity provides density,
+        LocalUiMode provides uiMode,
         LocalEnableNavigationBadge provides shellSettings.navigationBadge,
+        LocalEnableBlur provides shellSettings.enableBlur,
+        LocalEnableFloatingBottomBar provides shellSettings.enableFloatingBottomBar,
+        LocalEnableFloatingBottomBarBlur provides shellSettings.enableFloatingBottomBarBlur,
         LocalEnableSwipeDismiss provides shellSettings.swipeDismiss,
         LocalPagerInterceptionMode provides shellSettings.pagerInterceptionMode,
         LocalModuleDescriptionMaxLines provides shellSettings.moduleDescriptionMaxLines,
     ) {
-        LuckyTheme(appSettings = appSettings, content = content)
+        LuckyTheme(appSettings = appSettings, uiMode = uiMode, content = content)
     }
 }
 
