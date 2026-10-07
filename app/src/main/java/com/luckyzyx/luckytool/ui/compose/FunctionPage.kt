@@ -2,28 +2,25 @@ package com.luckyzyx.luckytool.ui.compose
 
 import android.content.Context
 import androidx.activity.compose.BackHandler
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowRight
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SearchBar
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.rememberTopAppBarState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -37,7 +34,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.navigation.NavDestination.Companion.hasRoute
@@ -53,10 +50,14 @@ import com.luckyzyx.luckytool.ui.components.preference.PrefScopeBuilder
 import com.luckyzyx.luckytool.ui.components.preference.ScopeScreen
 import com.luckyzyx.luckytool.ui.components.preference.ScrollTarget
 import com.luckyzyx.luckytool.ui.compose.components.EdgeSwipeDismiss
+import com.luckyzyx.luckytool.ui.compose.components.PrefGroup
+import com.luckyzyx.luckytool.ui.compose.components.PrefRow
+import com.luckyzyx.luckytool.ui.compose.components.material.ExpressiveList
+import com.luckyzyx.luckytool.ui.compose.components.material.ExpressivePageScaffold
+import com.luckyzyx.luckytool.ui.compose.components.material.SegmentedTextField
 import com.luckyzyx.luckytool.ui.compose.scopes.ScopePageRegistry
 import com.luckyzyx.luckytool.ui.compose.scopes.ScopePageSpec
 import com.luckyzyx.luckytool.ui.shell.LocalEnableSwipeDismiss
-import com.luckyzyx.luckytool.ui.shell.LocalModuleDescriptionMaxLines
 import com.luckyzyx.luckytool.utils.AppUtils
 import com.luckyzyx.luckytool.utils.PrefState
 import com.luckyzyx.luckytool.utils.RestartMenuUtils
@@ -184,6 +185,7 @@ private fun buildIndex(context: Context, spec: ScopePageSpec): List<PrefIndexIte
 private data class TreeRow(val pageKey: String, val title: String, val summary: String?)
 
 /** 功能树：49 页固定顺序（ScopePageRegistry.treeOrder），空索引页隐藏 */
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun FunctionTreeScreen(
     onOpenPage: (pageKey: String, title: String) -> Unit,
@@ -204,56 +206,57 @@ private fun FunctionTreeScreen(
         }
     }
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text(stringResource(R.string.nav_function)) },
-                actions = {
-                    IconButton(onClick = onOpenSearch) {
-                        Icon(
-                            painterResource(R.drawable.ic_baseline_search_24),
-                            contentDescription = stringResource(R.string.menu_search),
-                        )
-                    }
-                    IconButton(onClick = onShowRestartMenu) {
-                        Icon(
-                            painterResource(R.drawable.ic_baseline_refresh_24),
-                            contentDescription = stringResource(R.string.menu_reboot),
-                        )
-                    }
-                    IconButton(onClick = onShowVersionInfo) {
-                        Icon(
-                            painterResource(R.drawable.ic_baseline_extension_24),
-                            contentDescription = stringResource(R.string.menu_versioninfo),
-                        )
-                    }
-                },
-            )
+    val scrollBehavior =
+        TopAppBarDefaults.exitUntilCollapsedScrollBehavior(rememberTopAppBarState())
+    ExpressivePageScaffold(
+        title = stringResource(R.string.nav_function),
+        scrollBehavior = scrollBehavior,
+        actions = {
+            IconButton(onClick = onOpenSearch) {
+                Icon(
+                    painterResource(R.drawable.ic_baseline_search_24),
+                    contentDescription = stringResource(R.string.menu_search),
+                )
+            }
+            IconButton(onClick = onShowRestartMenu) {
+                Icon(
+                    painterResource(R.drawable.ic_baseline_refresh_24),
+                    contentDescription = stringResource(R.string.menu_reboot),
+                )
+            }
+            IconButton(onClick = onShowVersionInfo) {
+                Icon(
+                    painterResource(R.drawable.ic_baseline_extension_24),
+                    contentDescription = stringResource(R.string.menu_versioninfo),
+                )
+            }
         },
     ) { padding ->
-        LazyColumn(
+        ExpressiveList(
+            scrollBehavior = scrollBehavior,
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding),
         ) {
-            items(rows, key = { it.pageKey }) { row ->
-                ListItem(
-                    headlineContent = { Text(row.title) },
-                    supportingContent = {
-                        row.summary?.let {
-                            Text(
-                                it,
-                                maxLines = LocalModuleDescriptionMaxLines.current,
-                                overflow = TextOverflow.Ellipsis,
+            // 整树合并为一张分段卡片（对齐主题页分组卡片），条目顺序与原 ListItem 完全一致
+            item(key = "function_tree") {
+                PrefGroup {
+                    rows.forEach { row ->
+                        item(key = row.pageKey) {
+                            PrefRow(
+                                title = row.title,
+                                summary = row.summary,
+                                trailing = {
+                                    Icon(
+                                        Icons.AutoMirrored.Rounded.KeyboardArrowRight,
+                                        contentDescription = null,
+                                    )
+                                },
+                                onClick = { onOpenPage(row.pageKey, row.title) },
                             )
                         }
-                    },
-                    trailingContent = {
-                        Icon(painterResource(R.drawable.ic_baseline_chevron_right_24), contentDescription = null)
-                    },
-                    modifier = Modifier.clickable { onOpenPage(row.pageKey, row.title) },
-                )
-                HorizontalDivider()
+                    }
+                }
             }
         }
     }
@@ -285,92 +288,95 @@ private fun FunctionSearchScreen(onBack: () -> Unit, onOpen: (ScopeRoute) -> Uni
         }
     }
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text(stringResource(R.string.menu_search)) },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(
-                            painterResource(R.drawable.ic_baseline_arrow_back_24),
-                            contentDescription = stringResource(R.string.back),
-                        )
-                    }
-                },
-            )
-        },
+    val scrollBehavior =
+        TopAppBarDefaults.exitUntilCollapsedScrollBehavior(rememberTopAppBarState())
+    ExpressivePageScaffold(
+        title = stringResource(R.string.menu_search),
+        onBack = onBack,
+        scrollBehavior = scrollBehavior,
     ) { padding ->
-        Column(
+        ExpressiveList(
+            scrollBehavior = scrollBehavior,
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding),
         ) {
-            SearchBar(
-                query = query,
-                onQueryChange = { query = it },
-                onSearch = {},
-                active = true,
-                onActiveChange = {},
-                placeholder = { Text(stringResource(R.string.menu_search)) },
-                leadingIcon = {
-                    Icon(painterResource(R.drawable.ic_baseline_search_24), contentDescription = null)
-                },
-                trailingIcon = if (query.isNotEmpty()) {
-                    {
-                        IconButton(onClick = { query = "" }) {
-                            Icon(painterResource(R.drawable.ic_baseline_close_24), contentDescription = stringResource(R.string.clear))
+            item(key = "search_field") {
+                PrefGroup {
+                    item {
+                        SegmentedTextField(
+                            value = query,
+                            onValueChange = { query = it },
+                            placeholder = { Text(stringResource(R.string.menu_search)) },
+                            singleLine = true,
+                            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
+                            leadingContent = {
+                                Icon(
+                                    painterResource(R.drawable.ic_baseline_search_24),
+                                    contentDescription = null,
+                                )
+                            },
+                            trailingContent = if (query.isNotEmpty()) {
+                                {
+                                    IconButton(onClick = { query = "" }) {
+                                        Icon(
+                                            painterResource(R.drawable.ic_baseline_close_24),
+                                            contentDescription = stringResource(R.string.clear),
+                                        )
+                                    }
+                                }
+                            } else {
+                                null
+                            },
+                        )
+                    }
+                }
+            }
+            filtered.forEach { entry ->
+                item(key = "result_${entry.pageKey}/${entry.item.key}") {
+                    PrefGroup {
+                        item {
+                            PrefRow(
+                                title = entry.item.title ?: entry.item.key,
+                                summary = buildString {
+                                    if (!entry.item.summary.isNullOrBlank()) {
+                                        append(entry.item.summary)
+                                        append('\n')
+                                    }
+                                    append(entry.pageTitle)
+                                },
+                                trailing = {
+                                    Icon(
+                                        Icons.AutoMirrored.Rounded.KeyboardArrowRight,
+                                        contentDescription = null,
+                                    )
+                                },
+                                onClick = {
+                                    // page DSL 命中 → 跳目标页；普通偏好命中 → 本页滚动定位
+                                    val targetSpec = entry.item.pageTarget
+                                        ?.let { ScopePageRegistry.pageTargetMap[it] }
+                                        ?.let { ScopePageRegistry[it] }
+                                    if (targetSpec != null) {
+                                        onOpen(
+                                            ScopeRoute(
+                                                targetSpec.pageKey,
+                                                pageTitle(context, targetSpec)
+                                            )
+                                        )
+                                    } else {
+                                        onOpen(
+                                            ScopeRoute(
+                                                entry.pageKey,
+                                                entry.pageTitle,
+                                                entry.item.key,
+                                                entry.item.slot,
+                                            )
+                                        )
+                                    }
+                                },
+                            )
                         }
                     }
-                } else {
-                    null
-                },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 8.dp),
-            ) {}
-            LazyColumn(modifier = Modifier.fillMaxSize()) {
-                items(filtered, key = { "${it.pageKey}/${it.item.key}" }) { entry ->
-                    ListItem(
-                        headlineContent = { Text(entry.item.title ?: entry.item.key) },
-                        supportingContent = {
-                            Column {
-                                if (!entry.item.summary.isNullOrBlank()) {
-                                    Text(
-                                        entry.item.summary,
-                                        maxLines = LocalModuleDescriptionMaxLines.current,
-                                        overflow = TextOverflow.Ellipsis,
-                                    )
-                                }
-                                Text(
-                                    entry.pageTitle,
-                                    style = MaterialTheme.typography.labelMedium,
-                                    color = MaterialTheme.colorScheme.primary,
-                                )
-                            }
-                        },
-                        trailingContent = {
-                            Icon(painterResource(R.drawable.ic_baseline_chevron_right_24), contentDescription = null)
-                        },
-                        modifier = Modifier.clickable {
-                            // page DSL 命中 → 跳目标页；普通偏好命中 → 本页滚动定位
-                            val targetSpec = entry.item.pageTarget
-                                ?.let { ScopePageRegistry.pageTargetMap[it] }
-                                ?.let { ScopePageRegistry[it] }
-                            if (targetSpec != null) {
-                                onOpen(ScopeRoute(targetSpec.pageKey, pageTitle(context, targetSpec)))
-                            } else {
-                                onOpen(
-                                    ScopeRoute(
-                                        entry.pageKey,
-                                        entry.pageTitle,
-                                        entry.item.key,
-                                        entry.item.slot,
-                                    )
-                                )
-                            }
-                        },
-                    )
-                    HorizontalDivider()
                 }
             }
         }
@@ -378,6 +384,7 @@ private fun FunctionSearchScreen(onBack: () -> Unit, onOpen: (ScopeRoute) -> Uni
 }
 
 /** 作用域页宿主：类型安全 ScopeRoute → 任意已注册 ScopePageSpec */
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun ScopePageHost(
     activity: MainActivity,
@@ -389,33 +396,23 @@ private fun ScopePageHost(
     val spec = ScopePageRegistry[route.pageKey]
     var showRestartScope by remember { mutableStateOf(false) }
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = {
-                    Text(route.title.ifBlank { spec?.let { pageTitle(context, it) } ?: route.pageKey })
-                },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(
-                            painterResource(R.drawable.ic_baseline_arrow_back_24),
-                            contentDescription = stringResource(R.string.back),
-                        )
-                    }
-                },
-                actions = {
-                    if (spec?.restartEnabled == true) {
-                        IconButton(
-                            onClick = { showRestartScope = true }
-                        ) {
-                            Icon(
-                                painterResource(R.drawable.ic_baseline_refresh_24),
-                                contentDescription = stringResource(R.string.menu_reboot),
-                            )
-                        }
-                    }
-                },
-            )
+    val scrollBehavior =
+        TopAppBarDefaults.exitUntilCollapsedScrollBehavior(rememberTopAppBarState())
+    ExpressivePageScaffold(
+        title = route.title.ifBlank { spec?.let { pageTitle(context, it) } ?: route.pageKey },
+        onBack = onBack,
+        scrollBehavior = scrollBehavior,
+        actions = {
+            if (spec?.restartEnabled == true) {
+                IconButton(
+                    onClick = { showRestartScope = true }
+                ) {
+                    Icon(
+                        painterResource(R.drawable.ic_baseline_refresh_24),
+                        contentDescription = stringResource(R.string.menu_reboot),
+                    )
+                }
+            }
         },
     ) { padding ->
         if (spec == null) {
@@ -427,28 +424,37 @@ private fun ScopePageHost(
             ) {
                 Text("Unknown page: ${route.pageKey}", color = MaterialTheme.colorScheme.error)
             }
-            return@Scaffold
+        } else {
+            val state = remember(spec) { PrefState.of(context.applicationContext, spec.prefsName) }
+            ExpressiveList(
+                scrollBehavior = scrollBehavior,
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(padding),
+                // 作用域页内容自带列表与内边距，此处不再叠加，避免双重缩进与卡片背景内缩
+                horizontalPadding = 0.dp,
+            ) {
+                item(key = "scope_content") {
+                    ScopeScreen(
+                        state = state,
+                        modifier = Modifier.fillMaxSize(),
+                        sendValue = { key, value -> context.sendPrefsValue(spec.packName, key, value) },
+                        scrollTarget = if (route.scrollKey.isNotBlank() && route.scrollPosition >= 0) {
+                            ScrollTarget(route.scrollKey, route.scrollPosition)
+                        } else {
+                            null
+                        },
+                        onNavigate = { target, title ->
+                            ScopePageRegistry.pageTargetMap[target]?.let { onNavigate(it, title) }
+                        },
+                        onRestart = if (spec.restartEnabled) ({ activity.restart() }) else null,
+                        onRefresh = spec.onRefresh,
+                        fullContent = spec.fullContent,
+                        content = spec.content,
+                    )
+                }
+            }
         }
-        val state = remember(spec) { PrefState.of(context.applicationContext, spec.prefsName) }
-        ScopeScreen(
-            state = state,
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding),
-            sendValue = { key, value -> context.sendPrefsValue(spec.packName, key, value) },
-            scrollTarget = if (route.scrollKey.isNotBlank() && route.scrollPosition >= 0) {
-                ScrollTarget(route.scrollKey, route.scrollPosition)
-            } else {
-                null
-            },
-            onNavigate = { target, title ->
-                ScopePageRegistry.pageTargetMap[target]?.let { onNavigate(it, title) }
-            },
-            onRestart = if (spec.restartEnabled) ({ activity.restart() }) else null,
-            onRefresh = spec.onRefresh,
-            fullContent = spec.fullContent,
-            content = spec.content,
-        )
     }
 
     if (showRestartScope) {

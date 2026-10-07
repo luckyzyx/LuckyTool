@@ -4,65 +4,38 @@ import android.app.KeyguardManager
 import android.content.ComponentName
 import android.content.Context
 import android.net.Uri
-import android.os.Build
 import android.util.ArraySet
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.horizontalScroll
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.selection.selectable
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.RadioButton
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.rememberTopAppBarState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.drawBehind
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.luckyzyx.luckytool.R
 import com.luckyzyx.luckytool.ui.activity.MainActivity
-import com.materialkolor.PaletteStyle
-import com.materialkolor.dynamiccolor.ColorSpec
-import com.luckyzyx.luckytool.ui.application.MyApplication
 import com.luckyzyx.luckytool.ui.compose.components.PrefCard
 import com.luckyzyx.luckytool.ui.compose.components.PrefCategoryHeader
-import com.luckyzyx.luckytool.ui.compose.components.PrefSwitchCard
-import com.luckyzyx.luckytool.ui.compose.components.PrefValueCard
-import com.luckyzyx.luckytool.ui.theme.keyColorOptions
+import com.luckyzyx.luckytool.ui.compose.components.PrefGroup
+import com.luckyzyx.luckytool.ui.compose.components.PrefRow
+import com.luckyzyx.luckytool.ui.compose.components.PrefSwitchRow
+import com.luckyzyx.luckytool.ui.compose.components.PrefValueRow
+import com.luckyzyx.luckytool.ui.compose.components.material.ExpressiveList
+import com.luckyzyx.luckytool.ui.compose.components.material.ExpressivePageScaffold
 import com.luckyzyx.luckytool.utils.AppUtils
 import com.luckyzyx.luckytool.utils.BiometricUtils
 import com.luckyzyx.luckytool.utils.DonateUtils
@@ -104,7 +77,6 @@ fun SettingPage(activity: MainActivity, onOpenTheme: () -> Unit = {}) {
     val context = LocalContext.current
     val settings = remember { PrefState.of(context, SettingsPrefs) }
     val zh = remember(context) { isZh(context) }
-    val reload = { (activity.application as MyApplication).reloadAllActivities() }
     var pendingRestoreJson by remember { mutableStateOf<JSONObject?>(null) }
 
     // 备份/恢复（旧 registerForActivityResult）
@@ -136,170 +108,190 @@ fun SettingPage(activity: MainActivity, onOpenTheme: () -> Unit = {}) {
     var showClearDialog by remember { mutableStateOf(false) }
     var showFeedbackDialog by remember { mutableStateOf(false) }
 
-    Scaffold(
-        topBar = { TopAppBar(title = { Text(stringResource(R.string.nav_setting)) }) }
+    val scrollBehavior =
+        TopAppBarDefaults.exitUntilCollapsedScrollBehavior(rememberTopAppBarState())
+    ExpressivePageScaffold(
+        title = stringResource(R.string.nav_setting),
+        scrollBehavior = scrollBehavior,
     ) { padding ->
-        LazyColumn(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding),
-            contentPadding = PaddingValues(bottom = 16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
+        ExpressiveList(
+            scrollBehavior = scrollBehavior,
+            modifier = Modifier.padding(padding),
         ) {
             // ---------------- 主题 ----------------
             // 主题模式 / 主题色 / 调色风格 / 色彩规格 / 动态取色 全部迁至独立主题页（对齐 KernelSU colorpalette）
             item(key = "theme_header") {
                 PrefCategoryHeader(stringResource(R.string.theme_title))
             }
-            item(key = "theme_entry") {
-                PrefValueCard(
-                    title = stringResource(R.string.theme_palette),
-                    value = settings.getString("palette_style", "TonalSpot") ?: "TonalSpot",
-                    summary = stringResource(R.string.theme_palette_summary),
-                    onClick = onOpenTheme,
-                )
+            item(key = "theme_group") {
+                PrefGroup {
+                    item {
+                        PrefValueRow(
+                            title = stringResource(R.string.theme_palette),
+                            value = settings.getString("palette_style", "TonalSpot")
+                                ?: "TonalSpot",
+                            summary = stringResource(R.string.theme_palette_summary),
+                            onClick = onOpenTheme,
+                        )
+                    }
+                }
             }
 
             // ---------------- 其他 ----------------
             item(key = "other_header") {
                 PrefCategoryHeader(stringResource(R.string.other_settings))
             }
-            item(key = "auto_check_update") {
-                SettingsSwitch(
-                    settings = settings,
-                    key = "auto_check_update",
-                    title = stringResource(R.string.auto_check_update),
-                    summary = stringResource(R.string.auto_check_update_summary),
-                    default = true,
-                )
-            }
+            // 生物识别开关自带 remember 状态，单独成组以便条件显隐过渡独立计算
             if (deviceSecure) {
-                item(key = "enable_biometric_unlock_verification") {
+                item(key = "biometric_group") {
                     var checked by remember {
                         mutableStateOf(
                             settings.getBoolean("enable_biometric_unlock_verification", false)
                         )
                     }
-                    PrefSwitchCard(
-                        title = stringResource(R.string.enable_biometric_unlock_verification),
-                        checked = checked,
-                        onCheckedChange = { enable ->
-                            if (enable) {
-                                // 旧行为：验证通过才真正写入
-                                BiometricUtils.showBiometricPrompt(activity, onSucceed = {
-                                    settings.set("enable_biometric_unlock_verification", true)
-                                    checked = true
-                                })
-                            } else {
-                                settings.set("enable_biometric_unlock_verification", false)
-                                checked = false
-                            }
-                        },
-                    )
+                    PrefGroup {
+                        item {
+                            PrefSwitchRow(
+                                title = stringResource(R.string.enable_biometric_unlock_verification),
+                                checked = checked,
+                                onCheckedChange = { enable ->
+                                    if (enable) {
+                                        // 旧行为：验证通过才真正写入
+                                        BiometricUtils.showBiometricPrompt(activity, onSucceed = {
+                                            settings.set("enable_biometric_unlock_verification", true)
+                                            checked = true
+                                        })
+                                    } else {
+                                        settings.set("enable_biometric_unlock_verification", false)
+                                        checked = false
+                                    }
+                                },
+                            )
+                        }
+                    }
                 }
             }
-            item(key = "tile_auto_start") {
-                SettingsSwitch(
-                    settings = settings,
-                    key = "tile_auto_start",
-                    title = stringResource(R.string.tile_auto_start),
-                    summary = stringResource(R.string.tile_auto_start_summary),
-                    default = true,
-                )
-            }
-            item(key = "hide_function_page_icon") {
-                SettingsSwitch(
-                    settings = settings,
-                    key = "hide_function_page_icon",
-                    title = stringResource(R.string.hide_function_page_icon),
-                    onChanged = { activity.restart() },
-                )
-            }
-            item(key = "hide_desktop_module_icon") {
-                SettingsSwitch(
-                    settings = settings,
-                    key = "hide_desktop_module_icon",
-                    title = stringResource(R.string.hide_desktop_module_icon),
-                    summary = stringResource(R.string.hide_desktop_module_icon_summary),
-                    onChanged = { value ->
-                        AppUtils(context).setComponentDisabled(
-                            ComponentName(context.packageName, "${context.packageName}.Hide"),
-                            value,
+            item(key = "other_group") {
+                PrefGroup {
+                    item {
+                        SettingsSwitch(
+                            settings = settings,
+                            key = "auto_check_update",
+                            title = stringResource(R.string.auto_check_update),
+                            summary = stringResource(R.string.auto_check_update_summary),
+                            default = true,
                         )
-                    },
-                )
+                    }
+                    item {
+                        SettingsSwitch(
+                            settings = settings,
+                            key = "tile_auto_start",
+                            title = stringResource(R.string.tile_auto_start),
+                            summary = stringResource(R.string.tile_auto_start_summary),
+                            default = true,
+                        )
+                    }
+                    item {
+                        SettingsSwitch(
+                            settings = settings,
+                            key = "hide_function_page_icon",
+                            title = stringResource(R.string.hide_function_page_icon),
+                            onChanged = { activity.restart() },
+                        )
+                    }
+                    item {
+                        SettingsSwitch(
+                            settings = settings,
+                            key = "hide_desktop_module_icon",
+                            title = stringResource(R.string.hide_desktop_module_icon),
+                            summary = stringResource(R.string.hide_desktop_module_icon_summary),
+                            onChanged = { value ->
+                                AppUtils(context).setComponentDisabled(
+                                    ComponentName(context.packageName, "${context.packageName}.Hide"),
+                                    value,
+                                )
+                            },
+                        )
+                    }
+                }
             }
 
             // ---------------- 备份/恢复/清除 ----------------
             item(key = "backup_header") {
                 PrefCategoryHeader(stringResource(R.string.backup_restore_clear))
             }
-            item(key = "backup_data") {
-                PrefCard(
-                    title = stringResource(R.string.backup_data),
-                    onClick = {
-                        FileUtils.checkDownloadDir(context, "LuckyTool").apply {
-                            if (isFile) delete()
-                            if (!exists()) mkdirs()
-                        }
-                        val fileName =
-                            "LuckyTool_" + formatDate("yyyyMMdd_HHmmss") + "_backup.json"
-                        if (IntentUtils(activity).checkCreateDocument()) {
-                            backupLauncher.launch(fileName)
-                        } else {
-                            context.showToast("Intent Create Document Error!")
-                        }
-                    },
-                )
-            }
-            item(key = "restore_data") {
-                PrefCard(
-                    title = stringResource(R.string.restore_data),
-                    onClick = {
-                        FileUtils.checkDownloadDir(context, "LuckyTool").apply {
-                            if (isFile) delete()
-                            if (!exists()) mkdirs()
-                        }
-                        restoreLauncher.launch("application/json")
-                    },
-                )
-            }
-            item(key = "clear_all_data") {
-                PrefCard(
-                    title = stringResource(R.string.clear_all_data),
-                    summary = stringResource(R.string.clear_all_data_summary),
-                    onClick = { showClearDialog = true },
-                )
+            item(key = "backup_group") {
+                PrefGroup {
+                    item {
+                        PrefRow(
+                            title = stringResource(R.string.backup_data),
+                            onClick = {
+                                FileUtils.checkDownloadDir(context, "LuckyTool").apply {
+                                    if (isFile) delete()
+                                    if (!exists()) mkdirs()
+                                }
+                                val fileName =
+                                    "LuckyTool_" + formatDate("yyyyMMdd_HHmmss") + "_backup.json"
+                                if (IntentUtils(activity).checkCreateDocument()) {
+                                    backupLauncher.launch(fileName)
+                                } else {
+                                    context.showToast("Intent Create Document Error!")
+                                }
+                            },
+                        )
+                    }
+                    item {
+                        PrefRow(
+                            title = stringResource(R.string.restore_data),
+                            onClick = {
+                                FileUtils.checkDownloadDir(context, "LuckyTool").apply {
+                                    if (isFile) delete()
+                                    if (!exists()) mkdirs()
+                                }
+                                restoreLauncher.launch("application/json")
+                            },
+                        )
+                    }
+                    item {
+                        PrefRow(
+                            title = stringResource(R.string.clear_all_data),
+                            summary = stringResource(R.string.clear_all_data_summary),
+                            onClick = { showClearDialog = true },
+                        )
+                    }
+                }
             }
 
             // ---------------- 关于 ----------------
             item(key = "about_header") {
                 PrefCategoryHeader(stringResource(R.string.about_title))
             }
-            item(key = "donate") {
-                PrefCard(
-                    title = stringResource(R.string.donate),
-                    summary = stringResource(R.string.donate_summary),
-                    onClick = {
-                        showDonateList = true
-                    },
-                )
-            }
-            item(key = "feedback_download") {
-                PrefCard(
-                    title = stringResource(R.string.feedback_download),
-                    summary = stringResource(R.string.feedback_download_summary),
-                    onClick = { showFeedbackDialog = true },
-                )
-            }
-            item(key = "participate_translation") {
-                PrefCard(
-                    title = stringResource(R.string.participate_translation),
-                    summary = stringResource(R.string.participate_translation_summary),
-                    onClick = {
-                        context.openUrl("https://github.com/luckyzyx/LuckyTool-Localization")
-                    },
-                )
+            item(key = "about_group") {
+                PrefGroup {
+                    item {
+                        PrefRow(
+                            title = stringResource(R.string.donate),
+                            summary = stringResource(R.string.donate_summary),
+                            onClick = { showDonateList = true },
+                        )
+                    }
+                    item {
+                        PrefRow(
+                            title = stringResource(R.string.feedback_download),
+                            summary = stringResource(R.string.feedback_download_summary),
+                            onClick = { showFeedbackDialog = true },
+                        )
+                    }
+                    item {
+                        PrefRow(
+                            title = stringResource(R.string.participate_translation),
+                            summary = stringResource(R.string.participate_translation_summary),
+                            onClick = {
+                                context.openUrl("https://github.com/luckyzyx/LuckyTool-Localization")
+                            },
+                        )
+                    }
+                }
             }
         }
     }
@@ -454,7 +446,7 @@ private fun SettingsSwitch(
 ) {
     if (!visible) return
     var checked by remember { mutableStateOf(settings.getBoolean(key, default)) }
-    PrefSwitchCard(
+    PrefSwitchRow(
         title = title,
         summary = summary,
         checked = checked,

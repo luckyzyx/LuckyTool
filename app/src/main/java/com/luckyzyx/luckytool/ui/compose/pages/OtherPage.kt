@@ -10,16 +10,12 @@ import androidx.collection.ArrayMap
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.text.KeyboardOptions
@@ -30,11 +26,11 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.RadioButton
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.rememberTopAppBarState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -61,7 +57,10 @@ import com.luckyzyx.luckytool.service.AdbService
 import com.luckyzyx.luckytool.service.TilesService
 import com.luckyzyx.luckytool.ui.activity.MainActivity
 import com.luckyzyx.luckytool.ui.components.AppPickerDialog
-import com.luckyzyx.luckytool.ui.compose.components.PrefCard
+import com.luckyzyx.luckytool.ui.compose.components.PrefRow
+import com.luckyzyx.luckytool.ui.compose.components.prefGroup
+import com.luckyzyx.luckytool.ui.compose.components.material.ExpressiveList
+import com.luckyzyx.luckytool.ui.compose.components.material.ExpressivePageScaffold
 import com.luckyzyx.luckytool.utils.A13
 import com.luckyzyx.luckytool.utils.GlobalKeyValue.keyTouchSamplingRateLevel
 import com.luckyzyx.luckytool.utils.OtherPrefs
@@ -98,92 +97,91 @@ fun OtherPage(activity: MainActivity) {
     var showTouchDialog by remember { mutableStateOf(false) }
     var showAdbDialog by remember { mutableStateOf(false) }
 
+    val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior(rememberTopAppBarState())
+
     // 旧 onResume：刷新 tiles / adb 控制器
     LifecycleEventEffect(Lifecycle.Event.ON_RESUME) {
         TilesService.get(activity) { tileController = it }
         AdbService.get(activity) { adbController = it }
     }
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text(stringResource(R.string.nav_other)) },
-                actions = {
-                    IconButton(onClick = { showOptimizePicker = true }) {
-                        Icon(
-                            painterResource(R.drawable.ic_baseline_extension_24),
-                            contentDescription = "优化App",
-                        )
-                    }
-                },
-            )
-        }
-    ) { padding ->
-        LazyColumn(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding),
-            contentPadding = PaddingValues(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
-        ) {
-            item(key = "quick_entry") {
-                PrefCard(
-                    title = stringResource(R.string.quick_entry),
-                    summary = stringResource(R.string.quick_entry_summary),
-                    onClick = {
-                        activity.requestFunctionNavigation(
-                            "quick_entry", context.getString(R.string.quick_entry)
-                        )
-                    },
+    ExpressivePageScaffold(
+        title = stringResource(R.string.nav_other),
+        scrollBehavior = scrollBehavior,
+        actions = {
+            IconButton(onClick = { showOptimizePicker = true }) {
+                Icon(
+                    painterResource(R.drawable.ic_baseline_extension_24),
+                    contentDescription = "优化App",
                 )
             }
-            @SuppressLint("NewApi")
-            if (SDK >= A13) {
-                item(key = "tile_list") {
-                    PrefCard(
-                        title = stringResource(R.string.tile_list),
-                        summary = stringResource(R.string.tile_list_summary),
+        },
+    ) { padding ->
+        ExpressiveList(
+            scrollBehavior = scrollBehavior,
+            modifier = Modifier.padding(padding),
+        ) {
+            // 全部入口合并为一张分段卡片（KernelSU 主题页外观）
+            prefGroup(key = "other_entries") {
+                item(key = "quick_entry") {
+                    PrefRow(
+                        title = stringResource(R.string.quick_entry),
+                        summary = stringResource(R.string.quick_entry_summary),
                         onClick = {
-                            context.showToast(context.getString(R.string.tile_list_click_tips))
-                            showTileDialog = true
+                            activity.requestFunctionNavigation(
+                                "quick_entry", context.getString(R.string.quick_entry)
+                            )
                         },
                     )
                 }
-            }
-            item(key = "shortcut") {
-                PrefCard(
-                    title = stringResource(R.string.set_module_shortcuts),
-                    summary = stringResource(R.string.set_module_shortcuts_summary),
-                    onClick = { showShortcutDialog = true },
-                )
-            }
-            item(key = "fps") {
-                PrefCard(
-                    title = stringResource(R.string.fps_title),
-                    summary = stringResource(R.string.fps_summary),
-                    onClick = {
-                        activity.requestFunctionNavigation(
-                            "force_fps", context.getString(R.string.fps_title)
+                @SuppressLint("NewApi")
+                if (SDK >= A13) {
+                    item(key = "tile_list") {
+                        PrefRow(
+                            title = stringResource(R.string.tile_list),
+                            summary = stringResource(R.string.tile_list_summary),
+                            onClick = {
+                                context.showToast(context.getString(R.string.tile_list_click_tips))
+                                showTileDialog = true
+                            },
                         )
-                    },
-                )
-            }
-            if (tileController?.checkTouchMode() == true) {
-                item(key = "touch_panel") {
-                    PrefCard(
-                        title = stringResource(R.string.set_touch_sampling_rate_tile_level),
-                        summary = stringResource(R.string.set_touch_sampling_rate_tile_level_summary),
-                        onClick = { showTouchDialog = true },
+                    }
+                }
+                item(key = "shortcut") {
+                    PrefRow(
+                        title = stringResource(R.string.set_module_shortcuts),
+                        summary = stringResource(R.string.set_module_shortcuts_summary),
+                        onClick = { showShortcutDialog = true },
                     )
                 }
-            }
-            if (adbController != null) {
-                item(key = "remote_adb_debug") {
-                    PrefCard(
-                        title = stringResource(R.string.remote_adb_debug_title),
-                        summary = stringResource(R.string.remote_adb_debug_summary),
-                        onClick = { showAdbDialog = true },
+                item(key = "fps") {
+                    PrefRow(
+                        title = stringResource(R.string.fps_title),
+                        summary = stringResource(R.string.fps_summary),
+                        onClick = {
+                            activity.requestFunctionNavigation(
+                                "force_fps", context.getString(R.string.fps_title)
+                            )
+                        },
                     )
+                }
+                if (tileController?.checkTouchMode() == true) {
+                    item(key = "touch_panel") {
+                        PrefRow(
+                            title = stringResource(R.string.set_touch_sampling_rate_tile_level),
+                            summary = stringResource(R.string.set_touch_sampling_rate_tile_level_summary),
+                            onClick = { showTouchDialog = true },
+                        )
+                    }
+                }
+                if (adbController != null) {
+                    item(key = "remote_adb_debug") {
+                        PrefRow(
+                            title = stringResource(R.string.remote_adb_debug_title),
+                            summary = stringResource(R.string.remote_adb_debug_summary),
+                            onClick = { showAdbDialog = true },
+                        )
+                    }
                 }
             }
         }

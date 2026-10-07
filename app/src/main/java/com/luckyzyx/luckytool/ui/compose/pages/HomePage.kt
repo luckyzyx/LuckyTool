@@ -3,26 +3,21 @@ package com.luckyzyx.luckytool.ui.compose.pages
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.rememberTopAppBarState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -31,6 +26,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
@@ -44,7 +40,11 @@ import com.luckyzyx.luckytool.BuildConfig
 import com.luckyzyx.luckytool.R
 import com.luckyzyx.luckytool.service.GlobalFuncService
 import com.luckyzyx.luckytool.ui.activity.MainActivity
-import com.luckyzyx.luckytool.ui.compose.components.PrefCard
+import com.luckyzyx.luckytool.ui.compose.components.PrefRow
+import com.luckyzyx.luckytool.ui.compose.components.prefGroup
+import com.luckyzyx.luckytool.ui.compose.components.material.ExpressiveList
+import com.luckyzyx.luckytool.ui.compose.components.material.ExpressivePageScaffold
+import com.luckyzyx.luckytool.ui.compose.components.material.TonalCard
 import com.luckyzyx.luckytool.ui.service.XposedServiceBridge
 import com.luckyzyx.luckytool.ui.shell.ShellBadgeState
 import com.luckyzyx.luckytool.utils.DeviceUtils
@@ -70,6 +70,9 @@ import java.io.File
 /**
  * 主页（旧 HomeFragment 的 Compose 等价实现）。
  * 状态卡 / 更新卡 / 系统信息卡 / 捐赠卡 / 授权提示与旧实现逐项对齐。
+ *
+ * 外观对齐 KernelSU 主题页（ThemeScreen）：可折叠大标题 AppBar +
+ * surfaceContainer 底色 + 16dp 内容边距 + surfaceBright 分段卡片。
  */
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
@@ -78,6 +81,7 @@ fun HomePage(activity: MainActivity) {
     val settings = remember { PrefState.of(context, SettingsPrefs) }
     val zh = remember(context) { isZh(context) }
     val isDev = remember { settings.getBoolean("hidden_function", false) }
+    val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior(rememberTopAppBarState())
 
     var moduleActive by remember { mutableStateOf(XposedServiceBridge.isModuleActive) }
     var systemInfo by remember { mutableStateOf<String?>(null) }
@@ -137,60 +141,54 @@ fun HomePage(activity: MainActivity) {
         }
     }
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text(stringResource(R.string.nav_home)) },
-                actions = {
-                    IconButton(onClick = { showRestartMenu = true }) {
-                        Icon(
-                            painterResource(R.drawable.ic_baseline_refresh_24),
-                            contentDescription = stringResource(R.string.menu_reboot),
-                        )
-                    }
-                    IconButton(onClick = {
-                        aboutText = if (settings.getBoolean("hidden_function", false)) {
-                            "忆清鸣、luckyzyx T"
-                        } else {
-                            "忆清鸣、luckyzyx"
-                        }
-                        showAbout = true
-                    }) {
-                        Icon(
-                            painterResource(R.drawable.ic_baseline_info_24),
-                            contentDescription = stringResource(R.string.menu_settings),
-                        )
-                    }
-                },
-            )
-        }
+    ExpressivePageScaffold(
+        title = stringResource(R.string.nav_home),
+        scrollBehavior = scrollBehavior,
+        actions = {
+            IconButton(onClick = { showRestartMenu = true }) {
+                Icon(
+                    painterResource(R.drawable.ic_baseline_refresh_24),
+                    contentDescription = stringResource(R.string.menu_reboot),
+                )
+            }
+            IconButton(onClick = {
+                aboutText = if (settings.getBoolean("hidden_function", false)) {
+                    "忆清鸣、luckyzyx T"
+                } else {
+                    "忆清鸣、luckyzyx"
+                }
+                showAbout = true
+            }) {
+                Icon(
+                    painterResource(R.drawable.ic_baseline_info_24),
+                    contentDescription = stringResource(R.string.menu_settings),
+                )
+            }
+        },
     ) { padding ->
-        LazyColumn(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding),
-            contentPadding = PaddingValues(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
+        ExpressiveList(
+            scrollBehavior = scrollBehavior,
+            modifier = Modifier.padding(padding),
         ) {
             item(key = "status_card") {
-                Card(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .combinedClickable(
-                            onClick = {},
-                            onLongClick = { statusCardClick?.invoke() },
-                        ),
-                    colors = CardDefaults.cardColors(
-                        containerColor = if (moduleActive) {
-                            MaterialTheme.colorScheme.primary
-                        } else {
-                            Color.Gray
-                        },
-                    ),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 12.dp),
+                // 状态卡沿用主色/灰色实心配色（保留原强调外观），仅外壳换成 Expressive 圆角卡片
+                TonalCard(
+                    modifier = Modifier.clip(MaterialTheme.shapes.large),
+                    containerColor = if (moduleActive) {
+                        MaterialTheme.colorScheme.primary
+                    } else {
+                        Color.Gray
+                    },
+                    contentColor = Color.White,
                 ) {
                     Row(
-                        modifier = Modifier.padding(16.dp),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .combinedClickable(
+                                onClick = {},
+                                onLongClick = { statusCardClick?.invoke() },
+                            )
+                            .padding(16.dp),
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
                         Icon(
@@ -242,35 +240,38 @@ fun HomePage(activity: MainActivity) {
                     }
                 }
             }
-            updateInfo?.let { info ->
-                item(key = "update_card") {
-                    PrefCard(
-                        title = info,
-                        onClick = { updateClick?.invoke() },
+            // 更新卡 / 系统信息卡 / 捐赠卡合并为一张分段卡片（KernelSU 主题页外观）
+            prefGroup(key = "cards_group") {
+                updateInfo?.let { info ->
+                    item(key = "update_card") {
+                        PrefRow(
+                            title = info,
+                            onClick = { updateClick?.invoke() },
+                        )
+                    }
+                }
+                item(key = "system_info_card") {
+                    PrefRow(
+                        title = systemInfo ?: stringResource(R.string.loading),
+                        onLongClick = {
+                            context.copyStr(DeviceUtils.getOTACOnfigs())
+                            context.showToast("Copy Device OTA Data Success!")
+                        },
                     )
                 }
-            }
-            item(key = "system_info_card") {
-                PrefCard(
-                    title = systemInfo ?: stringResource(R.string.loading),
-                    onLongClick = {
-                        context.copyStr(DeviceUtils.getOTACOnfigs())
-                        context.showToast("Copy Device OTA Data Success!")
-                    },
-                )
-            }
-            item(key = "donate_card") {
-                PrefCard(
-                    title = stringResource(R.string.donate_tv_title) + " by: 忆清鸣、luckyzyx",
-                    summary = stringResource(R.string.donate_tv__summary),
-                    onClick = {
-                        context.openUrl(
-                            if (zh) "https://docs.qq.com/doc/DS2ZDZlNIeUlpdlV1"
-                            else "https://luckyzyx.github.io/LuckyTool_Doc/en/donate"
-                        )
-                    },
-                    onLongClick = { showDonateList = true },
-                )
+                item(key = "donate_card") {
+                    PrefRow(
+                        title = stringResource(R.string.donate_tv_title) + " by: 忆清鸣、luckyzyx",
+                        summary = stringResource(R.string.donate_tv__summary),
+                        onClick = {
+                            context.openUrl(
+                                if (zh) "https://docs.qq.com/doc/DS2ZDZlNIeUlpdlV1"
+                                else "https://luckyzyx.github.io/LuckyTool_Doc/en/donate"
+                            )
+                        },
+                        onLongClick = { showDonateList = true },
+                    )
+                }
             }
             if (zh) {
                 item(key = "authorized") {
