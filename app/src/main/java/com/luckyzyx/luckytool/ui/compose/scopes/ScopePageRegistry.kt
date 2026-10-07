@@ -71,6 +71,9 @@ import com.luckyzyx.luckytool.ui.compose.special.ForceFpsPage
 import com.luckyzyx.luckytool.ui.compose.special.QuickEntryPage
 import com.luckyzyx.luckytool.ui.compose.special.DarkModePage
 import com.luckyzyx.luckytool.ui.compose.special.HideAppIntentPage
+import com.luckyzyx.luckytool.ui.compose.special.MemcConfigPage
+import com.luckyzyx.luckytool.ui.compose.special.MultiAppPage
+import com.luckyzyx.luckytool.ui.compose.special.ZoomWindowPage
 
 /**
  * 一个 Compose 作用域页的声明——旧 [BaseScopePreferenceFeagment] 子类中
@@ -287,5 +290,8 @@ object ScopePageRegistry {
         register(QuickEntryPage.spec)
         register(DarkModePage.spec)
         register(HideAppIntentPage.spec)
+        register(MemcConfigPage.spec)
+        register(MultiAppPage.spec)
+        register(ZoomWindowPage.spec)
     }
 }
