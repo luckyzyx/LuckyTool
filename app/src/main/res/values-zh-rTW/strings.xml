@@ -39,6 +39,8 @@
     <string name="settings_module_description_max_lines">模組描述最大行數</string>
     <string name="settings_module_description_max_lines_summary">超過此行數的介紹將自動折疊</string>
     <string name="unit_lines">行</string>
+    <string name="settings_ui_mode">介面風格</string>
+    <string name="settings_ui_mode_summary">選擇應用的介面風格</string>
     <string name="language">語言</string>
     <string name="privacy_agreement">隐私协议</string>
     <string name="auto_check_update">自動檢查更新</string>
