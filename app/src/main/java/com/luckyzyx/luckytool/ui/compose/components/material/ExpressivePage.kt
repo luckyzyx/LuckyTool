@@ -38,6 +38,12 @@ import androidx.compose.ui.unit.dp
 val LocalBottomBarPresent = staticCompositionLocalOf { false }
 
 /**
+ * 悬浮底栏的高度（由 MainShell 提供）：内容列表在常规底部内边距之外再预留这么多，
+ * 使条目可以滑到悬浮胶囊之下（模糊/玻璃效果因此有可采样的内容），同时最后一条不会被永久遮挡。
+ */
+val LocalShellBottomInset = staticCompositionLocalOf { 0.dp }
+
+/**
  * 统一页面外壳（无返回键时传 onBack = null，用于底部导航主页面）。
  *
  * 用法：
@@ -115,7 +121,7 @@ fun ExpressiveList(
             start = horizontalPadding,
             end = horizontalPadding,
             top = 4.dp,
-            bottom = 16.dp + bottomInset,
+            bottom = 16.dp + bottomInset + LocalShellBottomInset.current,
         ),
         verticalArrangement = verticalArrangement,
         content = content,

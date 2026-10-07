@@ -36,6 +36,10 @@ import com.luckyzyx.luckytool.ui.compose.components.PrefSwitchRow
 import com.luckyzyx.luckytool.ui.compose.components.PrefValueRow
 import com.luckyzyx.luckytool.ui.compose.components.material.ExpressiveList
 import com.luckyzyx.luckytool.ui.compose.components.material.ExpressivePageScaffold
+import com.luckyzyx.luckytool.ui.compose.components.material.SegmentedDropdownItem
+import com.luckyzyx.luckytool.ui.theme.ThemeController
+import com.luckyzyx.luckytool.ui.theme.ThemePrefs
+import com.luckyzyx.luckytool.ui.theme.UiMode
 import com.luckyzyx.luckytool.utils.AppUtils
 import com.luckyzyx.luckytool.utils.BiometricUtils
 import com.luckyzyx.luckytool.utils.DonateUtils
@@ -132,6 +136,25 @@ fun SettingPage(activity: MainActivity, onOpenTheme: () -> Unit = {}) {
                                 ?: "TonalSpot",
                             summary = stringResource(R.string.theme_palette_summary),
                             onClick = onOpenTheme,
+                        )
+                    }
+                    // 界面风格切换（Material / Miuix）：放在设置页而不是主题页，
+                    // 保证切到 Miuix 后仍能在这里切回 Material（对齐 KernelSU settings_ui_mode）
+                    item {
+                        var uiMode by remember {
+                            mutableStateOf(ThemeController.getUiMode(context))
+                        }
+                        SegmentedDropdownItem(
+                            title = stringResource(R.string.settings_ui_mode),
+                            summary = stringResource(R.string.settings_ui_mode_summary),
+                            items = UiMode.entries.map { it.name },
+                            selectedIndex = if (uiMode == UiMode.Material) 1 else 0,
+                            onItemSelected = { index ->
+                                val target = UiMode.entries[index]
+                                uiMode = target
+                                context.putString(SettingsPrefs, ThemeController.KEY_UI_MODE, target.value)
+                                ThemePrefs.notifyChanged()
+                            },
                         )
                     }
                 }

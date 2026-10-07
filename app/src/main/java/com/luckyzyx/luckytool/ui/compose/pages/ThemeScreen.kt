@@ -50,6 +50,7 @@ import androidx.compose.material.icons.rounded.AspectRatio
 import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material.icons.rounded.Description
 import androidx.compose.material.icons.rounded.DesignServices
+import androidx.compose.material.icons.rounded.DisplaySettings
 import androidx.compose.material.icons.rounded.Pin
 import androidx.compose.material.icons.rounded.Style
 import androidx.compose.material.icons.rounded.Swipe
@@ -100,7 +101,10 @@ import com.luckyzyx.luckytool.ui.shell.PageScaleMin
 import com.luckyzyx.luckytool.ui.shell.ShellSettingsController
 import com.luckyzyx.luckytool.ui.theme.AppSettings
 import com.luckyzyx.luckytool.ui.theme.ColorMode
+import com.luckyzyx.luckytool.ui.theme.LocalUiMode
+import com.luckyzyx.luckytool.ui.theme.ThemeController
 import com.luckyzyx.luckytool.ui.theme.ThemePrefs
+import com.luckyzyx.luckytool.ui.theme.UiMode
 import com.luckyzyx.luckytool.ui.theme.keyColorOptions
 import com.luckyzyx.luckytool.ui.theme.rememberLuckyColorScheme
 import com.luckyzyx.luckytool.ui.theme.rememberSeedColor
@@ -119,6 +123,17 @@ import com.materialkolor.dynamiccolor.ColorSpec
 import kotlin.math.roundToInt
 
 /**
+ * 主题与配色页分发（对齐 KernelSU `ColorPaletteScreen`）：按当前界面风格选择实现。
+ */
+@Composable
+fun ThemeScreen(onBack: () -> Unit) {
+    when (LocalUiMode.current) {
+        UiMode.Miuix -> ThemeScreenMiuix(onBack = onBack)
+        UiMode.Material -> ThemeScreenMaterial(onBack = onBack)
+    }
+}
+
+/**
  * 主题与配色页（迁移 KernelSU `ui/screen/colorpalette`，Material 实现）。
  *
  * 组成对齐 KernelSU ColorPaletteScreenMaterial：
@@ -131,7 +146,7 @@ import kotlin.math.roundToInt
  * 写入后通过 [ThemePrefs.notifyChanged] 让应用主题即时重算，无需 recreate。
  */
 @Composable
-fun ThemeScreen(onBack: () -> Unit) {
+fun ThemeScreenMaterial(onBack: () -> Unit) {
     val context = LocalContext.current
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior(rememberTopAppBarState())
 
@@ -172,6 +187,7 @@ fun ThemeScreen(onBack: () -> Unit) {
                 .coerceIn(ModuleLinesMin, ModuleLinesMax)
         )
     }
+    var uiMode by remember { mutableStateOf(ThemeController.getUiMode(context)) }
 
     val appSettings = AppSettings(
         colorMode = colorMode,
@@ -374,6 +390,57 @@ fun ThemeScreen(onBack: () -> Unit) {
                         ),
                     )
                 }
+            }
+
+            // 界面风格（Material / Miuix，对齐 KernelSU settings_ui_mode）
+            item {
+                SegmentedColumn(
+                    modifier = Modifier.padding(horizontal = 16.dp),
+                    content = listOf(
+                        {
+                            SegmentedDropdownItem(
+                                icon = Icons.Rounded.DisplaySettings,
+                                title = stringResource(R.string.settings_ui_mode),
+                                summary = stringResource(R.string.settings_ui_mode_summary),
+                                items = UiMode.entries.map { it.name },
+                                selectedIndex = if (uiMode == UiMode.Material) 1 else 0,
+                                onItemSelected = { index ->
+                                    val target = UiMode.entries[index]
+                                    uiMode = target
+                                    context.putString(
+                                        SettingsPrefs,
+                                        ThemeController.KEY_UI_MODE,
+                                        target.value,
+                                    )
+                                    // 与 KernelSU 一致：切换外观线时归一化「Monet 模式」组合
+                                    val miuixMonet = context.getBoolean(
+                                        SettingsPrefs,
+                                        ThemeController.KEY_MIUIX_MONET,
+                                        false,
+                                    )
+                                    val normalized = when {
+                                        target == UiMode.Miuix && !miuixMonet && colorMode.isMonet ->
+                                            colorMode.toNonMonetMode()
+
+                                        target == UiMode.Material && colorMode.isMonet ->
+                                            colorMode.toNonMonetMode()
+
+                                        else -> colorMode
+                                    }
+                                    if (normalized != colorMode) {
+                                        colorMode = normalized
+                                        context.putString(
+                                            SettingsPrefs,
+                                            "dark_theme",
+                                            normalized.value.toString(),
+                                        )
+                                    }
+                                    ThemePrefs.notifyChanged()
+                                },
+                            )
+                        },
+                    ),
+                )
             }
 
             // 导航角标（对齐 KernelSU ColorPaletteScreenMaterial 的对应分段项）

@@ -30,7 +30,8 @@ const val ModuleLinesMax = 5
  *
  * 偏好键与 KernelSU 保持一致，默认值取其仓库默认值：
  * enable_navigation_badge = true、enable_predictive_back = false、enable_swipe_dismiss = true、
- * pager_interception_mode = 1、page_scale = 1.0f、module_description_max_lines = 4。
+ * pager_interception_mode = 1、page_scale = 1.0f、module_description_max_lines = 4、
+ * enable_blur = false、enable_floating_bottom_bar = false、enable_floating_bottom_bar_blur = false。
  */
 @Immutable
 data class ShellSettings(
@@ -40,6 +41,12 @@ data class ShellSettings(
     val pagerInterceptionMode: Int = PagerModeCrossAxis,
     val pageScale: Float = 1.0f,
     val moduleDescriptionMaxLines: Int = 4,
+    /** Miuix 外观线：顶栏 / 底栏背景模糊（需 isRenderEffectSupported()，API 33+） */
+    val enableBlur: Boolean = false,
+    /** Miuix 外观线：Apple 风格悬浮底栏 */
+    val enableFloatingBottomBar: Boolean = false,
+    /** Miuix 外观线：悬浮底栏的液态玻璃效果 */
+    val enableFloatingBottomBarBlur: Boolean = false,
 )
 
 object ShellSettingsController {
@@ -49,6 +56,9 @@ object ShellSettingsController {
     const val KEY_PAGER_MODE = "pager_interception_mode"
     const val KEY_PAGE_SCALE = "page_scale"
     const val KEY_MODULE_LINES = "module_description_max_lines"
+    const val KEY_ENABLE_BLUR = "enable_blur"
+    const val KEY_FLOATING_BOTTOM_BAR = "enable_floating_bottom_bar"
+    const val KEY_FLOATING_BOTTOM_BAR_BLUR = "enable_floating_bottom_bar_blur"
 
     fun get(context: Context): ShellSettings = ShellSettings(
         navigationBadge = context.getBoolean(SettingsPrefs, KEY_NAVIGATION_BADGE, true),
@@ -60,11 +70,27 @@ object ShellSettingsController {
             .coerceIn(PageScaleMin, PageScaleMax),
         moduleDescriptionMaxLines = context.getInt(SettingsPrefs, KEY_MODULE_LINES, 4)
             .coerceIn(ModuleLinesMin, ModuleLinesMax),
+        enableBlur = context.getBoolean(SettingsPrefs, KEY_ENABLE_BLUR, false),
+        enableFloatingBottomBar = context.getBoolean(SettingsPrefs, KEY_FLOATING_BOTTOM_BAR, false),
+        enableFloatingBottomBarBlur = context.getBoolean(
+            SettingsPrefs,
+            KEY_FLOATING_BOTTOM_BAR_BLUR,
+            false,
+        ),
     )
 }
 
 /** 底部导航角标开关 */
 val LocalEnableNavigationBadge = staticCompositionLocalOf { true }
+
+/** 顶栏 / 底栏背景模糊开关（Miuix 外观线，对齐 KernelSU `LocalEnableBlur`） */
+val LocalEnableBlur = staticCompositionLocalOf { false }
+
+/** 悬浮底栏开关（对齐 KernelSU `LocalEnableFloatingBottomBar`） */
+val LocalEnableFloatingBottomBar = staticCompositionLocalOf { false }
+
+/** 悬浮底栏液态玻璃开关（对齐 KernelSU `LocalEnableFloatingBottomBarBlur`） */
+val LocalEnableFloatingBottomBarBlur = staticCompositionLocalOf { false }
 
 /** 边缘横移返回手势开关 */
 val LocalEnableSwipeDismiss = staticCompositionLocalOf { true }
