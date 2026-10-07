@@ -4,29 +4,40 @@ import android.app.KeyguardManager
 import android.content.ComponentName
 import android.content.Context
 import android.net.Uri
+import android.os.Build
 import android.util.ArraySet
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.selection.selectable
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
-import com.google.android.material.color.DynamicColors
-import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.luckyzyx.luckytool.R
 import com.luckyzyx.luckytool.ui.activity.MainActivity
 import com.luckyzyx.luckytool.ui.application.MyApplication
@@ -48,7 +59,6 @@ import com.luckyzyx.luckytool.utils.backupAllPrefs
 import com.luckyzyx.luckytool.utils.base64Decode
 import com.luckyzyx.luckytool.utils.base64Encode
 import com.luckyzyx.luckytool.utils.clearAllPrefs
-import com.luckyzyx.luckytool.utils.dialogCentered
 import com.luckyzyx.luckytool.utils.formatDate
 import com.luckyzyx.luckytool.utils.getOSVersionCode
 import com.luckyzyx.luckytool.utils.getOSVersionName
@@ -77,6 +87,7 @@ fun SettingPage(activity: MainActivity) {
     val settings = remember { PrefState.of(context, SettingsPrefs) }
     val zh = remember(context) { isZh(context) }
     val reload = { (activity.application as MyApplication).reloadAllActivities() }
+    var pendingRestoreJson by remember { mutableStateOf<JSONObject?>(null) }
 
     // 备份/恢复（旧 registerForActivityResult）
     val backupLauncher = rememberLauncherForActivityResult(
@@ -87,12 +98,28 @@ fun SettingPage(activity: MainActivity) {
     ) { uri ->
         if (uri != null) {
             val entryData = FileUtils.readFromUri(activity, uri)
-            checkRestoreData(activity, entryData)
+            val json = JSONObject(base64Decode(entryData))
+            val osCode = json.optInt("osCode")
+            if (osCode > 0 && osCode != getOSVersionCode) {
+                // 旧 checkRestoreData：跨版本备份先提示，再恢复
+                pendingRestoreJson = json
+            } else {
+                writeRestoreData(activity, json)
+            }
         }
     }
 
     val deviceSecure = remember(context) {
         context.getSystemService(KeyguardManager::class.java).isDeviceSecure
+    }
+
+    var showDonateList by remember { mutableStateOf(false) }
+    var showQrType by remember { mutableStateOf(-1) }
+    var showDarkThemeDialog by remember { mutableStateOf(false) }
+    var showClearDialog by remember { mutableStateOf(false) }
+    var showFeedbackDialog by remember { mutableStateOf(false) }
+    var darkThemeSelected by remember {
+        mutableStateOf(settings.getString("dark_theme", "0") ?: "0")
     }
 
     Scaffold(
@@ -116,35 +143,18 @@ fun SettingPage(activity: MainActivity) {
                     title = stringResource(R.string.use_dynamic_color),
                     summary = stringResource(R.string.use_dynamic_color_summary),
                     default = true,
-                    visible = DynamicColors.isDynamicColorAvailable(),
+                    visible = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S,
                     onChanged = { reload() },
                 )
             }
             item(key = "dark_theme") {
                 val darkThemeEntries = context.resources.getStringArray(R.array.dark_theme)
                 val darkThemeValues = arrayOf("0", "1", "2")
-                val current by remember {
-                    mutableStateOf(settings.getString("dark_theme", "0") ?: "0")
-                }
-                var selected by remember { mutableStateOf(current) }
                 PrefValueCard(
                     title = stringResource(R.string.dark_theme),
-                    value = darkThemeEntries.getOrNull(darkThemeValues.indexOf(selected))
-                        ?: selected,
-                    onClick = {
-                        MaterialAlertDialogBuilder(context, dialogCentered)
-                            .setTitle(R.string.dark_theme)
-                            .setSingleChoiceItems(
-                                darkThemeEntries,
-                                darkThemeValues.indexOf(selected).coerceAtLeast(0),
-                            ) { dialog, which ->
-                                selected = darkThemeValues[which]
-                                settings.set("dark_theme", selected)
-                                dialog.dismiss()
-                                reload()
-                            }
-                            .show()
-                    },
+                    value = darkThemeEntries.getOrNull(darkThemeValues.indexOf(darkThemeSelected))
+                        ?: darkThemeSelected,
+                    onClick = { showDarkThemeDialog = true },
                 )
             }
 
@@ -256,18 +266,7 @@ fun SettingPage(activity: MainActivity) {
                 PrefCard(
                     title = stringResource(R.string.clear_all_data),
                     summary = stringResource(R.string.clear_all_data_summary),
-                    onClick = {
-                        MaterialAlertDialogBuilder(context)
-                            .setMessage(R.string.clear_all_data_message)
-                            .setPositiveButton(android.R.string.ok) { _, _ ->
-                                context.clearAllPrefs(
-                                    ModulePrefs, IntentPrefs, SettingsPrefs, OtherPrefs
-                                )
-                                exitProcess(0)
-                            }
-                            .setNeutralButton(android.R.string.cancel, null)
-                            .show()
-                    },
+                    onClick = { showClearDialog = true },
                 )
             }
 
@@ -280,37 +279,7 @@ fun SettingPage(activity: MainActivity) {
                     title = stringResource(R.string.donate),
                     summary = stringResource(R.string.donate_summary),
                     onClick = {
-                        val donateList = arrayListOf(
-                            context.getString(R.string.qq),
-                            context.getString(R.string.wechat),
-                            context.getString(R.string.alipay),
-                            context.getString(R.string.donation_list),
-                        )
-                        if (!zh) {
-                            donateList.add(3, context.getString(R.string.patreon))
-                            donateList.add(4, context.getString(R.string.paypal))
-                        }
-                        MaterialAlertDialogBuilder(context).apply {
-                            setItems(donateList.toTypedArray()) { _, which ->
-                                when (which) {
-                                    0, 1, 2 -> DonateUtils.showQRCode(context, which)
-                                    3 -> if (zh) {
-                                        activity.requestFunctionNavigation(
-                                            "donate",
-                                            context.getString(R.string.donation_list),
-                                        )
-                                    } else {
-                                        context.openUrl("https://www.patreon.com/LuckyTool")
-                                    }
-
-                                    4 -> context.openUrl("https://paypal.me/luckyzyx")
-                                    5 -> activity.requestFunctionNavigation(
-                                        "donate",
-                                        context.getString(R.string.donation_list),
-                                    )
-                                }
-                            }
-                        }.show()
+                        showDonateList = true
                     },
                 )
             }
@@ -318,33 +287,7 @@ fun SettingPage(activity: MainActivity) {
                 PrefCard(
                     title = stringResource(R.string.feedback_download),
                     summary = stringResource(R.string.feedback_download_summary),
-                    onClick = {
-                        val items = arrayOf(
-                            context.getString(R.string.coolmarket),
-                            context.getString(R.string.module_doc),
-                            context.getString(R.string.qq_chat_group),
-                            context.getString(R.string.qq_channel),
-                            context.getString(R.string.telegram_channel),
-                            context.getString(R.string.lsposed_repo),
-                        )
-                        MaterialAlertDialogBuilder(context).apply {
-                            setItems(items) { _, which ->
-                                when (which) {
-                                    0 -> context.openUrl("coolmarket://u/1930284")
-                                    1 -> context.openUrl("https://luckyzyx.gitlab.io/LuckyTool_Doc")
-                                    2 -> context.openUrl(
-                                        "http://qm.qq.com/cgi-bin/qm/qr?_wv=1027&k=3fYu6lT8IHrBPKAfFTNSHbd8wcWX0oGs&authKey=dyIpjTWH8KWHMU3v6gI05T0bAzr6XigJKasMiCwmco1%2F8BRtPCN%2B1zOGgXyK7IUB&noverify=0&group_code=663884734"
-                                    )
-
-                                    3 -> context.openUrl("https://pd.qq.com/s/ahjm4zyxb")
-                                    4 -> context.openUrl("https://t.me/LuckyTool")
-                                    5 -> context.openUrl(
-                                        "https://modules.lsposed.org/module/com.luckyzyx.luckytool"
-                                    )
-                                }
-                            }
-                        }.show()
-                    },
+                    onClick = { showFeedbackDialog = true },
                 )
             }
             item(key = "participate_translation") {
@@ -357,6 +300,181 @@ fun SettingPage(activity: MainActivity) {
                 )
             }
         }
+    }
+
+    if (showDonateList) {
+        val donateList = arrayListOf(
+            context.getString(R.string.qq),
+            context.getString(R.string.wechat),
+            context.getString(R.string.alipay),
+            context.getString(R.string.donation_list),
+        )
+        if (!zh) {
+            donateList.add(3, context.getString(R.string.patreon))
+            donateList.add(4, context.getString(R.string.paypal))
+        }
+        AlertDialog(
+            onDismissRequest = { showDonateList = false },
+            text = {
+                Column {
+                    donateList.forEachIndexed { index, label ->
+                        Text(
+                            label,
+                            Modifier.fillMaxWidth().clickable {
+                                showDonateList = false
+                                when (index) {
+                                    0, 1, 2 -> showQrType = index
+                                    3 -> if (zh) {
+                                        activity.requestFunctionNavigation(
+                                            "donate",
+                                            context.getString(R.string.donation_list),
+                                        )
+                                    } else {
+                                        context.openUrl("https://www.patreon.com/LuckyTool")
+                                    }
+                                    4 -> context.openUrl("https://paypal.me/luckyzyx")
+                                    5 -> activity.requestFunctionNavigation(
+                                        "donate",
+                                        context.getString(R.string.donation_list),
+                                    )
+                                }
+                            }.padding(horizontal = 24.dp, vertical = 14.dp),
+                        )
+                    }
+                }
+            },
+            confirmButton = {},
+        )
+    }
+
+    if (showQrType >= 0) {
+        DonateUtils.DonateQRDialog(showQrType) { showQrType = -1 }
+    }
+
+    if (showDarkThemeDialog) {
+        val darkThemeEntries = context.resources.getStringArray(R.array.dark_theme)
+        val darkThemeValues = arrayOf("0", "1", "2")
+        AlertDialog(
+            onDismissRequest = { showDarkThemeDialog = false },
+            title = { Text(stringResource(R.string.dark_theme)) },
+            text = {
+                Column {
+                    darkThemeEntries.forEachIndexed { index, label ->
+                        Row(
+                            Modifier
+                                .fillMaxWidth()
+                                .selectable(
+                                    selected = darkThemeSelected == darkThemeValues[index],
+                                    role = Role.RadioButton,
+                                    onClick = {
+                                        darkThemeSelected = darkThemeValues[index]
+                                        settings.set("dark_theme", darkThemeSelected)
+                                        showDarkThemeDialog = false
+                                        reload()
+                                    },
+                                )
+                                .padding(vertical = 12.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            RadioButton(
+                                selected = darkThemeSelected == darkThemeValues[index],
+                                onClick = null,
+                            )
+                            Spacer(Modifier.width(8.dp))
+                            Text(label)
+                        }
+                    }
+                }
+            },
+            confirmButton = {},
+        )
+    }
+
+    if (showClearDialog) {
+        AlertDialog(
+            onDismissRequest = { showClearDialog = false },
+            text = { Text(stringResource(R.string.clear_all_data_message)) },
+            confirmButton = {
+                TextButton(onClick = {
+                    showClearDialog = false
+                    context.clearAllPrefs(ModulePrefs, IntentPrefs, SettingsPrefs, OtherPrefs)
+                    exitProcess(0)
+                }) { Text(stringResource(android.R.string.ok)) }
+            },
+            dismissButton = {
+                TextButton(onClick = { showClearDialog = false }) {
+                    Text(stringResource(android.R.string.cancel))
+                }
+            },
+        )
+    }
+
+    if (showFeedbackDialog) {
+        val items = arrayOf(
+            context.getString(R.string.coolmarket),
+            context.getString(R.string.module_doc),
+            context.getString(R.string.qq_chat_group),
+            context.getString(R.string.qq_channel),
+            context.getString(R.string.telegram_channel),
+            context.getString(R.string.lsposed_repo),
+        )
+        AlertDialog(
+            onDismissRequest = { showFeedbackDialog = false },
+            text = {
+                Column {
+                    items.forEachIndexed { index, label ->
+                        Text(
+                            label,
+                            Modifier.fillMaxWidth().clickable {
+                                showFeedbackDialog = false
+                                when (index) {
+                                    0 -> context.openUrl("coolmarket://u/1930284")
+                                    1 -> context.openUrl("https://luckyzyx.gitlab.io/LuckyTool_Doc")
+                                    2 -> context.openUrl(
+                                        "http://qm.qq.com/cgi-bin/qm/qr?_wv=1027&k=3fYu6lT8IHrBPKAfFTNSHbd8wcWX0oGs&authKey=dyIpjTWH8KWHMU3v6gI05T0bAzr6XigJKasMiCwmco1%2F8BRtPCN%2B1zOGgXyK7IUB&noverify=0&group_code=663884734"
+                                    )
+
+                                    3 -> context.openUrl("https://pd.qq.com/s/ahjm4zyxb")
+                                    4 -> context.openUrl("https://t.me/LuckyTool")
+                                    5 -> context.openUrl(
+                                        "https://modules.lsposed.org/module/com.luckyzyx.luckytool"
+                                    )
+                                }
+                            }.padding(horizontal = 24.dp, vertical = 14.dp),
+                        )
+                    }
+                }
+            },
+            confirmButton = {},
+        )
+    }
+
+    pendingRestoreJson?.let { json ->
+        val osCode = json.optInt("osCode")
+        AlertDialog(
+            onDismissRequest = { pendingRestoreJson = null },
+            text = {
+                Text(
+                    """
+                    ${context.getString(R.string.data_backup_data_version)}: ${getOSVersionName(osCode)}
+                    ${context.getString(R.string.data_current_system_version)}: $getOSVersionName
+                    
+                    ${context.getString(R.string.data_restore_version_tips)}
+                    """.trimIndent()
+                )
+            },
+            confirmButton = {
+                TextButton(onClick = { pendingRestoreJson = null }) {
+                    Text(stringResource(android.R.string.ok))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = {
+                    pendingRestoreJson = null
+                    writeRestoreData(activity, json)
+                }) { Text(stringResource(R.string.ignore)) }
+            },
+        )
     }
 }
 
@@ -415,29 +533,6 @@ private fun writeBackupData(context: Context, uri: Uri) {
     } catch (e: IOException) {
         e.printStackTrace()
         context.showToast(context.getString(R.string.data_backup_error))
-    }
-}
-
-/** 旧 checkRestoreData：跨版本备份先提示，再恢复 */
-private fun checkRestoreData(context: Context, data: String) {
-    val json = JSONObject(base64Decode(data))
-    val osCode = json.optInt("osCode")
-    if (osCode > 0 && osCode != getOSVersionCode) {
-        MaterialAlertDialogBuilder(context, dialogCentered).apply {
-            setMessage(
-                """
-                ${context.getString(R.string.data_backup_data_version)}: ${getOSVersionName(osCode)}
-                ${context.getString(R.string.data_current_system_version)}: $getOSVersionName
-                
-                ${context.getString(R.string.data_restore_version_tips)}
-                """.trimIndent()
-            )
-            setPositiveButton(android.R.string.ok, null)
-            setNeutralButton(R.string.ignore) { _, _ -> writeRestoreData(context, json) }
-            show()
-        }
-    } else {
-        writeRestoreData(context, json)
     }
 }
 

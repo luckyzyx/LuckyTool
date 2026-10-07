@@ -6,17 +6,16 @@ import android.content.Intent
 import android.os.Bundle
 import android.os.Process
 import androidx.activity.compose.setContent
+import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AlertDialog
+import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
-import com.google.android.material.dialog.MaterialAlertDialogBuilder
-import com.highcapable.betterandroid.system.extension.component.Intent
 import com.highcapable.betterandroid.ui.extension.view.toast
 import com.highcapable.kavaref.extension.classOf
 import com.luckyzyx.luckytool.BuildConfig
 import com.luckyzyx.luckytool.R
-import com.luckyzyx.luckytool.databinding.ActivityMainBinding
 import com.luckyzyx.luckytool.service.ActivityManagerService
 import com.luckyzyx.luckytool.service.AdbService
 import com.luckyzyx.luckytool.service.GlobalFuncService
@@ -25,7 +24,7 @@ import com.luckyzyx.luckytool.service.PowerService
 import com.luckyzyx.luckytool.service.RefreshRateService
 import com.luckyzyx.luckytool.service.TilesService
 import com.luckyzyx.luckytool.service.UserService
-import com.luckyzyx.luckytool.ui.activity.base.BaseActivity
+import com.luckyzyx.luckytool.ui.application.ActivityLifecycleManager
 import com.luckyzyx.luckytool.ui.compose.FunctionRequest
 import com.luckyzyx.luckytool.ui.compose.MainShell
 import com.luckyzyx.luckytool.ui.service.XposedServiceBridge
@@ -39,7 +38,7 @@ import com.luckyzyx.luckytool.utils.OtherPrefs
 import com.luckyzyx.luckytool.utils.PermissionUtils
 import com.luckyzyx.luckytool.utils.SDK
 import com.luckyzyx.luckytool.utils.SettingsPrefs
-import com.luckyzyx.luckytool.utils.dialogCentered
+import com.luckyzyx.luckytool.utils.ThemeUtils
 import com.luckyzyx.luckytool.utils.exitModule
 import com.luckyzyx.luckytool.utils.getBoolean
 import com.luckyzyx.luckytool.utils.getOSVersionCode
@@ -51,7 +50,7 @@ import kotlin.system.exitProcess
 
 @Obfuscate
 @Suppress("PrivatePropertyName")
-open class MainActivity : BaseActivity<ActivityMainBinding>() {
+open class MainActivity : AppCompatActivity() {
     //检测Prefs状态
     private val KEY_PREFIX = classOf<MainActivity>().name + '.'
     private val EXTRA_SAVED_INSTANCE_STATE = KEY_PREFIX + "SAVED_INSTANCE_STATE"
@@ -68,7 +67,7 @@ open class MainActivity : BaseActivity<ActivityMainBinding>() {
     private var checkSuDialog: AlertDialog? = null
 
     private fun newIntent(context: Context): Intent {
-        return Intent<MainActivity>(context)
+        return Intent(context, MainActivity::class.java)
     }
 
     private fun newIntent(savedInstanceState: Bundle, context: Context): Intent {
@@ -77,6 +76,11 @@ open class MainActivity : BaseActivity<ActivityMainBinding>() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        ThemeUtils.initTheme(this)
+        enableEdgeToEdge()
+        window.isNavigationBarContrastEnforced = false
+        ActivityLifecycleManager.registerActivity(this)
 
         verityPackage()
         checkXposed()
@@ -89,6 +93,11 @@ open class MainActivity : BaseActivity<ActivityMainBinding>() {
                 MainShell(this)
             }
         }
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        ActivityLifecycleManager.unregisterActivity(this)
     }
 
     /** Compose 页面跨 tab 跳转到 Function 子树作用域页（pageKey 见 ScopePageRegistry） */
@@ -106,7 +115,7 @@ open class MainActivity : BaseActivity<ActivityMainBinding>() {
     private fun checkXposed() {
         XposedServiceBridge.awaitReady()
         if (!XposedServiceBridge.isModuleActive) {
-            MaterialAlertDialogBuilder(this).apply {
+            AlertDialog.Builder(this).apply {
                 setCancelable(false)
                 setMessage(getString(R.string.unsupported_xposed))
                 setPositiveButton(android.R.string.ok) { _, _ -> exitProcess(0) }
@@ -125,7 +134,7 @@ open class MainActivity : BaseActivity<ActivityMainBinding>() {
         putBoolean(IntentPrefs, "intent_prefs", isSu)
         putBoolean(OtherPrefs, "other_prefs", isSu)
         if (!isSu && (checkSuDialog == null || !checkSuDialog!!.isShowing)) {
-            checkSuDialog = MaterialAlertDialogBuilder(this, dialogCentered).apply {
+            checkSuDialog = AlertDialog.Builder(this).apply {
                 setCancelable(false)
                 setTitle(getString(R.string.no_root))
                 setMessage(getString(R.string.no_root_summary))
@@ -140,7 +149,7 @@ open class MainActivity : BaseActivity<ActivityMainBinding>() {
 
     private fun checkOs() {
         val osCode = getOSVersionCode
-        MaterialAlertDialogBuilder(this, dialogCentered).apply {
+        AlertDialog.Builder(this).apply {
             setCancelable(false)
             setTitle(getString(R.string.unsupported_os))
             setMessage(getString(R.string.unsupported_os_summary))

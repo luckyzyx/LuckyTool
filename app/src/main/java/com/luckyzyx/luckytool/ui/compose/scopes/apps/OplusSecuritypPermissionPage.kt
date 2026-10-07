@@ -1,13 +1,27 @@
 package com.luckyzyx.luckytool.ui.compose.scopes.apps
 
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ListItem
+import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Text
-import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import androidx.compose.material3.TextButton
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.dp
 import com.luckyzyx.luckytool.R
 import com.luckyzyx.luckytool.service.UserService
 import com.luckyzyx.luckytool.ui.compose.scopes.ScopePageSpec
 import com.luckyzyx.luckytool.utils.ModulePrefs
-import com.luckyzyx.luckytool.utils.dialogCentered
 import com.luckyzyx.luckytool.utils.getOSVersionCode
 import com.luckyzyx.luckytool.utils.sendPrefsValue
 import com.luckyzyx.luckytool.utils.showToast
@@ -19,6 +33,12 @@ import com.luckyzyx.luckytool.utils.showToast
  */
 object OplusSecuritypPermissionPage {
 
+    private data class UserDialogData(
+        val title: String,
+        val items: List<Pair<String, Int>>,
+        val allUserIds: List<Int>,
+    )
+
     val spec = ScopePageSpec(
         pageKey = "oplus_securityp_permission",
         prefsName = ModulePrefs,
@@ -27,6 +47,7 @@ object OplusSecuritypPermissionPage {
         restartEnabled = true,
     ) {
         val c = requireNotNull(context) { "ScopeScreen 未注入 Context" }
+
         if (getOSVersionCode >= 38) {
             switch(
                 key = "disable_malicious_app_intercept",
@@ -48,6 +69,8 @@ object OplusSecuritypPermissionPage {
         if (state.getBoolean("enable_always_allow_app_start_dialog")) {
             val removeListTitle = c.getString(R.string.remove_always_allow_app_start_list)
             custom(key = "remove_always_allow_app_start_list", title = removeListTitle) {
+                var userDialogData by remember { mutableStateOf<UserDialogData?>(null) }
+                var curUserId by remember { mutableStateOf(arrayListOf<Int>()) }
                 ListItem(
                     onClick = {
                         UserService.get(c) {
@@ -60,27 +83,62 @@ object OplusSecuritypPermissionPage {
                             users.forEach { info ->
                                 items.add(Pair("${info.name} [${info.id}]", info.id))
                             }
-                            var curUserId = ArrayList(users.map { info -> info.id })
-                            MaterialAlertDialogBuilder(c, dialogCentered).apply {
-                                setTitle(removeListTitle)
-                                setSingleChoiceItems(
-                                    items.map { i -> i.first }.toTypedArray(), 0,
-                                ) { _, which ->
-                                    curUserId = when (which) {
-                                        0 -> ArrayList(users.map { info -> info.id })
-                                        else -> arrayListOf(items[which].second)
-                                    }
-                                }
-                                setNeutralButton(android.R.string.cancel, null)
-                                setPositiveButton(android.R.string.ok) { _, _ ->
-                                    c.sendPrefsValue(
-                                        "android", "remove_always_allow_app_start_list", curUserId
-                                    )
-                                }
-                            }.show()
+                            curUserId = ArrayList(users.map { info -> info.id })
+                            userDialogData = UserDialogData(
+                                title = removeListTitle,
+                                items = items,
+                                allUserIds = users.map { info -> info.id },
+                            )
                         }
                     },
                 ) { Text(removeListTitle) }
+
+                userDialogData?.let { data ->
+                    AlertDialog(
+                        onDismissRequest = { userDialogData = null },
+                        title = { Text(data.title) },
+                        text = {
+                            Column {
+                                data.items.forEachIndexed { index, item ->
+                                    val selected = when {
+                                        index == 0 -> curUserId.size == data.allUserIds.size
+                                        else -> curUserId.size == 1 && curUserId.firstOrNull() == item.second
+                                    }
+                                    Row(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .clickable {
+                                                curUserId = when (index) {
+                                                    0 -> ArrayList(data.allUserIds)
+                                                    else -> arrayListOf(item.second)
+                                                }
+                                            }
+                                            .padding(vertical = 2.dp),
+                                        verticalAlignment = Alignment.CenterVertically,
+                                    ) {
+                                        RadioButton(selected = selected, onClick = null)
+                                        Text(item.first)
+                                    }
+                                }
+                            }
+                        },
+                        dismissButton = {
+                            TextButton(onClick = { userDialogData = null }) {
+                                Text(stringResource(android.R.string.cancel))
+                            }
+                        },
+                        confirmButton = {
+                            TextButton(
+                                onClick = {
+                                    c.sendPrefsValue(
+                                        "android", "remove_always_allow_app_start_list", curUserId
+                                    )
+                                    userDialogData = null
+                                },
+                            ) { Text(stringResource(android.R.string.ok)) }
+                        },
+                    )
+                }
             }
         }
         switch(

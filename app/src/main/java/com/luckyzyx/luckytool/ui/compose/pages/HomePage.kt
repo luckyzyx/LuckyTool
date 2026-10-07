@@ -40,7 +40,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
-import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.luckyzyx.luckytool.BuildConfig
 import com.luckyzyx.luckytool.R
 import com.luckyzyx.luckytool.service.GlobalFuncService
@@ -52,6 +51,10 @@ import com.luckyzyx.luckytool.utils.DonateUtils
 import com.luckyzyx.luckytool.utils.PrefState
 import com.luckyzyx.luckytool.utils.RestartMenuUtils
 import com.luckyzyx.luckytool.utils.SettingsPrefs
+import com.luckyzyx.luckytool.utils.UpdateChangelogDialog
+import com.luckyzyx.luckytool.utils.UpdateDownloadProgressDialog
+import com.luckyzyx.luckytool.utils.UpdateDownloadSourceDialog
+import com.luckyzyx.luckytool.utils.UpdateDownloadedDialog
 import com.luckyzyx.luckytool.utils.UpdateUtils
 import com.luckyzyx.luckytool.utils.copyStr
 import com.luckyzyx.luckytool.utils.getDeviceInfo
@@ -61,6 +64,7 @@ import com.luckyzyx.luckytool.utils.getVersionName
 import com.luckyzyx.luckytool.utils.isZh
 import com.luckyzyx.luckytool.utils.openUrl
 import com.luckyzyx.luckytool.utils.showToast
+import java.io.File
 
 /**
  * 主页（旧 HomeFragment 的 Compose 等价实现）。
@@ -82,6 +86,12 @@ fun HomePage(activity: MainActivity) {
     var showAbout by remember { mutableStateOf(false) }
     var aboutText by remember { mutableStateOf("") }
     var dexDialogVisible by remember { mutableStateOf(false) }
+    var pendingOsVersion by remember { mutableStateOf("") }
+    var showRestartMenu by remember { mutableStateOf(false) }
+    var showOptimizeDex by remember { mutableStateOf(false) }
+    var showDonateList by remember { mutableStateOf(false) }
+    var showQrType by remember { mutableStateOf(-1) }
+    var updateStage by remember { mutableStateOf<UpdateStage?>(null) }
 
     fun refreshModuleStatus() {
         moduleActive = XposedServiceBridge.isModuleActive
@@ -94,31 +104,21 @@ fun HomePage(activity: MainActivity) {
             ?: DeviceUtils.getOtaVersion().takeIf { it != "null" }
             ?: ""
         if (getOs != curOs && !dexDialogVisible) {
+            pendingOsVersion = curOs
             dexDialogVisible = true
-            MaterialAlertDialogBuilder(activity, com.luckyzyx.luckytool.utils.dialogCentered)
-                .setMessage(R.string.optimize_dex_after_system_update)
-                .setCancelable(false)
-                .setPositiveButton(android.R.string.ok) { _, _ ->
-                    RestartMenuUtils.showOptimizeAllDexDialog(context, true)
-                    settings.set("current_os_version", curOs)
-                }
-                .setNeutralButton(R.string.ignore, null)
-                .setOnDismissListener { dexDialogVisible = false }
-                .show()
         }
     }
 
     // 旧 onViewCreated：自动检查更新（每次进入页面组合执行一次）
     LaunchedEffect(Unit) {
         if (!settings.getBoolean("auto_check_update", true)) return@LaunchedEffect
-        UpdateUtils(activity, isDev).checkUpdate { versionName, versionCode, function ->
-            if (getVersionCode < versionCode) {
-                function()
+        UpdateUtils(activity, isDev).checkUpdate { info ->
+            if (getVersionCode < info.code) {
                 updateInfo = context.getString(R.string.check_update_hint) +
-                        "  -->  $versionName($versionCode)"
-                updateClick = function
+                        "  -->  ${info.name}(${info.code})"
+                updateClick = { updateStage = UpdateStage.Changelog(info) }
             }
-            if (isDev) statusCardClick = function
+            if (isDev) statusCardClick = { updateStage = UpdateStage.Changelog(info) }
         }
     }
 
@@ -139,7 +139,7 @@ fun HomePage(activity: MainActivity) {
             TopAppBar(
                 title = { Text(stringResource(R.string.nav_home)) },
                 actions = {
-                    IconButton(onClick = { RestartMenuUtils.showMainRestartMenu(activity) }) {
+                    IconButton(onClick = { showRestartMenu = true }) {
                         Icon(
                             painterResource(R.drawable.ic_baseline_refresh_24),
                             contentDescription = stringResource(R.string.menu_reboot),
@@ -266,22 +266,7 @@ fun HomePage(activity: MainActivity) {
                             else "https://luckyzyx.github.io/LuckyTool_Doc/en/donate"
                         )
                     },
-                    onLongClick = {
-                        val donateList = arrayListOf(
-                            context.getString(R.string.qq),
-                            context.getString(R.string.wechat),
-                            context.getString(R.string.alipay),
-                        )
-                        if (!zh) donateList.add(3, context.getString(R.string.patreon))
-                        MaterialAlertDialogBuilder(context).apply {
-                            setItems(donateList.toTypedArray()) { _, which ->
-                                when (which) {
-                                    0, 1, 2 -> DonateUtils.showQRCode(context, which)
-                                    3 -> context.openUrl("https://www.patreon.com/LuckyTool")
-                                }
-                            }
-                        }.show()
-                    },
+                    onLongClick = { showDonateList = true },
                 )
             }
             if (zh) {
@@ -333,4 +318,112 @@ fun HomePage(activity: MainActivity) {
             },
         )
     }
+
+    if (showRestartMenu) {
+        RestartMenuUtils.RestartMenuDialog(context) { showRestartMenu = false }
+    }
+
+    if (dexDialogVisible) {
+        AlertDialog(
+            onDismissRequest = { dexDialogVisible = false },
+            text = { Text(stringResource(R.string.optimize_dex_after_system_update)) },
+            confirmButton = {
+                TextButton(onClick = {
+                    dexDialogVisible = false
+                    settings.set("current_os_version", pendingOsVersion)
+                    showOptimizeDex = true
+                }) { Text(stringResource(android.R.string.ok)) }
+            },
+            dismissButton = {
+                TextButton(onClick = { dexDialogVisible = false }) {
+                    Text(stringResource(R.string.ignore))
+                }
+            },
+        )
+    }
+
+    if (showOptimizeDex) {
+        RestartMenuUtils.OptimizeDexDialog(
+            context,
+            RestartMenuUtils.buildScopeMaps(
+                context, context.resources.getStringArray(R.array.xposed_scope)
+            ),
+            confirmFirst = true,
+        ) { showOptimizeDex = false }
+    }
+
+    if (showDonateList) {
+        val donateList = arrayListOf(
+            context.getString(R.string.qq),
+            context.getString(R.string.wechat),
+            context.getString(R.string.alipay),
+        )
+        if (!zh) donateList.add(3, context.getString(R.string.patreon))
+        AlertDialog(
+            onDismissRequest = { showDonateList = false },
+            text = {
+                Column {
+                    donateList.forEachIndexed { index, label ->
+                        Text(
+                            label,
+                            Modifier.fillMaxWidth().clickable {
+                                showDonateList = false
+                                when (index) {
+                                    0, 1, 2 -> showQrType = index
+                                    else -> context.openUrl("https://www.patreon.com/LuckyTool")
+                                }
+                            }.padding(horizontal = 24.dp, vertical = 14.dp),
+                        )
+                    }
+                }
+            },
+            confirmButton = {},
+        )
+    }
+
+    if (showQrType >= 0) {
+        DonateUtils.DonateQRDialog(showQrType) { showQrType = -1 }
+    }
+
+    when (val stage = updateStage) {
+        null -> Unit
+        is UpdateStage.Changelog -> UpdateChangelogDialog(
+            context, stage.info, isDev,
+            onDismiss = { updateStage = null },
+            onDownload = {
+                val apkFile = UpdateUtils(context).prepareApkFile(stage.info.fileName)
+                updateStage = if (apkFile.exists()) {
+                    UpdateStage.Downloaded(stage.info, apkFile)
+                } else {
+                    UpdateStage.Source(stage.info, apkFile)
+                }
+            },
+        )
+        is UpdateStage.Source -> UpdateDownloadSourceDialog(
+            context, stage.info.downloadUrl, isDev,
+            onDismiss = { updateStage = null },
+            onSelect = { url -> updateStage = UpdateStage.Downloading(stage.apkFile, url) },
+        )
+        is UpdateStage.Downloaded -> UpdateDownloadedDialog(
+            context, stage.apkFile, isDev,
+            onDismiss = { updateStage = null },
+            onDownloadAgain = {
+                stage.apkFile.delete()
+                updateStage = UpdateStage.Source(stage.info, stage.apkFile)
+            },
+            onInstall = { UpdateUtils(context).installApk(stage.apkFile) },
+        )
+        is UpdateStage.Downloading -> UpdateDownloadProgressDialog(
+            context, stage.apkFile, stage.url,
+            onDismiss = { updateStage = null },
+        )
+    }
+}
+
+/** 更新对话框状态机：更新日志 → 下载源 → 下载中 → 已下载 */
+private sealed class UpdateStage {
+    data class Changelog(val info: UpdateUtils.UpdateInfo) : UpdateStage()
+    data class Source(val info: UpdateUtils.UpdateInfo, val apkFile: File) : UpdateStage()
+    data class Downloaded(val info: UpdateUtils.UpdateInfo, val apkFile: File) : UpdateStage()
+    data class Downloading(val apkFile: File, val url: String) : UpdateStage()
 }

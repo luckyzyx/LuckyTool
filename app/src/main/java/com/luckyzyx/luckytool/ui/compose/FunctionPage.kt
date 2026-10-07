@@ -109,8 +109,14 @@ fun FunctionPage(activity: MainActivity, onShellBack: () -> Unit) {
         if (atRoot) onShellBack() else navController.popBackStack()
     }
 
+    var showRestartMenu by remember { mutableStateOf(false) }
+
     if (showVersionInfo) {
         VersionInfoDialog(onDismiss = { showVersionInfo = false })
+    }
+
+    if (showRestartMenu) {
+        RestartMenuUtils.RestartMenuDialog(activity) { showRestartMenu = false }
     }
 
     NavHost(
@@ -123,7 +129,7 @@ fun FunctionPage(activity: MainActivity, onShellBack: () -> Unit) {
                 onOpenPage = { key, title -> navController.navigate(ScopeRoute(key, title)) },
                 onOpenSearch = { navController.navigate(SearchRoute) },
                 onShowVersionInfo = { showVersionInfo = true },
-                onShowRestartMenu = { RestartMenuUtils.showMainRestartMenu(activity) },
+                onShowRestartMenu = { showRestartMenu = true },
             )
         }
         composable<SearchRoute> {
@@ -360,6 +366,7 @@ private fun ScopePageHost(
 ) {
     val context = LocalContext.current
     val spec = ScopePageRegistry[route.pageKey]
+    var showRestartScope by remember { mutableStateOf(false) }
 
     Scaffold(
         topBar = {
@@ -378,9 +385,7 @@ private fun ScopePageHost(
                 actions = {
                     if (spec?.restartEnabled == true) {
                         IconButton(
-                            onClick = {
-                                RestartMenuUtils.showRestartScopeDialog(activity, spec.scopes, true)
-                            }
+                            onClick = { showRestartScope = true }
                         ) {
                             Icon(
                                 painterResource(R.drawable.ic_baseline_refresh_24),
@@ -423,6 +428,12 @@ private fun ScopePageHost(
             fullContent = spec.fullContent,
             content = spec.content,
         )
+    }
+
+    if (showRestartScope) {
+        RestartMenuUtils.RestartScopeDialog(context, spec?.scopes ?: emptyArray(), isSystem = true) {
+            showRestartScope = false
+        }
     }
 }
 

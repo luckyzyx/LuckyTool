@@ -1374,6 +1374,8 @@
     <string name="apk_details_min_sdk">Minimum SDK</string>
     <string name="apk_details_target_sdk">Target SDK</string>
     <string name="apk_details_unknown">Unavailable</string>
+    <string name="select_color">Select Color</string>
+    <string name="current_color">Current Color: %1$s</string>
 
 
 </resources>

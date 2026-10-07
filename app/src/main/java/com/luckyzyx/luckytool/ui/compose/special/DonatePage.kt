@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
@@ -17,6 +18,7 @@ import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -28,8 +30,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.viewinterop.AndroidView
 import com.drake.net.Get
 import com.luckyzyx.luckytool.R
 import com.luckyzyx.luckytool.data.DonateDetailInfo
@@ -39,11 +43,8 @@ import com.luckyzyx.luckytool.utils.AESCrypt
 import com.luckyzyx.luckytool.utils.LogUtils
 import com.luckyzyx.luckytool.utils.SettingsPrefs
 import com.luckyzyx.luckytool.utils.formatDate
-import com.luckyzyx.luckytool.utils.formatStringAuto
 import com.luckyzyx.luckytool.utils.safeOfNull
 import com.luckyzyx.luckytool.utils.showToast
-import io.noties.markwon.Markwon
-import io.noties.markwon.ext.tables.TablePlugin
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -55,7 +56,7 @@ import java.text.DecimalFormat
 /**
  * Donate 页（旧 ui.fragment.settings.DonateFragment 的 Compose 等价物）。
  * 捐赠数据经 GitHub API 检查更新、GitMirror 下载、AESCrypt 加密缓存后由
- * Markwon(+TablePlugin) 渲染为 Markdown 表格；筛选/排序选项在 ModalBottomSheet 中。
+ * 自绘 Compose 表格渲染（替代 Markwon+TablePlugin）；筛选/排序选项在 ModalBottomSheet 中。
  * 下拉刷新（onRefresh）重跑 initData 管线。
  */
 object DonatePage {
@@ -90,7 +91,7 @@ object DonatePage {
             var sortMode by remember { mutableStateOf(0) }
             var showDetail by remember { mutableStateOf(state.getBoolean(showDetailedKey, false)) }
             var otherCurrency by remember { mutableStateOf(state.getBoolean(showOtherCurrencyKey, false)) }
-            var markdown by remember { mutableStateOf("") }
+            var tableData by remember { mutableStateOf<List<List<String>>>(emptyList()) }
             var ready by remember { mutableStateOf(false) }
             var showSheet by remember { mutableStateOf(false) }
 
@@ -98,7 +99,7 @@ object DonatePage {
 
             // ---- 数据管线（对齐旧 DonateFragment；网络/文件 IO 放 IO 调度器） ----
 
-            suspend fun loadJson(): String? {
+            suspend fun loadJson(): List<List<String>>? {
                 val dd = File(appContext.filesDir, "dd")
                 val jsonObject = withContext(Dispatchers.IO) {
                     safeOfNull {
@@ -111,14 +112,14 @@ object DonatePage {
                     c.showToast(c.getString(R.string.donate_data_decode_error))
                     return null
                 }
-                val markdownList = ArrayList<String>()
+                val tableRows = ArrayList<List<String>>()
                 val datas = jsonObject.optJSONArray("datas") ?: JSONArray()
                 if (!showDetail) {
-                    formatUserInfo(datas, markdownList, otherCurrency, sortMode, isReverse, filterString, develop)
+                    formatUserInfo(datas, tableRows, otherCurrency, sortMode, isReverse, filterString, develop)
                 } else {
-                    formatUserDetailInfo(datas, markdownList, otherCurrency, sortMode, isReverse, filterString, develop)
+                    formatUserDetailInfo(datas, tableRows, otherCurrency, sortMode, isReverse, filterString, develop)
                 }
-                return formatStringAuto(markdownList, "\n")
+                return tableRows
             }
 
             suspend fun downloadJson(date: String) {
@@ -137,7 +138,7 @@ object DonatePage {
                             file.delete()
                         }
                         state.set(lastUpdateKey, date)
-                        loadJson()?.let { markdown = it }
+                        loadJson()?.let { tableData = it }
                     }
                 } catch (e: Exception) {
                     c.showToast("Exception while download data!")
@@ -152,7 +153,7 @@ object DonatePage {
                     if (date.isBlank()) return
                     val lastUpdateDate = state.getString(lastUpdateKey, "null")
                     if (date != lastUpdateDate) downloadJson(date)
-                    else loadJson()?.let { markdown = it }
+                    else loadJson()?.let { tableData = it }
                 } catch (e: Exception) {
                     c.showToast("Exception while checking data!")
                     LogUtils.e("checkDonateData", "checking", e.toString(), true)
@@ -183,7 +184,7 @@ object DonatePage {
             // ---- UI（旧布局顺序：搜索框在上，Markdown 内容在下） ----
 
             val rerunFilter: () -> Unit = {
-                scope.launch { loadJson()?.let { markdown = it } }
+                scope.launch { loadJson()?.let { tableData = it } }
             }
 
             Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp)) {
@@ -209,17 +210,12 @@ object DonatePage {
                     modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp),
                 )
 
-                val markwon = remember {
-                    Markwon.builder(appContext).usePlugin(TablePlugin.create(appContext)).build()
+                if (tableData.isNotEmpty()) {
+                    DonateTable(
+                        rows = tableData,
+                        modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
+                    )
                 }
-                AndroidView(
-                    factory = { ctx -> android.widget.TextView(ctx) },
-                    modifier = Modifier.fillMaxWidth(),
-                    update = { tv ->
-                        tv.setTextIsSelectable(true)
-                        if (markdown.isNotBlank()) markwon.setMarkdown(tv, markdown)
-                    },
-                )
             }
 
             if (showSheet) {
@@ -301,15 +297,14 @@ object DonatePage {
     /** 简表：按用户聚合（Name/Money） */
     private fun formatUserInfo(
         jsonArray: JSONArray,
-        markdownList: ArrayList<String>,
+        rows: ArrayList<List<String>>,
         otherCurrency: Boolean,
         sortMode: Int,
         isReverse: Boolean,
         filterString: String,
         develop: Boolean,
     ) {
-        markdownList.add("| Name | Money |")
-        markdownList.add("| :------: | :------: |")
+        rows.add(listOf("Name", "Money"))
         val userInfoList = ArrayList<DonateInfo>()
         var totalRmbCount = 0.0
         var totalOtherCount = 0.0
@@ -363,7 +358,7 @@ object DonatePage {
         }
         for (info in userInfoList) {
             if (filterString.isBlank() || info.name.contains(filterString, true)) {
-                markdownList.add("| ${info.name} | ${info.money} ${info.unit} |")
+                rows.add(listOf(info.name, "${info.money} ${info.unit}"))
             }
         }
     }
@@ -371,15 +366,14 @@ object DonatePage {
     /** 详表：逐条明细（Name/Time/Money/Channel） */
     private fun formatUserDetailInfo(
         jsonArray: JSONArray,
-        markdownList: ArrayList<String>,
+        rows: ArrayList<List<String>>,
         otherCurrency: Boolean,
         sortMode: Int,
         isReverse: Boolean,
         filterString: String,
         develop: Boolean,
     ) {
-        markdownList.add("| Name | Time | Money | Channel |")
-        markdownList.add("| :------: | :------: | :------: | :------: |")
+        rows.add(listOf("Name", "Time", "Money", "Channel"))
         val userInfoList = ArrayList<DonateDetailInfo>()
         var totalRmbCount = 0.0
         var totalOtherCount = 0.0
@@ -424,7 +418,36 @@ object DonatePage {
         }
         for (info in userInfoList) {
             if (filterString.isBlank() || info.name.contains(filterString)) {
-                markdownList.add("| ${info.name} | ${info.time} | ${info.money} ${info.unit} | ${info.channel} |")
+                rows.add(listOf(info.name, info.time, "${info.money} ${info.unit}", info.channel))
+            }
+        }
+    }
+
+    /** 简易表格渲染（旧 Markwon TablePlugin 的 Compose 等价物）；列宽按列数预设，表头加粗居中 */
+    @Composable
+    private fun DonateTable(rows: List<List<String>>, modifier: Modifier = Modifier) {
+        val columnWidths = when (rows.firstOrNull()?.size) {
+            4 -> listOf(110.dp, 140.dp, 96.dp, 110.dp)
+            else -> listOf(150.dp, 110.dp)
+        }
+        Column(modifier.horizontalScroll(rememberScrollState())) {
+            rows.forEachIndexed { rowIndex, row ->
+                val isHeader = rowIndex == 0
+                Row {
+                    row.forEachIndexed { colIndex, cell ->
+                        Text(
+                            text = cell,
+                            textAlign = if (isHeader) TextAlign.Center else TextAlign.Start,
+                            fontWeight = if (isHeader) FontWeight.SemiBold else FontWeight.Normal,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            modifier = Modifier
+                                .width(columnWidths.getOrElse(colIndex) { 110.dp })
+                                .padding(horizontal = 8.dp, vertical = 6.dp),
+                        )
+                    }
+                }
+                if (isHeader) HorizontalDivider()
             }
         }
     }

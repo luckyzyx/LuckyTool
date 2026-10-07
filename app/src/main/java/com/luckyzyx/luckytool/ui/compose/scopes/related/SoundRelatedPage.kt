@@ -8,16 +8,16 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.Text
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.core.graphics.toColorInt
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.luckyzyx.colorpicker.ColorPickerDialog
-import com.luckyzyx.colorpicker.R as ColorPickerR
 import com.luckyzyx.luckytool.R
+import com.luckyzyx.luckytool.ui.components.ColorPickerDialog
 import com.luckyzyx.luckytool.ui.compose.scopes.ScopePageSpec
 import com.luckyzyx.luckytool.utils.A12
 import com.luckyzyx.luckytool.utils.A13
@@ -30,8 +30,8 @@ import com.luckyzyx.luckytool.utils.getOSVersionCode
  * 声音相关页（旧 ui.fragment.scopes.related.SoundRelated 的 Compose 等价物）。
  * 逐项对齐：键、默认值、条件可见性（osCode = getOSVersionCode、SDK = Android API）、
  * notify（sendPrefsValue("com.android.systemui")）、restart 回调。
- * ColorPickerPreference 迁移为 custom：ColorPickerDialog（与旧实现同源），存储 #AARRGGBB 字符串
- * （默认 "#FFFFFFFF"，旧 setDefaultValue(Color.WHITE)），选色后 sendValue 通知 SystemUI。
+ * ColorPickerPreference 迁移为 custom：Compose ui/components/ColorPickerDialog，存储 #AARRGGBB
+ * 字符串（默认 "#FFFFFFFF"，旧 setDefaultValue(Color.WHITE)），选色后 sendValue 通知 SystemUI。
  */
 object SoundRelatedPage {
 
@@ -130,19 +130,11 @@ object SoundRelatedPage {
                         Color.Transparent
                     }
                 }
-                val ctx = LocalContext.current
+                var showPicker by remember { mutableStateOf(false) }
                 ListItem(
-                    onClick = {
-                        ColorPickerDialog.Builder(ctx)
-                            .setInitialColor(hex)
-                            .setOnColorSelectedListener { _, newHex ->
-                                state.set(PERCENT_COLOR_KEY, newHex)
-                                sendValue(PERCENT_COLOR_KEY, newHex)
-                            }
-                            .show()
-                    },
+                    onClick = { showPicker = true },
                     supportingContent = {
-                        Text(c.getString(ColorPickerR.string.current_color, hex))
+                        Text(c.getString(R.string.current_color, hex))
                     },
                     trailingContent = {
                         Box(
@@ -153,6 +145,17 @@ object SoundRelatedPage {
                     },
                     modifier = Modifier.fillMaxWidth(),
                 ) { Text(c.getString(R.string.custom_volume_bar_percent_color)) }
+                if (showPicker) {
+                    ColorPickerDialog(
+                        initialHex = hex,
+                        onDismiss = { showPicker = false },
+                        onColorSelected = { _, newHex ->
+                            state.set(PERCENT_COLOR_KEY, newHex)
+                            sendValue(PERCENT_COLOR_KEY, newHex)
+                            showPicker = false
+                        },
+                    )
+                }
             }
         }
         switch(

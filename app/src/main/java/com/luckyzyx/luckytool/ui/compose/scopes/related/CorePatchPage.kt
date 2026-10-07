@@ -1,12 +1,21 @@
 package com.luckyzyx.luckytool.ui.compose.scopes.related
 
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ListItem
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
-import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import androidx.compose.material3.TextButton
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.luckyzyx.luckytool.R
 import com.luckyzyx.luckytool.ui.compose.scopes.ScopePageSpec
 import com.luckyzyx.luckytool.utils.ModulePrefs
-import com.luckyzyx.luckytool.utils.dialogCentered
 
 /**
  * CorePatch 页（旧 ui.fragment.scopes.related.CorePatch 的 Compose 等价物）。
@@ -51,20 +60,38 @@ object CorePatchPage {
             title = c.getString(R.string.bypass_exact_signature_match),
             summary = c.getString(R.string.bypass_exact_signature_match_summary),
         )
-        switch(
+        custom(
             key = "use_previous_signatures",
             title = c.getString(R.string.use_previous_signatures),
             summary = c.getString(R.string.use_previous_signatures_summary),
-            onChange = { newValue ->
-                if (newValue) {
-                    MaterialAlertDialogBuilder(c, dialogCentered).apply {
-                        setMessage(R.string.use_previous_signatures_warning)
-                        setPositiveButton(android.R.string.ok, null)
-                        show()
-                    }
-                }
-            },
-        )
+        ) {
+            val checked by state.booleanFlow("use_previous_signatures")
+                .collectAsStateWithLifecycle()
+            var showWarning by remember { mutableStateOf(false) }
+            fun apply(newValue: Boolean) {
+                state.set("use_previous_signatures", newValue)
+                if (newValue) showWarning = true
+            }
+            ListItem(
+                onClick = { apply(!checked) },
+                supportingContent = { Text(c.getString(R.string.use_previous_signatures_summary)) },
+                trailingContent = {
+                    Switch(checked = checked, onCheckedChange = ::apply)
+                },
+                modifier = Modifier.fillMaxWidth(),
+            ) { Text(c.getString(R.string.use_previous_signatures)) }
+            if (showWarning) {
+                AlertDialog(
+                    onDismissRequest = { showWarning = false },
+                    text = { Text(c.getString(R.string.use_previous_signatures_warning)) },
+                    confirmButton = {
+                        TextButton(onClick = { showWarning = false }) {
+                            Text(stringResource(android.R.string.ok))
+                        }
+                    },
+                )
+            }
+        }
         switch(
             key = "allow_hidden_apis_for_system_apps",
             title = c.getString(R.string.allow_hidden_apis_for_system_apps),

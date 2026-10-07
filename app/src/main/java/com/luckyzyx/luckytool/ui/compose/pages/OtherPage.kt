@@ -6,18 +6,34 @@ import android.content.ComponentName
 import android.content.Context
 import android.content.pm.PackageManager
 import android.os.Build
-import android.view.LayoutInflater
-import androidx.annotation.RequiresApi
+import androidx.collection.ArrayMap
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.selection.toggleable
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -25,26 +41,26 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.toMutableStateList
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.core.graphics.drawable.toBitmap
-import androidx.core.view.isVisible
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
-import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.luckyzyx.luckytool.IAdbDebugController
 import com.luckyzyx.luckytool.ITileServiceController
 import com.luckyzyx.luckytool.R
-import com.luckyzyx.luckytool.data.AppInfo
-import com.luckyzyx.luckytool.databinding.DialogAdbLayoutBinding
-import com.luckyzyx.luckytool.listener.OnSelectAppInfoListener
-import com.luckyzyx.luckytool.selector.AppInfoSelectDialog
 import com.luckyzyx.luckytool.service.AdbService
 import com.luckyzyx.luckytool.service.TilesService
 import com.luckyzyx.luckytool.ui.activity.MainActivity
+import com.luckyzyx.luckytool.ui.components.AppPickerDialog
 import com.luckyzyx.luckytool.ui.compose.components.PrefCard
 import com.luckyzyx.luckytool.utils.A13
 import com.luckyzyx.luckytool.utils.GlobalKeyValue.keyTouchSamplingRateLevel
@@ -56,7 +72,6 @@ import com.luckyzyx.luckytool.utils.SDK
 import com.luckyzyx.luckytool.utils.SettingsPrefs
 import com.luckyzyx.luckytool.utils.ShortcutUtils
 import com.luckyzyx.luckytool.utils.copyStr
-import com.luckyzyx.luckytool.utils.dialogCentered
 import com.luckyzyx.luckytool.utils.showToast
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -76,6 +91,12 @@ fun OtherPage(activity: MainActivity) {
     val scope = rememberCoroutineScope()
     var tileController by remember { mutableStateOf<ITileServiceController?>(null) }
     var adbController by remember { mutableStateOf<IAdbDebugController?>(null) }
+    var showOptimizePicker by remember { mutableStateOf(false) }
+    var optimizeScopes by remember { mutableStateOf<ArrayMap<String, CharSequence>?>(null) }
+    var showTileDialog by remember { mutableStateOf(false) }
+    var showShortcutDialog by remember { mutableStateOf(false) }
+    var showTouchDialog by remember { mutableStateOf(false) }
+    var showAdbDialog by remember { mutableStateOf(false) }
 
     // 旧 onResume：刷新 tiles / adb 控制器
     LifecycleEventEffect(Lifecycle.Event.ON_RESUME) {
@@ -88,19 +109,7 @@ fun OtherPage(activity: MainActivity) {
             TopAppBar(
                 title = { Text(stringResource(R.string.nav_other)) },
                 actions = {
-                    IconButton(onClick = {
-                        AppInfoSelectDialog(activity, true).apply {
-                            setDefaultShowSystem(true)
-                            setOnSelectAppListener(object : OnSelectAppInfoListener {
-                                override fun resultSelectAppInfos(list: ArrayList<AppInfo>) {
-                                    RestartMenuUtils.optimizeScope(
-                                        context, list.map { it.packageName }.toTypedArray()
-                                    )
-                                }
-                            })
-                            show()
-                        }
-                    }) {
+                    IconButton(onClick = { showOptimizePicker = true }) {
                         Icon(
                             painterResource(R.drawable.ic_baseline_extension_24),
                             contentDescription = "优化App",
@@ -134,7 +143,10 @@ fun OtherPage(activity: MainActivity) {
                     PrefCard(
                         title = stringResource(R.string.tile_list),
                         summary = stringResource(R.string.tile_list_summary),
-                        onClick = { showTileListDialog(context) },
+                        onClick = {
+                            context.showToast(context.getString(R.string.tile_list_click_tips))
+                            showTileDialog = true
+                        },
                     )
                 }
             }
@@ -142,7 +154,7 @@ fun OtherPage(activity: MainActivity) {
                 PrefCard(
                     title = stringResource(R.string.set_module_shortcuts),
                     summary = stringResource(R.string.set_module_shortcuts_summary),
-                    onClick = { showShortcutDialog(context) },
+                    onClick = { showShortcutDialog = true },
                 )
             }
             item(key = "fps") {
@@ -161,9 +173,7 @@ fun OtherPage(activity: MainActivity) {
                     PrefCard(
                         title = stringResource(R.string.set_touch_sampling_rate_tile_level),
                         summary = stringResource(R.string.set_touch_sampling_rate_tile_level_summary),
-                        onClick = {
-                            showTouchSamplingRateDialog(context, settings, tileController)
-                        },
+                        onClick = { showTouchDialog = true },
                     )
                 }
             }
@@ -172,185 +182,342 @@ fun OtherPage(activity: MainActivity) {
                     PrefCard(
                         title = stringResource(R.string.remote_adb_debug_title),
                         summary = stringResource(R.string.remote_adb_debug_summary),
-                        onClick = {
-                            showAdbDialog(context, otherPrefs, adbController, scope)
-                        },
+                        onClick = { showAdbDialog = true },
                     )
                 }
             }
         }
     }
+
+    if (showOptimizePicker) {
+        AppPickerDialog(
+            title = "优化App",
+            multiMode = true,
+            showSystemApps = true,
+            onDismiss = { showOptimizePicker = false },
+            onConfirm = { list ->
+                showOptimizePicker = false
+                optimizeScopes = RestartMenuUtils.buildScopeMaps(
+                    context, list.map { it.packageName }.toTypedArray()
+                )
+            },
+        )
+    }
+    optimizeScopes?.let { scopes ->
+        RestartMenuUtils.OptimizeDexDialog(context, scopes, confirmFirst = false) {
+            optimizeScopes = null
+        }
+    }
+
+    if (showTileDialog) {
+        TileListDialog(context) { showTileDialog = false }
+    }
+    if (showShortcutDialog) {
+        ShortcutDialog(context) { showShortcutDialog = false }
+    }
+    if (showTouchDialog && tileController?.checkTouchMode() == true) {
+        TouchSamplingRateDialog(context, settings, tileController) { showTouchDialog = false }
+    }
+    if (showAdbDialog && adbController != null) {
+        AdbDebugDialog(context, otherPrefs, adbController, scope) { showAdbDialog = false }
+    }
 }
 
 /** 模块内置磁贴列表：请求添加到控制中心（旧 initQuickTile） */
-@RequiresApi(Build.VERSION_CODES.TIRAMISU)
-private fun showTileListDialog(context: Context) {
-    context.showToast(context.getString(R.string.tile_list_click_tips))
-    val info = PackageUtils(context.packageManager).getPackageInfo(
-        context.packageName, PackageManager.GET_SERVICES
-    ) ?: return
-    val statusBarManager = context.getSystemService(StatusBarManager::class.java)
-    val tileInfos = info.services?.filter {
-        it.permission == "android.permission.BIND_QUICK_SETTINGS_TILE"
-    }?.toList() ?: arrayListOf()
-    val items = Array(tileInfos.size) { i -> tileInfos[i].loadLabel(context.packageManager) }
-    MaterialAlertDialogBuilder(context, dialogCentered).apply {
-        setItems(items) { _, which ->
-            val clazz = tileInfos[which].name
-            val label = tileInfos[which].loadLabel(context.packageManager)
-            val icon = tileInfos[which].loadIcon(context.packageManager)
-            statusBarManager.requestAddTileService(
-                ComponentName(context.packageName, clazz), label,
-                android.graphics.drawable.Icon.createWithBitmap(icon.toBitmap()),
-                context.mainExecutor
-            ) { resultCode ->
-                when (resultCode) {
-                    StatusBarManager.TILE_ADD_REQUEST_RESULT_TILE_NOT_ADDED ->
-                        context.showToast("$label ${context.getString(R.string.add_fail)}")
+@SuppressLint("NewApi")
+@Composable
+private fun TileListDialog(context: Context, onDismiss: () -> Unit) {
+    val info = remember(context) {
+        PackageUtils(context.packageManager).getPackageInfo(
+            context.packageName, PackageManager.GET_SERVICES
+        )
+    } ?: return
+    val tileInfos = remember(info) {
+        info.services?.filter {
+            it.permission == "android.permission.BIND_QUICK_SETTINGS_TILE"
+        }?.toList() ?: emptyList()
+    }
+    val statusBarManager = remember { context.getSystemService(StatusBarManager::class.java) }
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        confirmButton = {},
+        text = {
+            Column {
+                tileInfos.forEach { serviceInfo ->
+                    val label = serviceInfo.loadLabel(context.packageManager).toString()
+                    Text(
+                        text = label,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable {
+                                val icon = serviceInfo.loadIcon(context.packageManager)
+                                statusBarManager.requestAddTileService(
+                                    ComponentName(context.packageName, serviceInfo.name),
+                                    label,
+                                    android.graphics.drawable.Icon.createWithBitmap(icon.toBitmap()),
+                                    context.mainExecutor
+                                ) { resultCode ->
+                                    when (resultCode) {
+                                        StatusBarManager.TILE_ADD_REQUEST_RESULT_TILE_NOT_ADDED ->
+                                            context.showToast("$label ${context.getString(R.string.add_fail)}")
 
-                    StatusBarManager.TILE_ADD_REQUEST_RESULT_TILE_ALREADY_ADDED ->
-                        context.showToast("$label ${context.getString(R.string.add_repeat)}")
+                                        StatusBarManager.TILE_ADD_REQUEST_RESULT_TILE_ALREADY_ADDED ->
+                                            context.showToast("$label ${context.getString(R.string.add_repeat)}")
 
-                    StatusBarManager.TILE_ADD_REQUEST_RESULT_TILE_ADDED ->
-                        context.showToast("$label ${context.getString(R.string.add_success)}")
+                                        StatusBarManager.TILE_ADD_REQUEST_RESULT_TILE_ADDED ->
+                                            context.showToast("$label ${context.getString(R.string.add_success)}")
+                                    }
+                                }
+                                onDismiss()
+                            }
+                            .padding(vertical = 12.dp)
+                    )
                 }
             }
-        }
-    }.show()
+        },
+    )
 }
 
 /** 模块快捷方式：多选启用 + Pin 到桌面（旧 shortcut 卡点击） */
-private fun showShortcutDialog(context: Context) {
-    val shortcutUtils = ShortcutUtils(context)
-    val beans = shortcutUtils.getDefaultShortcutBean()
-    val titles = Array(beans.size) { i -> beans[i].label }
-    val values = Array(beans.size) { i ->
-        shortcutUtils.getEnabledShortcutList().find { it.id == beans[i].key } != null
+@Composable
+private fun ShortcutDialog(context: Context, onDismiss: () -> Unit) {
+    val shortcutUtils = remember { ShortcutUtils(context) }
+    val beans = remember { shortcutUtils.getDefaultShortcutBean() }
+    val checked = remember(beans) {
+        val enabledIds = shortcutUtils.getEnabledShortcutList().map { it.id }.toSet()
+        beans.map { bean -> enabledIds.contains(bean.key) }.toMutableStateList()
     }
-    MaterialAlertDialogBuilder(context, dialogCentered).apply {
-        setTitle(context.getString(R.string.set_module_shortcuts))
-        setMultiChoiceItems(titles, values.toBooleanArray(), null)
-        setPositiveButton(android.R.string.ok) { dialog, _ ->
-            val positions = (dialog as androidx.appcompat.app.AlertDialog).listView.checkedItemPositions
-            for (i in 0 until positions.size()) {
-                shortcutUtils.setShortcutStatus(
-                    beans, beans[positions.keyAt(i)], positions.valueAt(i)
-                )
-            }
-        }
-        if (shortcutUtils.shortcutManager.isRequestPinShortcutSupported) {
-            setNeutralButton("Pin") { dialog, _ ->
-                val positions = (dialog as androidx.appcompat.app.AlertDialog).listView.checkedItemPositions
-                val checked = (0 until positions.size()).filter { positions.valueAt(it) }
-                if (checked.size > 1) {
-                    context.showToast("Only select one item")
-                    return@setNeutralButton
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(R.string.set_module_shortcuts)) },
+        text = {
+            Column {
+                beans.forEachIndexed { i, bean ->
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .toggleable(
+                                value = checked[i],
+                                role = Role.Checkbox,
+                                onValueChange = { checked[i] = it },
+                            )
+                            .padding(vertical = 12.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Checkbox(checked = checked[i], onCheckedChange = { checked[i] = it })
+                        Spacer(Modifier.width(8.dp))
+                        Text(bean.label)
+                    }
                 }
-                val indexValue = checked.firstOrNull() ?: return@setNeutralButton
-                val key = positions.keyAt(indexValue)
-                shortcutUtils.requestPinShortcut(beans[key].toShortcutInfo(context))
             }
-        }
-    }.show()
+        },
+        confirmButton = {
+            TextButton(
+                onClick = {
+                    beans.forEachIndexed { i, bean ->
+                        if (checked[i]) shortcutUtils.setShortcutStatus(beans, bean, true)
+                    }
+                    onDismiss()
+                },
+            ) { Text(stringResource(android.R.string.ok)) }
+        },
+        dismissButton = {
+            Row {
+                if (shortcutUtils.shortcutManager.isRequestPinShortcutSupported) {
+                    TextButton(
+                        onClick = {
+                            val selected = beans.indices.filter { checked[it] }
+                            if (selected.size > 1) {
+                                context.showToast("Only select one item")
+                            } else {
+                                selected.firstOrNull()?.let { index ->
+                                    shortcutUtils.requestPinShortcut(beans[index].toShortcutInfo(context))
+                                }
+                            }
+                        },
+                    ) { Text("Pin") }
+                }
+                TextButton(onClick = onDismiss) { Text(stringResource(android.R.string.cancel)) }
+            }
+        },
+    )
 }
 
 /** 触摸采样率档位（旧 initTouchPanelView） */
-private fun showTouchSamplingRateDialog(
+@Composable
+private fun TouchSamplingRateDialog(
     context: Context,
     settings: PrefState,
     controller: ITileServiceController?,
+    onDismiss: () -> Unit,
 ) {
-    val touchs = arrayOf("120", "180", "240", "360", "480", "600", "720")
-    val curLevel = settings.getString(keyTouchSamplingRateLevel, "240")
-    MaterialAlertDialogBuilder(context, dialogCentered).apply {
-        setTitle(context.getString(R.string.set_touch_sampling_rate_tile_level))
-        setSingleChoiceItems(touchs, touchs.indexOf(curLevel), null)
-        setPositiveButton(android.R.string.ok) { dialog, _ ->
-            val position =
-                (dialog as androidx.appcompat.app.AlertDialog).listView.checkedItemPosition
-            val value = if (position > 0) touchs[position] else position.toString()
-            settings.set(keyTouchSamplingRateLevel, value)
-            controller?.touchMode = value.toInt()
-        }
-        setNeutralButton(android.R.string.cancel, null)
-    }.show()
+    val touchs = remember { arrayOf("120", "180", "240", "360", "480", "600", "720") }
+    var tempSelection by remember {
+        mutableStateOf(touchs.indexOf(settings.getString(keyTouchSamplingRateLevel, "240")))
+    }
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(R.string.set_touch_sampling_rate_tile_level)) },
+        text = {
+            Column {
+                touchs.forEachIndexed { position, level ->
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .selectable(
+                                selected = tempSelection == position,
+                                role = Role.RadioButton,
+                                onClick = { tempSelection = position },
+                            )
+                            .padding(vertical = 12.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        RadioButton(
+                            selected = tempSelection == position,
+                            onClick = { tempSelection = position },
+                        )
+                        Spacer(Modifier.width(8.dp))
+                        Text(level)
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(
+                onClick = {
+                    val value = if (tempSelection > 0) touchs[tempSelection] else tempSelection.toString()
+                    settings.set(keyTouchSamplingRateLevel, value)
+                    controller?.touchMode = value.toInt()
+                    onDismiss()
+                },
+            ) { Text(stringResource(android.R.string.ok)) }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) { Text(stringResource(android.R.string.cancel)) }
+        },
+    )
 }
 
 /** 远程 ADB 调试（旧 initAdbDebugView，布局与状态机保持原样） */
+@OptIn(ExperimentalFoundationApi::class)
 @SuppressLint("SetTextI18n")
-private fun showAdbDialog(
+@Composable
+private fun AdbDebugDialog(
     context: Context,
     otherPrefs: PrefState,
     controller: IAdbDebugController?,
     scope: CoroutineScope,
+    onDismiss: () -> Unit,
 ) {
     val adb = controller ?: return
     val getPort = adb.adbPort
-    var getIP = adb.wifiIP ?: "IP"
+    var getIP by remember { mutableStateOf(adb.wifiIP ?: "IP") }
 
-    val dialogBinding = DialogAdbLayoutBinding.inflate(LayoutInflater.from(context))
-    MaterialAlertDialogBuilder(context).apply {
-        setCancelable(true)
-        setView(dialogBinding.root)
-    }.show()
-
-    val adbPortLayout = dialogBinding.adbPortLayout
-    val adbPort = dialogBinding.adbPort.apply {
-        setText(
-            if (getPort == 0 || getPort == -1) otherPrefs.getString("adb_port", "6666")
-            else getPort.toString()
+    var portText by remember {
+        mutableStateOf(
+            (if (getPort == 0 || getPort == -1) otherPrefs.getString("adb_port", "6666")
+            else getPort.toString()) ?: "6666"
         )
     }
-    val adbTv = dialogBinding.adbTv.apply {
-        if (getPort != 0 && getPort != -1) text = "adb connect $getIP:$getPort"
-        setOnLongClickListener { context.copyStr(text.toString()); true }
+    var adbTvText by remember {
+        mutableStateOf(if (getPort != 0 && getPort != -1) "adb connect $getIP:$getPort" else "")
     }
-    val adbTvTip = dialogBinding.adbTvTip.apply {
-        isVisible = !adbTv.text.isNullOrBlank()
-        setOnLongClickListener { context.copyStr(adbTv.text.toString()); true }
-    }
-    dialogBinding.adbSwitch.apply {
-        isChecked = isEnabled && getPort != 0 && getPort != -1
-        adbPortLayout.isEnabled = !isChecked
-        setOnCheckedChangeListener { buttonView, checked ->
-            if (!buttonView.isPressed) return@setOnCheckedChangeListener
-            if (checked) {
-                val portStr = adbPort.text?.toString()
-                if (portStr.isNullOrBlank()) {
-                    isChecked = false
-                    adbTv.text = context.getString(R.string.adb_debug_port_cannot_null)
-                    return@setOnCheckedChangeListener
+    var busy by remember { mutableStateOf(false) }
+    var adbEnabled by remember { mutableStateOf(getPort != 0 && getPort != -1) }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        confirmButton = {},
+        text = {
+            Column {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Text(
+                        stringResource(R.string.enable_remote_adb_debugging),
+                        modifier = Modifier.weight(1f),
+                    )
+                    Switch(
+                        checked = adbEnabled,
+                        enabled = !busy,
+                        onCheckedChange = { checked ->
+                            if (checked) {
+                                val portStr = portText
+                                if (portStr.isBlank()) {
+                                    adbTvText = context.getString(R.string.adb_debug_port_cannot_null)
+                                } else {
+                                    scope.launch {
+                                        val port = portStr.toIntOrNull()
+                                        if (port == null) {
+                                            adbTvText = context.getString(R.string.adb_debug_port_cannot_null)
+                                            return@launch
+                                        }
+                                        busy = true
+                                        runCatching {
+                                            withContext(Dispatchers.IO) {
+                                                adb.adbPort = port
+                                                adb.restartAdb()
+                                            }
+                                            getIP = adb.wifiIP ?: "IP"
+                                            otherPrefs.set("adb_port", port.toString())
+                                        }
+                                        adbEnabled = true
+                                        adbTvText = "adb connect $getIP:$portStr"
+                                        busy = false
+                                    }
+                                }
+                            } else {
+                                scope.launch {
+                                    busy = true
+                                    runCatching {
+                                        withContext(Dispatchers.IO) {
+                                            adb.adbPort = -1
+                                            adb.restartAdb()
+                                            adb.adbPort = 0
+                                        }
+                                    }
+                                    adbEnabled = false
+                                    adbTvText = ""
+                                    busy = false
+                                }
+                            }
+                        },
+                    )
                 }
-                scope.launch {
-                    val port = portStr.toInt()
-                    isEnabled = false
-                    runCatching {
-                        withContext(Dispatchers.IO) {
-                            adb.adbPort = port
-                            adb.restartAdb()
-                        }
-                        getIP = adb.wifiIP ?: "IP"
-                        otherPrefs.set("adb_port", port.toString())
-                    }
-                    adbPortLayout.isEnabled = false
-                    adbTv.text = "adb connect $getIP:$portStr"
-                    adbTvTip.isVisible = true
-                    isEnabled = true
+                OutlinedTextField(
+                    value = portText,
+                    onValueChange = { portText = it },
+                    enabled = !adbEnabled && !busy,
+                    label = { Text(stringResource(R.string.adb_port)) },
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                )
+                if (adbTvText.isNotBlank()) {
+                    Text(
+                        text = adbTvText,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .combinedClickable(
+                                onLongClick = { context.copyStr(adbTvText) },
+                                onClick = {},
+                            )
+                            .padding(vertical = 12.dp),
+                    )
+                    Text(
+                        text = stringResource(R.string.adb_tv_tip),
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .combinedClickable(
+                                onLongClick = { context.copyStr(adbTvText) },
+                                onClick = {},
+                            )
+                            .padding(bottom = 20.dp),
+                    )
                 }
-            } else scope.launch {
-                isEnabled = false
-                runCatching {
-                    withContext(Dispatchers.IO) {
-                        adb.adbPort = -1
-                        adb.restartAdb()
-                        adb.adbPort = 0
-                    }
-                }
-                adbPortLayout.isEnabled = true
-                adbTv.text = ""
-                adbTvTip.isVisible = false
-                isEnabled = true
             }
-        }
-    }
+        },
+    )
 }
