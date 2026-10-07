@@ -2,7 +2,6 @@
 
 package com.luckyzyx.luckytool.ui.components
 
-import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.drawable.BitmapDrawable
 import android.graphics.drawable.Drawable
@@ -41,6 +40,7 @@ import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.core.graphics.createBitmap
 import com.luckyzyx.luckytool.data.AppInfo
 import com.luckyzyx.luckytool.utils.PackageUtils
 import kotlinx.coroutines.Dispatchers
@@ -63,7 +63,7 @@ fun rememberAppIconPainter(icon: Drawable?): Painter? = remember(icon) {
         val bitmap = (drawable as? BitmapDrawable)?.bitmap ?: run {
             val width = drawable.intrinsicWidth.coerceAtLeast(1)
             val height = drawable.intrinsicHeight.coerceAtLeast(1)
-            val bmp = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
+            val bmp = createBitmap(width, height)
             val canvas = Canvas(bmp)
             drawable.setBounds(0, 0, width, height)
             drawable.draw(canvas)
