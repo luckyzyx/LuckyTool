@@ -100,10 +100,10 @@ object StatusBarRelatedPage {
                         enabled = enabled,
                     ) { Text(c.getString(R.string.set_custom_music_fluid_cloud_whitelist)) }
                     if (showPicker) {
-                        // TODO P4: AppPickerDialog 支持传入已选列表（旧 setEnabledList）后启用
                         AppPickerDialog(
                             title = c.getString(R.string.set_custom_music_fluid_cloud_whitelist),
                             multiMode = true,
+                            enabledList = whitelist,
                             onDismiss = { showPicker = false },
                             onConfirm = { apps ->
                                 state.set(

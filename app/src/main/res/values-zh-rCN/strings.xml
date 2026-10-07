@@ -1085,6 +1085,7 @@
     <string name="appinfo_sort_by">排序方式</string>
     <string name="appinfo_filter">过滤器</string>
     <string name="appinfo_reverse">反转</string>
+    <string name="appinfo_search_hint">搜索应用名或包名</string>
     <string name="appinfo_app_name">应用名称</string>
     <string name="appinfo_package_name">应用包名</string>
     <string name="appinfo_app_size">应用大小</string>

@@ -86,6 +86,7 @@ object OplusGesturePage {
                     AppPickerDialog(
                         title = c.getString(R.string.custom_aon_gesture_scroll_page_whitelist),
                         multiMode = true,
+                        enabledList = saved,
                         onDismiss = { show = false },
                         onConfirm = { apps ->
                             state.set(

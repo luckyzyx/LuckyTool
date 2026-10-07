@@ -5,6 +5,7 @@ package com.luckyzyx.luckytool.ui.components
 import android.graphics.Canvas
 import android.graphics.drawable.BitmapDrawable
 import android.graphics.drawable.Drawable
+import androidx.annotation.StringRes
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
@@ -41,19 +42,20 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.core.graphics.createBitmap
+import com.luckyzyx.luckytool.R
 import com.luckyzyx.luckytool.data.AppInfo
 import com.luckyzyx.luckytool.utils.PackageUtils
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
-/** AppInfo 排序模式（与旧 AppInfoSelectDialog 的 sortMode 对齐；TODO P4: 与旧字符串资源统一） */
-enum class AppSortMode(val label: String) {
-    Name("名称"),
-    Package("包名"),
-    Size("大小"),
-    InstallTime("安装时间"),
-    LastInstallTime("更新时间"),
-    Target("目标 SDK"),
+/** AppInfo 排序模式（与旧 AppInfoSelectDialog 的 sortMode 对齐） */
+enum class AppSortMode(@StringRes val labelRes: Int) {
+    Name(R.string.appinfo_app_name),
+    Package(R.string.appinfo_package_name),
+    Size(R.string.appinfo_app_size),
+    InstallTime(R.string.appinfo_install_time),
+    LastInstallTime(R.string.appinfo_last_updated_time),
+    Target(R.string.appinfo_target_sdk),
 }
 
 /** Drawable → Painter（AppInfo.icon 为平台 Drawable，转位图渲染，避免引入图片库） */
@@ -78,14 +80,15 @@ fun rememberAppIconPainter(icon: Drawable?): Painter? = remember(icon) {
  *
  * 行为对齐旧实现：加载 `PackageUtils(context.packageManager).getInstalledAppInfos(0)`，
  * 排除 overlay 应用，默认隐藏系统应用；搜索匹配名称/包名；6 种排序 + 倒序；
- * 多选模式底部确认返回，单选模式点击即返回。
- * TODO P4: 启用列表置顶（旧 enabledList 逻辑）与排序文案资源统一。
+ * 多选模式底部确认返回，单选模式点击即返回；
+ * 已选应用（旧 setEnabledList 逻辑）：预勾选并置顶显示。
  */
 @Composable
 fun AppPickerDialog(
     title: String,
     multiMode: Boolean = false,
     showSystemApps: Boolean = false,
+    enabledList: Set<String> = emptySet(),
     onDismiss: () -> Unit,
     onConfirm: (List<AppInfo>) -> Unit,
 ) {
@@ -100,15 +103,18 @@ fun AppPickerDialog(
     var sortMode by remember { mutableStateOf(AppSortMode.Name) }
     var reverse by remember { mutableStateOf(false) }
     var includeSystem by remember { mutableStateOf(showSystemApps) }
-    var selected by remember { mutableStateOf(setOf<String>()) }
+    var selected by remember { mutableStateOf(enabledList) }
 
-    val filtered = remember(apps, query, sortMode, reverse, includeSystem) {
+    val filtered = remember(apps, query, sortMode, reverse, includeSystem, enabledList) {
         val q = query.trim().lowercase()
         apps.asSequence()
             .filter { !it.isOverlay }
             .filter { includeSystem || !it.isSystem }
             .filter { q.isEmpty() || it.name.lowercase().contains(q) || it.packageName.lowercase().contains(q) }
-            .sortedWith(compareByDescending<AppInfo> { it.isEnable }.then(comparatorOf(sortMode, reverse)))
+            .sortedWith(
+                compareByDescending<AppInfo> { it.packageName in enabledList }
+                    .then(comparatorOf(sortMode, reverse))
+            )
             .toList()
     }
 
@@ -120,7 +126,7 @@ fun AppPickerDialog(
                 OutlinedTextField(
                     value = query,
                     onValueChange = { query = it },
-                    placeholder = { Text("搜索应用名或包名") },
+                    placeholder = { Text(stringResource(R.string.appinfo_search_hint)) },
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth(),
                 )
@@ -134,7 +140,7 @@ fun AppPickerDialog(
                     FilterChip(
                         selected = includeSystem,
                         onClick = { includeSystem = !includeSystem },
-                        label = { Text("系统应用") },
+                        label = { Text(stringResource(R.string.appinfo_system_app)) },
                     )
                     FilterChip(
                         selected = reverse,
@@ -152,7 +158,7 @@ fun AppPickerDialog(
                         FilterChip(
                             selected = sortMode == mode,
                             onClick = { sortMode = mode },
-                            label = { Text(mode.label) },
+                            label = { Text(stringResource(mode.labelRes)) },
                         )
                     }
                 }

@@ -329,6 +329,7 @@ object ApplicationRelatedPage {
                 AppPickerDialog(
                     title = title,
                     multiMode = true,
+                    enabledList = state.getStringSet(key),
                     onDismiss = { showPicker = false },
                     onConfirm = { apps ->
                         state.set(key, apps.map { it.packageName }.toSet())

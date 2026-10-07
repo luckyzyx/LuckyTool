@@ -159,6 +159,7 @@ object OplusGamesPage {
                 AppPickerDialog(
                     title = c.getString(R.string.custom_media_player_support),
                     multiMode = true,
+                    enabledList = saved,
                     onDismiss = { show = false },
                     onConfirm = { apps ->
                         state.set(
@@ -187,6 +188,7 @@ object OplusGamesPage {
                 AppPickerDialog(
                     title = c.getString(R.string.custom_barrage_notification_whitelist),
                     multiMode = true,
+                    enabledList = saved,
                     onDismiss = { show = false },
                     onConfirm = { apps ->
                         state.set(

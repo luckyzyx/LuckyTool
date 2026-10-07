@@ -84,11 +84,11 @@ object StatusBarNotifyPage {
                         Text(c.getString(R.string.set_small_window_reply_blacklist))
                     }
                     if (showPicker) {
-                        // TODO P4: AppPickerDialog 支持传入已选列表（旧 setEnabledList）后启用
                         AppPickerDialog(
                             title = c.getString(R.string.set_small_window_reply_blacklist),
                             multiMode = true,
                             showSystemApps = true,
+                            enabledList = blacklist,
                             onDismiss = { showPicker = false },
                             onConfirm = { apps ->
                                 val set = apps.map { it.packageName }.toSet()

@@ -1269,6 +1269,7 @@
     <string name="appinfo_sort_by">Sort By</string>
     <string name="appinfo_filter">Filter</string>
     <string name="appinfo_reverse">Reverse</string>
+    <string name="appinfo_search_hint">Search App Name Or Package Name</string>
     
     <string name="appinfo_app_name">App Name</string>
     <string name="appinfo_package_name">Package Name</string>
