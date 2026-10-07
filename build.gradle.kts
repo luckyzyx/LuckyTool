@@ -3,7 +3,10 @@ import java.util.Properties
 
 val keystorePropertiesFile: File = rootProject.file("keystore/keystore.properties")
 val keystoreProperties = Properties()
-keystoreProperties.load(FileInputStream(keystorePropertiesFile))
+// Load signing config only when keystore file exists; CI debug builds fall back to the default debug keystore
+if (keystorePropertiesFile.exists()) {
+    keystoreProperties.load(FileInputStream(keystorePropertiesFile))
+}
 
 // Top-level build file where you can add configuration options common to all sub-projects/modules.
 plugins {

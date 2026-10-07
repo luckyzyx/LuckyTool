@@ -39,10 +39,13 @@ android {
             enableV3Signing = true
             enableV4Signing = null
 
-            storeFile = file(rootProject.extra.get("storeFile") as String)
-            storePassword = rootProject.extra.get("storePassword") as String
-            keyAlias = rootProject.extra.get("keyAlias") as String
-            keyPassword = rootProject.extra.get("keyPassword") as String
+            // Only configure custom keystore when available; CI debug builds use default debug keystore
+            if (rootProject.extra.has("storeFile")) {
+                storeFile = file(rootProject.extra.get("storeFile") as String)
+                storePassword = rootProject.extra.get("storePassword") as String
+                keyAlias = rootProject.extra.get("keyAlias") as String
+                keyPassword = rootProject.extra.get("keyPassword") as String
+            }
         }
     }
     buildTypes {
