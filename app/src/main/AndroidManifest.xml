@@ -34,7 +34,10 @@
     <!--前台服务-->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
-    
+
+    <!--Miuix blur 的 targetSdk 高于本模块，放行 manifest 合并-->
+    <uses-sdk tools:overrideLibrary="top.yukonga.miuix.kmp.blur" />
+
     <application
             android:name=".ui.application.MyApplication"
             android:allowBackup="true"

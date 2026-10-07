@@ -146,6 +146,12 @@ dependencies {
     implementation(libs.androidx.compose.material3)
     implementation(libs.material.kolor)
     implementation(libs.androidx.compose.material.icons.extended)
+    //Miuix（对齐 KernelSU Miuix 外观线：主题、组件、导航、设置项、模糊）
+    implementation(libs.miuix.ui)
+    implementation(libs.miuix.icons)
+    implementation(libs.miuix.nav)
+    implementation(libs.miuix.preference)
+    implementation(libs.miuix.blur)
     //Markdown 渲染（Markwon，供捐赠数据/版本信息/更新日志使用）
     implementation(libs.markwon.core)
     implementation(libs.markwon.html)

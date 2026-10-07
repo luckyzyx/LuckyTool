@@ -17,6 +17,8 @@ compose-bom = "2026.09.00"
 # 1.5.0-alpha29 是 Google 官方 Expressive 线（用户已确认），MaterialExpressiveTheme 为公开 API。
 material3 = "1.5.0-alpha29"
 materialKolor = "5.0.1"
+# Miuix（KernelSU Miuix 外观线）：版本与 KernelSU manager 保持一致
+miuix = "0.9.4"
 markwon = "4.6.2"
 lifecycle = "2.11.0"
 activity-compose = "1.13.0"
@@ -76,6 +78,11 @@ androidx-compose-material3 = { group = "androidx.compose.material3", name = "mat
 material-kolor = { group = "com.materialkolor", name = "material-kolor", version.ref = "materialKolor" }
 # icons 组件自 1.7.8 后冻结，不再由 Compose BOM 管理，显式钉版本
 androidx-compose-material-icons-extended = { group = "androidx.compose.material", name = "material-icons-extended", version = "1.7.8" }
+miuix-ui = { module = "top.yukonga.miuix.kmp:miuix-ui-android", version.ref = "miuix" }
+miuix-icons = { module = "top.yukonga.miuix.kmp:miuix-icons-android", version.ref = "miuix" }
+miuix-nav = { module = "top.yukonga.miuix.kmp:miuix-nav-android", version.ref = "miuix" }
+miuix-preference = { module = "top.yukonga.miuix.kmp:miuix-preference-android", version.ref = "miuix" }
+miuix-blur = { module = "top.yukonga.miuix.kmp:miuix-blur-android", version.ref = "miuix" }
 coil-compose = { group = "io.coil-kt.coil3", name = "coil-compose", version.ref = "coil" }
 coil-network-okhttp = { group = "io.coil-kt.coil3", name = "coil-network-okhttp", version.ref = "coil" }
 
