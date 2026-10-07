@@ -29,7 +29,6 @@ dependencyResolutionManagement {
         mavenLocal {
             content { includeGroup("com.highcapable.yukihookapi") }
             content { includeGroup("com.highcapable.kavaref") }
-            content { includeGroup("com.highcapable.hikage") }
         }
         google()
         mavenCentral()
@@ -42,4 +41,4 @@ dependencyResolutionManagement {
 }
 
 rootProject.name = "LuckyTool"
-include(":app", ":colorpicker", ":hidden-api-stub")
+include(":app", ":hidden-api-stub")

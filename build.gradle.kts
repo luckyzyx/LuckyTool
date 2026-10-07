@@ -25,12 +25,6 @@ extra["storePassword"] = keystoreProperties["storePassword"]
 extra["keyAlias"] = keystoreProperties["keyAlias"]
 extra["keyPassword"] = keystoreProperties["keyPassword"]
 
-buildscript {
-    dependencies {
-        classpath(libs.androidx.navigation.safe.args.gradle.plugin)
-    }
-}
-
 tasks {
     register("clean", Delete::class) {
         delete(layout.buildDirectory)

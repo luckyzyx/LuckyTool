@@ -1,6 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<!-- P2：主壳已迁移至 Compose（MainActivity + MainShell）。
-     此布局仅作为 AppBindingActivity 的最小绑定根，P5 清理时随 ActivityMainBinding 一并移除。 -->
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent" />

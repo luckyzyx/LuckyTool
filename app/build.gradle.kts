@@ -8,7 +8,6 @@ plugins {
     alias(libs.plugins.lsplugin.resopt)
     alias(libs.plugins.lsplugin.lsparanoid)
     alias(libs.plugins.kotlin.serialization)
-    alias(libs.plugins.navigation.safe.args)
 }
 
 lsparanoid {
@@ -70,7 +69,6 @@ android {
     }
     buildFeatures {
         aidl = true
-        viewBinding = true
         buildConfig = true
         compose = true
     }
@@ -111,7 +109,6 @@ androidComponents {
 
 dependencies {
     compileOnly(projects.hiddenApiStub)
-    implementation(projects.colorpicker)
 
     @Suppress("AvoidDuplicateDependencies")
     platform(libs.yukihook.bom).apply {
@@ -133,12 +130,8 @@ dependencies {
     implementation(libs.hiddenapibypass)
 
     //AndroidX
+    implementation(libs.androidx.appcompat)
     implementation(libs.androidx.biometric)
-    implementation(libs.androidx.constraintlayout)
-    implementation(libs.androidx.preference.ktx)
-    implementation(libs.androidx.swiperefreshlayout)
-    implementation(libs.androidx.navigation.fragment.ktx)
-    implementation(libs.androidx.navigation.ui.ktx)
     implementation(libs.androidx.lifecycle.viewmodel.ktx)
     implementation(libs.androidx.lifecycle.runtime.compose)
     implementation(libs.androidx.lifecycle.viewmodel.compose)
@@ -156,17 +149,10 @@ dependencies {
     implementation(libs.coil.network.okhttp)
 
     //Android UI
-    implementation(libs.material)
     implementation(libs.betterandroid.ui.component)
     implementation(libs.betterandroid.ui.component.adapter)
     implementation(libs.betterandroid.ui.extension)
     implementation(libs.betterandroid.system.extension)
-    implementation(libs.hikage.core)
-    implementation(libs.hikage.compiler)
-    implementation(libs.hikage.extension)
-    implementation(libs.hikage.extension.betterandroid)
-    implementation(libs.hikage.widget.androidx)
-    implementation(libs.hikage.widget.material)
 
     //KotlinX
     implementation(libs.kotlinx.coroutines.core)
@@ -183,17 +169,10 @@ dependencies {
     implementation(libs.libsu.service)
     implementation(libs.libsu.io)
 
-    //MarkDown
-    implementation(libs.markwon.core)
-    implementation(libs.markwon.html)
-    implementation(libs.markwon.image)
-    implementation(libs.markwon.ext.tables)
-
     //Tools
     implementation(libs.deviceCompat)
     implementation(libs.xxpermissions)
     implementation(libs.spiderman)
-    implementation(libs.fastscroll)
     implementation(libs.android.image.cropper)
 
     //Test

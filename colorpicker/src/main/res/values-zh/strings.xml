@@ -1,5 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<resources>
-    <string name="current_color">当前颜色: %1$s</string>
-    <string name="select_color">选择颜色</string>
-</resources>
