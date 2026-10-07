@@ -340,19 +340,43 @@
     </fragment>
     <fragment
             android:id="@+id/alphaBackupPro"
-            android:name="com.luckyzyx.luckytool.ui.fragment.scopes.others.AlphaBackupPro"
+            android:name="com.luckyzyx.luckytool.ui.compose.ComposeScopeFragment"
             android:label="{title_text}">
         <argument
                 android:name="title_text"
                 app:argType="string" />
+        <argument
+                android:name="page_key"
+                app:argType="string"
+                android:defaultValue="alpha_backup_pro" />
+        <argument
+                android:name="scrollKey"
+                app:argType="string"
+                android:defaultValue="" />
+        <argument
+                android:name="scrollPosition"
+                app:argType="integer"
+                android:defaultValue="-1" />
     </fragment>
     <fragment
             android:id="@+id/claw"
-            android:name="com.luckyzyx.luckytool.ui.fragment.scopes.others.Claw"
+            android:name="com.luckyzyx.luckytool.ui.compose.ComposeScopeFragment"
             android:label="{title_text}">
         <argument
                 android:name="title_text"
                 app:argType="string" />
+        <argument
+                android:name="page_key"
+                app:argType="string"
+                android:defaultValue="claw" />
+        <argument
+                android:name="scrollKey"
+                app:argType="string"
+                android:defaultValue="" />
+        <argument
+                android:name="scrollPosition"
+                app:argType="integer"
+                android:defaultValue="-1" />
     </fragment>
     <fragment
             android:id="@+id/systemQuickEntry"
@@ -540,11 +564,23 @@
     </fragment>
     <fragment
             android:id="@+id/ksWeb"
-            android:name="com.luckyzyx.luckytool.ui.fragment.scopes.others.KsWeb"
+            android:name="com.luckyzyx.luckytool.ui.compose.ComposeScopeFragment"
             android:label="{title_text}">
         <argument
                 android:name="title_text"
                 app:argType="string" />
+        <argument
+                android:name="page_key"
+                app:argType="string"
+                android:defaultValue="ks_web" />
+        <argument
+                android:name="scrollKey"
+                app:argType="string"
+                android:defaultValue="" />
+        <argument
+                android:name="scrollPosition"
+                app:argType="integer"
+                android:defaultValue="-1" />
     </fragment>
     <fragment
             android:id="@+id/statusBarTiles"
@@ -712,11 +748,23 @@
     </fragment>
     <fragment
             android:id="@+id/adm"
-            android:name="com.luckyzyx.luckytool.ui.fragment.scopes.others.ADM"
+            android:name="com.luckyzyx.luckytool.ui.compose.ComposeScopeFragment"
             android:label="{title_text}">
         <argument
                 android:name="title_text"
                 app:argType="string" />
+        <argument
+                android:name="page_key"
+                app:argType="string"
+                android:defaultValue="adm" />
+        <argument
+                android:name="scrollKey"
+                app:argType="string"
+                android:defaultValue="" />
+        <argument
+                android:name="scrollPosition"
+                app:argType="integer"
+                android:defaultValue="-1" />
     </fragment>
     <fragment
             android:id="@+id/oplusGallery"
@@ -1284,10 +1332,22 @@
     </fragment>
     <fragment
             android:id="@+id/gpsJoyStick"
-            android:name="com.luckyzyx.luckytool.ui.fragment.scopes.others.GpsJoyStick"
+            android:name="com.luckyzyx.luckytool.ui.compose.ComposeScopeFragment"
             android:label="{title_text}">
         <argument
                 android:name="title_text"
                 app:argType="string" />
+        <argument
+                android:name="page_key"
+                app:argType="string"
+                android:defaultValue="gps_joy_stick" />
+        <argument
+                android:name="scrollKey"
+                app:argType="string"
+                android:defaultValue="" />
+        <argument
+                android:name="scrollPosition"
+                app:argType="integer"
+                android:defaultValue="-1" />
     </fragment>
 </navigation>
