@@ -56,7 +56,7 @@ betterandroid-ui-component-adapter = { group = "com.highcapable.betterandroid", 
 betterandroid-ui-extension = { group = "com.highcapable.betterandroid", name = "ui-extension", version.ref = "betterandroid" }
 betterandroid-system-extension = { group = "com.highcapable.betterandroid", name = "system-extension", version.ref = "betterandroid" }
 
-androidx-appcompat = { group = "androidx.appcompat", name = "appcompat", version = "1.7.1" }
+androidx-appcompat = { group = "androidx.appcompat", name = "appcompat", version = "1.8.0" }
 androidx-biometric = { group = "androidx.biometric", name = "biometric", version = "1.1.0" }
 androidx-annotation = { group = "androidx.annotation", name = "annotation", version = "1.11.0" }
 androidx-lifecycle-viewmodel-ktx = { group = "androidx.lifecycle", name = "lifecycle-viewmodel-ktx", version.ref = "lifecycle" }
