@@ -1,5 +1,7 @@
 package com.luckyzyx.luckytool.ui.compose.scopes
 
+import androidx.compose.foundation.lazy.LazyItemScope
+import androidx.compose.runtime.Composable
 import com.luckyzyx.luckytool.ui.components.preference.PrefScopeBuilder
 import com.luckyzyx.luckytool.ui.compose.scopes.apps.OplusAlarmClockPage
 import com.luckyzyx.luckytool.ui.compose.scopes.apps.OplusBatteryPage
@@ -81,6 +83,7 @@ class ScopePageSpec(
     val scopes: Array<String>,
     val restartEnabled: Boolean,
     val onRefresh: (suspend () -> Unit)? = null,
+    val fullContent: (@Composable LazyItemScope.(PrefScopeBuilder) -> Unit)? = null,
     val content: PrefScopeBuilder.() -> Unit,
 )
 

@@ -71,6 +71,8 @@ class ComposeScopeFragment : Fragment(), MenuProvider {
                 } else {
                     null
                 },
+                onRefresh = spec.onRefresh,
+                fullContent = spec.fullContent,
                 content = spec.content,
             )
         }

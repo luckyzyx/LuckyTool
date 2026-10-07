@@ -8,9 +8,11 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyItemScope
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.text.KeyboardOptions
@@ -23,12 +25,14 @@ import androidx.compose.material3.Slider
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.rememberSliderState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -40,6 +44,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.luckyzyx.luckytool.utils.PrefState
 import kotlin.math.roundToInt
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 /** 搜索跳转目标：position 为 LazyColumn 槽位（与 [PrefIndexItem.slot] 对应） */
 data class ScrollTarget(val key: String, val position: Int)
@@ -412,6 +417,8 @@ fun ScopeScreen(
     scrollTarget: ScrollTarget? = null,
     onNavigate: ((target: String, title: String?) -> Unit)? = null,
     onRestart: (() -> Unit)? = null,
+    onRefresh: (suspend () -> Unit)? = null,
+    fullContent: (@Composable LazyItemScope.(PrefScopeBuilder) -> Unit)? = null,
     content: PrefScopeBuilder.() -> Unit,
 ) {
     // 订阅 revision：任何偏好写入都会重组本页 → 构建 lambda 重跑 → 条件可见性自动重求值
@@ -440,9 +447,35 @@ fun ScopeScreen(
         if (builder.highlightSlot.value == slot) builder.highlightSlot.value = null
     }
 
-    LazyColumn(modifier = modifier, state = listState) {
-        builder.entries.forEach { entry ->
-            item(key = entry.itemKey) { entry.render(entry.slot) }
+    val list: @Composable (Modifier) -> Unit = { listModifier ->
+        LazyColumn(modifier = listModifier, state = listState) {
+            if (fullContent != null) {
+                item(key = "full") { fullContent(this, builder) }
+            } else {
+                builder.entries.forEach { entry ->
+                    item(key = entry.itemKey) { entry.render(entry.slot) }
+                }
+            }
         }
+    }
+    if (onRefresh != null) {
+        var refreshing by remember { mutableStateOf(false) }
+        val scope = rememberCoroutineScope()
+        PullToRefreshBox(
+            isRefreshing = refreshing,
+            onRefresh = {
+                scope.launch {
+                    refreshing = true
+                    try {
+                        onRefresh()
+                    } finally {
+                        refreshing = false
+                    }
+                }
+            },
+            modifier = modifier,
+        ) { list(Modifier.fillMaxSize()) }
+    } else {
+        list(modifier)
     }
 }
