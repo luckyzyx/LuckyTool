@@ -26,13 +26,28 @@ fun ColorScheme.amoledBackground(amoled: Boolean): ColorScheme =
         surfaceContainerHighest = Color.Black,
     )
 
+/** 对齐 KernelSU Colors.kt：15 个预设主题色（ARGB Int，供主题配色选择） */
+val keyColorOptions = listOf(
+    0xFFF44336.toInt(), 0xFFE91E63.toInt(), 0xFF9C27B0.toInt(), 0xFF673AB7.toInt(),
+    0xFF3F51B5.toInt(), 0xFF2196F3.toInt(), 0xFF00BCD4.toInt(), 0xFF009688.toInt(),
+    0xFF4FAF50.toInt(), 0xFFFFEB3B.toInt(), 0xFFFFC107.toInt(), 0xFFFF9800.toInt(),
+    0xFF795548.toInt(), 0xFF607D8F.toInt(), 0xFFFF9CA8.toInt(),
+)
+
 /**
- * 与 KernelSU 相同的 material-kolor 取色管线（TonalSpot + SPEC_2025）：
+ * 与 KernelSU 相同的 material-kolor 取色管线（默认 TonalSpot + SPEC_2025）：
  * seedColor 为 Color.Unspecified 时用系统 primary 作种子（动态取色），
- * 否则直接用给定种子生成完整色板。
+ * 否则直接用给定种子生成完整色板；isAmoled 开启时背景全黑。
+ * 注意：material-kolor 5.0.1 的 SpecVersion 只有 SPEC_2021 / SPEC_2025 两个值。
  */
 @Composable
-fun rememberLuckyColorScheme(seedColor: Color, isDark: Boolean): ColorScheme {
+fun rememberLuckyColorScheme(
+    seedColor: Color,
+    isDark: Boolean,
+    isAmoled: Boolean = false,
+    style: PaletteStyle = PaletteStyle.TonalSpot,
+    specVersion: ColorSpec.SpecVersion = ColorSpec.SpecVersion.SPEC_2025,
+): ColorScheme {
     val context = LocalContext.current
     val seed = if (seedColor == Color.Unspecified) {
         (if (isDark) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)).primary
@@ -42,10 +57,10 @@ fun rememberLuckyColorScheme(seedColor: Color, isDark: Boolean): ColorScheme {
     return rememberDynamicColorScheme(
         seedColor = seed,
         isDark = isDark,
-        isAmoled = false,
-        style = PaletteStyle.TonalSpot,
-        specVersion = ColorSpec.SpecVersion.SPEC_2025,
-    ).amoledBackground(false)
+        isAmoled = isAmoled,
+        style = style,
+        specVersion = specVersion,
+    ).amoledBackground(isAmoled)
 }
 
 /** 主题切换时全色板弹性动画过渡（对齐 KernelSU） */

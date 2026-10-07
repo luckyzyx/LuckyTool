@@ -21,6 +21,12 @@
     <string name="dark_theme_off">Always off</string>
     <string name="dark_theme_on">Always on</string>
     <string name="dark_theme_follow_system" translatable="false">@string/follow_system</string>
+    <string name="dark_theme_on_amoled">Deep dark (AMOLED)</string>
+    <string name="theme_palette">Theme palette</string>
+    <string name="theme_palette_summary">Theme color, palette style and color spec</string>
+    <string name="theme_color_title">Theme color</string>
+    <string name="palette_style_title">Palette style</string>
+    <string name="color_spec_title">Color spec</string>
     <string name="language">Language</string>
     <string name="privacy_agreement">Privacy Agreement</string>
     <string name="auto_check_update">Automatically check for updates</string>

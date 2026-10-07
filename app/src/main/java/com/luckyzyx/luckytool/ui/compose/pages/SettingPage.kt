@@ -8,20 +8,30 @@ import android.os.Build
 import android.util.ArraySet
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -34,17 +44,25 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.luckyzyx.luckytool.R
 import com.luckyzyx.luckytool.ui.activity.MainActivity
+import com.materialkolor.PaletteStyle
+import com.materialkolor.dynamiccolor.ColorSpec
 import com.luckyzyx.luckytool.ui.application.MyApplication
 import com.luckyzyx.luckytool.ui.compose.components.PrefCard
 import com.luckyzyx.luckytool.ui.compose.components.PrefCategoryHeader
 import com.luckyzyx.luckytool.ui.compose.components.PrefSwitchCard
 import com.luckyzyx.luckytool.ui.compose.components.PrefValueCard
+import com.luckyzyx.luckytool.ui.theme.keyColorOptions
 import com.luckyzyx.luckytool.utils.AppUtils
 import com.luckyzyx.luckytool.utils.BiometricUtils
 import com.luckyzyx.luckytool.utils.DonateUtils
@@ -116,6 +134,7 @@ fun SettingPage(activity: MainActivity) {
     var showDonateList by remember { mutableStateOf(false) }
     var showQrType by remember { mutableStateOf(-1) }
     var showDarkThemeDialog by remember { mutableStateOf(false) }
+    var showPaletteDialog by remember { mutableStateOf(false) }
     var showClearDialog by remember { mutableStateOf(false) }
     var showFeedbackDialog by remember { mutableStateOf(false) }
     var darkThemeSelected by remember {
@@ -149,12 +168,20 @@ fun SettingPage(activity: MainActivity) {
             }
             item(key = "dark_theme") {
                 val darkThemeEntries = context.resources.getStringArray(R.array.dark_theme)
-                val darkThemeValues = arrayOf("0", "1", "2")
+                val darkThemeValues = arrayOf("0", "1", "2", "3")
                 PrefValueCard(
                     title = stringResource(R.string.dark_theme),
                     value = darkThemeEntries.getOrNull(darkThemeValues.indexOf(darkThemeSelected))
                         ?: darkThemeSelected,
                     onClick = { showDarkThemeDialog = true },
+                )
+            }
+            item(key = "theme_palette") {
+                PrefValueCard(
+                    title = stringResource(R.string.theme_palette),
+                    value = settings.getString("palette_style", "TonalSpot") ?: "TonalSpot",
+                    summary = stringResource(R.string.theme_palette_summary),
+                    onClick = { showPaletteDialog = true },
                 )
             }
 
@@ -353,7 +380,7 @@ fun SettingPage(activity: MainActivity) {
 
     if (showDarkThemeDialog) {
         val darkThemeEntries = context.resources.getStringArray(R.array.dark_theme)
-        val darkThemeValues = arrayOf("0", "1", "2")
+        val darkThemeValues = arrayOf("0", "1", "2", "3")
         AlertDialog(
             onDismissRequest = { showDarkThemeDialog = false },
             title = { Text(stringResource(R.string.dark_theme)) },
@@ -387,6 +414,17 @@ fun SettingPage(activity: MainActivity) {
                 }
             },
             confirmButton = {},
+        )
+    }
+
+    if (showPaletteDialog) {
+        ThemePaletteDialog(
+            settings = settings,
+            onDismiss = { showPaletteDialog = false },
+            onChanged = {
+                showPaletteDialog = false
+                reload()
+            },
         )
     }
 
@@ -501,6 +539,163 @@ private fun SettingsSwitch(
             onChanged?.invoke(value)
         },
     )
+}
+
+/** 主题配色对话框：主题色（跟随系统 / 15 预设）+ 调色风格 + 色彩规格，对齐 KernelSU 颜色屏幕（简化为对话框） */
+@Composable
+private fun ThemePaletteDialog(
+    settings: PrefState,
+    onDismiss: () -> Unit,
+    onChanged: () -> Unit,
+) {
+    val dynamicEnabled = settings.getBoolean("use_dynamic_color", true)
+    val keyColor = settings.getInt("key_color", 0)
+    val currentStyle = settings.getString("palette_style", "TonalSpot") ?: "TonalSpot"
+    val currentSpec = settings.getString("color_spec", "SPEC_2025") ?: "SPEC_2025"
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(R.string.theme_palette)) },
+        text = {
+            Column(
+                Modifier
+                    .fillMaxWidth()
+                    .verticalScroll(rememberScrollState()),
+            ) {
+                Text(
+                    stringResource(R.string.theme_color_title),
+                    style = MaterialTheme.typography.titleSmall,
+                    modifier = Modifier.padding(bottom = 8.dp),
+                )
+                Row(
+                    Modifier
+                        .fillMaxWidth()
+                        .horizontalScroll(rememberScrollState())
+                        .padding(bottom = 16.dp),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                ) {
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                        ThemeColorButton(
+                            color = null,
+                            selected = dynamicEnabled,
+                            onClick = {
+                                settings.set("use_dynamic_color", true)
+                                onChanged()
+                            },
+                        )
+                    }
+                    keyColorOptions.forEach { argb ->
+                        ThemeColorButton(
+                            color = Color(argb),
+                            selected = !dynamicEnabled && keyColor == argb,
+                            onClick = {
+                                settings.set("use_dynamic_color", false)
+                                settings.set("key_color", argb)
+                                onChanged()
+                            },
+                        )
+                    }
+                }
+                Text(
+                    stringResource(R.string.palette_style_title),
+                    style = MaterialTheme.typography.titleSmall,
+                )
+                PaletteStyle.entries.forEach { style ->
+                    PaletteRadioRow(
+                        label = style.name,
+                        selected = style.name == currentStyle,
+                        onClick = {
+                            settings.set("palette_style", style.name)
+                            onChanged()
+                        },
+                    )
+                }
+                Text(
+                    stringResource(R.string.color_spec_title),
+                    style = MaterialTheme.typography.titleSmall,
+                    modifier = Modifier.padding(top = 12.dp),
+                )
+                ColorSpec.SpecVersion.entries.forEach { spec ->
+                    PaletteRadioRow(
+                        label = spec.name,
+                        selected = spec.name == currentSpec,
+                        onClick = {
+                            settings.set("color_spec", spec.name)
+                            onChanged()
+                        },
+                    )
+                }
+            }
+        },
+        confirmButton = {},
+    )
+}
+
+/** 主题色圆形按钮：color 为 null 时渲染"跟随系统"双半圆（primaryContainer / tertiaryContainer，对齐 KernelSU） */
+@Composable
+private fun ThemeColorButton(
+    color: Color?,
+    selected: Boolean,
+    onClick: () -> Unit,
+) {
+    val colorScheme = MaterialTheme.colorScheme
+    Box(
+        modifier = Modifier
+            .size(44.dp)
+            .clip(CircleShape)
+            .background(color ?: Color.Transparent)
+            .drawBehind {
+                if (color == null) {
+                    drawArc(
+                        color = colorScheme.primaryContainer,
+                        startAngle = 180f,
+                        sweepAngle = 180f,
+                        useCenter = true,
+                    )
+                    drawArc(
+                        color = colorScheme.tertiaryContainer,
+                        startAngle = 0f,
+                        sweepAngle = 180f,
+                        useCenter = true,
+                    )
+                }
+            }
+            .border(
+                width = if (selected) 3.dp else 1.dp,
+                color = if (selected) colorScheme.primary else colorScheme.outlineVariant,
+                shape = CircleShape,
+            )
+            .clickable(onClick = onClick),
+        contentAlignment = Alignment.Center,
+    ) {
+        if (selected) {
+            val checkColor = when {
+                color == null -> colorScheme.primary
+                color.luminance() > 0.5f -> Color.Black
+                else -> Color.White
+            }
+            Text("✓", color = checkColor, fontWeight = FontWeight.Bold)
+        }
+    }
+}
+
+/** 调色风格 / 色彩规格单选行（写入偏好后由 onChanged 触发 Activity recreate 生效） */
+@Composable
+private fun PaletteRadioRow(
+    label: String,
+    selected: Boolean,
+    onClick: () -> Unit,
+) {
+    Row(
+        Modifier
+            .fillMaxWidth()
+            .selectable(selected = selected, role = Role.RadioButton, onClick = onClick)
+            .padding(vertical = 10.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        RadioButton(selected = selected, onClick = null)
+        Spacer(Modifier.width(8.dp))
+        Text(label)
+    }
 }
 
 /** 旧 writeBackupData：JSON(osCode + 四个 prefs 文件) → base64 → 写入 uri */

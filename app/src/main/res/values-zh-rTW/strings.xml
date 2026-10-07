@@ -18,6 +18,12 @@
     <string name="follow_system">跟随系统</string>
     <string name="dark_theme_off">总是关闭</string>
     <string name="dark_theme_on">总是开启</string>
+    <string name="dark_theme_on_amoled">深色（AMOLED 純黑）</string>
+    <string name="theme_palette">主題配色</string>
+    <string name="theme_palette_summary">主題色、調色風格與色彩規格</string>
+    <string name="theme_color_title">主題色</string>
+    <string name="palette_style_title">調色風格</string>
+    <string name="color_spec_title">色彩規格</string>
     <string name="language">語言</string>
     <string name="privacy_agreement">隐私协议</string>
     <string name="auto_check_update">自動檢查更新</string>
