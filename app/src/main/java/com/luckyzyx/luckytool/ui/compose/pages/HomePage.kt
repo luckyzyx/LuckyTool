@@ -46,6 +46,7 @@ import com.luckyzyx.luckytool.service.GlobalFuncService
 import com.luckyzyx.luckytool.ui.activity.MainActivity
 import com.luckyzyx.luckytool.ui.compose.components.PrefCard
 import com.luckyzyx.luckytool.ui.service.XposedServiceBridge
+import com.luckyzyx.luckytool.ui.shell.ShellBadgeState
 import com.luckyzyx.luckytool.utils.DeviceUtils
 import com.luckyzyx.luckytool.utils.DonateUtils
 import com.luckyzyx.luckytool.utils.PrefState
@@ -113,6 +114,8 @@ fun HomePage(activity: MainActivity) {
     LaunchedEffect(Unit) {
         if (!settings.getBoolean("auto_check_update", true)) return@LaunchedEffect
         UpdateUtils(activity, isDev).checkUpdate { info ->
+            // 导航角标：有新版本时在「主页」tab 上提示（受主题页的导航角标开关控制）
+            ShellBadgeState.updateAvailable = getVersionCode < info.code
             if (getVersionCode < info.code) {
                 updateInfo = context.getString(R.string.check_update_hint) +
                         "  -->  ${info.name}(${info.code})"

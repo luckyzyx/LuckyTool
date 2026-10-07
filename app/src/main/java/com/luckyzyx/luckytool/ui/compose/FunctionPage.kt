@@ -52,8 +52,11 @@ import com.luckyzyx.luckytool.ui.components.preference.PrefIndexItem
 import com.luckyzyx.luckytool.ui.components.preference.PrefScopeBuilder
 import com.luckyzyx.luckytool.ui.components.preference.ScopeScreen
 import com.luckyzyx.luckytool.ui.components.preference.ScrollTarget
+import com.luckyzyx.luckytool.ui.compose.components.EdgeSwipeDismiss
 import com.luckyzyx.luckytool.ui.compose.scopes.ScopePageRegistry
 import com.luckyzyx.luckytool.ui.compose.scopes.ScopePageSpec
+import com.luckyzyx.luckytool.ui.shell.LocalEnableSwipeDismiss
+import com.luckyzyx.luckytool.ui.shell.LocalModuleDescriptionMaxLines
 import com.luckyzyx.luckytool.utils.AppUtils
 import com.luckyzyx.luckytool.utils.PrefState
 import com.luckyzyx.luckytool.utils.RestartMenuUtils
@@ -122,33 +125,38 @@ fun FunctionPage(activity: MainActivity, onShellBack: () -> Unit) {
         RestartMenuUtils.RestartMenuDialog(activity) { showRestartMenu = false }
     }
 
-    NavHost(
-        navController = navController,
-        startDestination = FunctionTreeRoute,
-        modifier = Modifier.fillMaxSize(),
+    EdgeSwipeDismiss(
+        enabled = LocalEnableSwipeDismiss.current && !atRoot,
+        onDismiss = { navController.popBackStack() },
     ) {
-        composable<FunctionTreeRoute> {
-            FunctionTreeScreen(
-                onOpenPage = { key, title -> navController.navigate(ScopeRoute(key, title)) },
-                onOpenSearch = { navController.navigate(SearchRoute) },
-                onShowVersionInfo = { showVersionInfo = true },
-                onShowRestartMenu = { showRestartMenu = true },
-            )
-        }
-        composable<SearchRoute> {
-            FunctionSearchScreen(
-                onBack = { navController.popBackStack() },
-                onOpen = { route -> navController.navigate(route) },
-            )
-        }
-        composable<ScopeRoute> { entry ->
-            val route = entry.toRoute<ScopeRoute>()
-            ScopePageHost(
-                activity = activity,
-                route = route,
-                onBack = { navController.popBackStack() },
-                onNavigate = { key, title -> navController.navigate(ScopeRoute(key, title ?: "", "", -1)) },
-            )
+        NavHost(
+            navController = navController,
+            startDestination = FunctionTreeRoute,
+            modifier = Modifier.fillMaxSize(),
+        ) {
+            composable<FunctionTreeRoute> {
+                FunctionTreeScreen(
+                    onOpenPage = { key, title -> navController.navigate(ScopeRoute(key, title)) },
+                    onOpenSearch = { navController.navigate(SearchRoute) },
+                    onShowVersionInfo = { showVersionInfo = true },
+                    onShowRestartMenu = { showRestartMenu = true },
+                )
+            }
+            composable<SearchRoute> {
+                FunctionSearchScreen(
+                    onBack = { navController.popBackStack() },
+                    onOpen = { route -> navController.navigate(route) },
+                )
+            }
+            composable<ScopeRoute> { entry ->
+                val route = entry.toRoute<ScopeRoute>()
+                ScopePageHost(
+                    activity = activity,
+                    route = route,
+                    onBack = { navController.popBackStack() },
+                    onNavigate = { key, title -> navController.navigate(ScopeRoute(key, title ?: "", "", -1)) },
+                )
+            }
         }
     }
 }
@@ -232,7 +240,13 @@ private fun FunctionTreeScreen(
                 ListItem(
                     headlineContent = { Text(row.title) },
                     supportingContent = {
-                        row.summary?.let { Text(it, maxLines = 2, overflow = TextOverflow.Ellipsis) }
+                        row.summary?.let {
+                            Text(
+                                it,
+                                maxLines = LocalModuleDescriptionMaxLines.current,
+                                overflow = TextOverflow.Ellipsis,
+                            )
+                        }
                     },
                     trailingContent = {
                         Icon(painterResource(R.drawable.ic_baseline_chevron_right_24), contentDescription = null)
@@ -321,7 +335,11 @@ private fun FunctionSearchScreen(onBack: () -> Unit, onOpen: (ScopeRoute) -> Uni
                         supportingContent = {
                             Column {
                                 if (!entry.item.summary.isNullOrBlank()) {
-                                    Text(entry.item.summary, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                                    Text(
+                                        entry.item.summary,
+                                        maxLines = LocalModuleDescriptionMaxLines.current,
+                                        overflow = TextOverflow.Ellipsis,
+                                    )
                                 }
                                 Text(
                                     entry.pageTitle,
