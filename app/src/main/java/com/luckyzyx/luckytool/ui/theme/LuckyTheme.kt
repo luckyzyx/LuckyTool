@@ -3,142 +3,155 @@
 package com.luckyzyx.luckytool.ui.theme
 
 import android.app.Activity
-import android.content.Context
 import android.os.Build
 import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.MaterialExpressiveTheme
 import androidx.compose.material3.MotionScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalView
+import androidx.compose.ui.unit.Density
 import androidx.core.view.WindowCompat
-import com.luckyzyx.luckytool.utils.SettingsPrefs
-import com.luckyzyx.luckytool.utils.ThemeUtils
-import com.luckyzyx.luckytool.utils.getInt
-import com.luckyzyx.luckytool.utils.getString
+import com.luckyzyx.luckytool.ui.shell.LocalEnableNavigationBadge
+import com.luckyzyx.luckytool.ui.shell.LocalEnableSwipeDismiss
+import com.luckyzyx.luckytool.ui.shell.LocalModuleDescriptionMaxLines
+import com.luckyzyx.luckytool.ui.shell.LocalPagerInterceptionMode
+import com.luckyzyx.luckytool.ui.shell.ShellSettingsController
 import com.materialkolor.PaletteStyle
 import com.materialkolor.dynamiccolor.ColorSpec
 
-/**
- * 深色模式偏好（SettingsPrefs["dark_theme"]），与旧 View 时代 ThemeUtils.initTheme 语义一致：
- * "0" 跟随系统 / "1" 强制夜间 / "2" 强制白天 / "3" 强制夜间 + AMOLED 纯黑（对齐 KernelSU DARK_AMOLED）。
- */
-enum class LuckyDarkTheme(val prefValue: String) {
-    FollowSystem("0"),
-    On("1"),
-    Off("2"),
-    OnAmoled("3");
+/** 关闭动态取色、且未选自定义主题色时的种子色：M3 基线紫，观感对齐旧 light/darkColorScheme() 默认值。 */
+private val DefaultSeedColor = Color(0xFF6750A4)
 
-    companion object {
-        fun from(context: Context): LuckyDarkTheme =
-            when (context.getString(SettingsPrefs, "dark_theme", FollowSystem.prefValue)) {
-                On.prefValue -> On
-                Off.prefValue -> Off
-                OnAmoled.prefValue -> OnAmoled
-                else -> FollowSystem
-            }
+/**
+ * 给定模式解析本次组合应使用的种子色（对齐 KernelSU MaterialKernelSUTheme）：
+ * `Color.Unspecified` 表示跟随系统动态取色（需 Android 12+）；否则用自定义主题色或默认种子色。
+ */
+@Composable
+fun rememberSeedColor(
+    appSettings: AppSettings,
+    isDark: Boolean,
+): Color {
+    val context = LocalContext.current
+    val dynamicAvailable = appSettings.dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
+    return remember(context, appSettings.keyColor, dynamicAvailable, isDark) {
+        when {
+            dynamicAvailable -> Color.Unspecified
+            appSettings.keyColor != 0 -> Color(appSettings.keyColor)
+            else -> DefaultSeedColor
+        }
     }
 }
 
-/** 关闭动态取色、且未选自定义主题色时的种子色：M3 基线紫，观感对齐旧 light/darkColorScheme() 默认值。 */
-private val DefaultSeedColor = Color(0xFF6750A4)
+/** 解析当前模式下的明暗（跟随系统时需要系统配置参与判断） */
+@Composable
+fun ColorMode.resolveDarkTheme(): Boolean = when {
+    isDark -> true
+    isSystem -> isSystemInDarkTheme()
+    else -> false
+}
 
 /**
  * LuckyTool 统一 Compose 主题：Material 3 Expressive（material3 1.5.0-alpha29，
  * Google 官方 Expressive 线；1.4.0 稳定版不含公开 Expressive API，故按用户确认选 alpha29）。
  *
  * 取色管线对齐 KernelSU（material-kolor 5.0.1）：
- * - use_dynamic_color 开启且 Android 12+ 时以系统 primary 为种子动态取色；
+ * - dynamicColor 开启且 Android 12+ 时以系统 primary 为种子动态取色；
  * - 否则使用自定义主题色（key_color）或默认种子色（0xFF6750A4）；
- * - palette_style / color_spec 偏好控制取色风格与色彩规格；
- * - amoled 开启时所有背景槽位纯黑；
+ * - palette_style / color_spec 偏好控制取色风格与色彩规格，SPEC_2025 在不支持的风格上回退 SPEC_2021；
+ * - AMOLED 模式（ColorMode.DARK_AMOLED）下所有背景槽位纯黑；
  * - 主题切换时全色板弹性动画过渡，并同步系统栏前景色（对齐 KernelSU MaterialKernelSUTheme）。
- *
- * 注意：主题相关偏好修改后按既有约定触发 Activity recreate（见 SettingPage），
- * 因此主题参数在每次组合树重建时重新读取偏好即可，无需运行时监听。
  */
 @Composable
 fun LuckyTheme(
-    darkTheme: Boolean = isSystemInDarkTheme(),
-    dynamicColor: Boolean = ThemeUtils.isDynamicColorsEnabled(LocalContext.current),
-    amoled: Boolean = false,
-    keyColor: Int = 0,
-    paletteStyle: PaletteStyle = PaletteStyle.TonalSpot,
-    colorSpec: ColorSpec.SpecVersion = ColorSpec.SpecVersion.SPEC_2025,
+    appSettings: AppSettings,
     content: @Composable () -> Unit,
 ) {
+    val colorMode = appSettings.colorMode
+    val darkTheme = colorMode.resolveDarkTheme()
+    val seedColor = rememberSeedColor(appSettings = appSettings, isDark = darkTheme)
+
     val colorScheme = rememberLuckyColorScheme(
-        seedColor = when {
-            dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> Color.Unspecified
-            keyColor != 0 -> Color(keyColor)
-            else -> DefaultSeedColor
-        },
+        seedColor = seedColor,
         isDark = darkTheme,
-        isAmoled = amoled,
-        style = paletteStyle,
-        specVersion = colorSpec,
+        isAmoled = colorMode.isAmoled,
+        style = appSettings.paletteStyle,
+        specVersion = appSettings.colorSpec,
     )
     val animatedColorScheme = colorScheme.animateAsState()
 
-    // 对齐 KernelSU：深色切换时同步状态栏 / 导航栏前景色
+    themeWindowAppearance(darkTheme)
+
+    // 模式与色板下发到组合树（对齐 KernelSU LocalColorMode / 色板本地化读取）
+    CompositionLocalProvider(
+        LocalColorMode provides colorMode,
+        LocalLuckyColorScheme provides animatedColorScheme,
+    ) {
+        // material3 1.5.0-alpha29：Expressive 公开入口（1.4.0 稳定版中该 API 为 internal 不可用）
+        MaterialExpressiveTheme(
+            colorScheme = animatedColorScheme,
+            motionScheme = MotionScheme.expressive(),
+            typography = Typography,
+            content = content,
+        )
+    }
+}
+
+/** 深色切换时同步状态栏 / 导航栏前景色（对齐 KernelSU） */
+@Composable
+private fun themeWindowAppearance(darkTheme: Boolean) {
     val view = LocalView.current
-    if (!view.isInEditMode) {
-        LaunchedEffect(darkTheme) {
-            val window = (view.context as? Activity)?.window ?: return@LaunchedEffect
-            WindowCompat.getInsetsController(window, view).apply {
-                isAppearanceLightStatusBars = !darkTheme
-                isAppearanceLightNavigationBars = !darkTheme
-            }
+    if (view.isInEditMode) return
+    LaunchedEffect(darkTheme) {
+        val window = (view.context as? Activity)?.window ?: return@LaunchedEffect
+        WindowCompat.getInsetsController(window, view).apply {
+            isAppearanceLightStatusBars = !darkTheme
+            isAppearanceLightNavigationBars = !darkTheme
         }
     }
-
-    // material3 1.5.0-alpha29：Expressive 公开入口（1.4.0 稳定版中该 API 为 internal 不可用）
-    MaterialExpressiveTheme(
-        colorScheme = animatedColorScheme,
-        motionScheme = MotionScheme.expressive(),
-        typography = Typography,
-        content = content,
-    )
 }
 
 /**
- * 跟随应用偏好（dark_theme / use_dynamic_color / key_color / palette_style / color_spec）的 LuckyTheme。
+ * 跟随应用偏好的 LuckyTheme 入口：主题（dark_theme / use_dynamic_color / key_color /
+ * palette_style / color_spec）与外壳行为（ShellSettings）。
  * Compose 界面的统一入口：P1 试点 ComposeView、P2 主壳 setContent 均包一层 LuckyAppTheme。
+ *
+ * 主题页（ThemeScreen）写入偏好后会调用 [ThemePrefs.notifyChanged]，revision 自增即重读设置，
+ * 全应用配色、明暗与外壳行为均无需 recreate Activity 即时生效。
+ *
+ * 界面缩放（page_scale）对齐 KernelSU：覆盖 [LocalDensity]，只缩放 density，fontScale 原样透传。
  */
 @Composable
 fun LuckyAppTheme(content: @Composable () -> Unit) {
     val context = LocalContext.current
-    val darkPref = remember(context) { LuckyDarkTheme.from(context) }
-    val dynamicColor = remember(context) { ThemeUtils.isDynamicColorsEnabled(context) }
-    val keyColor = remember(context) { context.getInt(SettingsPrefs, "key_color", 0) }
-    val paletteStyle = remember(context) {
-        val name = context.getString(SettingsPrefs, "palette_style", PaletteStyle.TonalSpot.name)
-        PaletteStyle.entries.firstOrNull { it.name == name } ?: PaletteStyle.TonalSpot
+    // revision 变化表示主题页刚写入偏好：重新读取设置即可即时生效
+    val revision = ThemePrefs.revision
+    val appSettings = remember(context, revision) { ThemeController.getAppSettings(context) }
+    val shellSettings = remember(context, revision) { ShellSettingsController.get(context) }
+
+    val systemDensity = LocalDensity.current
+    val density = remember(systemDensity, shellSettings.pageScale) {
+        Density(systemDensity.density * shellSettings.pageScale, systemDensity.fontScale)
     }
-    val colorSpec = remember(context) {
-        val name = context.getString(
-            SettingsPrefs,
-            "color_spec",
-            ColorSpec.SpecVersion.SPEC_2025.name,
-        )
-        ColorSpec.SpecVersion.entries.firstOrNull { it.name == name }
-            ?: ColorSpec.SpecVersion.SPEC_2025
+
+    CompositionLocalProvider(
+        LocalDensity provides density,
+        LocalEnableNavigationBadge provides shellSettings.navigationBadge,
+        LocalEnableSwipeDismiss provides shellSettings.swipeDismiss,
+        LocalPagerInterceptionMode provides shellSettings.pagerInterceptionMode,
+        LocalModuleDescriptionMaxLines provides shellSettings.moduleDescriptionMaxLines,
+    ) {
+        LuckyTheme(appSettings = appSettings, content = content)
     }
-    val darkTheme = when (darkPref) {
-        LuckyDarkTheme.On, LuckyDarkTheme.OnAmoled -> true
-        LuckyDarkTheme.Off -> false
-        LuckyDarkTheme.FollowSystem -> isSystemInDarkTheme()
-    }
-    LuckyTheme(
-        darkTheme = darkTheme,
-        dynamicColor = dynamicColor,
-        amoled = darkPref == LuckyDarkTheme.OnAmoled,
-        keyColor = keyColor,
-        paletteStyle = paletteStyle,
-        colorSpec = colorSpec,
-        content = content,
-    )
+}
+
+/** 当前色板（主题预览卡片等需要显式拿到色板的场景使用） */
+val LocalLuckyColorScheme = androidx.compose.runtime.staticCompositionLocalOf<ColorScheme> {
+    error("LocalLuckyColorScheme not provided")
 }

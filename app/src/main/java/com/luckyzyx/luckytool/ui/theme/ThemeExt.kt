@@ -59,7 +59,8 @@ fun rememberLuckyColorScheme(
         isDark = isDark,
         isAmoled = isAmoled,
         style = style,
-        specVersion = specVersion,
+        // SPEC_2025 未覆盖全部调色风格，未覆盖时回退 SPEC_2021（对齐 KernelSU effectiveFor）
+        specVersion = specVersion.effectiveFor(style),
     ).amoledBackground(isAmoled)
 }
 
