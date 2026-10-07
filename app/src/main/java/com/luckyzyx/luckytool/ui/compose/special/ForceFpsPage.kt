@@ -1,0 +1,148 @@
+package com.luckyzyx.luckytool.ui.compose.special
+
+import android.app.Activity
+import android.content.Context
+import android.content.ContextWrapper
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.Button
+import androidx.compose.material3.ListItem
+import androidx.compose.material3.RadioButton
+import androidx.compose.material3.Switch
+import androidx.compose.material3.Text
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.dp
+import com.luckyzyx.luckytool.IRefreshRateController
+import com.luckyzyx.luckytool.R
+import com.luckyzyx.luckytool.data.DisplayMode
+import com.luckyzyx.luckytool.service.RefreshRateService
+import com.luckyzyx.luckytool.ui.compose.scopes.ScopePageSpec
+import com.luckyzyx.luckytool.utils.GlobalKeyValue.keyFpsAutoStart
+import com.luckyzyx.luckytool.utils.GlobalKeyValue.keyFpsCur
+import com.luckyzyx.luckytool.utils.SettingsPrefs
+import kotlinx.coroutines.suspendCancellableCoroutine
+
+/** 沿 ContextWrapper 链向上找 Activity（ComposeView 的 LocalContext 可能是包装 Context） */
+private tailrec fun Context.findActivity(): Activity? = when (this) {
+    is Activity -> this
+    is ContextWrapper -> baseContext.findActivity()
+    else -> null
+}
+
+/**
+ * ForceFps 页（旧 ui.fragment.extension.ForceFpsFragment 的 Compose 等价物）。
+ * 刷新率控制器状态在 RootService 控制器而非 prefs，故整页用 custom() 手工构建
+ * （不用 DSL switch/slider）。下拉刷新重新拉取 controller 并重算全部状态。
+ */
+object ForceFpsPage {
+
+    /** 由内容组合时注册的加载器驱动 onRefresh */
+    private var reloader: (suspend () -> Unit)? = null
+
+    val spec = ScopePageSpec(
+        pageKey = "force_fps",
+        prefsName = SettingsPrefs,
+        packName = "",
+        scopes = arrayOf(),
+        restartEnabled = false,
+        onRefresh = { reloader?.invoke() },
+    ) {
+        val c = requireNotNull(context) { "ScopeScreen 未注入 Context" }
+        custom(key = "force_fps_body") {
+            var controller by remember { mutableStateOf<IRefreshRateController?>(null) }
+
+            suspend fun fetchController(): IRefreshRateController? =
+                suspendCancellableCoroutine { cont ->
+                    val activity = c.findActivity()
+                    if (activity == null) cont.resume(null, onCancellation = null)
+                    else RefreshRateService.get(activity) {
+                        cont.resume(it, onCancellation = null)
+                    }
+                }
+
+            suspend fun reload() {
+                controller = fetchController()
+            }
+            reloader = ::reload
+            DisposableEffect(Unit) {
+                onDispose { reloader = null }
+            }
+            LaunchedEffect(Unit) { reload() }
+
+            // AIDL 声明为裸 List（无泛型），与旧代码一致地强转为 ArrayList<DisplayMode>
+            @Suppress("UNCHECKED_CAST")
+            val modes =
+                (controller?.supportModes ?: ArrayList<DisplayMode>()) as ArrayList<DisplayMode>
+            val isUnsupport = modes.isEmpty()
+            val fpsCur = state.getInt(keyFpsCur, -1)
+            val fpsAutostart = state.getBoolean(keyFpsAutoStart, false)
+
+            Column(Modifier.fillMaxWidth().padding(horizontal = 10.dp, vertical = 8.dp)) {
+                // fpsSelfStart（旧逻辑：controller!=null 且 !isUnsupport 且 fpsCur!=-1 才可用）
+                Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                    Text(c.getString(R.string.fps_autostart), Modifier.weight(1f))
+                    Switch(
+                        checked = fpsAutostart,
+                        enabled = controller != null && !isUnsupport && fpsCur != -1,
+                        onCheckedChange = { v -> state.set(keyFpsAutoStart, v) },
+                    )
+                }
+                if (isUnsupport) {
+                    Text(
+                        c.getString(R.string.fps_no_data),
+                        modifier = Modifier.fillMaxWidth().padding(vertical = 24.dp),
+                        textAlign = TextAlign.Center,
+                    )
+                } else {
+                    // 模式单选列表（旧 ListView CHOICE_MODE_SINGLE；id 即 index）
+                    modes.forEachIndexed { index, mode ->
+                        ListItem(
+                            leadingContent = {
+                                RadioButton(selected = index == fpsCur, onClick = null)
+                            },
+                            onClick = {
+                                state.set(keyFpsCur, index)
+                                controller?.setRefreshRateMode(index)
+                            },
+                        ) {
+                            Text("${mode.id}   ${mode.width} x ${mode.height}   ${mode.refreshRate}")
+                        }
+                    }
+                }
+                // fpsShow（旧代码 isPressed 守卫 → M3 Switch onCheckedChange 仅用户手势触发）
+                Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                    Text(c.getString(R.string.display_refresh_rate), Modifier.weight(1f))
+                    Switch(
+                        checked = controller?.refreshRateDisplay == true,
+                        enabled = controller != null,
+                        onCheckedChange = { v -> controller?.refreshRateDisplay = v },
+                    )
+                }
+                // fpsRecover（旧 resetRefreshRate：持久化 -1 + 重置模式；开关可用性随 fpsCur==-1 自动失效）
+                Button(
+                    onClick = {
+                        state.set(keyFpsCur, -1)
+                        controller?.resetRefreshRateMode()
+                    },
+                    enabled = controller != null,
+                    modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
+                ) { Text(c.getString(R.string.restore_default_refresh_rate)) }
+                Text(
+                    c.getString(R.string.fps_tips),
+                    modifier = Modifier.fillMaxWidth().padding(top = 10.dp),
+                    textAlign = TextAlign.Center,
+                )
+            }
+        }
+    }
+}

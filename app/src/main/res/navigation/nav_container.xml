@@ -380,11 +380,23 @@
     </fragment>
     <fragment
             android:id="@+id/systemQuickEntry"
-            android:name="com.luckyzyx.luckytool.ui.fragment.others.QuickEntryFragment"
+            android:name="com.luckyzyx.luckytool.ui.compose.ComposeScopeFragment"
             android:label="{title_text}">
         <argument
                 android:name="title_text"
                 app:argType="string" />
+        <argument
+                android:name="page_key"
+                app:argType="string"
+                android:defaultValue="quick_entry" />
+        <argument
+                android:name="scrollKey"
+                app:argType="string"
+                android:defaultValue="" />
+        <argument
+                android:name="scrollPosition"
+                app:argType="integer"
+                android:defaultValue="-1" />
     </fragment>
     <fragment
             android:id="@+id/statusBarNetWorkSpeed"
@@ -456,11 +468,23 @@
     </fragment>
     <fragment
             android:id="@+id/darkModeFragment"
-            android:name="com.luckyzyx.luckytool.ui.fragment.extension.DarkModeFragment"
+            android:name="com.luckyzyx.luckytool.ui.compose.ComposeScopeFragment"
             android:label="{title_text}">
         <argument
                 android:name="title_text"
                 app:argType="string" />
+        <argument
+                android:name="page_key"
+                app:argType="string"
+                android:defaultValue="dark_mode" />
+        <argument
+                android:name="scrollKey"
+                app:argType="string"
+                android:defaultValue="" />
+        <argument
+                android:name="scrollPosition"
+                app:argType="integer"
+                android:defaultValue="-1" />
     </fragment>
     <fragment
             android:id="@+id/fingerPrintRelated"
@@ -604,11 +628,23 @@
     </fragment>
     <fragment
             android:id="@+id/forceFpsFragment"
-            android:name="com.luckyzyx.luckytool.ui.fragment.extension.ForceFpsFragment"
+            android:name="com.luckyzyx.luckytool.ui.compose.ComposeScopeFragment"
             android:label="{title_text}">
         <argument
                 android:name="title_text"
                 app:argType="string" />
+        <argument
+                android:name="page_key"
+                app:argType="string"
+                android:defaultValue="force_fps" />
+        <argument
+                android:name="scrollKey"
+                app:argType="string"
+                android:defaultValue="" />
+        <argument
+                android:name="scrollPosition"
+                app:argType="integer"
+                android:defaultValue="-1" />
     </fragment>
     <fragment
             android:id="@+id/statusBarNotifyRemoval"
@@ -632,11 +668,23 @@
     </fragment>
     <fragment
             android:id="@+id/extractOTAFragment"
-            android:name="com.luckyzyx.luckytool.ui.fragment.extension.ExtractOTAFragment"
+            android:name="com.luckyzyx.luckytool.ui.compose.ComposeScopeFragment"
             android:label="{title_text}">
         <argument
                 android:name="title_text"
                 app:argType="string" />
+        <argument
+                android:name="page_key"
+                app:argType="string"
+                android:defaultValue="extract_ota" />
+        <argument
+                android:name="scrollKey"
+                app:argType="string"
+                android:defaultValue="" />
+        <argument
+                android:name="scrollPosition"
+                app:argType="integer"
+                android:defaultValue="-1" />
     </fragment>
     <fragment
             android:id="@+id/aod"
@@ -660,11 +708,23 @@
     </fragment>
     <fragment
             android:id="@+id/donateFragment"
-            android:name="com.luckyzyx.luckytool.ui.fragment.settings.DonateFragment"
+            android:name="com.luckyzyx.luckytool.ui.compose.ComposeScopeFragment"
             android:label="{title_text}">
         <argument
                 android:name="title_text"
                 app:argType="string" />
+        <argument
+                android:name="page_key"
+                app:argType="string"
+                android:defaultValue="donate" />
+        <argument
+                android:name="scrollKey"
+                app:argType="string"
+                android:defaultValue="" />
+        <argument
+                android:name="scrollPosition"
+                app:argType="integer"
+                android:defaultValue="-1" />
     </fragment>
     <fragment
             android:id="@+id/oplusPictorial"
@@ -1096,11 +1156,23 @@
     </fragment>
     <fragment
             android:id="@+id/hideAppIntentFragment"
-            android:name="com.luckyzyx.luckytool.ui.fragment.extension.HideAppIntentFragment"
+            android:name="com.luckyzyx.luckytool.ui.compose.ComposeScopeFragment"
             android:label="{title_text}">
         <argument
                 android:name="title_text"
                 app:argType="string" />
+        <argument
+                android:name="page_key"
+                app:argType="string"
+                android:defaultValue="hide_app_intent" />
+        <argument
+                android:name="scrollKey"
+                app:argType="string"
+                android:defaultValue="" />
+        <argument
+                android:name="scrollPosition"
+                app:argType="integer"
+                android:defaultValue="-1" />
     </fragment>
     <fragment
             android:id="@+id/oplusHealth"
@@ -1164,11 +1236,23 @@
     </fragment>
     <fragment
             android:id="@+id/batteryInfoFragment"
-            android:name="com.luckyzyx.luckytool.ui.fragment.extension.BatteryInfoFragment"
+            android:name="com.luckyzyx.luckytool.ui.compose.ComposeScopeFragment"
             android:label="{title_text}">
         <argument
                 android:name="title_text"
                 app:argType="string" />
+        <argument
+                android:name="page_key"
+                app:argType="string"
+                android:defaultValue="battery_info" />
+        <argument
+                android:name="scrollKey"
+                app:argType="string"
+                android:defaultValue="" />
+        <argument
+                android:name="scrollPosition"
+                app:argType="integer"
+                android:defaultValue="-1" />
     </fragment>
     <fragment
             android:id="@+id/oplusOShare"

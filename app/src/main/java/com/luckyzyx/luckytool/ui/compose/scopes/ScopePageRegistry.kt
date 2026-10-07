@@ -63,6 +63,13 @@ import com.luckyzyx.luckytool.ui.compose.scopes.others.AlphaBackupProPage
 import com.luckyzyx.luckytool.ui.compose.scopes.others.ClawPage
 import com.luckyzyx.luckytool.ui.compose.scopes.others.GpsJoyStickPage
 import com.luckyzyx.luckytool.ui.compose.scopes.others.KsWebPage
+import com.luckyzyx.luckytool.ui.compose.special.BatteryInfoPage
+import com.luckyzyx.luckytool.ui.compose.special.DonatePage
+import com.luckyzyx.luckytool.ui.compose.special.ExtractOTAPage
+import com.luckyzyx.luckytool.ui.compose.special.ForceFpsPage
+import com.luckyzyx.luckytool.ui.compose.special.QuickEntryPage
+import com.luckyzyx.luckytool.ui.compose.special.DarkModePage
+import com.luckyzyx.luckytool.ui.compose.special.HideAppIntentPage
 
 /**
  * 一个 Compose 作用域页的声明——旧 [BaseScopePreferenceFeagment] 子类中
@@ -162,5 +169,13 @@ object ScopePageRegistry {
         register(ClawPage.spec)
         register(GpsJoyStickPage.spec)
         register(KsWebPage.spec)
+        // P4 special 批
+        register(BatteryInfoPage.spec)
+        register(DonatePage.spec)
+        register(ExtractOTAPage.spec)
+        register(ForceFpsPage.spec)
+        register(QuickEntryPage.spec)
+        register(DarkModePage.spec)
+        register(HideAppIntentPage.spec)
     }
 }
