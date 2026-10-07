@@ -39,6 +39,7 @@ import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.painter.BitmapPainter
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.luckyzyx.luckytool.data.AppInfo
 import com.luckyzyx.luckytool.utils.PackageUtils
@@ -189,14 +190,14 @@ fun AppPickerDialog(
                 TextButton(
                     enabled = selected.isNotEmpty(),
                     onClick = { onConfirm(filtered.filter { it.packageName in selected }) },
-                ) { Text("确定") }
+                ) { Text(stringResource(android.R.string.ok)) }
             } else {
-                TextButton(onClick = onDismiss) { Text("取消") }
+                TextButton(onClick = onDismiss) { Text(stringResource(android.R.string.cancel)) }
             }
         },
         dismissButton = {
             if (multiMode) {
-                TextButton(onClick = onDismiss) { Text("取消") }
+                TextButton(onClick = onDismiss) { Text(stringResource(android.R.string.cancel)) }
             }
         },
     )

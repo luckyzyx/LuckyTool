@@ -30,6 +30,7 @@ import androidx.compose.material3.rememberSliderState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -38,13 +39,15 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.luckyzyx.luckytool.utils.PrefState
-import kotlin.math.roundToInt
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlin.math.roundToInt
+import kotlin.time.Duration.Companion.milliseconds
 
 /** 搜索跳转目标：position 为 LazyColumn 槽位（与 [PrefIndexItem.slot] 对应） */
 data class ScrollTarget(val key: String, val position: Int)
@@ -114,7 +117,14 @@ class PrefScopeBuilder internal constructor(
     /** 当前构建轮次的搜索索引快照 */
     fun snapshotIndex(): List<PrefIndexItem> = entries.mapNotNull { entry ->
         entry.indexKey?.let { key ->
-            PrefIndexItem(key, entry.indexTitle, entry.indexSummary, { true }, entry.slot, entry.pageTarget)
+            PrefIndexItem(
+                key,
+                entry.indexTitle,
+                entry.indexSummary,
+                { true },
+                entry.slot,
+                entry.pageTarget
+            )
         }
     }
 
@@ -135,7 +145,15 @@ class PrefScopeBuilder internal constructor(
         render: @Composable (slot: Int) -> Unit,
     ) {
         val slot = entries.size
-        entries += PrefEntry(slot, itemKey ?: "slot-$slot", indexKey, indexTitle, indexSummary, pageTarget, render)
+        entries += PrefEntry(
+            slot,
+            itemKey ?: "slot-$slot",
+            indexKey,
+            indexTitle,
+            indexSummary,
+            pageTarget,
+            render
+        )
     }
 
     // ---------------- DSL 项 ----------------
@@ -146,7 +164,9 @@ class PrefScopeBuilder internal constructor(
             text = title,
             style = MaterialTheme.typography.titleSmall,
             color = MaterialTheme.colorScheme.primary,
-            modifier = Modifier.fillMaxWidth().padding(start = 16.dp, top = 20.dp, bottom = 4.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(start = 16.dp, top = 20.dp, bottom = 4.dp),
         )
     }
 
@@ -193,7 +213,7 @@ class PrefScopeBuilder internal constructor(
     ) = emit(key, key, title, summary) { slot ->
         val current by state.stringFlow(key, default).collectAsStateWithLifecycle()
         var showDialog by remember { mutableStateOf(false) }
-        val currentLabel = entries.getOrNull(entryValues.indexOf(current)) ?: current.orEmpty()
+        val currentLabel = entries.getOrNull(entryValues.indexOf(current)) ?: current
         val bg = highlightColor(slot)
         ListItem(
             onClick = { showDialog = true },
@@ -204,7 +224,11 @@ class PrefScopeBuilder internal constructor(
             enabled = enabled,
         ) { Text(title) }
         if (showDialog) {
-            var selected by remember { mutableStateOf(entryValues.indexOf(current).coerceAtLeast(0)) }
+            var selected by remember {
+                mutableIntStateOf(
+                    entryValues.indexOf(current).coerceAtLeast(0)
+                )
+            }
             AlertDialog(
                 onDismissRequest = { showDialog = false },
                 title = { Text(title) },
@@ -214,7 +238,9 @@ class PrefScopeBuilder internal constructor(
                             Row(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .selectable(selected = i == selected, onClick = { selected = i })
+                                    .selectable(
+                                        selected = i == selected,
+                                        onClick = { selected = i })
                                     .padding(vertical = 4.dp),
                                 verticalAlignment = Alignment.CenterVertically,
                             ) {
@@ -233,10 +259,12 @@ class PrefScopeBuilder internal constructor(
                             if (notify) sendValue(key, newValue)
                             onChange?.invoke(newValue)
                         },
-                    ) { Text("确定") /* TODO P5: 迁入 stringResource */ }
+                    ) { Text(stringResource(android.R.string.ok)) }
                 },
                 dismissButton = {
-                    TextButton(onClick = { showDialog = false }) { Text("取消") }
+                    TextButton(onClick = {
+                        showDialog = false
+                    }) { Text(stringResource(android.R.string.cancel)) }
                 },
             )
         }
@@ -335,7 +363,7 @@ class PrefScopeBuilder internal constructor(
             enabled = enabled,
         ) { Text(title) }
         if (showDialog) {
-            var text by remember { mutableStateOf(current.orEmpty()) }
+            var text by remember { mutableStateOf(current) }
             AlertDialog(
                 onDismissRequest = { showDialog = false },
                 title = { Text(title) },
@@ -366,10 +394,12 @@ class PrefScopeBuilder internal constructor(
                             if (notify) sendValue(key, text)
                             onChange?.invoke(text)
                         },
-                    ) { Text("确定") }
+                    ) { Text(stringResource(android.R.string.ok)) }
                 },
                 dismissButton = {
-                    TextButton(onClick = { showDialog = false }) { Text("取消") }
+                    TextButton(onClick = {
+                        showDialog = false
+                    }) { Text(stringResource(android.R.string.cancel)) }
                 },
             )
         }
@@ -435,7 +465,7 @@ fun ScopeScreen(
     val listState = rememberLazyListState()
     LaunchedEffect(scrollTarget) {
         val target = scrollTarget ?: return@LaunchedEffect
-        val slot = if (!target.key.isNullOrBlank()) {
+        val slot = if (target.key.isNotBlank()) {
             // 按索引 key 解析槽位（条目在构建后位置可能因条件可见性变化而偏移）
             builder.entries.firstOrNull { it.indexKey == target.key }?.slot ?: return@LaunchedEffect
         } else {
@@ -443,7 +473,7 @@ fun ScopeScreen(
         }
         listState.animateScrollToItem(slot)
         builder.highlightSlot.value = slot
-        delay(2500)
+        delay(2500.milliseconds)
         if (builder.highlightSlot.value == slot) builder.highlightSlot.value = null
     }
 
