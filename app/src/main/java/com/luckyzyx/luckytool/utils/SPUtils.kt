@@ -65,7 +65,7 @@ fun Context.putStringSet(prefsName: String, key: String, value: Set<String>): Bo
     }
 }
 
-fun Context.getInt(prefsName: String, key: String, defaultValue: Int = -1): Int {
+fun Context.getInt(prefsName: String, key: String, defaultValue: Int = 0): Int {
     return try {
         val prefs = appPrefs(prefsName)
         prefs.getInt(key, defaultValue)
@@ -85,7 +85,7 @@ fun Context.putInt(prefsName: String, key: String, value: Int): Boolean {
     }
 }
 
-fun Context.getLong(prefsName: String, key: String, defaultValue: Long = -1L): Long {
+fun Context.getLong(prefsName: String, key: String, defaultValue: Long = 0L): Long {
     return try {
         val prefs = appPrefs(prefsName)
         prefs.getLong(key, defaultValue)
@@ -105,7 +105,7 @@ fun Context.putLong(prefsName: String, key: String, value: Long): Boolean {
     }
 }
 
-fun Context.getFloat(prefsName: String, key: String, defaultValue: Float = -1F): Float {
+fun Context.getFloat(prefsName: String, key: String, defaultValue: Float = 0F): Float {
     return try {
         val prefs = appPrefs(prefsName)
         prefs.getFloat(key, defaultValue)

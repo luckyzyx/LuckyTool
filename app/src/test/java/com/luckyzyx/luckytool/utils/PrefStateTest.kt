@@ -53,6 +53,11 @@ class PrefStateTest {
         assertTrue(state.getBoolean("bool", true))
         assertEquals(7, state.getInt("int", 7))
         assertNull(state.getString("nullable", null))
+
+        // 数值类型的默认值统一为 0（不传 default 时）
+        assertEquals(0, state.getInt("missing_int"))
+        assertEquals(0L, state.getLong("missing_long"))
+        assertEquals(0f, state.getFloat("missing_float"), 0f)
     }
 
     @Test

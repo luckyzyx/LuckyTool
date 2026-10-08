@@ -68,13 +68,13 @@ class PrefState private constructor(
     fun booleanFlow(key: String, default: Boolean = false): StateFlow<Boolean> =
         typedFlow(key, default, "boolean") { it.getBoolean(key, default) }
 
-    fun intFlow(key: String, default: Int = -1): StateFlow<Int> =
+    fun intFlow(key: String, default: Int = 0): StateFlow<Int> =
         typedFlow(key, default, "int") { it.getInt(key, default) }
 
-    fun longFlow(key: String, default: Long = -1L): StateFlow<Long> =
+    fun longFlow(key: String, default: Long = 0L): StateFlow<Long> =
         typedFlow(key, default, "long") { it.getLong(key, default) }
 
-    fun floatFlow(key: String, default: Float = -1f): StateFlow<Float> =
+    fun floatFlow(key: String, default: Float = 0f): StateFlow<Float> =
         typedFlow(key, default, "float") { it.getFloat(key, default) }
 
     fun stringSetFlow(key: String, default: Set<String> = emptySet()): StateFlow<Set<String>> =
@@ -88,13 +88,13 @@ class PrefState private constructor(
     fun getBoolean(key: String, default: Boolean = false): Boolean =
         try { current().getBoolean(key, default) } catch (t: Throwable) { default }
 
-    fun getInt(key: String, default: Int = -1): Int =
+    fun getInt(key: String, default: Int = 0): Int =
         try { current().getInt(key, default) } catch (t: Throwable) { default }
 
-    fun getLong(key: String, default: Long = -1L): Long =
+    fun getLong(key: String, default: Long = 0L): Long =
         try { current().getLong(key, default) } catch (t: Throwable) { default }
 
-    fun getFloat(key: String, default: Float = -1f): Float =
+    fun getFloat(key: String, default: Float = 0f): Float =
         try { current().getFloat(key, default) } catch (t: Throwable) { default }
 
     fun getStringSet(key: String, default: Set<String> = emptySet()): Set<String> =
