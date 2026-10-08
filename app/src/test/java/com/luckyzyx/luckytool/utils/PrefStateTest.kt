@@ -99,15 +99,18 @@ class PrefStateTest {
         val b = state.booleanFlow("b", false)
         val i = state.intFlow("i", 0)
         val l = state.longFlow("l", 0L)
+        val f = state.floatFlow("f", -1f)
         val set = state.stringSetFlow("set", emptySet())
 
         raw.edit().putString("s", "v").putBoolean("b", true).putInt("i", 3)
-            .putLong("l", 4L).putStringSet("set", setOf("z")).commit()
+            .putLong("l", 4L).putFloat("f", 1.5f).putStringSet("set", setOf("z")).commit()
 
         assertEquals("v", s.first())
         assertTrue(b.first())
         assertEquals(3, i.first())
         assertEquals(4L, l.first())
+        assertEquals(1.5f, f.first(), 0f)
+        assertEquals(1.5f, state.getFloat("f", -1f), 0f)
         assertEquals(setOf("z"), set.first())
     }
 

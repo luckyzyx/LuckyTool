@@ -74,6 +74,9 @@ class PrefState private constructor(
     fun longFlow(key: String, default: Long = -1L): StateFlow<Long> =
         typedFlow(key, default, "long") { it.getLong(key, default) }
 
+    fun floatFlow(key: String, default: Float = -1f): StateFlow<Float> =
+        typedFlow(key, default, "float") { it.getFloat(key, default) }
+
     fun stringSetFlow(key: String, default: Set<String> = emptySet()): StateFlow<Set<String>> =
         typedFlow(key, default, "set") { it.getStringSet(key, default)?.toSet() ?: default }
 
@@ -90,6 +93,9 @@ class PrefState private constructor(
 
     fun getLong(key: String, default: Long = -1L): Long =
         try { current().getLong(key, default) } catch (t: Throwable) { default }
+
+    fun getFloat(key: String, default: Float = -1f): Float =
+        try { current().getFloat(key, default) } catch (t: Throwable) { default }
 
     fun getStringSet(key: String, default: Set<String> = emptySet()): Set<String> =
         try { current().getStringSet(key, default)?.toSet() ?: default } catch (t: Throwable) { default }
