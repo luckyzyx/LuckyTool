@@ -31,6 +31,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -426,34 +427,29 @@ private fun ScopePageHost(
             }
         } else {
             val state = remember(spec) { PrefState.of(context.applicationContext, spec.prefsName) }
-            ExpressiveList(
-                scrollBehavior = scrollBehavior,
+            // ScopeScreen 自带 LazyColumn 并渲染全部条目，直接作为页面内容：
+            // 不能再包一层 ExpressiveList（同向嵌套 LazyColumn 会以无限高度约束测量而崩溃）。
+            // 作用域页内容自带 16dp 水平内边距，此处不叠加。
+            ScopeScreen(
+                state = state,
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(padding),
-                // 作用域页内容自带列表与内边距，此处不再叠加，避免双重缩进与卡片背景内缩
-                horizontalPadding = 0.dp,
-            ) {
-                item(key = "scope_content") {
-                    ScopeScreen(
-                        state = state,
-                        modifier = Modifier.fillMaxSize(),
-                        sendValue = { key, value -> context.sendPrefsValue(spec.packName, key, value) },
-                        scrollTarget = if (route.scrollKey.isNotBlank() && route.scrollPosition >= 0) {
-                            ScrollTarget(route.scrollKey, route.scrollPosition)
-                        } else {
-                            null
-                        },
-                        onNavigate = { target, title ->
-                            ScopePageRegistry.pageTargetMap[target]?.let { onNavigate(it, title) }
-                        },
-                        onRestart = if (spec.restartEnabled) ({ activity.restart() }) else null,
-                        onRefresh = spec.onRefresh,
-                        fullContent = spec.fullContent,
-                        content = spec.content,
-                    )
-                }
-            }
+                    .padding(padding)
+                    .nestedScroll(scrollBehavior.nestedScrollConnection),
+                sendValue = { key, value -> context.sendPrefsValue(spec.packName, key, value) },
+                scrollTarget = if (route.scrollKey.isNotBlank() && route.scrollPosition >= 0) {
+                    ScrollTarget(route.scrollKey, route.scrollPosition)
+                } else {
+                    null
+                },
+                onNavigate = { target, title ->
+                    ScopePageRegistry.pageTargetMap[target]?.let { onNavigate(it, title) }
+                },
+                onRestart = if (spec.restartEnabled) ({ activity.restart() }) else null,
+                onRefresh = spec.onRefresh,
+                fullContent = spec.fullContent,
+                content = spec.content,
+            )
         }
     }
 
