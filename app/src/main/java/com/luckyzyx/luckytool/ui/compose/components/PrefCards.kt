@@ -7,7 +7,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
 import com.luckyzyx.luckytool.ui.compose.components.material.SegmentedColumn
 import com.luckyzyx.luckytool.ui.compose.components.material.SegmentedColumnScope
@@ -82,14 +81,12 @@ fun PrefSwitchRow(
     modifier: Modifier = Modifier,
     summary: String? = null,
     enabled: Boolean = true,
-    icon: ImageVector? = null,
     onCheckedChange: (Boolean) -> Unit,
 ) {
     Box(modifier = modifier) {
         SegmentedSwitchItem(
             title = title,
             summary = summary,
-            icon = icon,
             checked = checked,
             enabled = enabled,
             onCheckedChange = onCheckedChange,

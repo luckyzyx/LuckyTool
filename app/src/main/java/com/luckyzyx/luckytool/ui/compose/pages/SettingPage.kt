@@ -11,8 +11,6 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.SystemUpdate
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Text
@@ -25,7 +23,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -125,24 +122,6 @@ fun SettingPage(activity: MainActivity, onOpenTheme: () -> Unit = {}) {
             scrollBehavior = scrollBehavior,
             modifier = Modifier.padding(padding),
         ) {
-            // ---------------- 更新 ----------------
-            // 更新检查单独成卡置顶，对齐 KernelSU：settings_check_update 位于设置页首卡，
-            // 带 SystemUpdate 图标，不与下方无关开关混排
-            item(key = "update_group") {
-                PrefGroup {
-                    item {
-                        SettingsSwitch(
-                            settings = settings,
-                            key = "auto_check_update",
-                            title = stringResource(R.string.auto_check_update),
-                            summary = stringResource(R.string.auto_check_update_summary),
-                            default = true,
-                            icon = Icons.Filled.SystemUpdate,
-                        )
-                    }
-                }
-            }
-
             // ---------------- 主题 ----------------
             // 主题模式 / 主题色 / 调色风格 / 色彩规格 / 动态取色 全部迁至独立主题页（对齐 KernelSU colorpalette）
             item(key = "theme_header") {
@@ -218,6 +197,15 @@ fun SettingPage(activity: MainActivity, onOpenTheme: () -> Unit = {}) {
             }
             item(key = "other_group") {
                 PrefGroup {
+                    item {
+                        SettingsSwitch(
+                            settings = settings,
+                            key = "auto_check_update",
+                            title = stringResource(R.string.auto_check_update),
+                            summary = stringResource(R.string.auto_check_update_summary),
+                            default = true,
+                        )
+                    }
                     item {
                         SettingsSwitch(
                             settings = settings,
@@ -477,7 +465,6 @@ private fun SettingsSwitch(
     title: String,
     summary: String? = null,
     default: Boolean = false,
-    icon: ImageVector? = null,
     visible: Boolean = true,
     onChanged: ((Boolean) -> Unit)? = null,
 ) {
@@ -486,7 +473,6 @@ private fun SettingsSwitch(
     PrefSwitchRow(
         title = title,
         summary = summary,
-        icon = icon,
         checked = checked,
         onCheckedChange = { value ->
             checked = value
