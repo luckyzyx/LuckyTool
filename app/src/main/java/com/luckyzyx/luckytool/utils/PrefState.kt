@@ -68,13 +68,13 @@ class PrefState private constructor(
     fun booleanFlow(key: String, default: Boolean = false): StateFlow<Boolean> =
         typedFlow(key, default, "boolean") { it.getBoolean(key, default) }
 
-    fun intFlow(key: String, default: Int = 0): StateFlow<Int> =
+    fun intFlow(key: String, default: Int): StateFlow<Int> =
         typedFlow(key, default, "int") { it.getInt(key, default) }
 
-    fun longFlow(key: String, default: Long = 0L): StateFlow<Long> =
+    fun longFlow(key: String, default: Long): StateFlow<Long> =
         typedFlow(key, default, "long") { it.getLong(key, default) }
 
-    fun floatFlow(key: String, default: Float = 0f): StateFlow<Float> =
+    fun floatFlow(key: String, default: Float): StateFlow<Float> =
         typedFlow(key, default, "float") { it.getFloat(key, default) }
 
     fun stringSetFlow(key: String, default: Set<String> = emptySet()): StateFlow<Set<String>> =
@@ -88,13 +88,13 @@ class PrefState private constructor(
     fun getBoolean(key: String, default: Boolean = false): Boolean =
         try { current().getBoolean(key, default) } catch (t: Throwable) { default }
 
-    fun getInt(key: String, default: Int = 0): Int =
+    fun getInt(key: String, default: Int): Int =
         try { current().getInt(key, default) } catch (t: Throwable) { default }
 
-    fun getLong(key: String, default: Long = 0L): Long =
+    fun getLong(key: String, default: Long): Long =
         try { current().getLong(key, default) } catch (t: Throwable) { default }
 
-    fun getFloat(key: String, default: Float = 0f): Float =
+    fun getFloat(key: String, default: Float): Float =
         try { current().getFloat(key, default) } catch (t: Throwable) { default }
 
     fun getStringSet(key: String, default: Set<String> = emptySet()): Set<String> =
@@ -102,8 +102,20 @@ class PrefState private constructor(
 
     // ---------------- 写（commit 语义，与 SPUtils 一致；写入后监听器同步回流对应 Flow） ----------------
 
+    /**
+     * 写入键值（commit 语义）。
+     *
+     * [value] 传 null 等价于移除该键：SharedPreferences 没有 null 类型，`all` 里不存在 null 值，
+     * `getXxx(key, default)` 也只能用默认值表达「键不存在」。
+     *
+     * 当前存储值的类型与 [value] 不同时（历史脏数据把集合键写成了字符串，或反之）先 remove 再写：
+     * SP 本身允许同键改类型，但 remote prefs（libxposed RemotePreferences）是把 put 打包给框架执行的，
+     * 先清后写能保证任何实现都不残留旧类型的值。
+     */
     fun set(key: String, value: Any?): Boolean = try {
-        val editor = current().edit()
+        val prefs = current()
+        val editor = prefs.edit()
+        if (value != null && !sameType(rawValue(prefs, key), value)) editor.remove(key)
         when (value) {
             null -> editor.remove(key)
             is String -> editor.putString(key, value)
@@ -120,6 +132,21 @@ class PrefState private constructor(
     } catch (t: Throwable) {
         false
     }
+
+    /** 当前存储值与即将写入的值是否同类（集合只比较「是集合」，数值按具体类型比较） */
+    private fun sameType(existing: Any?, value: Any): Boolean = when (value) {
+        is String -> existing is String
+        is Boolean -> existing is Boolean
+        is Int -> existing is Int
+        is Long -> existing is Long
+        is Float -> existing is Float
+        is Set<*> -> existing is Set<*>
+        else -> false
+    }
+
+    /** 读取键的原始存储值（不抛异常） */
+    private fun rawValue(prefs: SharedPreferences, key: String): Any? =
+        runCatching { prefs.all?.get(key) }.getOrNull()
 
     /**
      * 一条「类型标签|键」专用的只读槽。

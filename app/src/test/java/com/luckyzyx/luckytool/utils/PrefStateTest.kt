@@ -53,11 +53,6 @@ class PrefStateTest {
         assertTrue(state.getBoolean("bool", true))
         assertEquals(7, state.getInt("int", 7))
         assertNull(state.getString("nullable", null))
-
-        // 数值类型的默认值统一为 0（不传 default 时）
-        assertEquals(0, state.getInt("missing_int"))
-        assertEquals(0L, state.getLong("missing_long"))
-        assertEquals(0f, state.getFloat("missing_float"), 0f)
     }
 
     @Test
@@ -159,5 +154,11 @@ class PrefStateTest {
         raw.edit().putStringSet("str", setOf("a")).commit()
         assertEquals("dft", state.stringFlow("str", "dft").first())
         assertEquals("dft", state.getString("str", "dft"))
+
+        // 再覆盖回字符串（先清后写）：旧类型的流回落默认值，而不是留着上一个类型的数据
+        assertTrue(state.set("set", "plain"))
+        assertEquals("plain", raw.getString("set", null))
+        assertEquals("plain", state.stringFlow("set", "dft").first())
+        assertEquals(emptySet<String>(), state.stringSetFlow("set", emptySet()).first())
     }
 }
