@@ -22,6 +22,36 @@ internal fun Context.appPrefs(prefsName: String): android.content.SharedPreferen
     XposedServiceBridge.preferences(prefsName)
         ?: getSharedPreferences(prefsName, Context.MODE_PRIVATE)
 
+// ---------------- 集合语义的兼容读（历史遗留的字符串形态数据） ----------------
+
+private val STRING_SET_TEXT = Regex("^\\s*[\\[{](.*)[]}]\\s*$", RegexOption.DOT_MATCHES_ALL)
+
+/** 字符串是否为 `Set.toString()` 形态（`{a, b}` / `[a, b]`）：据判断集合键能否安全还原 */
+internal fun looksLikeStringSet(value: String?): Boolean =
+    STRING_SET_TEXT.matches(value?.trim().orEmpty())
+
+/** 把字符串形态的集合还原成 Set；单个包名/逗号分隔串同样接受，空串得到空集 */
+internal fun legacyStringSet(value: String?): Set<String> {
+    val text = value?.trim().orEmpty()
+    if (text.isEmpty()) return emptySet()
+    val body = STRING_SET_TEXT.matchEntire(text)?.groupValues?.get(1) ?: text
+    return body.split(',').map { it.trim().trim('"', '\'') }.filter { it.isNotEmpty() }.toSet()
+}
+
+/**
+ * 按集合语义解析原始存储值：兼容 Set / Collection / 字符串形态。
+ *
+ * 备份 json 的 `JSONObject.put(key, Set)`（只接受 HashSet，其余类型走 toString）、
+ * 以及任何 `Set.toString()` 落盘都会留下 `{a, b}` 形态的字符串，之后 getStringSet
+ * 的未检查强转就会抛 ClassCastException，这里统一还原。
+ */
+internal fun rawStringSet(value: Any?, default: Set<String> = emptySet()): Set<String> = when (value) {
+    null -> default
+    is String -> legacyStringSet(value)
+    is Collection<*> -> value.filterIsInstance<String>().toSet()
+    else -> default
+}
+
 
 fun Context.getString(prefsName: String, key: String, defaultValue: String = ""): String {
     return try {
@@ -48,7 +78,9 @@ fun Context.getStringSet(
 ): Set<String> {
     return try {
         val prefs = appPrefs(prefsName)
-        ArraySet(prefs.getStringSet(key, defaultValue))
+        // 直接 getStringSet 对字符串形态的历史数据会抛 CCE，改为按原始值判定类型
+        val value = prefs.all?.get(key)
+        if (value == null) ArraySet(defaultValue) else rawStringSet(value, defaultValue)
     } catch (t: Throwable) {
         LogUtils.e("SPUtils", "getStringSet $key -> $defaultValue", "$t", true)
         defaultValue
