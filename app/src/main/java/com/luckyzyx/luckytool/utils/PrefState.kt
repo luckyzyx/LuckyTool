@@ -7,6 +7,7 @@ import android.content.SharedPreferences
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.CopyOnWriteArrayList
 
 /**
  * SharedPreferences 的响应式读取层（Compose 迁移的存储桥）。
@@ -22,7 +23,14 @@ import java.util.concurrent.ConcurrentHashMap
 class PrefState private constructor(
     private val provider: () -> SharedPreferences,
 ) {
+    /**
+     * 只读槽按「类型标签|键」分别缓存：脏数据下同一个键可能被不同类型读取，
+     * 共用一个 flow 会把错误类型的值交给消费者。
+     */
     private val flows = ConcurrentHashMap<String, MutableStateFlow<Any?>>()
+
+    /** 键 -> 该键所有类型化刷新器；值变化后各自按自己的读法重读（读失败即回落默认值） */
+    private val refreshers = ConcurrentHashMap<String, MutableList<() -> Unit>>()
     private var registered: SharedPreferences? = null
 
     /** 每次落盘/外部写入递增；ScopeScreen 订阅它以在“条件可见性”依赖的键变化时重建条目 */
@@ -33,7 +41,8 @@ class PrefState private constructor(
     }
 
     private val listener = SharedPreferences.OnSharedPreferenceChangeListener { _, key ->
-        flows[key]?.value = registered?.all?.get(key)
+        // 不把原始值直接塞进槽：值可能是错误类型，交给各类型自己的读法（带回落）处理
+        refreshers[key]?.toList()?.forEach { it() }
         bump()
     }
 
@@ -44,8 +53,8 @@ class PrefState private constructor(
             registered?.unregisterOnSharedPreferenceChangeListener(listener)
             prefs.registerOnSharedPreferenceChangeListener(listener)
             registered = prefs
-            // 数据源切换后全量刷新
-            flows.forEach { (key, flow) -> flow.value = prefs.all[key] }
+            // 数据源切换后全量刷新（各类型按自己的读法重读）
+            refreshers.values.forEach { list -> list.toList().forEach { it() } }
             bump()
         }
         return prefs
@@ -54,19 +63,19 @@ class PrefState private constructor(
     // ---------------- 响应式读（Compose collectAsStateWithLifecycle 用） ----------------
 
     fun stringFlow(key: String, default: String = ""): StateFlow<String> =
-        flow(key, default) { it.getString(key, default) ?: default }
+        typedFlow(key, default, "string") { it.getString(key, default) ?: default }
 
     fun booleanFlow(key: String, default: Boolean = false): StateFlow<Boolean> =
-        flow(key, default) { it.getBoolean(key, default) }
+        typedFlow(key, default, "boolean") { it.getBoolean(key, default) }
 
     fun intFlow(key: String, default: Int = -1): StateFlow<Int> =
-        flow(key, default) { it.getInt(key, default) }
+        typedFlow(key, default, "int") { it.getInt(key, default) }
 
     fun longFlow(key: String, default: Long = -1L): StateFlow<Long> =
-        flow(key, default) { it.getLong(key, default) }
+        typedFlow(key, default, "long") { it.getLong(key, default) }
 
     fun stringSetFlow(key: String, default: Set<String> = emptySet()): StateFlow<Set<String>> =
-        flow(key, default) { it.getStringSet(key, default)?.toSet() ?: default }
+        typedFlow(key, default, "set") { it.getStringSet(key, default)?.toSet() ?: default }
 
     // ---------------- 同步读（DSL 条件判断 / 非 Compose 代码兼容） ----------------
 
@@ -106,11 +115,28 @@ class PrefState private constructor(
         false
     }
 
+    /**
+     * 一条「类型标签|键」专用的只读槽。
+     *
+     * 读取一律包在 try/catch 里并按默认值回落：历史脏数据可能是错误类型（例如集合键被写成了
+     * 字符串），此时页面仍能正常打开、用户也能把正确的类型写回去；这里不做任何类型转换。
+     */
     @Suppress("UNCHECKED_CAST")
-    private fun <T> flow(key: String, default: T, read: (SharedPreferences) -> T): StateFlow<T> =
-        flows.getOrPut(key) { MutableStateFlow(read(current())) }.also {
-            (it as MutableStateFlow<T>).value = read(current())
-        } as MutableStateFlow<T>
+    private fun <T> typedFlow(
+        key: String,
+        default: T,
+        tag: String,
+        read: (SharedPreferences) -> T,
+    ): StateFlow<T> {
+        val slotKey = "$tag|$key"
+        flows[slotKey]?.let { return it as StateFlow<T> }
+        val slot = MutableStateFlow<Any?>(default)
+        flows[slotKey] = slot
+        val refresh = { slot.value = runCatching { read(current()) }.getOrDefault(default) }
+        refreshers.getOrPut(key) { CopyOnWriteArrayList() }.add(refresh)
+        refresh()
+        return slot as StateFlow<T>
+    }
 
     companion object {
         private val cache = ConcurrentHashMap<String, PrefState>()

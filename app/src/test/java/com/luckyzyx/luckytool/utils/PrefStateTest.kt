@@ -133,4 +133,23 @@ class PrefStateTest {
         val switched = PrefState.ofProvider { secondRaw }
         assertEquals("in-other", switched.stringFlow("str", "dft").first())
     }
+
+    @Test
+    fun `typed flows fall back to default on a mismatched stored value`() = runBlocking {
+        // 历史脏数据：集合键被写成了字符串 → 读集合的页面不崩、回落默认值
+        raw.edit().putString("set", "{com.a, com.b}").commit()
+        val state = state()
+        assertEquals(emptySet<String>(), state.stringSetFlow("set", emptySet()).first())
+        assertEquals(emptySet<String>(), state.getStringSet("set", emptySet()))
+
+        // 之后写回正确类型，同一条流要能恢复成真实数据
+        assertTrue(state.set("set", setOf("com.a")))
+        assertEquals(setOf("com.a"), raw.getStringSet("set", null))
+        assertEquals(setOf("com.a"), state.stringSetFlow("set", emptySet()).first())
+
+        // 反向：字符串键被写成了集合 → 读字符串回落默认值
+        raw.edit().putStringSet("str", setOf("a")).commit()
+        assertEquals("dft", state.stringFlow("str", "dft").first())
+        assertEquals("dft", state.getString("str", "dft"))
+    }
 }
