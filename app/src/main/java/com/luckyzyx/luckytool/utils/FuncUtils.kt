@@ -2,7 +2,6 @@
 
 package com.luckyzyx.luckytool.utils
 
-import android.annotation.SuppressLint
 import android.content.ComponentName
 import android.content.ContentValues
 import android.content.Context
@@ -291,21 +290,16 @@ fun getProp(key: String, def: String): String =
 
 /**
  * 发送广播以关闭折叠面板
+ *
+ * 旧实现在 sendBroadcast 失败时退回 startActivityAndCollapse(Intent)：该重载自 targetSdk 34 起
+ * 必定抛异常，而 sendBroadcast 在无接收者时并不会抛异常，退回路径实际不可达，故移除。
  * @receiver TileService
  */
-@SuppressLint("StartActivityAndCollapseDeprecated")
 fun TileService.closeCollapse() {
     try {
         sendBroadcast { action = "LuckyTool_CloseCollapse" }
     } catch (_: Exception) {
-        try {
-            @Suppress("DEPRECATION")
-            startActivityAndCollapse(Intent(Intent.ACTION_VIEW).apply {
-                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-            })
-        } catch (_: Exception) {
 
-        }
     }
 }
 
