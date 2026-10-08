@@ -130,13 +130,13 @@ fun MainShell(activity: MainActivity) {
     LaunchedEffect(onFunctionTab) { navController.enableOnBackPressed(!onFunctionTab) }
 
     // 跨 tab 跳转请求（Compose 页面 → Function 子树作用域页）：只切 tab，FunctionPage 消费执行
+    // 注意：这里不 popUpTo 来源 tab，而是把 Function 压到当前栈顶，保留来源 tab（Other/Setting）
+    // 在返回栈中，这样从作用域页返回时直接回到来源 tab，而不是先落到功能树再落到 Home。
     LaunchedEffect(Unit) {
         activity.functionNavRequests.collect { request ->
             if (request != null) {
                 navController.navigate(FunctionRoute) {
-                    popUpTo(navController.graph.findStartDestination().id) { saveState = true }
                     launchSingleTop = true
-                    restoreState = true
                 }
             }
         }

@@ -110,7 +110,10 @@ data class ScopeRoute(
 fun FunctionPage(activity: MainActivity, onShellBack: () -> Unit) {
     val navController = rememberNavController()
     val backStackEntry by navController.currentBackStackEntryAsState()
-    val atRoot = backStackEntry?.destination?.hasRoute<FunctionTreeRoute>() == true
+    val atTree = backStackEntry?.destination?.hasRoute<FunctionTreeRoute>() == true
+    // 内部栈是否还有上一页可退：功能树根与跨 tab 直达的作用域页均为内部栈根（无上一页）。
+    // 用它替代原来的 atRoot 判断，是因为跨 tab 直达会把功能树弹出内部栈，作用域页成为根。
+    val canPopInternal = navController.previousBackStackEntry != null
 
     var showVersionInfo by remember { mutableStateOf(false) }
 
@@ -119,16 +122,19 @@ fun FunctionPage(activity: MainActivity, onShellBack: () -> Unit) {
         activity.functionNavRequests.collect { request ->
             if (request != null) {
                 activity.functionNavRequests.value = null
+                // 跨 tab 直达作用域页：把功能树（内部栈根）一并弹出，让作用域页成为内部栈根，
+                // 返回键据此直接交还 shell（回到来源 tab），而不是先退回功能树。
                 navController.navigate(ScopeRoute(request.pageKey, request.title ?: "", "", -1)) {
+                    popUpTo<FunctionTreeRoute> { inclusive = true }
                     launchSingleTop = true
                 }
             }
         }
     }
 
-    // 返回键：非根退回上一页，根交还 shell（切回上一 tab 或退出）
+    // 返回键：有内部上一页则退内部栈，否则交还 shell（功能树根 → 上一 tab/退出；跨 tab 直达 → 来源 tab）
     BackHandler {
-        if (atRoot) onShellBack() else navController.popBackStack()
+        if (canPopInternal) navController.popBackStack() else onShellBack()
     }
 
     var showRestartMenu by remember { mutableStateOf(false) }
@@ -142,8 +148,8 @@ fun FunctionPage(activity: MainActivity, onShellBack: () -> Unit) {
     }
 
     EdgeSwipeDismiss(
-        enabled = LocalEnableSwipeDismiss.current && !atRoot,
-        onDismiss = { navController.popBackStack() },
+        enabled = LocalEnableSwipeDismiss.current && !atTree,
+        onDismiss = { if (canPopInternal) navController.popBackStack() else onShellBack() },
     ) {
         NavHost(
             navController = navController,
@@ -169,7 +175,14 @@ fun FunctionPage(activity: MainActivity, onShellBack: () -> Unit) {
                 ScopePageHost(
                     activity = activity,
                     route = route,
-                    onBack = { navController.popBackStack() },
+                    // 顶栏返回键与系统返回键一致：内部有上一页退内部栈，跨 tab 直达的根页交还 shell
+                    onBack = {
+                        if (navController.previousBackStackEntry != null) {
+                            navController.popBackStack()
+                        } else {
+                            onShellBack()
+                        }
+                    },
                     onNavigate = { key, title -> navController.navigate(ScopeRoute(key, title ?: "", "", -1)) },
                 )
             }
