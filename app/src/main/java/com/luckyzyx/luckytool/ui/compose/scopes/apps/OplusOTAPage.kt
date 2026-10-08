@@ -44,13 +44,19 @@ object OplusOTAPage {
         )
         category("OTA")
         // 纯信息型（旧 Preference 无点击）：展示当前 OTA 校验结果
+        // shell 调用只在渲染期执行：headless 索引构建不得执行任何 IO
         val verifyTitle = c.getString(R.string.get_ota_verify_result)
-        val verifyImgs = formatStringAuto(
-            ShellUtils.fastCmd("${CommandUtils.getprop} ${CommandUtils.otaVerifyResult}").split(","),
-            ",", false,
-        )
-        val verifySummary = c.getString(R.string.get_ota_verify_result_summary, verifyImgs)
-        custom(key = "get_ota_verify_result", title = verifyTitle, summary = verifySummary) { slot ->
+        custom(key = "get_ota_verify_result", title = verifyTitle) { slot ->
+            val verifySummary = c.getString(
+                R.string.get_ota_verify_result_summary,
+                formatStringAuto(
+                    runCatching {
+                        ShellUtils.fastCmd("${CommandUtils.getprop} ${CommandUtils.otaVerifyResult}")
+                            .split(",")
+                    }.getOrDefault(emptyList()),
+                    ",", false,
+                ),
+            )
             Box(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
                 SegmentedListItem(
                     supportingContent = { Text(verifySummary) },

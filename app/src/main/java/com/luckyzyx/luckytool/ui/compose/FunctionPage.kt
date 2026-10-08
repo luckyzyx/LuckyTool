@@ -58,6 +58,7 @@ import com.luckyzyx.luckytool.ui.compose.components.material.ExpressivePageScaff
 import com.luckyzyx.luckytool.ui.compose.components.material.SegmentedTextField
 import com.luckyzyx.luckytool.ui.compose.scopes.ScopePageRegistry
 import com.luckyzyx.luckytool.ui.compose.scopes.ScopePageSpec
+import com.luckyzyx.luckytool.utils.LogUtils
 import com.luckyzyx.luckytool.ui.shell.LocalEnableSwipeDismiss
 import com.luckyzyx.luckytool.utils.AppUtils
 import com.luckyzyx.luckytool.utils.PrefState
@@ -174,13 +175,17 @@ private fun pageTitle(context: Context, spec: ScopePageSpec): String {
  * headless 构建一页的搜索索引（等价旧 getAllPrefsItem：条件可见性已由 Kotlin if 应用，
  * 空索引 = 该页不可见）。构建是纯记录（emit 不渲染），可在任意线程运行。
  */
-private fun buildIndex(context: Context, spec: ScopePageSpec): List<PrefIndexItem> {
+private fun buildIndex(context: Context, spec: ScopePageSpec): List<PrefIndexItem> = try {
     val state = PrefState.of(context.applicationContext, spec.prefsName)
     val builder = PrefScopeBuilder(state)
     builder.context = context.applicationContext
     builder.beginBuild()
     spec.content(builder)
-    return builder.snapshotIndex()
+    builder.snapshotIndex()
+} catch (t: Throwable) {
+    // 单页构建失败只丢弃该页，不得拖垮整棵功能树/搜索索引
+    LogUtils.e("buildIndex", spec.pageKey, t.toString(), true)
+    emptyList()
 }
 
 private data class TreeRow(val pageKey: String, val title: String, val summary: String?)
@@ -280,12 +285,14 @@ private fun FunctionSearchScreen(onBack: () -> Unit, onOpen: (ScopeRoute) -> Uni
         }
     }
 
-    // 过滤规则对齐 SearchResultAdapter.getFilter：key/title/summary contains(ignoreCase)
+    // 过滤规则对齐 SearchResultAdapter.getFilter：key/title/summary contains(ignoreCase)，并补充页标题匹配
     val filtered = remember(entries, query) {
-        if (query.isBlank()) emptyList() else entries.filter { entry ->
-            entry.item.key.contains(query, ignoreCase = true) ||
-                entry.item.title?.contains(query, ignoreCase = true) == true ||
-                entry.item.summary?.contains(query, ignoreCase = true) == true
+        val q = query.trim()
+        if (q.isEmpty()) emptyList() else entries.filter { entry ->
+            entry.item.key.contains(q, ignoreCase = true) ||
+                entry.item.title?.contains(q, ignoreCase = true) == true ||
+                entry.item.summary?.contains(q, ignoreCase = true) == true ||
+                entry.pageTitle.contains(q, ignoreCase = true)
         }
     }
 
@@ -330,6 +337,24 @@ private fun FunctionSearchScreen(onBack: () -> Unit, onOpen: (ScopeRoute) -> Uni
                                 null
                             },
                         )
+                    }
+                }
+            }
+            if (query.isNotBlank() && entries.isEmpty()) {
+                item(key = "search_index_loading") {
+                    PrefGroup {
+                        item {
+                            PrefRow(title = stringResource(R.string.search_index_loading))
+                        }
+                    }
+                }
+            }
+            if (query.isNotBlank() && entries.isNotEmpty() && filtered.isEmpty()) {
+                item(key = "search_no_results") {
+                    PrefGroup {
+                        item {
+                            PrefRow(title = stringResource(R.string.search_no_results))
+                        }
                     }
                 }
             }

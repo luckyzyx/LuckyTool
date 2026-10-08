@@ -149,6 +149,8 @@
     <!-- Menu -->
     <string name="menu_reboot">Restart menu</string>
     <string name="menu_search">Search menu</string>
+    <string name="search_no_results">No matching results</string>
+    <string name="search_index_loading">Building search index…</string>
     <string name="menu_settings">Set menu</string>
     <string name="restart_scope">Restart scoped processes</string>
     <string name="reload_hooker">Reload processes hooker</string>

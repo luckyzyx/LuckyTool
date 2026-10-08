@@ -138,6 +138,8 @@
     <!-- Menu -->
     <string name="menu_reboot">重启菜单</string>
     <string name="menu_search">搜索菜单</string>
+    <string name="search_no_results">无匹配结果</string>
+    <string name="search_index_loading">正在构建搜索索引…</string>
     <string name="menu_settings">设置菜单</string>
     <string name="restart_scope">重启作用域进程</string>
     <string name="reload_hooker">重载进程Hooker</string>
