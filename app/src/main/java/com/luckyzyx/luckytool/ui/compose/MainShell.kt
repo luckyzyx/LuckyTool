@@ -43,7 +43,6 @@ import com.luckyzyx.luckytool.ui.compose.components.material.LocalBottomBarPrese
 import com.luckyzyx.luckytool.ui.compose.components.material.LocalShellBottomInset
 import com.luckyzyx.luckytool.ui.compose.components.miuix.MiuixBarItem
 import com.luckyzyx.luckytool.ui.compose.components.miuix.MiuixBottomBar
-import com.luckyzyx.luckytool.ui.compose.components.miuix.rememberBlurBackdrop
 import com.luckyzyx.luckytool.ui.compose.pages.HomePage
 import com.luckyzyx.luckytool.ui.compose.pages.LogPage
 import com.luckyzyx.luckytool.ui.compose.pages.OtherPage
@@ -60,6 +59,7 @@ import com.luckyzyx.luckytool.ui.theme.UiMode
 import kotlinx.serialization.Serializable
 import top.yukonga.miuix.kmp.blur.layerBackdrop
 import top.yukonga.miuix.kmp.blur.rememberLayerBackdrop
+import top.yukonga.miuix.kmp.shader.isRenderEffectSupported
 import top.yukonga.miuix.kmp.theme.MiuixTheme
 
 // 类型安全路由（迁移方案 P2：MainShell 五个 tab，官方 recommended pattern）
@@ -158,8 +158,10 @@ fun MainShell(activity: MainActivity) {
         }
     }
 
-    // Miuix 外观线：背景模糊（顶栏/底栏）与悬浮胶囊的采样源
-    val blurBackdrop = if (isMiuix) rememberBlurBackdrop(enableBlur) else null
+    // Miuix 外观线：模糊采样源（普通底栏背景模糊与悬浮胶囊液态玻璃共用）。
+    // 关键约束：该图层只录制页面内容（录制修饰符挂在 NavHost 上），录制盒内
+    // 绝不能包含任何绘制该图层的组件（底栏/胶囊），否则渲染树循环引用 →
+    // RenderThread prepareTree 无限递归 → 原生栈溢出崩溃（SIGSEGV）。
     val backdropSurface = if (isMiuix) MiuixTheme.colorScheme.surface else Color.Unspecified
     val backdrop = if (isMiuix) {
         rememberLayerBackdrop {
@@ -169,6 +171,11 @@ fun MainShell(activity: MainActivity) {
     } else {
         null
     }
+    // 普通底栏背景模糊：仅在模糊开关开启且 RenderEffect 可用时使用采样层
+    val barBlurBackdrop = if (isMiuix && enableBlur && isRenderEffectSupported()) backdrop else null
+    // 是否存在实际消费者需要录制背板：普通底栏模糊 或 悬浮胶囊液态玻璃
+    val needBackdrop = backdrop != null &&
+        ((barBlurBackdrop != null && !floatingBar) || (floatingBar && enableFloatingBottomBarBlur))
 
     val containerColor = if (isMiuix) {
         MiuixTheme.colorScheme.surface
@@ -182,7 +189,9 @@ fun MainShell(activity: MainActivity) {
             when {
                 // 主题页为全屏子页：不显示底栏
                 !showBar -> Unit
-                isMiuix && !floatingBar -> {
+                // 悬浮胶囊模式：胶囊在内容区上方单独绘制，底栏槽位留空
+                floatingBar -> Unit
+                isMiuix -> {
                     MiuixBottomBar(
                         items = tabs.mapIndexed { index, tab ->
                             MiuixBarItem(
@@ -197,7 +206,7 @@ fun MainShell(activity: MainActivity) {
                         },
                         selectedIndex = selectedIndex,
                         onSelected = onSelect,
-                        blurBackdrop = blurBackdrop,
+                        blurBackdrop = barBlurBackdrop,
                         backdrop = backdrop ?: rememberLayerBackdrop { },
                         floating = false,
                         floatingBlur = false,
@@ -255,23 +264,22 @@ fun MainShell(activity: MainActivity) {
             // 悬浮胶囊覆盖在内容之上：列表额外预留胶囊高度，条目仍可滑到胶囊之下
             LocalShellBottomInset provides if (floatingBar) FloatingBarInset else 0.dp,
         ) {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .then(
-                        if (floatingBar && enableFloatingBottomBarBlur && backdrop != null) {
-                            Modifier.layerBackdrop(backdrop)
-                        } else {
-                            Modifier
-                        }
-                    ),
-            ) {
+            // 采样层录制盒是 NavHost（见上）：本 Box 只做普通容器，
+            // 悬浮胶囊位于本 Box 内、录制盒之外，避免渲染树循环引用
+            Box(modifier = Modifier.fillMaxSize()) {
                 NavHost(
                     navController = navController,
                     startDestination = HomeRoute,
                     modifier = Modifier
                         .fillMaxSize()
-                        .padding(innerPadding),
+                        .padding(innerPadding)
+                        .then(
+                            if (backdrop != null && needBackdrop) {
+                                Modifier.layerBackdrop(backdrop)
+                            } else {
+                                Modifier
+                            }
+                        ),
                 ) {
                     composable<HomeRoute> { HomePage(activity) }
                     composable<OtherRoute> { OtherPage(activity) }
@@ -314,7 +322,7 @@ fun MainShell(activity: MainActivity) {
                         },
                         selectedIndex = selectedIndex,
                         onSelected = onSelect,
-                        blurBackdrop = blurBackdrop,
+                        blurBackdrop = barBlurBackdrop,
                         backdrop = backdrop ?: rememberLayerBackdrop { },
                         floating = true,
                         floatingBlur = enableFloatingBottomBarBlur,
