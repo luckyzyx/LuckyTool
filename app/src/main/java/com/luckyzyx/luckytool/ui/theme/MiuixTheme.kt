@@ -15,8 +15,8 @@ import top.yukonga.miuix.kmp.theme.ColorSchemeMode
 import top.yukonga.miuix.kmp.theme.LocalContentColor
 import top.yukonga.miuix.kmp.theme.MiuixTheme
 import top.yukonga.miuix.kmp.theme.ThemeColorSpec
-import top.yukonga.miuix.kmp.theme.ThemeController as MiuixThemeController
 import top.yukonga.miuix.kmp.theme.ThemePaletteStyle
+import top.yukonga.miuix.kmp.theme.ThemeController as MiuixThemeController
 
 /**
  * Miuix 外观线主题（迁移自 KernelSU `ui/theme/MiuixTheme.kt`）。
@@ -106,7 +106,6 @@ fun MiuixLuckyTheme(
                         specVersion = appSettings.colorSpec,
                     ).animateAsState(),
                     motionScheme = MotionScheme.expressive(),
-                    typography = Typography,
                     content = content,
                 )
             }
