@@ -163,8 +163,9 @@ class ShortcutUtils(val context: Context) {
      */
     fun requestPinShortcut(shortcutInfo: ShortcutInfo) {
         val intent = shortcutManager.createShortcutResultIntent(shortcutInfo)
+        // targetSdk 31 起必须显式声明 PendingIntent 可变性，否则创建时直接抛 IllegalArgumentException
         val callback = PendingIntent.getBroadcast(
-            context, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT
+            context, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
         shortcutManager.requestPinShortcut(shortcutInfo, callback.intentSender)
     }
