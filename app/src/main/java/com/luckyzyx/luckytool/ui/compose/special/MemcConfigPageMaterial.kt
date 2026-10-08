@@ -3,7 +3,6 @@ package com.luckyzyx.luckytool.ui.compose.special
 import android.content.Context
 import android.content.pm.ActivityInfo
 import android.content.pm.PackageManager
-import android.util.ArraySet
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.clickable
@@ -25,8 +24,9 @@ import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.SecondaryTabRow
 import androidx.compose.material3.Tab
-import androidx.compose.material3.TabRow
+import androidx.compose.material3.TabRowDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -53,21 +53,14 @@ import com.luckyzyx.luckytool.ui.compose.components.PrefGroup
 import com.luckyzyx.luckytool.ui.compose.components.PrefRow
 import com.luckyzyx.luckytool.ui.compose.components.material.SegmentedItem
 import com.luckyzyx.luckytool.ui.compose.components.material.SegmentedListItem
-import com.luckyzyx.luckytool.ui.compose.scopes.ScopePageSpec
 import com.luckyzyx.luckytool.utils.CommandUtils
 import com.luckyzyx.luckytool.utils.FileUtils
-import com.luckyzyx.luckytool.utils.GlobalKeyValue
-import com.luckyzyx.luckytool.utils.ModulePrefs
 import com.luckyzyx.luckytool.utils.PackageUtils
-import com.luckyzyx.luckytool.utils.getStringSet
-import com.luckyzyx.luckytool.utils.putStringSet
 import com.luckyzyx.luckytool.utils.safeOfNull
 import com.luckyzyx.luckytool.utils.showToast
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import kotlinx.serialization.json.Json
-import java.io.InputStream
 
 @Composable
 internal fun MemcConfigContent() {
@@ -116,18 +109,29 @@ internal fun MemcConfigContent() {
                 )
             }
         }
-        TabRow(selectedTabIndex = tabIndex) {
-            Tab(
-                selected = tabIndex == 0,
-                onClick = { tabIndex = 0 },
-                text = { Text("Packages") },
-            )
-            Tab(
-                selected = tabIndex == 1,
-                onClick = { tabIndex = 1 },
-                text = { Text("Activitys") },
-            )
-        }
+        SecondaryTabRow(
+            tabIndex,
+            Modifier,
+            TabRowDefaults.primaryContainerColor,
+            TabRowDefaults.primaryContentColor,
+            @Composable {
+                TabRowDefaults.SecondaryIndicator(
+                    Modifier.tabIndicatorOffset(tabIndex)
+                )
+            },
+            @Composable { HorizontalDivider() },
+            {
+                Tab(
+                    selected = tabIndex == 0,
+                    onClick = { tabIndex = 0 },
+                    text = { Text("Packages") },
+                )
+                Tab(
+                    selected = tabIndex == 1,
+                    onClick = { tabIndex = 1 },
+                    text = { Text("Activitys") },
+                )
+            })
         when (tabIndex) {
             0 -> MemcPackagePanel(
                 state = state,
@@ -208,11 +212,11 @@ internal fun MemcConfigContent() {
                 Column {
                     listOf("x7", "x7p").forEach { v ->
                         ListItem(
-                            headlineContent = { Text(v) },
                             modifier = Modifier.clickable {
                                 showVersionSheet = false
                                 scope.launch { state.reset(null, v) }
                             },
+                            content = { Text(v) },
                         )
                     }
                 }
@@ -614,16 +618,16 @@ internal fun MemcActivityDialog(
                 LazyColumn(Modifier.heightIn(max = 320.dp)) {
                     items(activityInfos, key = { it.name }) { ai ->
                         ListItem(
-                            headlineContent = {
+                            modifier = Modifier.clickable {
+                                activity = ai.name
+                                showActivityPicker = false
+                            },
+                            content = {
                                 Text(
                                     ai.name,
                                     maxLines = 1,
                                     overflow = TextOverflow.Ellipsis,
                                 )
-                            },
-                            modifier = Modifier.clickable {
-                                activity = ai.name
-                                showActivityPicker = false
                             },
                         )
                         HorizontalDivider()

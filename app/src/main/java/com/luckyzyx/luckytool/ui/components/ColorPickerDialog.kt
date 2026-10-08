@@ -25,6 +25,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.rememberSliderState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
@@ -43,15 +44,16 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.core.graphics.toColorInt
 import com.luckyzyx.luckytool.R
 import com.luckyzyx.luckytool.ui.theme.LocalUiMode
 import com.luckyzyx.luckytool.ui.theme.UiMode
 import top.yukonga.miuix.kmp.basic.ButtonDefaults
+import top.yukonga.miuix.kmp.overlay.OverlayDialog
+import top.yukonga.miuix.kmp.theme.MiuixTheme
 import top.yukonga.miuix.kmp.basic.Slider as MiuixSlider
 import top.yukonga.miuix.kmp.basic.Text as MiuixText
 import top.yukonga.miuix.kmp.basic.TextButton as MiuixTextButton
-import top.yukonga.miuix.kmp.overlay.OverlayDialog
-import top.yukonga.miuix.kmp.theme.MiuixTheme
 
 /** 颜色选择器内部状态（ARGB / 色相），两条外观线共用；语义与迁移前逐行一致。 */
 private class ColorPickerUiState(initialColor: Int) {
@@ -64,7 +66,13 @@ private class ColorPickerUiState(initialColor: Int) {
     val rgb: Int get() = colorInt and 0xFFFFFF
 
     fun colorFromHsv(h: Float, s: Float, v: Float) {
-        colorInt = (alpha shl 24) or (android.graphics.Color.HSVToColor(floatArrayOf(h, s, v)) and 0xFFFFFF)
+        colorInt = (alpha shl 24) or (android.graphics.Color.HSVToColor(
+            floatArrayOf(
+                h,
+                s,
+                v
+            )
+        ) and 0xFFFFFF)
     }
 
     fun applyHue(h: Float) {
@@ -94,7 +102,7 @@ fun ColorPickerDialog(
 ) {
     val initialColor = remember(initialHex) {
         try {
-            initialHex?.let { android.graphics.Color.parseColor(it) } ?: android.graphics.Color.WHITE
+            initialHex?.toColorInt() ?: android.graphics.Color.WHITE
         } catch (_: IllegalArgumentException) {
             android.graphics.Color.WHITE
         }
@@ -162,10 +170,12 @@ private fun MaterialColorPickerDialog(
                     )
                 }
                 Slider(
-                    value = state.alpha / 255f,
+                    state = rememberSliderState(
+                        value = state.alpha / 255f
+                    ),
                     onValueChange = { a ->
                         state.colorInt = ((a * 255f).toInt().coerceIn(0, 255) shl 24) or state.rgb
-                    },
+                    }
                 )
 
                 Row(

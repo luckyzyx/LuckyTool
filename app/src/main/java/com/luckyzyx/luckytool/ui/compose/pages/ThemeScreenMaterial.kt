@@ -97,10 +97,8 @@ import com.luckyzyx.luckytool.ui.shell.PageScaleMin
 import com.luckyzyx.luckytool.ui.shell.ShellSettingsController
 import com.luckyzyx.luckytool.ui.theme.AppSettings
 import com.luckyzyx.luckytool.ui.theme.ColorMode
-import com.luckyzyx.luckytool.ui.theme.LocalUiMode
 import com.luckyzyx.luckytool.ui.theme.ThemeController
 import com.luckyzyx.luckytool.ui.theme.ThemePrefs
-import com.luckyzyx.luckytool.ui.theme.UiMode
 import com.luckyzyx.luckytool.ui.theme.keyColorOptions
 import com.luckyzyx.luckytool.ui.theme.rememberLuckyColorScheme
 import com.luckyzyx.luckytool.ui.theme.rememberSeedColor
@@ -143,7 +141,7 @@ fun ThemeScreenMaterial(onBack: () -> Unit) {
                     SettingsPrefs,
                     "dark_theme",
                     "0"
-                )?.toIntOrNull() ?: 0
+                ).toIntOrNull() ?: 0
             )
         )
     }

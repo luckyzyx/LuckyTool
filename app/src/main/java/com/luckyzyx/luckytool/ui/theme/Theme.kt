@@ -4,7 +4,7 @@ import android.content.Context
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.ReadOnlyComposable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.staticCompositionLocalOf
 import com.luckyzyx.luckytool.utils.SettingsPrefs
@@ -77,9 +77,9 @@ enum class ColorMode(val value: Int) {
  */
 val PaletteStyle.supportsSpec2025: Boolean
     get() = this == PaletteStyle.TonalSpot ||
-        this == PaletteStyle.Neutral ||
-        this == PaletteStyle.Vibrant ||
-        this == PaletteStyle.Expressive
+            this == PaletteStyle.Neutral ||
+            this == PaletteStyle.Vibrant ||
+            this == PaletteStyle.Expressive
 
 /** 取色规格按调色风格做有效值回退（对齐 KernelSU） */
 fun ColorSpec.SpecVersion.effectiveFor(style: PaletteStyle): ColorSpec.SpecVersion =
@@ -109,7 +109,7 @@ object ThemeController {
     const val KEY_MIUIX_MONET = "miuix_monet"
 
     fun getUiMode(context: Context): UiMode = UiMode.fromValue(
-        context.getString(SettingsPrefs, KEY_UI_MODE, UiMode.DEFAULT_VALUE) ?: UiMode.DEFAULT_VALUE
+        context.getString(SettingsPrefs, KEY_UI_MODE, UiMode.DEFAULT_VALUE)
     )
 
     /**
@@ -122,7 +122,7 @@ object ThemeController {
     fun getAppSettings(context: Context): AppSettings {
         val uiMode = getUiMode(context)
         val rawColorMode = ColorMode.fromValue(
-            context.getString(SettingsPrefs, "dark_theme", "0")?.toIntOrNull() ?: 0
+            context.getString(SettingsPrefs, "dark_theme", "0").toIntOrNull() ?: 0
         )
         val colorMode = if (uiMode == UiMode.Miuix) {
             val miuixMonet = context.getBoolean(SettingsPrefs, KEY_MIUIX_MONET, false)
@@ -136,10 +136,18 @@ object ThemeController {
         }
         val keyColor = context.getInt(SettingsPrefs, "key_color", 0)
         val paletteStyle = PaletteStyle.entries.firstOrNull {
-            it.name == context.getString(SettingsPrefs, "palette_style", PaletteStyle.TonalSpot.name)
+            it.name == context.getString(
+                SettingsPrefs,
+                "palette_style",
+                PaletteStyle.TonalSpot.name
+            )
         } ?: PaletteStyle.TonalSpot
         val colorSpec = ColorSpec.SpecVersion.entries.firstOrNull {
-            it.name == context.getString(SettingsPrefs, "color_spec", ColorSpec.SpecVersion.SPEC_2025.name)
+            it.name == context.getString(
+                SettingsPrefs,
+                "color_spec",
+                ColorSpec.SpecVersion.SPEC_2025.name
+            )
         } ?: ColorSpec.SpecVersion.SPEC_2025
         val dynamicColor = context.getBoolean(SettingsPrefs, "use_dynamic_color", true)
         return AppSettings(
@@ -157,7 +165,7 @@ object ThemeController {
  * 从而在页内即时预览配色，无需 recreate Activity（旧实现靠 recreate 生效）。
  */
 object ThemePrefs {
-    var revision by mutableStateOf(0)
+    var revision by mutableIntStateOf(0)
         private set
 
     fun notifyChanged() {

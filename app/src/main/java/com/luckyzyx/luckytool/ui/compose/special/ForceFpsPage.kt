@@ -72,9 +72,9 @@ object ForceFpsPage {
             suspend fun fetchController(): IRefreshRateController? =
                 suspendCancellableCoroutine { cont ->
                     val activity = c.findActivity()
-                    if (activity == null) cont.resume(null, onCancellation = null)
+                    if (activity == null) cont.resume(null) { _, _, _ -> }
                     else RefreshRateService.get(activity) {
-                        cont.resume(it, onCancellation = null)
+                        cont.resume(it) { _, _, _ -> }
                     }
                 }
 
@@ -115,13 +115,17 @@ object ForceFpsPage {
                     if (miuix) {
                         MiuixText(
                             text = c.getString(R.string.fps_no_data),
-                            modifier = Modifier.fillMaxWidth().padding(vertical = 24.dp),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 24.dp),
                             textAlign = TextAlign.Center,
                         )
                     } else {
                         Text(
                             c.getString(R.string.fps_no_data),
-                            modifier = Modifier.fillMaxWidth().padding(vertical = 24.dp),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 24.dp),
                             textAlign = TextAlign.Center,
                         )
                     }
@@ -184,13 +188,17 @@ object ForceFpsPage {
                 if (miuix) {
                     MiuixText(
                         text = c.getString(R.string.fps_tips),
-                        modifier = Modifier.fillMaxWidth().padding(top = 10.dp),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(top = 10.dp),
                         textAlign = TextAlign.Center,
                     )
                 } else {
                     Text(
                         c.getString(R.string.fps_tips),
-                        modifier = Modifier.fillMaxWidth().padding(top = 10.dp),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(top = 10.dp),
                         textAlign = TextAlign.Center,
                     )
                 }

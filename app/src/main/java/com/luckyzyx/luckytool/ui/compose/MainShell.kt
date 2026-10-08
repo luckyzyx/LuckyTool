@@ -5,7 +5,7 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.Assignment
+import androidx.compose.material.icons.automirrored.rounded.Assignment
 import androidx.compose.material.icons.rounded.Dashboard
 import androidx.compose.material.icons.rounded.Extension
 import androidx.compose.material.icons.rounded.Home
@@ -146,7 +146,7 @@ fun MainShell(activity: MainActivity) {
         ShellTab(R.string.nav_other, R.drawable.ic_baseline_dashboard_24, Icons.Rounded.Dashboard, OtherRoute),
         ShellTab(R.string.nav_function, R.drawable.ic_baseline_extension_24, Icons.Rounded.Extension, FunctionRoute),
         ShellTab(R.string.nav_home, R.drawable.ic_baseline_home_24, Icons.Rounded.Home, HomeRoute),
-        ShellTab(R.string.nav_log, R.drawable.ic_baseline_assignment_24, Icons.Rounded.Assignment, LogRoute),
+        ShellTab(R.string.nav_log, R.drawable.ic_baseline_assignment_24, Icons.AutoMirrored.Rounded.Assignment, LogRoute),
         ShellTab(R.string.nav_setting, R.drawable.ic_baseline_settings_24, Icons.Rounded.Settings, SettingRoute),
     )
     val selectedIndex = tabs.indexOfFirst { currentDestination?.hasRoute(it.route::class) == true }
