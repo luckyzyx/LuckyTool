@@ -35,7 +35,9 @@ import androidx.compose.material3.rememberTopAppBarState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.Immutable
+import androidx.compose.runtime.movableContentOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -122,6 +124,13 @@ fun ExpressivePageScaffold(
         TopAppBarDefaults.exitUntilCollapsedScrollBehavior(rememberTopAppBarState()),
     content: @Composable (PaddingValues) -> Unit,
 ) {
+    // 切换外观时把同一份页面内容在两条骨架之间「搬移」（movable content）：页面自身的
+    // remember 状态（列表滚动位置、页内临时状态）随内容走，只有外侧骨架被替换。
+    // rememberUpdatedState 防止固化首次组合的 lambda（否则页内回调会引用过期取值）。
+    val currentContent = rememberUpdatedState(content)
+    val movableContent = remember {
+        movableContentOf<PaddingValues> { innerPadding -> currentContent.value(innerPadding) }
+    }
     // Miuix 线：换成 KernelSU 骨架。material 线分支保持原样（只加分支，取值未改）。
     if (LocalUiMode.current == UiMode.Miuix) {
         MiuixExpressivePageScaffold(
@@ -131,7 +140,7 @@ fun ExpressivePageScaffold(
             actions = actions,
             floatingActionButton = floatingActionButton,
             bottomBar = bottomBar,
-            content = content,
+            content = movableContent,
         )
         return
     }
@@ -156,7 +165,7 @@ fun ExpressivePageScaffold(
         contentWindowInsets = WindowInsets.safeDrawing.only(
             WindowInsetsSides.Top + WindowInsetsSides.Horizontal
         ),
-        content = content,
+        content = movableContent,
     )
 }
 
