@@ -490,6 +490,12 @@ private fun ScopePageHost(
             // - Miuix 线：骨架给的是真实 innerPadding，其中 top = 顶栏高度；top 经 LocalScopeTopInset 交给
             //   列表充当 contentPadding.top（内容滚动到模糊顶栏之下，KernelSU 式 scroll-under），这里只保留
             //   start/end/bottom 外置 padding（横屏 displayCutout 水平内缩与底部 inset 不能丢）。
+            // Miuix 线不接 m3 顶栏的 nestedScrollConnection：Miuix 骨架走的是自家 MiuixScrollBehavior
+            //（MiuixExpressivePageScaffold 自带 scrollBehavior，并经 LocalScopeScrollBehavior 下发，
+            // ScopeScreen 已在列表上接好）。m3 的 exitUntilCollapsed 行为只在真实 m3 TopAppBar 被布局时
+            // 才会写入 state.heightOffsetLimit（否则 limit 恒为 -Float.MAX_VALUE），Miuix 线没有 m3 顶栏，
+            // 接上去会让 ExitUntilCollapsedScrollBehavior.onPreScroll 把向上滚动的 delta 全部吃掉，
+            // 表现为页面完全无法上滑（内容下移不可见）。
             val pageContentModifier = if (uiMode == UiMode.Miuix) {
                 val layoutDirection = LocalLayoutDirection.current
                 Modifier
@@ -499,7 +505,6 @@ private fun ScopePageHost(
                         end = padding.calculateEndPadding(layoutDirection),
                         bottom = padding.calculateBottomPadding(),
                     )
-                    .nestedScroll(scrollBehavior.nestedScrollConnection)
             } else {
                 Modifier
                     .fillMaxSize()
