@@ -11,7 +11,9 @@ import androidx.compose.material3.MotionScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.movableContentOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
@@ -112,9 +114,15 @@ fun LuckyTheme(
     uiMode: UiMode = LocalUiMode.current,
     content: @Composable () -> Unit,
 ) {
+    // 切换 ui_mode 时两条外观线位于不同的组合位置：直接切换会销毁重建整棵内容子树
+    //（NavHost / NavController / 返回栈 / 页面内 remember 全部丢失，观感等同重启应用）。
+    // movableContentOf 把同一份内容在两条外观线之间「搬移」：槽表（状态）随内容走，只有主题被替换。
+    // content 通过 rememberUpdatedState 间接化，避免把首次组合的 lambda 实例永久固化。
+    val currentContent = rememberUpdatedState(content)
+    val movableContent = remember { movableContentOf { currentContent.value() } }
     when (uiMode) {
-        UiMode.Miuix -> MiuixLuckyTheme(appSettings = appSettings, content = content)
-        UiMode.Material -> MaterialLuckyTheme(appSettings = appSettings, content = content)
+        UiMode.Miuix -> MiuixLuckyTheme(appSettings = appSettings, content = movableContent)
+        UiMode.Material -> MaterialLuckyTheme(appSettings = appSettings, content = movableContent)
     }
 }
 

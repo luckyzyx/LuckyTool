@@ -23,7 +23,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.movableContentOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -338,17 +340,27 @@ fun MainShell(activity: MainActivity) {
         }
     }
 
+    // 切换外观线会在两套 Scaffold 之间切换组合位置（Miuix Scaffold ↔ material3 Scaffold）：
+    // 直接切换会销毁重建其内容，NavHost / NavController / 返回栈 / 页面内 remember 全部丢失。
+    // movableContentOf 把同一份 shell 内容在两者之间「搬移」，槽表（状态）随内容走、只换外观容器；
+    // shellContent 通过 rememberUpdatedState 间接化，避免固化首次组合的 lambda 实例
+    //（否则底栏选中态、悬浮开关等捕获值会被冻结）。
+    val currentShellContent = rememberUpdatedState(shellContent)
+    val movableShellContent = remember {
+        movableContentOf<PaddingValues> { innerPadding -> currentShellContent.value(innerPadding) }
+    }
+
     if (isMiuix) {
         top.yukonga.miuix.kmp.basic.Scaffold(
             containerColor = containerColor,
             bottomBar = rootBottomBar,
-            content = shellContent,
+            content = movableShellContent,
         )
     } else {
         Scaffold(
             containerColor = containerColor,
             bottomBar = rootBottomBar,
-            content = shellContent,
+            content = movableShellContent,
         )
     }
 }
