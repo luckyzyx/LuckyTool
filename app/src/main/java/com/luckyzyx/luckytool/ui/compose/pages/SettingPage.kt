@@ -696,29 +696,6 @@ private fun writeBackupData(context: Context, uri: Uri) {
     }
 }
 
-/** 旧版备份里字符串形态集合（`{a, b}` / `[a, b]`）的元素形态：包名/标识符，避免误转换普通字符串偏好 */
-private val LegacySetElement = Regex("[A-Za-z0-9_][A-Za-z0-9_.\\-]*")
-
-/**
- * 把旧版备份里字符串形态的集合还原成 Set；不是该形态时返回 null（调用方按普通 String 写回）。
- *
- * 只接受「整体被括号包裹 + 元素都像包名/标识符」的字符串：例如时钟格式 `[HH:mm]`、含 `/` 的路径
- * 都不会被误当集合，避免为了修集合而破坏普通字符串偏好。
- */
-private fun legacyStringSetOrNull(text: String): Set<String>? {
-    if (text.length < 2) return null
-    val trimmed = text.trim()
-    val bracketed = (trimmed.startsWith("{") && trimmed.endsWith("}")) ||
-        (trimmed.startsWith("[") && trimmed.endsWith("]"))
-    if (!bracketed) return null
-    val parts = trimmed.substring(1, trimmed.length - 1)
-        .split(',')
-        .map { it.trim().trim('"', '\'') }
-        .filter { it.isNotEmpty() }
-    if (parts.isEmpty() || parts.any { !LegacySetElement.matches(it) }) return null
-    return parts.toSet()
-}
-
 /** 旧 writeRestoreData：逐 prefs 逐键写回，完成后重启 Activity */
 private fun writeRestoreData(context: Context, json: JSONObject) {
     if (json.length() <= 0) return
@@ -738,15 +715,7 @@ private fun writeRestoreData(context: Context, json: JSONObject) {
                         context.putStringSet(prefs, key, set)
                     }
 
-                    // 旧版备份把集合写成了 "{a, b}" 形态的字符串（JSONObject.put 对非 HashSet
-                    // 集合兜底 toString 的产物）：识别该形态还原成 Set，恢复后仍是集合语义
-                    "String" -> {
-                        val text = value as String
-                        val legacySet = legacyStringSetOrNull(text)
-                        if (legacySet != null) context.putStringSet(prefs, key, legacySet)
-                        else context.putString(prefs, key, text)
-                    }
-
+                    "String" -> context.putString(prefs, key, value as String)
                     else -> context.showToast("Error: $key")
                 }
             }
