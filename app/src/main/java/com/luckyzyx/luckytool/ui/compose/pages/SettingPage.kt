@@ -708,13 +708,16 @@ private fun writeBackupData(context: Context, uri: Uri) {
 private fun writeRestoreData(context: Context, json: JSONObject) {
     if (json.length() <= 0) return
     json.remove("osCode")
+    var success = 0
+    var failed = 0
+    val failedKeys = ArrayList<String>()
     json.keys().forEach { prefs ->
         val prefsDatas = json.getJSONObject(prefs)
         if (prefsDatas.length() > 0) {
             prefsDatas.keys().forEach { key ->
                 val value = prefsDatas.get(key)
                 try {
-                    when (value.javaClass.simpleName) {
+                    val ok = when (value.javaClass.simpleName) {
                         "Boolean" -> context.putBoolean(prefs, key, value as Boolean)
                         "Integer" -> context.putInt(prefs, key, value as Int)
                         "JSONArray" -> {
@@ -727,14 +730,26 @@ private fun writeRestoreData(context: Context, json: JSONObject) {
                         "String" -> context.putString(prefs, key, value as String)
                         else -> error("${value.javaClass.simpleName} is not restorable")
                     }
+                    if (!ok) error("write failed")
+                    success++
                 } catch (t: Throwable) {
                     // 恢复不了的值：记录日志、跳过，并把该键从本地 prefs 移除，不让坏数据留在设备上
-                    LogUtils.e("SettingPage", "restore skip $key", "$t", false)
+                    failed++
+                    failedKeys.add("$prefs/$key")
+                    LogUtils.e("SettingPage", "restore skip $prefs/$key", "$t", false)
                     context.removeKey(prefs, key)
                 }
             }
         }
     }
-    context.showToast(context.getString(R.string.data_restore_complete))
+    if (failed > 0) {
+        LogUtils.e(
+            "SettingPage",
+            "restore result",
+            "success=$success failed=$failed ${failedKeys.joinToString()}",
+            false,
+        )
+    }
+    context.showToast(context.getString(R.string.data_restore_result, success, failed))
     (context as? MainActivity)?.restart()
 }

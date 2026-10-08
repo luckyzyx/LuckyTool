@@ -72,6 +72,7 @@
     <string name="data_backup_complete">数据备份完成!</string>
     <string name="data_backup_error">数据备份错误!</string>
     <string name="data_restore_complete">数据恢复完成!</string>
+    <string name="data_restore_result">恢复完成：成功 %1$d，失败 %2$d</string>
     <string name="data_backup_data_version">备份数据版本</string>
     <string name="data_current_system_version">当前系统版本</string>
     <string name="data_restore_version_tips">跨版本恢复数据可能会导致部分功能运行异常，建议重新配置模块功能数据</string>

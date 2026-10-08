@@ -107,6 +107,7 @@
     <string name="data_backup_complete">Data backup completed!</string>
     <string name="data_backup_error">Data backup error!</string>
     <string name="data_restore_complete">Data restore complete!</string>
+    <string name="data_restore_result">Restore finished: %1$d succeeded, %2$d failed</string>
     <string name="data_backup_data_version">Backup data version</string>
     <string name="data_current_system_version">Current system version</string>
     <string name="data_restore_version_tips">Restoring data across versions may cause some functions to run abnormally. It is recommended to reconfigure module function data.</string>
