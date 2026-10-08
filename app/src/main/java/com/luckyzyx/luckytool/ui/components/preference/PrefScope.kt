@@ -9,8 +9,12 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
+import androidx.compose.foundation.layout.captionBar
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyItemScope
@@ -50,6 +54,8 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.luckyzyx.luckytool.ui.compose.components.material.LocalBottomBarPresent
+import com.luckyzyx.luckytool.ui.compose.components.material.LocalShellBottomInset
 import com.luckyzyx.luckytool.ui.compose.components.material.SegmentedDropdownItem
 import com.luckyzyx.luckytool.ui.compose.components.material.SegmentedItem
 import com.luckyzyx.luckytool.ui.compose.components.material.SegmentedItemContainer
@@ -123,6 +129,7 @@ data class PrefIndexItem(
  *
  * [segIndex]/[segCount] 用于把相邻条目合并成 KernelSU 分段卡片（首条 16dp 外圆角、中间 4dp 内圆角、
  * 组内间距 2dp）；[groupable] = false 的条目（分类标题、滑条、自定义控件）独占一张卡片。
+ * [bare] = true 的条目（仅分类标题）完全裸渲染，不套任何卡片容器，对齐旧 PreferenceCategory 观感。
  */
 internal class PrefEntry(
     val slot: Int,
@@ -132,6 +139,7 @@ internal class PrefEntry(
     val indexSummary: String?,
     val pageTarget: String?,
     val groupable: Boolean,
+    val bare: Boolean,
     val render: @Composable (slot: Int) -> Unit,
 ) {
     var segIndex: Int = 0
@@ -255,18 +263,20 @@ class PrefScopeBuilder internal constructor(
         indexSummary: String?,
         pageTarget: String? = null,
         groupable: Boolean = true,
+        bare: Boolean = false,
         render: @Composable (slot: Int) -> Unit,
     ) {
         val slot = entries.size
         entries += PrefEntry(
-            slot,
-            itemKey ?: "slot-$slot",
-            indexKey,
-            indexTitle,
-            indexSummary,
-            pageTarget,
-            groupable,
-            render
+            slot = slot,
+            itemKey = itemKey ?: "slot-$slot",
+            indexKey = indexKey,
+            indexTitle = indexTitle,
+            indexSummary = indexSummary,
+            pageTarget = pageTarget,
+            groupable = groupable,
+            bare = bare,
+            render = render,
         )
     }
 
@@ -296,8 +306,8 @@ class PrefScopeBuilder internal constructor(
 
     // ---------------- DSL 项 ----------------
 
-    /** 分类标题（对应旧 addCategory / categoryPreference） */
-    fun category(title: String) = emit(null, null, null, null, groupable = false) { _ ->
+    /** 分类标题（对应旧 addCategory / categoryPreference）：不套卡片，裸渲染在分组卡片之上 */
+    fun category(title: String) = emit(null, null, null, null, groupable = false, bare = true) { _ ->
         if (LocalUiMode.current == UiMode.Miuix) {
             MiuixPrefCategoryHeader(
                 title = title,
@@ -703,7 +713,18 @@ fun ScopeScreen(
         } else {
             builder.entries.forEach { entry ->
                 item(key = entry.itemKey) {
-                    if (LocalUiMode.current == UiMode.Miuix) {
+                    if (entry.bare) {
+                        // 分类标题：不套卡片，对齐旧 PreferenceCategory 的观感（标题裸渲染在分组卡片之上）。
+                        // 顶部间距沿用原卡片路径的取值，纵向节奏与改动前一致。
+                        val topGap = if (LocalUiMode.current == UiMode.Miuix) {
+                            miuixTopGap(entry.slot, entry.segIndex)
+                        } else {
+                            if (entry.slot == 0) 0.dp else 8.dp
+                        }
+                        Box(modifier = Modifier.padding(top = topGap)) {
+                            entry.render(entry.slot)
+                        }
+                    } else if (LocalUiMode.current == UiMode.Miuix) {
                         MiuixScopeCard(
                             index = entry.segIndex,
                             count = entry.segCount,
@@ -736,10 +757,20 @@ fun ScopeScreen(
         if (LocalUiMode.current == UiMode.Miuix) {
             // Miuix 线：滚动到底触感 + 自绘回弹；关掉平台 overscroll glow 以免两套回弹叠加。
             // 顶部 inset 由 LocalScopeTopInset 注入（默认 0.dp，provide 方是页面骨架 Miuix 分支）；
-            // 水平 12dp 内缩是列表级单一来源（item 层不再叠），bottom 与 material 线一致。
+            // 水平 12dp 内缩是列表级单一来源（item 层不再叠）；bottom 见下方 inset 计算。
             // 滚动连接由 LocalScopeScrollBehavior 注入（骨架的 MiuixScrollBehavior）：接上后本列表
             // 与 ExpressiveList 一样能折叠顶栏 —— 修饰符顺序与 KernelSU SettingsMiuix.kt:98-106 一致。
             val scopeScrollBehavior = LocalScopeScrollBehavior.current
+            // 底部 inset：悬浮胶囊底栏盖在内容之上（Miuix 骨架的 contentWindowInsets 只含水平方向，
+            // innerPadding.bottom = 0），列表必须自己预留胶囊高度；系统导航栏/标题栏同理。
+            // LocalBottomBarPresent = true 表示底栏已消费系统导航栏 inset，不再重复叠加。
+            val navBars = WindowInsets.navigationBars.asPaddingValues()
+            val captionBar = WindowInsets.captionBar.asPaddingValues()
+            val bottomInset = if (LocalBottomBarPresent.current) {
+                0.dp
+            } else {
+                navBars.calculateBottomPadding() + captionBar.calculateBottomPadding()
+            }
             LazyColumn(
                 modifier = listModifier
                     .scrollEndHaptic()
@@ -756,7 +787,7 @@ fun ScopeScreen(
                     top = LocalScopeTopInset.current,
                     start = MiuixPrefDefaults.CardHorizontalInset,
                     end = MiuixPrefDefaults.CardHorizontalInset,
-                    bottom = 8.dp,
+                    bottom = 8.dp + bottomInset + LocalShellBottomInset.current,
                 ),
                 overscrollEffect = null,
                 content = listItems,
