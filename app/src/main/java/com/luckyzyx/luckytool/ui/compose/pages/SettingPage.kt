@@ -65,9 +65,13 @@ import com.luckyzyx.luckytool.utils.formatDate
 import com.luckyzyx.luckytool.utils.getOSVersionCode
 import com.luckyzyx.luckytool.utils.getOSVersionName
 import com.luckyzyx.luckytool.utils.isZh
+import com.luckyzyx.luckytool.utils.legacyStringSet
+import com.luckyzyx.luckytool.utils.looksLikeStringSet
 import com.luckyzyx.luckytool.utils.openUrl
 import com.luckyzyx.luckytool.utils.putBoolean
+import com.luckyzyx.luckytool.utils.putFloat
 import com.luckyzyx.luckytool.utils.putInt
+import com.luckyzyx.luckytool.utils.putLong
 import com.luckyzyx.luckytool.utils.putString
 import com.luckyzyx.luckytool.utils.putStringSet
 import com.luckyzyx.luckytool.utils.showToast
@@ -667,9 +671,12 @@ private fun writeBackupData(context: Context, uri: Uri) {
         val jsons = JSONObject()
         dataMapList[prefs]?.keys?.forEach { key ->
             val value = dataMapList[prefs]?.get(key)
-            if (value?.javaClass?.simpleName == "HashSet") {
+            // 集合值一律写 JSONArray：JSONObject.put 只接受 Boolean/Number/String/JSONObject/JSONArray，
+            // 其余类型（如 SharedPreferences 复制出的 android.util.ArraySet）会被转成 toString() 字符串，
+            // 恢复时就会把集合语义的键写成 String，读取端 getStringSet 随即抛 ClassCastException
+            if (value is Set<*>) {
                 val arr = JSONArray()
-                (value as HashSet<*>).toTypedArray().forEach { arr.put(it) }
+                value.forEach { arr.put(it) }
                 jsons.put(key, arr)
             } else {
                 jsons.put(key, value)
@@ -701,17 +708,23 @@ private fun writeRestoreData(context: Context, json: JSONObject) {
         if (prefsDatas.length() > 0) {
             prefsDatas.keys().forEach { key ->
                 val value = prefsDatas.get(key)
-                when (value.javaClass.simpleName) {
-                    "Boolean" -> context.putBoolean(prefs, key, value as Boolean)
-                    "Integer" -> context.putInt(prefs, key, value as Int)
-                    "JSONArray" -> {
+                when {
+                    value is Boolean -> context.putBoolean(prefs, key, value)
+                    value is Int -> context.putInt(prefs, key, value)
+                    value is Long -> context.putLong(prefs, key, value)
+                    // JSON 数字：Float 会以 Double 形态回来（例如 SettingsPrefs 的 page_scale）
+                    value is Number -> context.putFloat(prefs, key, value.toFloat())
+                    value is JSONArray -> {
                         val set = ArraySet<String>()
-                        val list = value as JSONArray
-                        for (i in 0 until list.length()) set.add(list[i] as String)
+                        for (i in 0 until value.length()) set.add(value[i] as String)
                         context.putStringSet(prefs, key, set)
                     }
+                    // 旧备份把集合写成字符串（"{a, b}"）：按集合语义还原，
+                    // 否则写回 String 会让读取端 getStringSet 抛 ClassCastException
+                    value is String && looksLikeStringSet(value) ->
+                        context.putStringSet(prefs, key, legacyStringSet(value))
 
-                    "String" -> context.putString(prefs, key, value as String)
+                    value is String -> context.putString(prefs, key, value)
                     else -> context.showToast("Error: $key")
                 }
             }
