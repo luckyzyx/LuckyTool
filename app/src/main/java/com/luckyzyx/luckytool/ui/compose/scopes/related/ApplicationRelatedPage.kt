@@ -16,7 +16,11 @@ import com.luckyzyx.luckytool.R
 import com.luckyzyx.luckytool.ui.components.AppPickerDialog
 import com.luckyzyx.luckytool.ui.compose.components.material.SegmentedListItem
 import com.luckyzyx.luckytool.ui.compose.components.material.SegmentedSwitchItem
+import com.luckyzyx.luckytool.ui.compose.components.miuix.MiuixListItem
+import com.luckyzyx.luckytool.ui.compose.components.miuix.MiuixSwitchItem
 import com.luckyzyx.luckytool.ui.compose.scopes.ScopePageSpec
+import com.luckyzyx.luckytool.ui.theme.LocalUiMode
+import com.luckyzyx.luckytool.ui.theme.UiMode
 import com.luckyzyx.luckytool.utils.A13
 import com.luckyzyx.luckytool.utils.A14
 import com.luckyzyx.luckytool.utils.ModulePrefs
@@ -25,6 +29,8 @@ import com.luckyzyx.luckytool.utils.arraySummaryLine
 import com.luckyzyx.luckytool.utils.getOSVersionCode
 import com.luckyzyx.luckytool.utils.sendPrefsKey
 import com.luckyzyx.luckytool.utils.sendPrefsValue
+import top.yukonga.miuix.kmp.basic.Text as MiuixText
+import top.yukonga.miuix.kmp.theme.MiuixTheme
 
 /**
  * 应用相关页（旧 ui.fragment.scopes.related.ApplicationRelated 的 Compose 等价物）。
@@ -160,12 +166,21 @@ object ApplicationRelatedPage {
         // 应用安装
         category(c.getString(R.string.AppInstallationRelated))
         custom {
-            Text(
-                c.getString(R.string.PackageInstaller_summary),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(horizontal = 16.dp),
-            )
+            if (LocalUiMode.current == UiMode.Miuix) {
+                MiuixText(
+                    c.getString(R.string.PackageInstaller_summary),
+                    style = MiuixTheme.textStyles.footnote1,
+                    color = MiuixTheme.colorScheme.onBackgroundVariant,
+                    modifier = Modifier.padding(horizontal = 16.dp),
+                )
+            } else {
+                Text(
+                    c.getString(R.string.PackageInstaller_summary),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(horizontal = 16.dp),
+                )
+            }
         }
         page(
             title = c.getString(R.string.corepatch),
@@ -289,18 +304,31 @@ object ApplicationRelatedPage {
                 summary = c.getString(R.string.disable_app_archiving_summary),
             ) { slot ->
                 val checked by state.booleanFlow(archivingKey, true).collectAsStateWithLifecycle()
-                Box(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
-                    SegmentedSwitchItem(
+                if (LocalUiMode.current == UiMode.Miuix) {
+                    MiuixSwitchItem(
                         title = c.getString(R.string.disable_app_archiving),
-                        summary = c.getString(R.string.disable_app_archiving_summary),
                         checked = checked,
-                        colors = itemColors(slot),
                         onCheckedChange = { v ->
                             state.set(archivingKey, v)
                             c.sendPrefsValue("android", archivingKey, v)
                             c.sendPrefsValue("com.android.settings", archivingKey, v)
                         },
+                        summary = c.getString(R.string.disable_app_archiving_summary),
                     )
+                } else {
+                    Box(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
+                        SegmentedSwitchItem(
+                            title = c.getString(R.string.disable_app_archiving),
+                            summary = c.getString(R.string.disable_app_archiving_summary),
+                            checked = checked,
+                            colors = itemColors(slot),
+                            onCheckedChange = { v ->
+                                state.set(archivingKey, v)
+                                c.sendPrefsValue("android", archivingKey, v)
+                                c.sendPrefsValue("com.android.settings", archivingKey, v)
+                            },
+                        )
+                    }
                 }
             }
         }
@@ -317,13 +345,21 @@ object ApplicationRelatedPage {
         custom(key = key, title = title) { slot ->
             var showPicker by remember { mutableStateOf(false) }
             val current = state.getStringSet(key).toString()
-            Box(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
-                SegmentedListItem(
+            if (LocalUiMode.current == UiMode.Miuix) {
+                MiuixListItem(
+                    title = title,
+                    summary = current,
                     onClick = { showPicker = true },
-                    supportingContent = { Text(current) },
-                    colors = itemColors(slot),
-                    headlineContent = { Text(title) },
                 )
+            } else {
+                Box(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
+                    SegmentedListItem(
+                        onClick = { showPicker = true },
+                        supportingContent = { Text(current) },
+                        colors = itemColors(slot),
+                        headlineContent = { Text(title) },
+                    )
+                }
             }
             if (showPicker) {
                 AppPickerDialog(

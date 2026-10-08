@@ -1,9 +1,27 @@
 package com.luckyzyx.luckytool.ui.compose.scopes
 
+import android.content.Context
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.lazy.LazyItemScope
+import androidx.compose.foundation.lazy.LazyListState
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.luckyzyx.luckytool.R
 import com.luckyzyx.luckytool.ui.components.preference.PrefScopeBuilder
+import com.luckyzyx.luckytool.ui.components.preference.ScopeScreen
+import com.luckyzyx.luckytool.ui.components.preference.ScrollTarget
 import com.luckyzyx.luckytool.ui.compose.scopes.apps.OplusAlarmClockPage
 import com.luckyzyx.luckytool.ui.compose.scopes.apps.OplusBatteryPage
 import com.luckyzyx.luckytool.ui.compose.scopes.apps.OplusBeaconLinkPage
@@ -74,6 +92,12 @@ import com.luckyzyx.luckytool.ui.compose.special.HideAppIntentPage
 import com.luckyzyx.luckytool.ui.compose.special.MemcConfigPage
 import com.luckyzyx.luckytool.ui.compose.special.MultiAppPage
 import com.luckyzyx.luckytool.ui.compose.special.ZoomWindowPage
+import com.luckyzyx.luckytool.ui.theme.LocalUiMode
+import com.luckyzyx.luckytool.ui.theme.UiMode
+import com.luckyzyx.luckytool.utils.PrefState
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import kotlin.time.Duration.Companion.milliseconds
 
 /**
  * 一个 Compose 作用域页的声明——旧 [BaseScopePreferenceFeagment] 子类中
@@ -86,6 +110,13 @@ import com.luckyzyx.luckytool.ui.compose.special.ZoomWindowPage
  * @param restartEnabled 是否显示"重启作用域"菜单
  * @param onRefresh      下拉刷新回调（null = 无下拉刷新；如 OTA 提取、捐赠数据页）
  * @param content        页面内容 DSL（每次重组重跑，条件可见性写 Kotlin if）
+ * @param contentMiuix   页面自带的 Miuix 呈现（null = 走共享渲染层 [ScopeScreen]）
+ * @param contentMaterial 页面自带的 material 呈现（null = 走共享渲染层 [ScopeScreen]）
+ *
+ * 页面需要像 KernelSU 一样自带主题布局时，提供一个或两个**槽位**（[contentMiuix] / [contentMaterial]）：
+ * 槽位非空时由页面自有布局渲染整页内容（见 [ScopePageContent]），共享层只负责状态、动作与搜索跳转。
+ * 行清单仍只写一份 —— 放在 [content] 里；槽位布局遍历已构建好的 `builder.entries` 渲染
+ * （共享层已跑过 [content]，**不要**在槽位里再 `apply` 一次，否则条目翻倍）。
  */
 class ScopePageSpec(
     val pageKey: String,
@@ -95,8 +126,190 @@ class ScopePageSpec(
     val restartEnabled: Boolean,
     val onRefresh: (suspend () -> Unit)? = null,
     val fullContent: (@Composable LazyItemScope.(PrefScopeBuilder) -> Unit)? = null,
+    val contentMiuix: (@Composable ScopeContentScope.(PrefScopeBuilder) -> Unit)? = null,
+    val contentMaterial: (@Composable ScopeContentScope.(PrefScopeBuilder) -> Unit)? = null,
+    /**
+     * 共享行声明。72 个既有页面用尾随 lambda 传入，因此**必须保持最后一个参数**；
+     * 无槽位时由 [ScopeScreen] 渲染，有槽位时由页面布局渲染同一批条目。
+     */
     val content: PrefScopeBuilder.() -> Unit,
 )
+
+/**
+ * 页面级内容作用域（中性）：页面自带布局（[ScopePageSpec.contentMiuix] / [ScopePageSpec.contentMaterial]）
+ * 通过它拿到只读能力与动作入口，**不含任何 material/miuix 主题类型** —— 页面代码只依赖本接口与
+ * [PrefScopeBuilder] 公共 API，因此同一套页面逻辑可以在两条主题线上复用。
+ */
+interface ScopeContentScope {
+    /** 宿主应用 Context（与共享层注入 [PrefScopeBuilder] 的同一个 applicationContext） */
+    val context: Context
+
+    /** 本页偏好状态（与共享层同一实例，条件可见性判断用它） */
+    val state: PrefState
+
+    /** 页面自有列表使用的滚动状态：宿主已用它执行搜索跳转 */
+    val listState: LazyListState
+
+    /** 搜索跳转命中的槽位（无命中为 null）：页面卡片据此高亮，语义与共享层一致 */
+    val highlightedSlot: Int?
+
+    /** 搜索跳转目标（只读；跳转与高亮已由宿主完成） */
+    val scrollTarget: ScrollTarget?
+
+    /** 写值：落盘 + 通知宿主（等价共享层行的写值路径） */
+    fun sendValue(key: String, value: Any)
+
+    /** 页面入口跳转（page DSL 项的等价动作；无宿主回调时为空操作） */
+    fun navigate(target: String, title: String? = null)
+
+    /** 重启作用域（`spec.restartEnabled` 时非空；否则空操作） */
+    fun restart()
+
+    /** 下拉刷新动作（`spec.onRefresh` 非空时有效） */
+    suspend fun refresh()
+}
+
+/** [ScopeContentScope] 的唯一委托体：两条主题线的实现类都委托到它，行为单点、不复制共享层逻辑。 */
+private class ScopeContentScopeImpl(
+    override val context: Context,
+    override val state: PrefState,
+    override val listState: LazyListState,
+    private val highlighted: () -> Int?,
+    private val target: () -> ScrollTarget?,
+    private val onSendValue: (key: String, value: Any) -> Unit,
+    private val onNavigate: ((target: String, title: String?) -> Unit)?,
+    private val onRestart: (() -> Unit)?,
+    private val onRefresh: (suspend () -> Unit)?,
+) : ScopeContentScope {
+    override val highlightedSlot: Int? get() = highlighted()
+    override val scrollTarget: ScrollTarget? get() = target()
+    override fun sendValue(key: String, value: Any) = onSendValue(key, value)
+    override fun navigate(target: String, title: String?) { onNavigate?.invoke(target, title) }
+    override fun restart() { onRestart?.invoke() }
+    override suspend fun refresh() { onRefresh?.invoke() }
+}
+
+/** material 线页面作用域实现（对外签名与 [MiuixScopeContentScope] 逐字一致，行为委托同一实现体）。 */
+internal class MaterialScopeContentScope(delegate: ScopeContentScope) : ScopeContentScope by delegate
+
+/** miuix 线页面作用域实现（对外签名与 [MaterialScopeContentScope] 逐字一致，行为委托同一实现体）。 */
+internal class MiuixScopeContentScope(delegate: ScopeContentScope) : ScopeContentScope by delegate
+
+/**
+ * 页面内容的中性宿主与**唯一分派点**（[ScopeScreen] 的调用处）。
+ *
+ * - 页面为当前主题线提供了槽位（Miuix → [ScopePageSpec.contentMiuix]，Material → [ScopePageSpec.contentMaterial]）
+ *   时，整页内容由页面自有布局渲染；共享层只做与 [ScopeScreen] 同语义的三件事：订阅 revision、构建
+ *   [PrefScopeBuilder]（行声明与条件可见性只写一份）、执行搜索跳转/高亮，并沿用下拉刷新包装。
+ *   页面布局若要复刻 KernelSU 的「内容在模糊顶栏下滚动」，把 Miuix 线的 `LocalScopeTopInset` 用作自己
+ *   LazyColumn 的 `contentPadding.top`，并把 [ScopeContentScope.listState] 交给该 LazyColumn。
+ * - 未提供槽位时（72 个既有页面），逐字回落到今天的 [ScopeScreen] 路径。
+ *
+ * [modifier] 由调用方的页面骨架给出：Miuix 线保留 start/end/bottom 外置 padding（top 归 0，顶栏高度经
+ * `LocalScopeTopInset` 交给列表充当 `contentPadding.top`），material 线是骨架的整块 innerPadding。
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+internal fun ScopePageContent(
+    spec: ScopePageSpec,
+    state: PrefState,
+    modifier: Modifier,
+    sendValue: (key: String, value: Any) -> Unit,
+    scrollTarget: ScrollTarget? = null,
+    onNavigate: ((target: String, title: String?) -> Unit)? = null,
+    onRestart: (() -> Unit)? = null,
+) {
+    val contentSlot = when (LocalUiMode.current) {
+        UiMode.Miuix -> spec.contentMiuix
+        UiMode.Material -> spec.contentMaterial
+    }
+    if (contentSlot == null) {
+        // 未提供槽位：与今天逐字一致的共享渲染层路径
+        ScopeScreen(
+            state = state,
+            modifier = modifier,
+            sendValue = sendValue,
+            scrollTarget = scrollTarget,
+            onNavigate = onNavigate,
+            onRestart = onRestart,
+            onRefresh = spec.onRefresh,
+            fullContent = spec.fullContent,
+            content = spec.content,
+        )
+        return
+    }
+
+    // ---- 槽位路径：页面自有布局（共享层负责状态/动作，不绘制任何行）----
+    // 订阅 revision：任何偏好写入都会重组本页 → 构建 lambda 重跑 → 条件可见性自动重求值
+    state.revision.collectAsStateWithLifecycle()
+
+    val builder = remember(state) { PrefScopeBuilder(state) }
+    builder.sendValue = sendValue
+    builder.navigate = onNavigate
+    builder.restart = onRestart
+    builder.context = LocalContext.current.applicationContext
+    builder.beginBuild()
+    spec.content(builder)
+    builder.computeSegments()
+
+    val listState = rememberLazyListState()
+    LaunchedEffect(scrollTarget) {
+        val target = scrollTarget ?: return@LaunchedEffect
+        val targetSlot = if (target.key.isNotBlank()) {
+            // 按索引 key 解析槽位（条目在构建后位置可能因条件可见性变化而偏移）
+            builder.entries.firstOrNull { it.indexKey == target.key }?.slot ?: return@LaunchedEffect
+        } else {
+            target.position.takeIf { it >= 0 } ?: return@LaunchedEffect
+        }
+        listState.animateScrollToItem(targetSlot)
+        builder.highlightSlot.value = targetSlot
+        delay(2500.milliseconds)
+        if (builder.highlightSlot.value == targetSlot) builder.highlightSlot.value = null
+    }
+
+    val scopeImpl = ScopeContentScopeImpl(
+        context = LocalContext.current.applicationContext,
+        state = state,
+        listState = listState,
+        highlighted = { builder.highlightSlot.value },
+        target = { scrollTarget },
+        onSendValue = sendValue,
+        onNavigate = onNavigate,
+        onRestart = onRestart,
+        onRefresh = spec.onRefresh,
+    )
+    val scope: ScopeContentScope = when (LocalUiMode.current) {
+        UiMode.Miuix -> MiuixScopeContentScope(scopeImpl)
+        UiMode.Material -> MaterialScopeContentScope(scopeImpl)
+    }
+
+    val page: @Composable (Modifier) -> Unit = { pageModifier ->
+        Box(pageModifier) { contentSlot(scope, builder) }
+    }
+    val onRefresh = spec.onRefresh
+    if (onRefresh != null) {
+        var refreshing by remember { mutableStateOf(false) }
+        val refreshScope = rememberCoroutineScope()
+        PullToRefreshBox(
+            isRefreshing = refreshing,
+            onRefresh = {
+                refreshScope.launch {
+                    refreshing = true
+                    try {
+                        onRefresh()
+                    } finally {
+                        refreshing = false
+                    }
+                }
+            },
+            modifier = modifier,
+        ) {
+            page(Modifier.fillMaxSize())
+        }
+    } else {
+        page(modifier)
+    }
+}
 
 /** Compose 页注册表：ComposeScopeFragment 按 page_key 查表渲染 */
 object ScopePageRegistry {

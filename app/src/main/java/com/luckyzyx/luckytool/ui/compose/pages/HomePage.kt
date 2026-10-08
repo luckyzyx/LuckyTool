@@ -4,11 +4,14 @@ import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -47,6 +50,8 @@ import com.luckyzyx.luckytool.ui.compose.components.material.ExpressivePageScaff
 import com.luckyzyx.luckytool.ui.compose.components.material.TonalCard
 import com.luckyzyx.luckytool.ui.service.XposedServiceBridge
 import com.luckyzyx.luckytool.ui.shell.ShellBadgeState
+import com.luckyzyx.luckytool.ui.theme.LocalUiMode
+import com.luckyzyx.luckytool.ui.theme.UiMode
 import com.luckyzyx.luckytool.utils.DeviceUtils
 import com.luckyzyx.luckytool.utils.DonateUtils
 import com.luckyzyx.luckytool.utils.PrefState
@@ -65,6 +70,11 @@ import com.luckyzyx.luckytool.utils.getVersionName
 import com.luckyzyx.luckytool.utils.isZh
 import com.luckyzyx.luckytool.utils.openUrl
 import com.luckyzyx.luckytool.utils.showToast
+import top.yukonga.miuix.kmp.basic.BasicComponent
+import top.yukonga.miuix.kmp.basic.ButtonDefaults
+import top.yukonga.miuix.kmp.basic.Text as MiuixText
+import top.yukonga.miuix.kmp.basic.TextButton as MiuixTextButton
+import top.yukonga.miuix.kmp.overlay.OverlayDialog
 import java.io.File
 
 /**
@@ -292,35 +302,51 @@ fun HomePage(activity: MainActivity) {
     }
 
     if (showAbout) {
-        AlertDialog(
-            onDismissRequest = { showAbout = false },
-            title = { Text(stringResource(R.string.about_author)) },
-            text = {
-                Text(
-                    text = aboutText,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(20.dp)
-                        .combinedClickable(
-                            onClick = {},
-                            onLongClick = {
-                                val newValue = !settings.getBoolean("hidden_function", false)
-                                settings.set("hidden_function", newValue)
-                                aboutText = if (newValue) {
-                                    "忆清鸣、luckyzyx T"
-                                } else {
-                                    "忆清鸣、luckyzyx"
-                                }
-                            },
-                        ),
-                )
-            },
-            confirmButton = {
-                TextButton(onClick = { showAbout = false }) {
-                    Text(stringResource(android.R.string.ok))
-                }
-            },
-        )
+        when (LocalUiMode.current) {
+            UiMode.Miuix -> MiuixAboutDialog(
+                aboutText = aboutText,
+                onLongPress = {
+                    val newValue = !settings.getBoolean("hidden_function", false)
+                    settings.set("hidden_function", newValue)
+                    aboutText = if (newValue) {
+                        "忆清鸣、luckyzyx T"
+                    } else {
+                        "忆清鸣、luckyzyx"
+                    }
+                },
+                onDismiss = { showAbout = false },
+            )
+
+            UiMode.Material -> AlertDialog(
+                onDismissRequest = { showAbout = false },
+                title = { Text(stringResource(R.string.about_author)) },
+                text = {
+                    Text(
+                        text = aboutText,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(20.dp)
+                            .combinedClickable(
+                                onClick = {},
+                                onLongClick = {
+                                    val newValue = !settings.getBoolean("hidden_function", false)
+                                    settings.set("hidden_function", newValue)
+                                    aboutText = if (newValue) {
+                                        "忆清鸣、luckyzyx T"
+                                    } else {
+                                        "忆清鸣、luckyzyx"
+                                    }
+                                },
+                            ),
+                    )
+                },
+                confirmButton = {
+                    TextButton(onClick = { showAbout = false }) {
+                        Text(stringResource(android.R.string.ok))
+                    }
+                },
+            )
+        }
     }
 
     if (showRestartMenu) {
@@ -328,22 +354,52 @@ fun HomePage(activity: MainActivity) {
     }
 
     if (dexDialogVisible) {
-        AlertDialog(
-            onDismissRequest = { dexDialogVisible = false },
-            text = { Text(stringResource(R.string.optimize_dex_after_system_update)) },
-            confirmButton = {
-                TextButton(onClick = {
-                    dexDialogVisible = false
-                    settings.set("current_os_version", pendingOsVersion)
-                    showOptimizeDex = true
-                }) { Text(stringResource(android.R.string.ok)) }
-            },
-            dismissButton = {
-                TextButton(onClick = { dexDialogVisible = false }) {
-                    Text(stringResource(R.string.ignore))
+        when (LocalUiMode.current) {
+            UiMode.Miuix -> OverlayDialog(
+                show = true,
+                onDismissRequest = { dexDialogVisible = false },
+            ) {
+                MiuixText(
+                    text = stringResource(R.string.optimize_dex_after_system_update),
+                    modifier = Modifier.fillMaxWidth(),
+                )
+                Row(modifier = Modifier.padding(top = 12.dp)) {
+                    MiuixTextButton(
+                        text = stringResource(R.string.ignore),
+                        onClick = { dexDialogVisible = false },
+                        modifier = Modifier.weight(1f),
+                    )
+                    Spacer(Modifier.width(20.dp))
+                    MiuixTextButton(
+                        text = stringResource(android.R.string.ok),
+                        onClick = {
+                            dexDialogVisible = false
+                            settings.set("current_os_version", pendingOsVersion)
+                            showOptimizeDex = true
+                        },
+                        modifier = Modifier.weight(1f),
+                        colors = ButtonDefaults.textButtonColorsPrimary(),
+                    )
                 }
-            },
-        )
+            }
+
+            UiMode.Material -> AlertDialog(
+                onDismissRequest = { dexDialogVisible = false },
+                text = { Text(stringResource(R.string.optimize_dex_after_system_update)) },
+                confirmButton = {
+                    TextButton(onClick = {
+                        dexDialogVisible = false
+                        settings.set("current_os_version", pendingOsVersion)
+                        showOptimizeDex = true
+                    }) { Text(stringResource(android.R.string.ok)) }
+                },
+                dismissButton = {
+                    TextButton(onClick = { dexDialogVisible = false }) {
+                        Text(stringResource(R.string.ignore))
+                    }
+                },
+            )
+        }
     }
 
     if (showOptimizeDex) {
@@ -363,26 +419,49 @@ fun HomePage(activity: MainActivity) {
             context.getString(R.string.alipay),
         )
         if (!zh) donateList.add(3, context.getString(R.string.patreon))
-        AlertDialog(
-            onDismissRequest = { showDonateList = false },
-            text = {
+        when (LocalUiMode.current) {
+            UiMode.Miuix -> OverlayDialog(
+                show = true,
+                onDismissRequest = { showDonateList = false },
+            ) {
                 Column {
                     donateList.forEachIndexed { index, label ->
-                        Text(
-                            label,
-                            Modifier.fillMaxWidth().clickable {
+                        BasicComponent(
+                            title = label,
+                            insideMargin = PaddingValues(horizontal = 24.dp, vertical = 14.dp),
+                            onClick = {
                                 showDonateList = false
                                 when (index) {
                                     0, 1, 2 -> showQrType = index
                                     else -> context.openUrl("https://www.patreon.com/LuckyTool")
                                 }
-                            }.padding(horizontal = 24.dp, vertical = 14.dp),
+                            },
                         )
                     }
                 }
-            },
-            confirmButton = {},
-        )
+            }
+
+            UiMode.Material -> AlertDialog(
+                onDismissRequest = { showDonateList = false },
+                text = {
+                    Column {
+                        donateList.forEachIndexed { index, label ->
+                            Text(
+                                label,
+                                Modifier.fillMaxWidth().clickable {
+                                    showDonateList = false
+                                    when (index) {
+                                        0, 1, 2 -> showQrType = index
+                                        else -> context.openUrl("https://www.patreon.com/LuckyTool")
+                                    }
+                                }.padding(horizontal = 24.dp, vertical = 14.dp),
+                            )
+                        }
+                    }
+                },
+                confirmButton = {},
+            )
+        }
     }
 
     if (showQrType >= 0) {
@@ -421,6 +500,41 @@ fun HomePage(activity: MainActivity) {
             context, stage.apkFile, stage.url,
             onDismiss = { updateStage = null },
         )
+    }
+}
+
+/**
+ * 关于作者对话框（Miuix 线）。
+ *
+ * 弹层由根部 Miuix Scaffold 的 popup host 承载（`renderInRootScaffold` 保持默认 true），
+ * 页面内不自装 host。
+ */
+@Composable
+private fun MiuixAboutDialog(
+    aboutText: String,
+    onLongPress: () -> Unit,
+    onDismiss: () -> Unit,
+) {
+    OverlayDialog(
+        show = true,
+        title = stringResource(R.string.about_author),
+        onDismissRequest = onDismiss,
+    ) {
+        MiuixText(
+            text = aboutText,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(20.dp)
+                .combinedClickable(onClick = {}, onLongClick = onLongPress),
+        )
+        Row(modifier = Modifier.padding(top = 12.dp)) {
+            MiuixTextButton(
+                text = stringResource(android.R.string.ok),
+                onClick = onDismiss,
+                modifier = Modifier.weight(1f),
+                colors = ButtonDefaults.textButtonColorsPrimary(),
+            )
+        }
     }
 }
 

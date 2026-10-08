@@ -6,7 +6,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material3.Text
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -18,7 +17,7 @@ import androidx.core.graphics.toColorInt
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.luckyzyx.luckytool.R
 import com.luckyzyx.luckytool.ui.components.ColorPickerDialog
-import com.luckyzyx.luckytool.ui.compose.components.material.SegmentedListItem
+import com.luckyzyx.luckytool.ui.compose.components.PrefRow
 import com.luckyzyx.luckytool.ui.compose.scopes.ScopePageSpec
 import com.luckyzyx.luckytool.utils.A12
 import com.luckyzyx.luckytool.utils.A13
@@ -121,7 +120,7 @@ object SoundRelatedPage {
             custom(
                 key = PERCENT_COLOR_KEY,
                 title = c.getString(R.string.custom_volume_bar_percent_color),
-            ) { slot ->
+            ) {
                 val hex by state.stringFlow(PERCENT_COLOR_KEY, "#FFFFFFFF")
                     .collectAsStateWithLifecycle()
                 val color = remember(hex) {
@@ -133,22 +132,17 @@ object SoundRelatedPage {
                 }
                 var showPicker by remember { mutableStateOf(false) }
                 Box(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
-                    SegmentedListItem(
-                        onClick = { showPicker = true },
-                        supportingContent = {
-                            Text(c.getString(R.string.current_color, hex))
-                        },
-                        trailingContent = {
+                    PrefRow(
+                        title = c.getString(R.string.custom_volume_bar_percent_color),
+                        summary = c.getString(R.string.current_color, hex),
+                        trailing = {
                             Box(
                                 modifier = Modifier
                                     .size(24.dp)
                                     .background(color, CircleShape)
                             )
                         },
-                        colors = itemColors(slot),
-                        headlineContent = {
-                            Text(c.getString(R.string.custom_volume_bar_percent_color))
-                        },
+                        onClick = { showPicker = true },
                     )
                 }
                 if (showPicker) {

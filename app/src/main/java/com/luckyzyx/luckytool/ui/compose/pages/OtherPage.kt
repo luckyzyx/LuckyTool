@@ -10,10 +10,14 @@ import androidx.collection.ArrayMap
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.selection.selectable
@@ -61,6 +65,8 @@ import com.luckyzyx.luckytool.ui.compose.components.PrefRow
 import com.luckyzyx.luckytool.ui.compose.components.prefGroup
 import com.luckyzyx.luckytool.ui.compose.components.material.ExpressiveList
 import com.luckyzyx.luckytool.ui.compose.components.material.ExpressivePageScaffold
+import com.luckyzyx.luckytool.ui.theme.LocalUiMode
+import com.luckyzyx.luckytool.ui.theme.UiMode
 import com.luckyzyx.luckytool.utils.A13
 import com.luckyzyx.luckytool.utils.GlobalKeyValue.keyTouchSamplingRateLevel
 import com.luckyzyx.luckytool.utils.OtherPrefs
@@ -72,6 +78,16 @@ import com.luckyzyx.luckytool.utils.SettingsPrefs
 import com.luckyzyx.luckytool.utils.ShortcutUtils
 import com.luckyzyx.luckytool.utils.copyStr
 import com.luckyzyx.luckytool.utils.showToast
+import top.yukonga.miuix.kmp.basic.BasicComponent
+import top.yukonga.miuix.kmp.basic.ButtonDefaults
+import top.yukonga.miuix.kmp.basic.Text as MiuixText
+import top.yukonga.miuix.kmp.basic.TextButton as MiuixTextButton
+import top.yukonga.miuix.kmp.basic.TextField as MiuixTextField
+import top.yukonga.miuix.kmp.overlay.OverlayDialog
+import top.yukonga.miuix.kmp.preference.CheckboxLocation
+import top.yukonga.miuix.kmp.preference.CheckboxPreference
+import top.yukonga.miuix.kmp.preference.RadioButtonPreference
+import top.yukonga.miuix.kmp.preference.SwitchPreference
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -236,44 +252,82 @@ private fun TileListDialog(context: Context, onDismiss: () -> Unit) {
         }?.toList() ?: emptyList()
     }
     val statusBarManager = remember { context.getSystemService(StatusBarManager::class.java) }
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        confirmButton = {},
-        text = {
+    when (LocalUiMode.current) {
+        UiMode.Miuix -> OverlayDialog(
+            show = true,
+            onDismissRequest = onDismiss,
+        ) {
             Column {
                 tileInfos.forEach { serviceInfo ->
                     val label = serviceInfo.loadLabel(context.packageManager).toString()
-                    Text(
-                        text = label,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable {
-                                val icon = serviceInfo.loadIcon(context.packageManager)
-                                statusBarManager.requestAddTileService(
-                                    ComponentName(context.packageName, serviceInfo.name),
-                                    label,
-                                    android.graphics.drawable.Icon.createWithBitmap(icon.toBitmap()),
-                                    context.mainExecutor
-                                ) { resultCode ->
-                                    when (resultCode) {
-                                        StatusBarManager.TILE_ADD_REQUEST_RESULT_TILE_NOT_ADDED ->
-                                            context.showToast("$label ${context.getString(R.string.add_fail)}")
+                    BasicComponent(
+                        title = label,
+                        insideMargin = PaddingValues(horizontal = 24.dp, vertical = 12.dp),
+                        onClick = {
+                            val icon = serviceInfo.loadIcon(context.packageManager)
+                            statusBarManager.requestAddTileService(
+                                ComponentName(context.packageName, serviceInfo.name),
+                                label,
+                                android.graphics.drawable.Icon.createWithBitmap(icon.toBitmap()),
+                                context.mainExecutor
+                            ) { resultCode ->
+                                when (resultCode) {
+                                    StatusBarManager.TILE_ADD_REQUEST_RESULT_TILE_NOT_ADDED ->
+                                        context.showToast("$label ${context.getString(R.string.add_fail)}")
 
-                                        StatusBarManager.TILE_ADD_REQUEST_RESULT_TILE_ALREADY_ADDED ->
-                                            context.showToast("$label ${context.getString(R.string.add_repeat)}")
+                                    StatusBarManager.TILE_ADD_REQUEST_RESULT_TILE_ALREADY_ADDED ->
+                                        context.showToast("$label ${context.getString(R.string.add_repeat)}")
 
-                                        StatusBarManager.TILE_ADD_REQUEST_RESULT_TILE_ADDED ->
-                                            context.showToast("$label ${context.getString(R.string.add_success)}")
-                                    }
+                                    StatusBarManager.TILE_ADD_REQUEST_RESULT_TILE_ADDED ->
+                                        context.showToast("$label ${context.getString(R.string.add_success)}")
                                 }
-                                onDismiss()
                             }
-                            .padding(vertical = 12.dp)
+                            onDismiss()
+                        },
                     )
                 }
             }
-        },
-    )
+        }
+
+        UiMode.Material -> AlertDialog(
+            onDismissRequest = onDismiss,
+            confirmButton = {},
+            text = {
+                Column {
+                    tileInfos.forEach { serviceInfo ->
+                        val label = serviceInfo.loadLabel(context.packageManager).toString()
+                        Text(
+                            text = label,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable {
+                                    val icon = serviceInfo.loadIcon(context.packageManager)
+                                    statusBarManager.requestAddTileService(
+                                        ComponentName(context.packageName, serviceInfo.name),
+                                        label,
+                                        android.graphics.drawable.Icon.createWithBitmap(icon.toBitmap()),
+                                        context.mainExecutor
+                                    ) { resultCode ->
+                                        when (resultCode) {
+                                            StatusBarManager.TILE_ADD_REQUEST_RESULT_TILE_NOT_ADDED ->
+                                                context.showToast("$label ${context.getString(R.string.add_fail)}")
+
+                                            StatusBarManager.TILE_ADD_REQUEST_RESULT_TILE_ALREADY_ADDED ->
+                                                context.showToast("$label ${context.getString(R.string.add_repeat)}")
+
+                                            StatusBarManager.TILE_ADD_REQUEST_RESULT_TILE_ADDED ->
+                                                context.showToast("$label ${context.getString(R.string.add_success)}")
+                                        }
+                                    }
+                                    onDismiss()
+                                }
+                                .padding(vertical = 12.dp)
+                        )
+                    }
+                }
+            },
+        )
+    }
 }
 
 /** 模块快捷方式：多选启用 + Pin 到桌面（旧 shortcut 卡点击） */
@@ -285,44 +339,31 @@ private fun ShortcutDialog(context: Context, onDismiss: () -> Unit) {
         val enabledIds = shortcutUtils.getEnabledShortcutList().map { it.id }.toSet()
         beans.map { bean -> enabledIds.contains(bean.key) }.toMutableStateList()
     }
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text(stringResource(R.string.set_module_shortcuts)) },
-        text = {
-            Column {
+    when (LocalUiMode.current) {
+        UiMode.Miuix -> OverlayDialog(
+            show = true,
+            title = stringResource(R.string.set_module_shortcuts),
+            onDismissRequest = onDismiss,
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .heightIn(max = 360.dp)
+                    .verticalScroll(rememberScrollState()),
+            ) {
                 beans.forEachIndexed { i, bean ->
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .toggleable(
-                                value = checked[i],
-                                role = Role.Checkbox,
-                                onValueChange = { checked[i] = it },
-                            )
-                            .padding(vertical = 12.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        Checkbox(checked = checked[i], onCheckedChange = { checked[i] = it })
-                        Spacer(Modifier.width(8.dp))
-                        Text(bean.label)
-                    }
+                    CheckboxPreference(
+                        title = bean.label,
+                        checked = checked[i],
+                        onCheckedChange = { checked[i] = it },
+                        checkboxLocation = CheckboxLocation.End,
+                    )
                 }
             }
-        },
-        confirmButton = {
-            TextButton(
-                onClick = {
-                    beans.forEachIndexed { i, bean ->
-                        if (checked[i]) shortcutUtils.setShortcutStatus(beans, bean, true)
-                    }
-                    onDismiss()
-                },
-            ) { Text(stringResource(android.R.string.ok)) }
-        },
-        dismissButton = {
-            Row {
+            Row(modifier = Modifier.padding(top = 12.dp)) {
                 if (shortcutUtils.shortcutManager.isRequestPinShortcutSupported) {
-                    TextButton(
+                    MiuixTextButton(
+                        text = "Pin",
                         onClick = {
                             val selected = beans.indices.filter { checked[it] }
                             if (selected.size > 1) {
@@ -333,12 +374,85 @@ private fun ShortcutDialog(context: Context, onDismiss: () -> Unit) {
                                 }
                             }
                         },
-                    ) { Text("Pin") }
+                        modifier = Modifier.weight(1f),
+                    )
+                    Spacer(Modifier.width(20.dp))
                 }
-                TextButton(onClick = onDismiss) { Text(stringResource(android.R.string.cancel)) }
+                MiuixTextButton(
+                    text = stringResource(android.R.string.cancel),
+                    onClick = onDismiss,
+                    modifier = Modifier.weight(1f),
+                )
+                Spacer(Modifier.width(20.dp))
+                MiuixTextButton(
+                    text = stringResource(android.R.string.ok),
+                    onClick = {
+                        beans.forEachIndexed { i, bean ->
+                            if (checked[i]) shortcutUtils.setShortcutStatus(beans, bean, true)
+                        }
+                        onDismiss()
+                    },
+                    modifier = Modifier.weight(1f),
+                    colors = ButtonDefaults.textButtonColorsPrimary(),
+                )
             }
-        },
-    )
+        }
+
+        UiMode.Material -> AlertDialog(
+            onDismissRequest = onDismiss,
+            title = { Text(stringResource(R.string.set_module_shortcuts)) },
+            text = {
+                Column {
+                    beans.forEachIndexed { i, bean ->
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .toggleable(
+                                    value = checked[i],
+                                    role = Role.Checkbox,
+                                    onValueChange = { checked[i] = it },
+                                )
+                                .padding(vertical = 12.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            Checkbox(checked = checked[i], onCheckedChange = { checked[i] = it })
+                            Spacer(Modifier.width(8.dp))
+                            Text(bean.label)
+                        }
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        beans.forEachIndexed { i, bean ->
+                            if (checked[i]) shortcutUtils.setShortcutStatus(beans, bean, true)
+                        }
+                        onDismiss()
+                    },
+                ) { Text(stringResource(android.R.string.ok)) }
+            },
+            dismissButton = {
+                Row {
+                    if (shortcutUtils.shortcutManager.isRequestPinShortcutSupported) {
+                        TextButton(
+                            onClick = {
+                                val selected = beans.indices.filter { checked[it] }
+                                if (selected.size > 1) {
+                                    context.showToast("Only select one item")
+                                } else {
+                                    selected.firstOrNull()?.let { index ->
+                                        shortcutUtils.requestPinShortcut(beans[index].toShortcutInfo(context))
+                                    }
+                                }
+                            },
+                        ) { Text("Pin") }
+                    }
+                    TextButton(onClick = onDismiss) { Text(stringResource(android.R.string.cancel)) }
+                }
+            },
+        )
+    }
 }
 
 /** 触摸采样率档位（旧 initTouchPanelView） */
@@ -353,47 +467,84 @@ private fun TouchSamplingRateDialog(
     var tempSelection by remember {
         mutableStateOf(touchs.indexOf(settings.getString(keyTouchSamplingRateLevel, "240")))
     }
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text(stringResource(R.string.set_touch_sampling_rate_tile_level)) },
-        text = {
+    when (LocalUiMode.current) {
+        UiMode.Miuix -> OverlayDialog(
+            show = true,
+            title = stringResource(R.string.set_touch_sampling_rate_tile_level),
+            onDismissRequest = onDismiss,
+        ) {
             Column {
                 touchs.forEachIndexed { position, level ->
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .selectable(
-                                selected = tempSelection == position,
-                                role = Role.RadioButton,
-                                onClick = { tempSelection = position },
-                            )
-                            .padding(vertical = 12.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        RadioButton(
-                            selected = tempSelection == position,
-                            onClick = { tempSelection = position },
-                        )
-                        Spacer(Modifier.width(8.dp))
-                        Text(level)
-                    }
+                    RadioButtonPreference(
+                        title = level,
+                        selected = tempSelection == position,
+                        onClick = { tempSelection = position },
+                    )
                 }
             }
-        },
-        confirmButton = {
-            TextButton(
-                onClick = {
-                    val value = if (tempSelection > 0) touchs[tempSelection] else tempSelection.toString()
-                    settings.set(keyTouchSamplingRateLevel, value)
-                    controller?.touchMode = value.toInt()
-                    onDismiss()
-                },
-            ) { Text(stringResource(android.R.string.ok)) }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) { Text(stringResource(android.R.string.cancel)) }
-        },
-    )
+            Row(modifier = Modifier.padding(top = 12.dp)) {
+                MiuixTextButton(
+                    text = stringResource(android.R.string.cancel),
+                    onClick = onDismiss,
+                    modifier = Modifier.weight(1f),
+                )
+                Spacer(Modifier.width(20.dp))
+                MiuixTextButton(
+                    text = stringResource(android.R.string.ok),
+                    onClick = {
+                        val value = if (tempSelection > 0) touchs[tempSelection] else tempSelection.toString()
+                        settings.set(keyTouchSamplingRateLevel, value)
+                        controller?.touchMode = value.toInt()
+                        onDismiss()
+                    },
+                    modifier = Modifier.weight(1f),
+                    colors = ButtonDefaults.textButtonColorsPrimary(),
+                )
+            }
+        }
+
+        UiMode.Material -> AlertDialog(
+            onDismissRequest = onDismiss,
+            title = { Text(stringResource(R.string.set_touch_sampling_rate_tile_level)) },
+            text = {
+                Column {
+                    touchs.forEachIndexed { position, level ->
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .selectable(
+                                    selected = tempSelection == position,
+                                    role = Role.RadioButton,
+                                    onClick = { tempSelection = position },
+                                )
+                                .padding(vertical = 12.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            RadioButton(
+                                selected = tempSelection == position,
+                                onClick = { tempSelection = position },
+                            )
+                            Spacer(Modifier.width(8.dp))
+                            Text(level)
+                        }
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        val value = if (tempSelection > 0) touchs[tempSelection] else tempSelection.toString()
+                        settings.set(keyTouchSamplingRateLevel, value)
+                        controller?.touchMode = value.toInt()
+                        onDismiss()
+                    },
+                ) { Text(stringResource(android.R.string.ok)) }
+            },
+            dismissButton = {
+                TextButton(onClick = onDismiss) { Text(stringResource(android.R.string.cancel)) }
+            },
+        )
+    }
 }
 
 /** 远程 ADB 调试（旧 initAdbDebugView，布局与状态机保持原样） */
@@ -423,99 +574,187 @@ private fun AdbDebugDialog(
     var busy by remember { mutableStateOf(false) }
     var adbEnabled by remember { mutableStateOf(getPort != 0 && getPort != -1) }
 
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        confirmButton = {},
-        text = {
-            Column {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Text(
-                        stringResource(R.string.enable_remote_adb_debugging),
-                        modifier = Modifier.weight(1f),
-                    )
-                    Switch(
-                        checked = adbEnabled,
-                        enabled = !busy,
-                        onCheckedChange = { checked ->
-                            if (checked) {
-                                val portStr = portText
-                                if (portStr.isBlank()) {
+    when (LocalUiMode.current) {
+        UiMode.Miuix -> OverlayDialog(
+            show = true,
+            onDismissRequest = onDismiss,
+        ) {
+            SwitchPreference(
+                checked = adbEnabled,
+                onCheckedChange = { checked ->
+                    if (checked) {
+                        val portStr = portText
+                        if (portStr.isBlank()) {
+                            adbTvText = context.getString(R.string.adb_debug_port_cannot_null)
+                        } else {
+                            scope.launch {
+                                val port = portStr.toIntOrNull()
+                                if (port == null) {
                                     adbTvText = context.getString(R.string.adb_debug_port_cannot_null)
+                                    return@launch
+                                }
+                                busy = true
+                                runCatching {
+                                    withContext(Dispatchers.IO) {
+                                        adb.adbPort = port
+                                        adb.restartAdb()
+                                    }
+                                    getIP = adb.wifiIP ?: "IP"
+                                    otherPrefs.set("adb_port", port.toString())
+                                }
+                                adbEnabled = true
+                                adbTvText = "adb connect $getIP:$portStr"
+                                busy = false
+                            }
+                        }
+                    } else {
+                        scope.launch {
+                            busy = true
+                            runCatching {
+                                withContext(Dispatchers.IO) {
+                                    adb.adbPort = -1
+                                    adb.restartAdb()
+                                    adb.adbPort = 0
+                                }
+                            }
+                            adbEnabled = false
+                            adbTvText = ""
+                            busy = false
+                        }
+                    }
+                },
+                title = stringResource(R.string.enable_remote_adb_debugging),
+                enabled = !busy,
+            )
+            MiuixTextField(
+                value = portText,
+                onValueChange = { portText = it },
+                enabled = !adbEnabled && !busy,
+                label = stringResource(R.string.adb_port),
+                useLabelAsPlaceholder = true,
+                singleLine = true,
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+            )
+            if (adbTvText.isNotBlank()) {
+                MiuixText(
+                    text = adbTvText,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .combinedClickable(
+                            onLongClick = { context.copyStr(adbTvText) },
+                            onClick = {},
+                        )
+                        .padding(vertical = 12.dp),
+                )
+                MiuixText(
+                    text = stringResource(R.string.adb_tv_tip),
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .combinedClickable(
+                            onLongClick = { context.copyStr(adbTvText) },
+                            onClick = {},
+                        )
+                        .padding(bottom = 20.dp),
+                )
+            }
+        }
+
+        UiMode.Material -> AlertDialog(
+            onDismissRequest = onDismiss,
+            confirmButton = {},
+            text = {
+                Column {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Text(
+                            stringResource(R.string.enable_remote_adb_debugging),
+                            modifier = Modifier.weight(1f),
+                        )
+                        Switch(
+                            checked = adbEnabled,
+                            enabled = !busy,
+                            onCheckedChange = { checked ->
+                                if (checked) {
+                                    val portStr = portText
+                                    if (portStr.isBlank()) {
+                                        adbTvText = context.getString(R.string.adb_debug_port_cannot_null)
+                                    } else {
+                                        scope.launch {
+                                            val port = portStr.toIntOrNull()
+                                            if (port == null) {
+                                                adbTvText = context.getString(R.string.adb_debug_port_cannot_null)
+                                                return@launch
+                                            }
+                                            busy = true
+                                            runCatching {
+                                                withContext(Dispatchers.IO) {
+                                                    adb.adbPort = port
+                                                    adb.restartAdb()
+                                                }
+                                                getIP = adb.wifiIP ?: "IP"
+                                                otherPrefs.set("adb_port", port.toString())
+                                            }
+                                            adbEnabled = true
+                                            adbTvText = "adb connect $getIP:$portStr"
+                                            busy = false
+                                        }
+                                    }
                                 } else {
                                     scope.launch {
-                                        val port = portStr.toIntOrNull()
-                                        if (port == null) {
-                                            adbTvText = context.getString(R.string.adb_debug_port_cannot_null)
-                                            return@launch
-                                        }
                                         busy = true
                                         runCatching {
                                             withContext(Dispatchers.IO) {
-                                                adb.adbPort = port
+                                                adb.adbPort = -1
                                                 adb.restartAdb()
+                                                adb.adbPort = 0
                                             }
-                                            getIP = adb.wifiIP ?: "IP"
-                                            otherPrefs.set("adb_port", port.toString())
                                         }
-                                        adbEnabled = true
-                                        adbTvText = "adb connect $getIP:$portStr"
+                                        adbEnabled = false
+                                        adbTvText = ""
                                         busy = false
                                     }
                                 }
-                            } else {
-                                scope.launch {
-                                    busy = true
-                                    runCatching {
-                                        withContext(Dispatchers.IO) {
-                                            adb.adbPort = -1
-                                            adb.restartAdb()
-                                            adb.adbPort = 0
-                                        }
-                                    }
-                                    adbEnabled = false
-                                    adbTvText = ""
-                                    busy = false
-                                }
-                            }
-                        },
+                            },
+                        )
+                    }
+                    OutlinedTextField(
+                        value = portText,
+                        onValueChange = { portText = it },
+                        enabled = !adbEnabled && !busy,
+                        label = { Text(stringResource(R.string.adb_port)) },
+                        singleLine = true,
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                     )
+                    if (adbTvText.isNotBlank()) {
+                        Text(
+                            text = adbTvText,
+                            textAlign = TextAlign.Center,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .combinedClickable(
+                                    onLongClick = { context.copyStr(adbTvText) },
+                                    onClick = {},
+                                )
+                                .padding(vertical = 12.dp),
+                        )
+                        Text(
+                            text = stringResource(R.string.adb_tv_tip),
+                            textAlign = TextAlign.Center,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .combinedClickable(
+                                    onLongClick = { context.copyStr(adbTvText) },
+                                    onClick = {},
+                                )
+                                .padding(bottom = 20.dp),
+                        )
+                    }
                 }
-                OutlinedTextField(
-                    value = portText,
-                    onValueChange = { portText = it },
-                    enabled = !adbEnabled && !busy,
-                    label = { Text(stringResource(R.string.adb_port)) },
-                    singleLine = true,
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                )
-                if (adbTvText.isNotBlank()) {
-                    Text(
-                        text = adbTvText,
-                        textAlign = TextAlign.Center,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .combinedClickable(
-                                onLongClick = { context.copyStr(adbTvText) },
-                                onClick = {},
-                            )
-                            .padding(vertical = 12.dp),
-                    )
-                    Text(
-                        text = stringResource(R.string.adb_tv_tip),
-                        textAlign = TextAlign.Center,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .combinedClickable(
-                                onLongClick = { context.copyStr(adbTvText) },
-                                onClick = {},
-                            )
-                            .padding(bottom = 20.dp),
-                    )
-                }
-            }
-        },
-    )
+            },
+        )
+    }
 }

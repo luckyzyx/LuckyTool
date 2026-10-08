@@ -9,7 +9,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.material3.Text
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.asImageBitmap
@@ -21,7 +20,7 @@ import com.luckyzyx.luckytool.BuildConfig
 import com.luckyzyx.luckytool.R
 import com.luckyzyx.luckytool.contract.CropImageContract
 import com.luckyzyx.luckytool.data.CropImageContractOptions
-import com.luckyzyx.luckytool.ui.compose.components.material.SegmentedListItem
+import com.luckyzyx.luckytool.ui.compose.components.PrefRow
 import com.luckyzyx.luckytool.ui.compose.scopes.ScopePageSpec
 import com.luckyzyx.luckytool.utils.FileUtils
 import com.luckyzyx.luckytool.utils.LogUtils
@@ -66,7 +65,7 @@ object FingerPrintRelatedPage {
                 key = "replace_fingerprint_icon_path",
                 title = pathTitle,
                 summary = pathSummary,
-            ) { slot ->
+            ) {
                 val launcher = rememberLauncherForActivityResult(CropImageContract()) {
                     if (it.second.isSuccessful) {
                         val uri = it.second.uriContent
@@ -87,7 +86,18 @@ object FingerPrintRelatedPage {
                     if (path.isBlank()) null else BitmapFactory.decodeFile(path)
                 }
                 Box(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
-                    SegmentedListItem(
+                    PrefRow(
+                        title = pathTitle,
+                        summary = pathSummary,
+                        leading = {
+                            bitmap?.let {
+                                Image(
+                                    it.asImageBitmap(),
+                                    contentDescription = null,
+                                    modifier = Modifier.size(36.dp),
+                                )
+                            }
+                        },
                         onClick = {
                             val cacheImageFile = FileUtils.createCacheFile(c, "png")
                             val cacheImageUri = FileProvider.getUriForFile(
@@ -111,18 +121,6 @@ object FingerPrintRelatedPage {
                                 )
                             )
                         },
-                        leadingContent = {
-                            bitmap?.let {
-                                Image(
-                                    it.asImageBitmap(),
-                                    contentDescription = null,
-                                    modifier = Modifier.size(36.dp),
-                                )
-                            }
-                        },
-                        supportingContent = { Text(pathSummary) },
-                        colors = itemColors(slot),
-                        headlineContent = { Text(pathTitle) },
                     )
                 }
             }

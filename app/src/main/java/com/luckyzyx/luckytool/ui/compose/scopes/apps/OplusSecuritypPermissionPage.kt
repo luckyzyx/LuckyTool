@@ -1,11 +1,14 @@
 package com.luckyzyx.luckytool.ui.compose.scopes.apps
 
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Text
@@ -20,12 +23,18 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.luckyzyx.luckytool.R
 import com.luckyzyx.luckytool.service.UserService
-import com.luckyzyx.luckytool.ui.compose.components.material.SegmentedListItem
+import com.luckyzyx.luckytool.ui.compose.components.PrefRow
+import com.luckyzyx.luckytool.ui.compose.components.miuix.MiuixRadioItem
 import com.luckyzyx.luckytool.ui.compose.scopes.ScopePageSpec
+import com.luckyzyx.luckytool.ui.theme.LocalUiMode
+import com.luckyzyx.luckytool.ui.theme.UiMode
 import com.luckyzyx.luckytool.utils.ModulePrefs
 import com.luckyzyx.luckytool.utils.getOSVersionCode
 import com.luckyzyx.luckytool.utils.sendPrefsValue
 import com.luckyzyx.luckytool.utils.showToast
+import top.yukonga.miuix.kmp.basic.ButtonDefaults
+import top.yukonga.miuix.kmp.basic.TextButton as MiuixTextButton
+import top.yukonga.miuix.kmp.overlay.OverlayDialog
 
 /**
  * 旧 ui.fragment.scopes.apps.OplusSecuritypPermission 的 Compose 等价物（机械翻译 loadPreferences）。
@@ -69,11 +78,12 @@ object OplusSecuritypPermissionPage {
         )
         if (state.getBoolean("enable_always_allow_app_start_dialog")) {
             val removeListTitle = c.getString(R.string.remove_always_allow_app_start_list)
-            custom(key = "remove_always_allow_app_start_list", title = removeListTitle) { slot ->
+            custom(key = "remove_always_allow_app_start_list", title = removeListTitle) {
                 var userDialogData by remember { mutableStateOf<UserDialogData?>(null) }
                 var curUserId by remember { mutableStateOf(arrayListOf<Int>()) }
                 Box(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
-                    SegmentedListItem(
+                    PrefRow(
+                        title = removeListTitle,
                         onClick = {
                             UserService.get(c) {
                                 val users = it?.users
@@ -93,56 +103,100 @@ object OplusSecuritypPermissionPage {
                                 )
                             }
                         },
-                        colors = itemColors(slot),
-                        headlineContent = { Text(removeListTitle) },
                     )
                 }
 
                 userDialogData?.let { data ->
-                    AlertDialog(
-                        onDismissRequest = { userDialogData = null },
-                        title = { Text(data.title) },
-                        text = {
+                    when (LocalUiMode.current) {
+                        UiMode.Miuix -> OverlayDialog(
+                            show = true,
+                            title = data.title,
+                            onDismissRequest = { userDialogData = null },
+                        ) {
                             Column {
                                 data.items.forEachIndexed { index, item ->
                                     val selected = when {
                                         index == 0 -> curUserId.size == data.allUserIds.size
                                         else -> curUserId.size == 1 && curUserId.firstOrNull() == item.second
                                     }
-                                    Row(
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .clickable {
-                                                curUserId = when (index) {
-                                                    0 -> ArrayList(data.allUserIds)
-                                                    else -> arrayListOf(item.second)
-                                                }
+                                    MiuixRadioItem(
+                                        title = item.first,
+                                        selected = selected,
+                                        onClick = {
+                                            curUserId = when (index) {
+                                                0 -> ArrayList(data.allUserIds)
+                                                else -> arrayListOf(item.second)
                                             }
-                                            .padding(vertical = 2.dp),
-                                        verticalAlignment = Alignment.CenterVertically,
-                                    ) {
-                                        RadioButton(selected = selected, onClick = null)
-                                        Text(item.first)
-                                    }
+                                        },
+                                    )
                                 }
                             }
-                        },
-                        dismissButton = {
-                            TextButton(onClick = { userDialogData = null }) {
-                                Text(stringResource(android.R.string.cancel))
+                            Row(horizontalArrangement = Arrangement.SpaceBetween) {
+                                MiuixTextButton(
+                                    text = stringResource(android.R.string.cancel),
+                                    onClick = { userDialogData = null },
+                                    modifier = Modifier.weight(1f),
+                                )
+                                Spacer(Modifier.width(20.dp))
+                                MiuixTextButton(
+                                    text = stringResource(android.R.string.ok),
+                                    onClick = {
+                                        c.sendPrefsValue(
+                                            "android", "remove_always_allow_app_start_list", curUserId
+                                        )
+                                        userDialogData = null
+                                    },
+                                    modifier = Modifier.weight(1f),
+                                    colors = ButtonDefaults.textButtonColorsPrimary(),
+                                )
                             }
-                        },
-                        confirmButton = {
-                            TextButton(
-                                onClick = {
-                                    c.sendPrefsValue(
-                                        "android", "remove_always_allow_app_start_list", curUserId
-                                    )
-                                    userDialogData = null
-                                },
-                            ) { Text(stringResource(android.R.string.ok)) }
-                        },
-                    )
+                        }
+
+                        UiMode.Material -> AlertDialog(
+                            onDismissRequest = { userDialogData = null },
+                            title = { Text(data.title) },
+                            text = {
+                                Column {
+                                    data.items.forEachIndexed { index, item ->
+                                        val selected = when {
+                                            index == 0 -> curUserId.size == data.allUserIds.size
+                                            else -> curUserId.size == 1 && curUserId.firstOrNull() == item.second
+                                        }
+                                        Row(
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .clickable {
+                                                    curUserId = when (index) {
+                                                        0 -> ArrayList(data.allUserIds)
+                                                        else -> arrayListOf(item.second)
+                                                    }
+                                                }
+                                                .padding(vertical = 2.dp),
+                                            verticalAlignment = Alignment.CenterVertically,
+                                        ) {
+                                            RadioButton(selected = selected, onClick = null)
+                                            Text(item.first)
+                                        }
+                                    }
+                                }
+                            },
+                            dismissButton = {
+                                TextButton(onClick = { userDialogData = null }) {
+                                    Text(stringResource(android.R.string.cancel))
+                                }
+                            },
+                            confirmButton = {
+                                TextButton(
+                                    onClick = {
+                                        c.sendPrefsValue(
+                                            "android", "remove_always_allow_app_start_list", curUserId
+                                        )
+                                        userDialogData = null
+                                    },
+                                ) { Text(stringResource(android.R.string.ok)) }
+                            },
+                        )
+                    }
                 }
             }
         }

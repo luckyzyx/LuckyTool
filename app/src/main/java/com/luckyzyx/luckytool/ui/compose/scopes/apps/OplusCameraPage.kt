@@ -3,11 +3,15 @@ package com.luckyzyx.luckytool.ui.compose.scopes.apps
 import android.content.Context
 import android.os.Build
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.Text
@@ -26,7 +30,11 @@ import com.luckyzyx.luckytool.R
 import com.luckyzyx.luckytool.data.CameraFilter
 import com.luckyzyx.luckytool.ui.components.AppPickerDialog
 import com.luckyzyx.luckytool.ui.compose.components.material.SegmentedListItem
+import com.luckyzyx.luckytool.ui.compose.components.miuix.MiuixCheckboxItem
+import com.luckyzyx.luckytool.ui.compose.components.miuix.MiuixListItem
 import com.luckyzyx.luckytool.ui.compose.scopes.ScopePageSpec
+import com.luckyzyx.luckytool.ui.theme.LocalUiMode
+import com.luckyzyx.luckytool.ui.theme.UiMode
 import com.luckyzyx.luckytool.utils.A13
 import com.luckyzyx.luckytool.utils.CameraUtils
 import com.luckyzyx.luckytool.utils.ModulePrefs
@@ -34,6 +42,8 @@ import com.luckyzyx.luckytool.utils.PrefState
 import com.luckyzyx.luckytool.utils.SDK
 import com.luckyzyx.luckytool.utils.arraySummaryLine
 import com.luckyzyx.luckytool.utils.getOSVersionCode
+import top.yukonga.miuix.kmp.basic.TextButton as MiuixTextButton
+import top.yukonga.miuix.kmp.overlay.OverlayDialog
 
 /**
  * 相机页（旧 ui.fragment.scopes.apps.OplusCamera 的 Compose 等价物）。
@@ -68,17 +78,25 @@ object OplusCameraPage {
                 val current by state.stringFlow("custom_camera_open_gallery_by_default")
                     .collectAsStateWithLifecycle()
                 var show by remember { mutableStateOf(false) }
-                Box(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
-                    SegmentedListItem(
+                if (LocalUiMode.current == UiMode.Miuix) {
+                    MiuixListItem(
+                        title = c.getString(R.string.custom_camera_open_gallery_by_default),
+                        summary = arraySummaryLine(current.ifBlank { c.getString(R.string.not_set) }),
                         onClick = { show = true },
-                        supportingContent = {
-                            Text(arraySummaryLine(current.ifBlank { c.getString(R.string.not_set) }))
-                        },
-                        colors = itemColors(slot),
-                        headlineContent = {
-                            Text(c.getString(R.string.custom_camera_open_gallery_by_default))
-                        },
                     )
+                } else {
+                    Box(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
+                        SegmentedListItem(
+                            onClick = { show = true },
+                            supportingContent = {
+                                Text(arraySummaryLine(current.ifBlank { c.getString(R.string.not_set) }))
+                            },
+                            colors = itemColors(slot),
+                            headlineContent = {
+                                Text(c.getString(R.string.custom_camera_open_gallery_by_default))
+                            },
+                        )
+                    }
                 }
                 if (show) {
                     AppPickerDialog(
@@ -157,17 +175,25 @@ object OplusCameraPage {
                 val filters = CameraUtils.getCameraFilters(c).apply {
                     forEach { it.isEnable = it.key in saved }
                 }
-                Box(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
-                    SegmentedListItem(
+                if (LocalUiMode.current == UiMode.Miuix) {
+                    MiuixListItem(
+                        title = c.getString(R.string.camera_universal_filter_settings),
+                        summary = filters.filter { it.isEnable }.map { it.title }.toString(),
                         onClick = { showDialog = true },
-                        supportingContent = {
-                            Text(filters.filter { it.isEnable }.map { it.title }.toString())
-                        },
-                        colors = itemColors(slot),
-                        headlineContent = {
-                            Text(c.getString(R.string.camera_universal_filter_settings))
-                        },
                     )
+                } else {
+                    Box(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
+                        SegmentedListItem(
+                            onClick = { showDialog = true },
+                            supportingContent = {
+                                Text(filters.filter { it.isEnable }.map { it.title }.toString())
+                            },
+                            colors = itemColors(slot),
+                            headlineContent = {
+                                Text(c.getString(R.string.camera_universal_filter_settings))
+                            },
+                        )
+                    }
                 }
                 if (showDialog) {
                     CameraFilterDialog(
@@ -197,17 +223,25 @@ object OplusCameraPage {
                 val filters = CameraUtils.getPortraitCameraFilters(c).apply {
                     forEach { it.isEnable = it.key in saved }
                 }
-                Box(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
-                    SegmentedListItem(
+                if (LocalUiMode.current == UiMode.Miuix) {
+                    MiuixListItem(
+                        title = c.getString(R.string.camera_portrait_filter_settings),
+                        summary = filters.filter { it.isEnable }.map { it.title }.toString(),
                         onClick = { showDialog = true },
-                        supportingContent = {
-                            Text(filters.filter { it.isEnable }.map { it.title }.toString())
-                        },
-                        colors = itemColors(slot),
-                        headlineContent = {
-                            Text(c.getString(R.string.camera_portrait_filter_settings))
-                        },
                     )
+                } else {
+                    Box(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
+                        SegmentedListItem(
+                            onClick = { showDialog = true },
+                            supportingContent = {
+                                Text(filters.filter { it.isEnable }.map { it.title }.toString())
+                            },
+                            colors = itemColors(slot),
+                            headlineContent = {
+                                Text(c.getString(R.string.camera_portrait_filter_settings))
+                            },
+                        )
+                    }
                 }
                 if (showDialog) {
                     CameraFilterDialog(
@@ -232,17 +266,25 @@ object OplusCameraPage {
                 val filters = CameraUtils.getVideoCameraFilters(c).apply {
                     forEach { it.isEnable = it.key in saved }
                 }
-                Box(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
-                    SegmentedListItem(
+                if (LocalUiMode.current == UiMode.Miuix) {
+                    MiuixListItem(
+                        title = c.getString(R.string.camera_video_filter_settings),
+                        summary = filters.filter { it.isEnable }.map { it.title }.toString(),
                         onClick = { showDialog = true },
-                        supportingContent = {
-                            Text(filters.filter { it.isEnable }.map { it.title }.toString())
-                        },
-                        colors = itemColors(slot),
-                        headlineContent = {
-                            Text(c.getString(R.string.camera_video_filter_settings))
-                        },
                     )
+                } else {
+                    Box(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
+                        SegmentedListItem(
+                            onClick = { showDialog = true },
+                            supportingContent = {
+                                Text(filters.filter { it.isEnable }.map { it.title }.toString())
+                            },
+                            colors = itemColors(slot),
+                            headlineContent = {
+                                Text(c.getString(R.string.camera_video_filter_settings))
+                            },
+                        )
+                    }
                 }
                 if (showDialog) {
                     CameraFilterDialog(
@@ -289,45 +331,83 @@ object OplusCameraPage {
         var checked by remember {
             mutableStateOf(data.filters.filter { it.isEnable }.map { it.key }.toMutableSet())
         }
-        AlertDialog(
-            onDismissRequest = onDismiss,
-            title = { Text(data.title) },
-            text = {
+        val confirm = {
+            val set = checked.toSet()
+            state.set(data.key, set)
+            data.onSaved(set)
+            data.onRestart()
+            onDismiss()
+        }
+        val toggle: (String, Boolean) -> Unit = { key, value ->
+            checked = checked.toMutableSet().apply { if (value) add(key) else remove(key) }
+        }
+        if (LocalUiMode.current == UiMode.Miuix) {
+            OverlayDialog(
+                show = true,
+                title = data.title,
+                onDismissRequest = onDismiss,
+            ) {
                 Column {
-                    data.filters.forEach { filter ->
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clickable {
-                                    checked = checked.toMutableSet().apply {
-                                        if (!add(filter.key)) remove(filter.key)
-                                    }
-                                }
-                                .padding(vertical = 2.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                        ) {
-                            Checkbox(checked = filter.key in checked, onCheckedChange = null)
-                            Text(filter.title)
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .heightIn(max = 380.dp)
+                            .verticalScroll(rememberScrollState()),
+                    ) {
+                        data.filters.forEach { filter ->
+                            MiuixCheckboxItem(
+                                title = filter.title,
+                                checked = filter.key in checked,
+                                onCheckedChange = { toggle(filter.key, it) },
+                            )
                         }
                     }
+                    Row(
+                        modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    ) {
+                        MiuixTextButton(
+                            text = stringResource(android.R.string.cancel),
+                            onClick = onDismiss,
+                            modifier = Modifier.weight(1f),
+                        )
+                        MiuixTextButton(
+                            text = stringResource(android.R.string.ok),
+                            onClick = confirm,
+                            modifier = Modifier.weight(1f),
+                        )
+                    }
                 }
-            },
-            dismissButton = {
-                TextButton(onClick = onDismiss) {
-                    Text(stringResource(android.R.string.cancel))
-                }
-            },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        val set = checked.toSet()
-                        state.set(data.key, set)
-                        data.onSaved(set)
-                        data.onRestart()
-                        onDismiss()
-                    },
-                ) { Text(stringResource(android.R.string.ok)) }
-            },
-        )
+            }
+        } else {
+            AlertDialog(
+                onDismissRequest = onDismiss,
+                title = { Text(data.title) },
+                text = {
+                    Column {
+                        data.filters.forEach { filter ->
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clickable { toggle(filter.key, filter.key !in checked) }
+                                    .padding(vertical = 2.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                            ) {
+                                Checkbox(checked = filter.key in checked, onCheckedChange = null)
+                                Text(filter.title)
+                            }
+                        }
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = onDismiss) {
+                        Text(stringResource(android.R.string.cancel))
+                    }
+                },
+                confirmButton = {
+                    TextButton(onClick = confirm) { Text(stringResource(android.R.string.ok)) }
+                },
+            )
+        }
     }
 }

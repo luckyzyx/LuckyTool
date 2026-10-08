@@ -7,7 +7,6 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Text
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.core.content.FileProvider
@@ -17,7 +16,7 @@ import com.luckyzyx.luckytool.BuildConfig
 import com.luckyzyx.luckytool.R
 import com.luckyzyx.luckytool.contract.CropImageContract
 import com.luckyzyx.luckytool.data.CropImageContractOptions
-import com.luckyzyx.luckytool.ui.compose.components.material.SegmentedListItem
+import com.luckyzyx.luckytool.ui.compose.components.PrefRow
 import com.luckyzyx.luckytool.ui.compose.scopes.ScopePageSpec
 import com.luckyzyx.luckytool.utils.A13
 import com.luckyzyx.luckytool.utils.A14
@@ -261,7 +260,7 @@ object OplusSettingsPage {
                         key = "customize_processor_image_path",
                         title = processorTitle,
                         summary = processorSummary,
-                    ) { slot ->
+                    ) {
                         val launcher = rememberLauncherForActivityResult(CropImageContract()) {
                             if (it.second.isSuccessful) {
                                 val uri = it.second.uriContent
@@ -279,7 +278,9 @@ object OplusSettingsPage {
                             }
                         }
                         Box(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
-                            SegmentedListItem(
+                            PrefRow(
+                                title = processorTitle,
+                                summary = processorSummary,
                                 onClick = {
                                     val cacheImageFile = FileUtils.createCacheFile(c, "png")
                                     val cacheImageUri = FileProvider.getUriForFile(
@@ -301,9 +302,6 @@ object OplusSettingsPage {
                                         )
                                     )
                                 },
-                                supportingContent = { Text(processorSummary) },
-                                colors = itemColors(slot),
-                                headlineContent = { Text(processorTitle) },
                             )
                         }
                     }
@@ -349,7 +347,7 @@ object OplusSettingsPage {
                         key = "customize_device_ota_card_background_path",
                         title = otaTitle,
                         summary = otaSummary,
-                    ) { slot ->
+                    ) {
                         val launcher = rememberLauncherForActivityResult(CropImageContract()) {
                             if (it.second.isSuccessful) {
                                 val uri = it.second.uriContent
@@ -367,7 +365,9 @@ object OplusSettingsPage {
                             }
                         }
                         Box(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
-                            SegmentedListItem(
+                            PrefRow(
+                                title = otaTitle,
+                                summary = otaSummary,
                                 onClick = {
                                     val cacheImageFile = FileUtils.createCacheFile(c, "png")
                                     val cacheImageUri = FileProvider.getUriForFile(
@@ -394,9 +394,6 @@ object OplusSettingsPage {
                                         )
                                     )
                                 },
-                                supportingContent = { Text(otaSummary) },
-                                colors = itemColors(slot),
-                                headlineContent = { Text(otaTitle) },
                             )
                         }
                     }

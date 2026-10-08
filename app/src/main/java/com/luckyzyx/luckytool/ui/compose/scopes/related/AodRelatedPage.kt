@@ -6,14 +6,13 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Text
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.luckyzyx.luckytool.R
-import com.luckyzyx.luckytool.ui.compose.components.material.SegmentedListItem
+import com.luckyzyx.luckytool.ui.compose.components.PrefRow
 import com.luckyzyx.luckytool.ui.compose.scopes.ScopePageSpec
 import com.luckyzyx.luckytool.utils.A13
 import com.luckyzyx.luckytool.utils.FileUtils
@@ -102,7 +101,7 @@ object AodRelatedPage {
                         key = "custom_random_text_file",
                         title = fileTitle,
                         summary = path.ifBlank { "Null" },
-                    ) { slot ->
+                    ) {
                         val activity = LocalContext.current as? Activity
                         val pickFile = rememberLauncherForActivityResult(
                             ActivityResultContracts.GetContent()
@@ -115,11 +114,10 @@ object AodRelatedPage {
                             restart?.invoke()
                         }
                         Box(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
-                            SegmentedListItem(
+                            PrefRow(
+                                title = fileTitle,
+                                summary = path.ifBlank { "Null" },
                                 onClick = { pickFile.launch("text/plain") },
-                                supportingContent = { Text(path.ifBlank { "Null" }) },
-                                colors = itemColors(slot),
-                                headlineContent = { Text(fileTitle) },
                             )
                         }
                     }

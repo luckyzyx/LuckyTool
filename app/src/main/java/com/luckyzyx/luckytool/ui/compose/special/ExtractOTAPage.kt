@@ -18,6 +18,8 @@ import androidx.compose.ui.unit.dp
 import androidx.core.database.getStringOrNull
 import com.luckyzyx.luckytool.R
 import com.luckyzyx.luckytool.ui.compose.scopes.ScopePageSpec
+import com.luckyzyx.luckytool.ui.theme.LocalUiMode
+import com.luckyzyx.luckytool.ui.theme.UiMode
 import com.luckyzyx.luckytool.utils.AESCrypt
 import com.luckyzyx.luckytool.utils.CommandUtils
 import com.luckyzyx.luckytool.utils.DeviceUtils
@@ -36,11 +38,14 @@ import com.luckyzyx.luckytool.utils.safeOfNull
 import com.topjohnwu.superuser.ShellUtils
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import top.yukonga.miuix.kmp.basic.Button as MiuixButton
+import top.yukonga.miuix.kmp.basic.Text as MiuixText
 
 /**
  * ExtractOTA 页（旧 ui.fragment.extension.ExtractOTAFragment 的 Compose 等价物）。
  * 无 Xposed 作用域（packName="" / scopes=arrayOf()），数据仅本地读取展示。
  * 下拉刷新（onRefresh）重跑加载流程，等价旧 SwipeRefreshLayout。
+ * 页内文字与按钮按 [LocalUiMode] 分派：Miuix 线 `MiuixText` / miuix `Button`，material 线不变。
  */
 @SuppressLint("SdCardPath")
 object ExtractOTAPage {
@@ -129,31 +134,64 @@ object ExtractOTAPage {
             val tipsText = if (isZh(c)) "使用此功能时,禁止删除与遗漏数据" else ""
             val fullText = if (dataList.isNotEmpty()) formatStringAuto(dataList, "\n") else ""
 
+            // 本页自有呈现按主题分派：Miuix 线用 miuix 件，material 线保持原 material3 件（逐行等价）
+            val miuix = LocalUiMode.current == UiMode.Miuix
             Column(Modifier.fillMaxWidth().padding(16.dp)) {
                 if (tipsText.isNotBlank()) {
-                    Text(
-                        tipsText,
-                        modifier = Modifier.fillMaxWidth(),
-                        textAlign = TextAlign.Center,
-                    )
+                    if (miuix) {
+                        MiuixText(
+                            text = tipsText,
+                            modifier = Modifier.fillMaxWidth(),
+                            textAlign = TextAlign.Center,
+                        )
+                    } else {
+                        Text(
+                            tipsText,
+                            modifier = Modifier.fillMaxWidth(),
+                            textAlign = TextAlign.Center,
+                        )
+                    }
                 }
                 if (fullText.isNotBlank()) {
-                    Text(
-                        fullText,
-                        modifier = Modifier.fillMaxWidth().padding(vertical = 16.dp),
-                    )
+                    if (miuix) {
+                        MiuixText(
+                            text = fullText,
+                            modifier = Modifier.fillMaxWidth().padding(vertical = 16.dp),
+                        )
+                    } else {
+                        Text(
+                            fullText,
+                            modifier = Modifier.fillMaxWidth().padding(vertical = 16.dp),
+                        )
+                    }
                 } else {
-                    Text(
-                        noDataText,
-                        modifier = Modifier.fillMaxWidth().padding(vertical = 24.dp),
-                        textAlign = TextAlign.Center,
-                    )
+                    if (miuix) {
+                        MiuixText(
+                            text = noDataText,
+                            modifier = Modifier.fillMaxWidth().padding(vertical = 24.dp),
+                            textAlign = TextAlign.Center,
+                        )
+                    } else {
+                        Text(
+                            noDataText,
+                            modifier = Modifier.fillMaxWidth().padding(vertical = 24.dp),
+                            textAlign = TextAlign.Center,
+                        )
+                    }
                 }
-                Button(
-                    onClick = { c.copyStr(fullText) },
-                    enabled = fullText.isNotBlank(),
-                    modifier = Modifier.fillMaxWidth(),
-                ) { Text(copyText) }
+                if (miuix) {
+                    MiuixButton(
+                        onClick = { c.copyStr(fullText) },
+                        enabled = fullText.isNotBlank(),
+                        modifier = Modifier.fillMaxWidth(),
+                    ) { MiuixText(text = copyText) }
+                } else {
+                    Button(
+                        onClick = { c.copyStr(fullText) },
+                        enabled = fullText.isNotBlank(),
+                        modifier = Modifier.fillMaxWidth(),
+                    ) { Text(copyText) }
+                }
             }
         }
     }

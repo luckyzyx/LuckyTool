@@ -4,8 +4,12 @@ import android.content.Context
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.calculateEndPadding
+import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
@@ -22,6 +26,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberTopAppBarState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -33,6 +38,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
@@ -46,9 +52,9 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
 import com.luckyzyx.luckytool.R
 import com.luckyzyx.luckytool.ui.activity.MainActivity
+import com.luckyzyx.luckytool.ui.components.preference.LocalScopeTopInset
 import com.luckyzyx.luckytool.ui.components.preference.PrefIndexItem
 import com.luckyzyx.luckytool.ui.components.preference.PrefScopeBuilder
-import com.luckyzyx.luckytool.ui.components.preference.ScopeScreen
 import com.luckyzyx.luckytool.ui.components.preference.ScrollTarget
 import com.luckyzyx.luckytool.ui.compose.components.EdgeSwipeDismiss
 import com.luckyzyx.luckytool.ui.compose.components.PrefGroup
@@ -56,8 +62,11 @@ import com.luckyzyx.luckytool.ui.compose.components.PrefRow
 import com.luckyzyx.luckytool.ui.compose.components.material.ExpressiveList
 import com.luckyzyx.luckytool.ui.compose.components.material.ExpressivePageScaffold
 import com.luckyzyx.luckytool.ui.compose.components.material.SegmentedTextField
+import com.luckyzyx.luckytool.ui.compose.scopes.ScopePageContent
 import com.luckyzyx.luckytool.ui.compose.scopes.ScopePageRegistry
 import com.luckyzyx.luckytool.ui.compose.scopes.ScopePageSpec
+import com.luckyzyx.luckytool.ui.theme.LocalUiMode
+import com.luckyzyx.luckytool.ui.theme.UiMode
 import com.luckyzyx.luckytool.utils.LogUtils
 import com.luckyzyx.luckytool.ui.shell.LocalEnableSwipeDismiss
 import com.luckyzyx.luckytool.utils.AppUtils
@@ -65,6 +74,10 @@ import com.luckyzyx.luckytool.utils.PrefState
 import com.luckyzyx.luckytool.utils.RestartMenuUtils
 import com.luckyzyx.luckytool.utils.formatStringAuto
 import com.luckyzyx.luckytool.utils.sendPrefsValue
+import top.yukonga.miuix.kmp.basic.ButtonDefaults
+import top.yukonga.miuix.kmp.basic.Text as MiuixText
+import top.yukonga.miuix.kmp.basic.TextButton as MiuixTextButton
+import top.yukonga.miuix.kmp.overlay.OverlayDialog
 import io.noties.markwon.Markwon
 import io.noties.markwon.ext.tables.TablePlugin
 import java.util.Arrays
@@ -452,29 +465,65 @@ private fun ScopePageHost(
             }
         } else {
             val state = remember(spec) { PrefState.of(context.applicationContext, spec.prefsName) }
-            // ScopeScreen 自带 LazyColumn 并渲染全部条目，直接作为页面内容：
-            // 不能再包一层 ExpressiveList（同向嵌套 LazyColumn 会以无限高度约束测量而崩溃）。
-            // 作用域页内容自带 16dp 水平内边距，此处不叠加。
-            ScopeScreen(
-                state = state,
-                modifier = Modifier
+            val uiMode = LocalUiMode.current
+            val sendPrefsValue: (key: String, value: Any) -> Unit = { key, value ->
+                context.sendPrefsValue(spec.packName, key, value)
+            }
+            val jumpTarget = if (route.scrollKey.isNotBlank() && route.scrollPosition >= 0) {
+                ScrollTarget(route.scrollKey, route.scrollPosition)
+            } else {
+                null
+            }
+            val navigatePage: (target: String, title: String?) -> Unit = { target, title ->
+                ScopePageRegistry.pageTargetMap[target]?.let { onNavigate(it, title) }
+            }
+            val restartScope: (() -> Unit)? = if (spec.restartEnabled) ({ activity.restart() }) else null
+
+            // 页面内容分派（唯一分派点见 ScopePageContent）：
+            // 页面为当前主题线提供了槽位（contentMiuix/contentMaterial）时由页面自有布局渲染整页，
+            // 否则逐字回落到共享渲染层 ScopeScreen —— ScopeScreen 自带 LazyColumn 并渲染全部条目，
+            // 直接作为页面内容：不能再包一层 ExpressiveList（同向嵌套 LazyColumn 会以无限高度约束测量而崩溃）。
+            // 水平内边距此处不叠加（material 线由作用域内容自带，Miuix 线由列表级 12dp contentPadding 提供）。
+            //
+            // 骨架内边距传递：
+            // - material 线：innerPadding 整块交给内容（与今天逐字一致，m3 顶栏 64dp 由 innerPadding 承担）。
+            // - Miuix 线：骨架给的是真实 innerPadding，其中 top = 顶栏高度；top 经 LocalScopeTopInset 交给
+            //   列表充当 contentPadding.top（内容滚动到模糊顶栏之下，KernelSU 式 scroll-under），这里只保留
+            //   start/end/bottom 外置 padding（横屏 displayCutout 水平内缩与底部 inset 不能丢）。
+            val pageContentModifier = if (uiMode == UiMode.Miuix) {
+                val layoutDirection = LocalLayoutDirection.current
+                Modifier
+                    .fillMaxSize()
+                    .padding(
+                        start = padding.calculateStartPadding(layoutDirection),
+                        end = padding.calculateEndPadding(layoutDirection),
+                        bottom = padding.calculateBottomPadding(),
+                    )
+                    .nestedScroll(scrollBehavior.nestedScrollConnection)
+            } else {
+                Modifier
                     .fillMaxSize()
                     .padding(padding)
-                    .nestedScroll(scrollBehavior.nestedScrollConnection),
-                sendValue = { key, value -> context.sendPrefsValue(spec.packName, key, value) },
-                scrollTarget = if (route.scrollKey.isNotBlank() && route.scrollPosition >= 0) {
-                    ScrollTarget(route.scrollKey, route.scrollPosition)
-                } else {
-                    null
-                },
-                onNavigate = { target, title ->
-                    ScopePageRegistry.pageTargetMap[target]?.let { onNavigate(it, title) }
-                },
-                onRestart = if (spec.restartEnabled) ({ activity.restart() }) else null,
-                onRefresh = spec.onRefresh,
-                fullContent = spec.fullContent,
-                content = spec.content,
-            )
+                    .nestedScroll(scrollBehavior.nestedScrollConnection)
+            }
+            val pageContent: @Composable () -> Unit = {
+                ScopePageContent(
+                    spec = spec,
+                    state = state,
+                    modifier = pageContentModifier,
+                    sendValue = sendPrefsValue,
+                    scrollTarget = jumpTarget,
+                    onNavigate = navigatePage,
+                    onRestart = restartScope,
+                )
+            }
+            if (uiMode == UiMode.Miuix) {
+                CompositionLocalProvider(LocalScopeTopInset provides padding.calculateTopPadding()) {
+                    pageContent()
+                }
+            } else {
+                pageContent()
+            }
         }
     }
 
@@ -506,21 +555,49 @@ private fun VersionInfoDialog(onDismiss: () -> Unit) {
     val markwon = remember(context) {
         Markwon.builder(context).usePlugin(TablePlugin.create(context)).build()
     }
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text(stringResource(R.string.menu_versioninfo)) },
-        text = {
+    when (LocalUiMode.current) {
+        UiMode.Miuix -> OverlayDialog(
+            show = true,
+            title = stringResource(R.string.menu_versioninfo),
+            onDismissRequest = onDismiss,
+        ) {
             AndroidView(
                 factory = { ctx -> android.widget.TextView(ctx) },
-                modifier = Modifier.fillMaxWidth().verticalScroll(rememberScrollState()),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .heightIn(max = 360.dp)
+                    .verticalScroll(rememberScrollState()),
                 update = { tv ->
                     tv.setTextIsSelectable(true)
                     markwon.setMarkdown(tv, markdown)
                 },
             )
-        },
-        confirmButton = {
-            TextButton(onClick = onDismiss) { Text(stringResource(android.R.string.ok)) }
-        },
-    )
+            Row(modifier = Modifier.padding(top = 12.dp)) {
+                MiuixTextButton(
+                    text = stringResource(android.R.string.ok),
+                    onClick = onDismiss,
+                    modifier = Modifier.weight(1f),
+                    colors = ButtonDefaults.textButtonColorsPrimary(),
+                )
+            }
+        }
+
+        UiMode.Material -> AlertDialog(
+            onDismissRequest = onDismiss,
+            title = { Text(stringResource(R.string.menu_versioninfo)) },
+            text = {
+                AndroidView(
+                    factory = { ctx -> android.widget.TextView(ctx) },
+                    modifier = Modifier.fillMaxWidth().verticalScroll(rememberScrollState()),
+                    update = { tv ->
+                        tv.setTextIsSelectable(true)
+                        markwon.setMarkdown(tv, markdown)
+                    },
+                )
+            },
+            confirmButton = {
+                TextButton(onClick = onDismiss) { Text(stringResource(android.R.string.ok)) }
+            },
+        )
+    }
 }

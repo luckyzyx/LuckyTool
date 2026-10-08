@@ -5,8 +5,13 @@ import android.content.Intent
 import android.provider.Settings
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
@@ -30,10 +35,17 @@ import com.drake.net.scope.NetCoroutineScope
 import com.drake.net.utils.scopeNet
 import com.highcapable.betterandroid.ui.extension.view.toast
 import com.luckyzyx.luckytool.R
+import com.luckyzyx.luckytool.ui.theme.LocalUiMode
+import com.luckyzyx.luckytool.ui.theme.UiMode
 import io.noties.markwon.Markwon
 import org.json.JSONArray
 import org.json.JSONObject
 import org.lsposed.lsparanoid.Obfuscate
+import top.yukonga.miuix.kmp.basic.BasicComponent
+import top.yukonga.miuix.kmp.basic.ButtonDefaults
+import top.yukonga.miuix.kmp.basic.Text as MiuixText
+import top.yukonga.miuix.kmp.basic.TextButton as MiuixTextButton
+import top.yukonga.miuix.kmp.overlay.OverlayDialog
 import java.io.File
 
 @Obfuscate
@@ -144,28 +156,64 @@ fun UpdateChangelogDialog(
     val finalText =
         "# LuckyTool v${info.name}\n- $version\n- $count\n- $size\n- $time\n${info.changeLog}"
     val markwon = remember(context) { Markwon.create(context) }
-    AlertDialog(
-        onDismissRequest = { if (isDev) onDismiss() },
-        title = { Text(context.getString(R.string.check_update_hint)) },
-        text = {
+    when (LocalUiMode.current) {
+        UiMode.Miuix -> OverlayDialog(
+            show = true,
+            title = context.getString(R.string.check_update_hint),
+            onDismissRequest = { if (isDev) onDismiss() },
+        ) {
             AndroidView(
                 factory = { ctx -> android.widget.TextView(ctx) },
-                modifier = Modifier.fillMaxWidth().verticalScroll(rememberScrollState()),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .heightIn(max = 360.dp)
+                    .verticalScroll(rememberScrollState()),
                 update = { tv ->
                     tv.setTextIsSelectable(true)
                     markwon.setMarkdown(tv, finalText)
                 },
             )
-        },
-        confirmButton = {
-            TextButton(onClick = onDownload) { Text(context.getString(R.string.direct_update)) }
-        },
-        dismissButton = {
-            TextButton(onClick = {
-                context.startActivity(Intent(Intent.ACTION_VIEW, info.downloadPage.toUri()))
-            }) { Text(context.getString(R.string.go_download_page)) }
+            Row(modifier = Modifier.padding(top = 12.dp)) {
+                MiuixTextButton(
+                    text = context.getString(R.string.go_download_page),
+                    onClick = {
+                        context.startActivity(Intent(Intent.ACTION_VIEW, info.downloadPage.toUri()))
+                    },
+                    modifier = Modifier.weight(1f),
+                )
+                Spacer(Modifier.width(20.dp))
+                MiuixTextButton(
+                    text = context.getString(R.string.direct_update),
+                    onClick = onDownload,
+                    modifier = Modifier.weight(1f),
+                    colors = ButtonDefaults.textButtonColorsPrimary(),
+                )
+            }
         }
-    )
+
+        UiMode.Material -> AlertDialog(
+            onDismissRequest = { if (isDev) onDismiss() },
+            title = { Text(context.getString(R.string.check_update_hint)) },
+            text = {
+                AndroidView(
+                    factory = { ctx -> android.widget.TextView(ctx) },
+                    modifier = Modifier.fillMaxWidth().verticalScroll(rememberScrollState()),
+                    update = { tv ->
+                        tv.setTextIsSelectable(true)
+                        markwon.setMarkdown(tv, finalText)
+                    },
+                )
+            },
+            confirmButton = {
+                TextButton(onClick = onDownload) { Text(context.getString(R.string.direct_update)) }
+            },
+            dismissButton = {
+                TextButton(onClick = {
+                    context.startActivity(Intent(Intent.ACTION_VIEW, info.downloadPage.toUri()))
+                }) { Text(context.getString(R.string.go_download_page)) }
+            }
+        )
+    }
 }
 
 /**
@@ -180,22 +228,40 @@ fun UpdateDownloadSourceDialog(
     onSelect: (String) -> Unit
 ) {
     val sources = remember(downloadUrl) { UpdateUtils(context).downloadSources(downloadUrl) }
-    AlertDialog(
-        onDismissRequest = { if (isDev) onDismiss() },
-        title = { Text(context.getString(R.string.select_download_source)) },
-        text = {
+    when (LocalUiMode.current) {
+        UiMode.Miuix -> OverlayDialog(
+            show = true,
+            title = context.getString(R.string.select_download_source),
+            onDismissRequest = { if (isDev) onDismiss() },
+        ) {
             Column {
                 sources.forEach { (name, url) ->
-                    Text(
-                        name,
-                        Modifier.fillMaxWidth().clickable { onSelect(url) }
-                            .padding(horizontal = 24.dp, vertical = 14.dp)
+                    BasicComponent(
+                        title = name,
+                        insideMargin = PaddingValues(horizontal = 24.dp, vertical = 14.dp),
+                        onClick = { onSelect(url) },
                     )
                 }
             }
-        },
-        confirmButton = {}
-    )
+        }
+
+        UiMode.Material -> AlertDialog(
+            onDismissRequest = { if (isDev) onDismiss() },
+            title = { Text(context.getString(R.string.select_download_source)) },
+            text = {
+                Column {
+                    sources.forEach { (name, url) ->
+                        Text(
+                            name,
+                            Modifier.fillMaxWidth().clickable { onSelect(url) }
+                                .padding(horizontal = 24.dp, vertical = 14.dp)
+                        )
+                    }
+                }
+            },
+            confirmButton = {}
+        )
+    }
 }
 
 /**
@@ -211,19 +277,46 @@ fun UpdateDownloadedDialog(
     onInstall: () -> Unit
 ) {
     val size = formatFileSize(FileUtils.getFileSize(apkFile).toFloat())
-    AlertDialog(
-        onDismissRequest = { if (isDev) onDismiss() },
-        title = { Text(context.getString(R.string.downloaded)) },
-        text = { Text("${apkFile.name}\n$size") },
-        confirmButton = {
-            TextButton(onClick = onInstall) { Text(context.getString(R.string.install)) }
-        },
-        dismissButton = {
-            TextButton(onClick = onDownloadAgain) {
-                Text(context.getString(R.string.download_again))
+    when (LocalUiMode.current) {
+        UiMode.Miuix -> OverlayDialog(
+            show = true,
+            title = context.getString(R.string.downloaded),
+            onDismissRequest = { if (isDev) onDismiss() },
+        ) {
+            MiuixText(
+                text = "${apkFile.name}\n$size",
+                modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp),
+            )
+            Row {
+                MiuixTextButton(
+                    text = context.getString(R.string.download_again),
+                    onClick = onDownloadAgain,
+                    modifier = Modifier.weight(1f),
+                )
+                Spacer(Modifier.width(20.dp))
+                MiuixTextButton(
+                    text = context.getString(R.string.install),
+                    onClick = onInstall,
+                    modifier = Modifier.weight(1f),
+                    colors = ButtonDefaults.textButtonColorsPrimary(),
+                )
             }
         }
-    )
+
+        UiMode.Material -> AlertDialog(
+            onDismissRequest = { if (isDev) onDismiss() },
+            title = { Text(context.getString(R.string.downloaded)) },
+            text = { Text("${apkFile.name}\n$size") },
+            confirmButton = {
+                TextButton(onClick = onInstall) { Text(context.getString(R.string.install)) }
+            },
+            dismissButton = {
+                TextButton(onClick = onDownloadAgain) {
+                    Text(context.getString(R.string.download_again))
+                }
+            }
+        )
+    }
 }
 
 /**
@@ -266,19 +359,39 @@ fun UpdateDownloadProgressDialog(
             onDismiss()
         }
     }
-    AlertDialog(
-        onDismissRequest = {},
-        title = { Text(context.getString(R.string.downloading)) },
-        text = {
+    when (LocalUiMode.current) {
+        UiMode.Miuix -> OverlayDialog(
+            show = true,
+            title = context.getString(R.string.downloading),
+            onDismissRequest = {},
+        ) {
             Column {
-                Text(progressText)
-                TextButton(onClick = {
-                    downloadScope?.cancel()
-                    apkFile.delete()
-                    onDismiss()
-                }) { Text(context.getString(R.string.cancel_button)) }
+                MiuixText(text = progressText)
+                MiuixTextButton(
+                    text = context.getString(R.string.cancel_button),
+                    onClick = {
+                        downloadScope?.cancel()
+                        apkFile.delete()
+                        onDismiss()
+                    },
+                )
             }
-        },
-        confirmButton = {}
-    )
+        }
+
+        UiMode.Material -> AlertDialog(
+            onDismissRequest = {},
+            title = { Text(context.getString(R.string.downloading)) },
+            text = {
+                Column {
+                    Text(progressText)
+                    TextButton(onClick = {
+                        downloadScope?.cancel()
+                        apkFile.delete()
+                        onDismiss()
+                    }) { Text(context.getString(R.string.cancel_button)) }
+                }
+            },
+            confirmButton = {}
+        )
+    }
 }

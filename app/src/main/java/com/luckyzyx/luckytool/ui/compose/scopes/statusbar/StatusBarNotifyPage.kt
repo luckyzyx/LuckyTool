@@ -3,7 +3,6 @@ package com.luckyzyx.luckytool.ui.compose.scopes.statusbar
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Text
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -13,7 +12,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.luckyzyx.luckytool.R
 import com.luckyzyx.luckytool.ui.components.AppPickerDialog
-import com.luckyzyx.luckytool.ui.compose.components.material.SegmentedListItem
+import com.luckyzyx.luckytool.ui.compose.components.PrefRow
 import com.luckyzyx.luckytool.ui.compose.scopes.ScopePageSpec
 import com.luckyzyx.luckytool.utils.ModulePrefs
 import com.luckyzyx.luckytool.utils.arraySummaryLine
@@ -66,25 +65,18 @@ object StatusBarNotifyPage {
                 custom(
                     key = "set_small_window_reply_blacklist_list",
                     title = c.getString(R.string.set_small_window_reply_blacklist),
-                ) { slot ->
+                ) {
                     val blacklist by state.stringSetFlow("set_small_window_reply_blacklist_list")
                         .collectAsStateWithLifecycle()
                     var showPicker by remember { mutableStateOf(false) }
                     Box(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
-                        SegmentedListItem(
+                        PrefRow(
+                            title = c.getString(R.string.set_small_window_reply_blacklist),
+                            summary = arraySummaryLine(
+                                c.getString(R.string.set_small_window_reply_blacklist_message),
+                                blacklist.toString(),
+                            ),
                             onClick = { showPicker = true },
-                            supportingContent = {
-                                Text(
-                                    arraySummaryLine(
-                                        c.getString(R.string.set_small_window_reply_blacklist_message),
-                                        blacklist.toString(),
-                                    )
-                                )
-                            },
-                            colors = itemColors(slot),
-                            headlineContent = {
-                                Text(c.getString(R.string.set_small_window_reply_blacklist))
-                            },
                         )
                     }
                     if (showPicker) {

@@ -13,7 +13,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.WindowInsetsSides
-import androidx.compose.foundation.layout.add
 import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.captionBar
@@ -27,6 +26,7 @@ import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBars
+import androidx.compose.foundation.layout.union
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -304,11 +304,12 @@ fun ThemeScreenMiuix(onBack: () -> Unit) {
                 )
             }
         },
-        // OverlayDropdownPreference / OverlayDialog 默认 renderInRootScaffold = true，
-        // 弹出内容只会投递到最近的 Scaffold 的 popup 宿主里；若该槽位为空，
-        // 强调色 / 色彩风格 / 色彩标准下拉与界面缩放对话框都不会有任何显示。
+        // 空槽位：OverlayDropdownPreference / OverlayDialog 默认 renderInRootScaffold = true，
+        // 弹层冒泡到根部 Miuix Scaffold 的默认 popupHost（各页不得自装 host），本页仅声明不自装。
         popupHost = { },
-        contentWindowInsets = WindowInsets.systemBars.add(WindowInsets.displayCutout)
+        // KernelSU 写法为 systemBars.add(displayCutout)；本仓库 Compose 版本没有 WindowInsets.add，
+        // 合并 insets 只能用 union（库内 basic/Scaffold.kt:90 同样写法）。
+        contentWindowInsets = WindowInsets.systemBars.union(WindowInsets.displayCutout)
             .only(WindowInsetsSides.Horizontal)
     ) { innerPadding ->
         val showScaleDialog = rememberSaveable { mutableStateOf(false) }

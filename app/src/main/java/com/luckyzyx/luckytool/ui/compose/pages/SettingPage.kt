@@ -9,8 +9,12 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Text
@@ -36,6 +40,7 @@ import com.luckyzyx.luckytool.ui.compose.components.PrefValueRow
 import com.luckyzyx.luckytool.ui.compose.components.material.ExpressiveList
 import com.luckyzyx.luckytool.ui.compose.components.material.ExpressivePageScaffold
 import com.luckyzyx.luckytool.ui.compose.components.material.SegmentedDropdownItem
+import com.luckyzyx.luckytool.ui.theme.LocalUiMode
 import com.luckyzyx.luckytool.ui.theme.ThemeController
 import com.luckyzyx.luckytool.ui.theme.ThemePrefs
 import com.luckyzyx.luckytool.ui.theme.UiMode
@@ -69,6 +74,11 @@ import java.io.FileNotFoundException
 import java.io.FileOutputStream
 import java.io.IOException
 import kotlin.system.exitProcess
+import top.yukonga.miuix.kmp.basic.BasicComponent
+import top.yukonga.miuix.kmp.basic.ButtonDefaults
+import top.yukonga.miuix.kmp.basic.Text as MiuixText
+import top.yukonga.miuix.kmp.basic.TextButton as MiuixTextButton
+import top.yukonga.miuix.kmp.overlay.OverlayDialog
 
 /**
  * 设置页（旧 SettingsFragment 的 Compose 等价实现）。
@@ -335,42 +345,78 @@ fun SettingPage(activity: MainActivity, onOpenTheme: () -> Unit = {}) {
             donateList.add(3, context.getString(R.string.patreon))
             donateList.add(4, context.getString(R.string.paypal))
         }
-        AlertDialog(
-            onDismissRequest = { showDonateList = false },
-            text = {
+        when (LocalUiMode.current) {
+            UiMode.Miuix -> OverlayDialog(
+                show = true,
+                onDismissRequest = { showDonateList = false },
+            ) {
                 Column {
                     donateList.forEachIndexed { index, label ->
-                        Text(
-                            label,
-                            Modifier
-                                .fillMaxWidth()
-                                .clickable {
-                                    showDonateList = false
-                                    when (index) {
-                                        0, 1, 2 -> showQrType = index
-                                        3 -> if (zh) {
-                                            activity.requestFunctionNavigation(
-                                                "donate",
-                                                context.getString(R.string.donation_list),
-                                            )
-                                        } else {
-                                            context.openUrl("https://www.patreon.com/LuckyTool")
-                                        }
-
-                                        4 -> context.openUrl("https://paypal.me/luckyzyx")
-                                        5 -> activity.requestFunctionNavigation(
+                        BasicComponent(
+                            title = label,
+                            insideMargin = PaddingValues(horizontal = 24.dp, vertical = 14.dp),
+                            onClick = {
+                                showDonateList = false
+                                when (index) {
+                                    0, 1, 2 -> showQrType = index
+                                    3 -> if (zh) {
+                                        activity.requestFunctionNavigation(
                                             "donate",
                                             context.getString(R.string.donation_list),
                                         )
+                                    } else {
+                                        context.openUrl("https://www.patreon.com/LuckyTool")
                                     }
+
+                                    4 -> context.openUrl("https://paypal.me/luckyzyx")
+                                    5 -> activity.requestFunctionNavigation(
+                                        "donate",
+                                        context.getString(R.string.donation_list),
+                                    )
                                 }
-                                .padding(horizontal = 24.dp, vertical = 14.dp),
+                            },
                         )
                     }
                 }
-            },
-            confirmButton = {},
-        )
+            }
+
+            UiMode.Material -> AlertDialog(
+                onDismissRequest = { showDonateList = false },
+                text = {
+                    Column {
+                        donateList.forEachIndexed { index, label ->
+                            Text(
+                                label,
+                                Modifier
+                                    .fillMaxWidth()
+                                    .clickable {
+                                        showDonateList = false
+                                        when (index) {
+                                            0, 1, 2 -> showQrType = index
+                                            3 -> if (zh) {
+                                                activity.requestFunctionNavigation(
+                                                    "donate",
+                                                    context.getString(R.string.donation_list),
+                                                )
+                                            } else {
+                                                context.openUrl("https://www.patreon.com/LuckyTool")
+                                            }
+
+                                            4 -> context.openUrl("https://paypal.me/luckyzyx")
+                                            5 -> activity.requestFunctionNavigation(
+                                                "donate",
+                                                context.getString(R.string.donation_list),
+                                            )
+                                        }
+                                    }
+                                    .padding(horizontal = 24.dp, vertical = 14.dp),
+                            )
+                        }
+                    }
+                },
+                confirmButton = {},
+            )
+        }
     }
 
     if (showQrType >= 0) {
@@ -378,22 +424,52 @@ fun SettingPage(activity: MainActivity, onOpenTheme: () -> Unit = {}) {
     }
 
     if (showClearDialog) {
-        AlertDialog(
-            onDismissRequest = { showClearDialog = false },
-            text = { Text(stringResource(R.string.clear_all_data_message)) },
-            confirmButton = {
-                TextButton(onClick = {
-                    showClearDialog = false
-                    context.clearAllPrefs(ModulePrefs, IntentPrefs, SettingsPrefs, OtherPrefs)
-                    exitProcess(0)
-                }) { Text(stringResource(android.R.string.ok)) }
-            },
-            dismissButton = {
-                TextButton(onClick = { showClearDialog = false }) {
-                    Text(stringResource(android.R.string.cancel))
+        when (LocalUiMode.current) {
+            UiMode.Miuix -> OverlayDialog(
+                show = true,
+                onDismissRequest = { showClearDialog = false },
+            ) {
+                MiuixText(
+                    text = stringResource(R.string.clear_all_data_message),
+                    modifier = Modifier.fillMaxWidth(),
+                )
+                Row(modifier = Modifier.padding(top = 12.dp)) {
+                    MiuixTextButton(
+                        text = stringResource(android.R.string.cancel),
+                        onClick = { showClearDialog = false },
+                        modifier = Modifier.weight(1f),
+                    )
+                    Spacer(Modifier.width(20.dp))
+                    MiuixTextButton(
+                        text = stringResource(android.R.string.ok),
+                        onClick = {
+                            showClearDialog = false
+                            context.clearAllPrefs(ModulePrefs, IntentPrefs, SettingsPrefs, OtherPrefs)
+                            exitProcess(0)
+                        },
+                        modifier = Modifier.weight(1f),
+                        colors = ButtonDefaults.textButtonColorsPrimary(),
+                    )
                 }
-            },
-        )
+            }
+
+            UiMode.Material -> AlertDialog(
+                onDismissRequest = { showClearDialog = false },
+                text = { Text(stringResource(R.string.clear_all_data_message)) },
+                confirmButton = {
+                    TextButton(onClick = {
+                        showClearDialog = false
+                        context.clearAllPrefs(ModulePrefs, IntentPrefs, SettingsPrefs, OtherPrefs)
+                        exitProcess(0)
+                    }) { Text(stringResource(android.R.string.ok)) }
+                },
+                dismissButton = {
+                    TextButton(onClick = { showClearDialog = false }) {
+                        Text(stringResource(android.R.string.cancel))
+                    }
+                },
+            )
+        }
     }
 
     if (showFeedbackDialog) {
@@ -405,70 +481,128 @@ fun SettingPage(activity: MainActivity, onOpenTheme: () -> Unit = {}) {
             context.getString(R.string.telegram_channel),
             context.getString(R.string.lsposed_repo),
         )
-        AlertDialog(
-            onDismissRequest = { showFeedbackDialog = false },
-            text = {
+        when (LocalUiMode.current) {
+            UiMode.Miuix -> OverlayDialog(
+                show = true,
+                onDismissRequest = { showFeedbackDialog = false },
+            ) {
                 Column {
                     items.forEachIndexed { index, label ->
-                        Text(
-                            label,
-                            Modifier
-                                .fillMaxWidth()
-                                .clickable {
-                                    showFeedbackDialog = false
-                                    when (index) {
-                                        0 -> context.openUrl("coolmarket://u/1930284")
-                                        1 -> context.openUrl("https://luckyzyx.gitlab.io/LuckyTool_Doc")
-                                        2 -> context.openUrl(
-                                            "http://qm.qq.com/cgi-bin/qm/qr?_wv=1027&k=3fYu6lT8IHrBPKAfFTNSHbd8wcWX0oGs&authKey=dyIpjTWH8KWHMU3v6gI05T0bAzr6XigJKasMiCwmco1%2F8BRtPCN%2B1zOGgXyK7IUB&noverify=0&group_code=663884734"
-                                        )
+                        BasicComponent(
+                            title = label,
+                            insideMargin = PaddingValues(horizontal = 24.dp, vertical = 14.dp),
+                            onClick = {
+                                showFeedbackDialog = false
+                                when (index) {
+                                    0 -> context.openUrl("coolmarket://u/1930284")
+                                    1 -> context.openUrl("https://luckyzyx.gitlab.io/LuckyTool_Doc")
+                                    2 -> context.openUrl(
+                                        "http://qm.qq.com/cgi-bin/qm/qr?_wv=1027&k=3fYu6lT8IHrBPKAfFTNSHbd8wcWX0oGs&authKey=dyIpjTWH8KWHMU3v6gI05T0bAzr6XigJKasMiCwmco1%2F8BRtPCN%2B1zOGgXyK7IUB&noverify=0&group_code=663884734"
+                                    )
 
-                                        3 -> context.openUrl("https://pd.qq.com/s/ahjm4zyxb")
-                                        4 -> context.openUrl("https://t.me/LuckyTool")
-                                        5 -> context.openUrl(
-                                            "https://modules.lsposed.org/module/com.luckyzyx.luckytool"
-                                        )
-                                    }
+                                    3 -> context.openUrl("https://pd.qq.com/s/ahjm4zyxb")
+                                    4 -> context.openUrl("https://t.me/LuckyTool")
+                                    5 -> context.openUrl(
+                                        "https://modules.lsposed.org/module/com.luckyzyx.luckytool"
+                                    )
                                 }
-                                .padding(horizontal = 24.dp, vertical = 14.dp),
+                            },
                         )
                     }
                 }
-            },
-            confirmButton = {},
-        )
+            }
+
+            UiMode.Material -> AlertDialog(
+                onDismissRequest = { showFeedbackDialog = false },
+                text = {
+                    Column {
+                        items.forEachIndexed { index, label ->
+                            Text(
+                                label,
+                                Modifier
+                                    .fillMaxWidth()
+                                    .clickable {
+                                        showFeedbackDialog = false
+                                        when (index) {
+                                            0 -> context.openUrl("coolmarket://u/1930284")
+                                            1 -> context.openUrl("https://luckyzyx.gitlab.io/LuckyTool_Doc")
+                                            2 -> context.openUrl(
+                                                "http://qm.qq.com/cgi-bin/qm/qr?_wv=1027&k=3fYu6lT8IHrBPKAfFTNSHbd8wcWX0oGs&authKey=dyIpjTWH8KWHMU3v6gI05T0bAzr6XigJKasMiCwmco1%2F8BRtPCN%2B1zOGgXyK7IUB&noverify=0&group_code=663884734"
+                                            )
+
+                                            3 -> context.openUrl("https://pd.qq.com/s/ahjm4zyxb")
+                                            4 -> context.openUrl("https://t.me/LuckyTool")
+                                            5 -> context.openUrl(
+                                                "https://modules.lsposed.org/module/com.luckyzyx.luckytool"
+                                            )
+                                        }
+                                    }
+                                    .padding(horizontal = 24.dp, vertical = 14.dp),
+                            )
+                        }
+                    }
+                },
+                confirmButton = {},
+            )
+        }
     }
 
     pendingRestoreJson?.let { json ->
         val osCode = json.optInt("osCode")
-        AlertDialog(
-            onDismissRequest = { pendingRestoreJson = null },
-            text = {
-                Text(
-                    """
+        val restoreMessage = """
                     ${context.getString(R.string.data_backup_data_version)}: ${
-                        getOSVersionName(
-                            osCode
-                        )
-                    }
+            getOSVersionName(
+                osCode
+            )
+        }
                     ${context.getString(R.string.data_current_system_version)}: $getOSVersionName
                     
                     ${context.getString(R.string.data_restore_version_tips)}
                     """.trimIndent()
+        when (LocalUiMode.current) {
+            UiMode.Miuix -> OverlayDialog(
+                show = true,
+                onDismissRequest = { pendingRestoreJson = null },
+            ) {
+                MiuixText(
+                    text = restoreMessage,
+                    modifier = Modifier.fillMaxWidth(),
                 )
-            },
-            confirmButton = {
-                TextButton(onClick = { pendingRestoreJson = null }) {
-                    Text(stringResource(android.R.string.ok))
+                Row(modifier = Modifier.padding(top = 12.dp)) {
+                    MiuixTextButton(
+                        text = stringResource(R.string.ignore),
+                        onClick = {
+                            pendingRestoreJson = null
+                            writeRestoreData(activity, json)
+                        },
+                        modifier = Modifier.weight(1f),
+                    )
+                    Spacer(Modifier.width(20.dp))
+                    MiuixTextButton(
+                        text = stringResource(android.R.string.ok),
+                        onClick = { pendingRestoreJson = null },
+                        modifier = Modifier.weight(1f),
+                        colors = ButtonDefaults.textButtonColorsPrimary(),
+                    )
                 }
-            },
-            dismissButton = {
-                TextButton(onClick = {
-                    pendingRestoreJson = null
-                    writeRestoreData(activity, json)
-                }) { Text(stringResource(R.string.ignore)) }
-            },
-        )
+            }
+
+            UiMode.Material -> AlertDialog(
+                onDismissRequest = { pendingRestoreJson = null },
+                text = { Text(restoreMessage) },
+                confirmButton = {
+                    TextButton(onClick = { pendingRestoreJson = null }) {
+                        Text(stringResource(android.R.string.ok))
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = {
+                        pendingRestoreJson = null
+                        writeRestoreData(activity, json)
+                    }) { Text(stringResource(R.string.ignore)) }
+                },
+            )
+        }
     }
 }
 

@@ -5,7 +5,10 @@ import android.provider.Settings
 import androidx.compose.material3.Text
 import com.luckyzyx.luckytool.R
 import com.luckyzyx.luckytool.ui.compose.components.material.SegmentedListItem
+import com.luckyzyx.luckytool.ui.compose.components.miuix.MiuixListItem
 import com.luckyzyx.luckytool.ui.compose.scopes.ScopePageSpec
+import com.luckyzyx.luckytool.ui.theme.LocalUiMode
+import com.luckyzyx.luckytool.ui.theme.UiMode
 import com.luckyzyx.luckytool.utils.IntentUtils
 import com.luckyzyx.luckytool.utils.SettingsPrefs
 import com.luckyzyx.luckytool.utils.checkResolveActivity
@@ -29,10 +32,14 @@ object QuickEntryPage {
         fun entry(title: String, visible: Boolean = true, onClick: () -> Unit) {
             if (!visible) return
             custom(key = null, title = title) {
-                SegmentedListItem(
-                    onClick = onClick,
-                    headlineContent = { Text(title) },
-                )
+                if (LocalUiMode.current == UiMode.Miuix) {
+                    MiuixListItem(title = title, onClick = onClick)
+                } else {
+                    SegmentedListItem(
+                        onClick = onClick,
+                        headlineContent = { Text(title) },
+                    )
+                }
             }
         }
 

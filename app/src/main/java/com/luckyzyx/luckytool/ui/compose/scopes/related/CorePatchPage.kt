@@ -16,9 +16,15 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.luckyzyx.luckytool.R
 import com.luckyzyx.luckytool.ui.compose.components.PrefCard
-import com.luckyzyx.luckytool.ui.compose.components.material.SegmentedSwitchItem
+import com.luckyzyx.luckytool.ui.compose.components.PrefSwitchRow
 import com.luckyzyx.luckytool.ui.compose.scopes.ScopePageSpec
+import com.luckyzyx.luckytool.ui.theme.LocalUiMode
+import com.luckyzyx.luckytool.ui.theme.UiMode
 import com.luckyzyx.luckytool.utils.ModulePrefs
+import top.yukonga.miuix.kmp.basic.ButtonDefaults
+import top.yukonga.miuix.kmp.basic.Text as MiuixText
+import top.yukonga.miuix.kmp.basic.TextButton as MiuixTextButton
+import top.yukonga.miuix.kmp.overlay.OverlayDialog
 
 /**
  * CorePatch 页（旧 ui.fragment.scopes.related.CorePatch 的 Compose 等价物）。
@@ -79,7 +85,7 @@ object CorePatchPage {
                 if (newValue) showWarning = true
             }
             Box(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
-                SegmentedSwitchItem(
+                PrefSwitchRow(
                     title = c.getString(R.string.use_previous_signatures),
                     summary = c.getString(R.string.use_previous_signatures_summary),
                     checked = checked,
@@ -87,15 +93,33 @@ object CorePatchPage {
                 )
             }
             if (showWarning) {
-                AlertDialog(
-                    onDismissRequest = { showWarning = false },
-                    text = { Text(c.getString(R.string.use_previous_signatures_warning)) },
-                    confirmButton = {
-                        TextButton(onClick = { showWarning = false }) {
-                            Text(stringResource(android.R.string.ok))
-                        }
-                    },
-                )
+                when (LocalUiMode.current) {
+                    UiMode.Miuix -> OverlayDialog(
+                        show = true,
+                        onDismissRequest = { showWarning = false },
+                    ) {
+                        MiuixText(
+                            text = c.getString(R.string.use_previous_signatures_warning),
+                            modifier = Modifier.fillMaxWidth(),
+                        )
+                        MiuixTextButton(
+                            text = stringResource(android.R.string.ok),
+                            onClick = { showWarning = false },
+                            modifier = Modifier.fillMaxWidth().padding(top = 12.dp),
+                            colors = ButtonDefaults.textButtonColorsPrimary(),
+                        )
+                    }
+
+                    UiMode.Material -> AlertDialog(
+                        onDismissRequest = { showWarning = false },
+                        text = { Text(c.getString(R.string.use_previous_signatures_warning)) },
+                        confirmButton = {
+                            TextButton(onClick = { showWarning = false }) {
+                                Text(stringResource(android.R.string.ok))
+                            }
+                        },
+                    )
+                }
             }
         }
         switch(

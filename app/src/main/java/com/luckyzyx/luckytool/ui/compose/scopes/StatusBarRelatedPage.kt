@@ -14,6 +14,9 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.luckyzyx.luckytool.R
 import com.luckyzyx.luckytool.ui.components.AppPickerDialog
 import com.luckyzyx.luckytool.ui.compose.components.material.SegmentedListItem
+import com.luckyzyx.luckytool.ui.compose.components.miuix.MiuixListItem
+import com.luckyzyx.luckytool.ui.theme.LocalUiMode
+import com.luckyzyx.luckytool.ui.theme.UiMode
 import com.luckyzyx.luckytool.utils.A13
 import com.luckyzyx.luckytool.utils.ModulePrefs
 import com.luckyzyx.luckytool.utils.SDK
@@ -94,16 +97,25 @@ object StatusBarRelatedPage {
                         .collectAsStateWithLifecycle()
                     val enabled = !state.getBoolean("disable_music_fluid_cloud_display")
                     var showPicker by remember { mutableStateOf(false) }
-                    Box(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
-                        SegmentedListItem(
+                    if (LocalUiMode.current == UiMode.Miuix) {
+                        MiuixListItem(
+                            title = c.getString(R.string.set_custom_music_fluid_cloud_whitelist),
+                            summary = whitelist.toString(),
                             onClick = { if (enabled) showPicker = true },
-                            supportingContent = { Text(whitelist.toString()) },
                             enabled = enabled,
-                            colors = itemColors(slot),
-                            headlineContent = {
-                                Text(c.getString(R.string.set_custom_music_fluid_cloud_whitelist))
-                            },
                         )
+                    } else {
+                        Box(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
+                            SegmentedListItem(
+                                onClick = { if (enabled) showPicker = true },
+                                supportingContent = { Text(whitelist.toString()) },
+                                enabled = enabled,
+                                colors = itemColors(slot),
+                                headlineContent = {
+                                    Text(c.getString(R.string.set_custom_music_fluid_cloud_whitelist))
+                                },
+                            )
+                        }
                     }
                     if (showPicker) {
                         AppPickerDialog(

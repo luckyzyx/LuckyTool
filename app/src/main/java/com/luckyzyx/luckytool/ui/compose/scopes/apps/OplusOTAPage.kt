@@ -4,14 +4,13 @@ import android.os.SystemProperties
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Text
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.drake.net.utils.scopeLife
 import com.drake.net.utils.withDefault
 import com.luckyzyx.luckytool.R
-import com.luckyzyx.luckytool.ui.compose.components.material.SegmentedListItem
+import com.luckyzyx.luckytool.ui.compose.components.PrefRow
 import com.luckyzyx.luckytool.ui.compose.scopes.ScopePageSpec
 import com.luckyzyx.luckytool.utils.CommandUtils
 import com.luckyzyx.luckytool.utils.ModulePrefs
@@ -46,7 +45,7 @@ object OplusOTAPage {
         // 纯信息型（旧 Preference 无点击）：展示当前 OTA 校验结果
         // shell 调用只在渲染期执行：headless 索引构建不得执行任何 IO
         val verifyTitle = c.getString(R.string.get_ota_verify_result)
-        custom(key = "get_ota_verify_result", title = verifyTitle) { slot ->
+        custom(key = "get_ota_verify_result", title = verifyTitle) {
             val verifySummary = c.getString(
                 R.string.get_ota_verify_result_summary,
                 formatStringAuto(
@@ -58,10 +57,9 @@ object OplusOTAPage {
                 ),
             )
             Box(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
-                SegmentedListItem(
-                    supportingContent = { Text(verifySummary) },
-                    colors = itemColors(slot),
-                    headlineContent = { Text(verifyTitle) },
+                PrefRow(
+                    title = verifyTitle,
+                    summary = verifySummary,
                 )
             }
         }
@@ -70,10 +68,12 @@ object OplusOTAPage {
             key = "unlock_local_upgrade",
             title = c.getString(R.string.unlock_local_upgrade),
             summary = c.getString(R.string.unlock_local_upgrade_summary),
-        ) { slot ->
+        ) {
             val lifecycleOwner = LocalLifecycleOwner.current
             Box(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
-                SegmentedListItem(
+                PrefRow(
+                    title = c.getString(R.string.unlock_local_upgrade),
+                    summary = c.getString(R.string.unlock_local_upgrade_summary),
                     onClick = {
                         lifecycleOwner.scopeLife {
                             val command = arrayOf(
@@ -86,9 +86,6 @@ object OplusOTAPage {
                             withDefault { ShellUtils.fastCmd(*command) }
                         }
                     },
-                    supportingContent = { Text(c.getString(R.string.unlock_local_upgrade_summary)) },
-                    colors = itemColors(slot),
-                    headlineContent = { Text(c.getString(R.string.unlock_local_upgrade)) },
                 )
             }
         }

@@ -7,8 +7,12 @@ import androidx.collection.ArrayMap
 import androidx.collection.arrayMapOf
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -19,6 +23,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.highcapable.betterandroid.ui.extension.view.toast
 import com.luckyzyx.luckytool.IPackageServiceController
@@ -27,6 +32,8 @@ import com.luckyzyx.luckytool.service.ActivityManagerService
 import com.luckyzyx.luckytool.service.PackagesService
 import com.luckyzyx.luckytool.service.PowerService
 import com.luckyzyx.luckytool.ui.service.XposedServiceBridge
+import com.luckyzyx.luckytool.ui.theme.LocalUiMode
+import com.luckyzyx.luckytool.ui.theme.UiMode
 import com.topjohnwu.superuser.Shell
 import com.topjohnwu.superuser.ShellUtils
 import io.github.libxposed.service.HotReloadResult
@@ -36,6 +43,11 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.lsposed.lsparanoid.Obfuscate
+import top.yukonga.miuix.kmp.basic.BasicComponent
+import top.yukonga.miuix.kmp.basic.ButtonDefaults
+import top.yukonga.miuix.kmp.basic.Text as MiuixText
+import top.yukonga.miuix.kmp.basic.TextButton as MiuixTextButton
+import top.yukonga.miuix.kmp.overlay.OverlayDialog
 
 @Obfuscate
 object RestartMenuUtils {
@@ -68,14 +80,17 @@ object RestartMenuUtils {
                 confirmFirst = true,
                 onDismiss
             )
-            else -> AlertDialog(
-                onDismissRequest = onDismiss,
-                text = {
+            else -> when (LocalUiMode.current) {
+                UiMode.Miuix -> OverlayDialog(
+                    show = true,
+                    onDismissRequest = onDismiss,
+                ) {
                     Column {
                         items.forEachIndexed { index, label ->
-                            Text(
-                                label,
-                                Modifier.fillMaxWidth().clickable {
+                            BasicComponent(
+                                title = label,
+                                insideMargin = PaddingValues(horizontal = 24.dp, vertical = 14.dp),
+                                onClick = {
                                     when (index) {
                                         0 -> showConfirmScope = true
                                         1 -> showOptimize = true
@@ -91,13 +106,43 @@ object RestartMenuUtils {
                                             onDismiss()
                                         }
                                     }
-                                }.padding(horizontal = 24.dp, vertical = 14.dp)
+                                },
                             )
                         }
                     }
-                },
-                confirmButton = {}
-            )
+                }
+
+                UiMode.Material -> AlertDialog(
+                    onDismissRequest = onDismiss,
+                    text = {
+                        Column {
+                            items.forEachIndexed { index, label ->
+                                Text(
+                                    label,
+                                    Modifier.fillMaxWidth().clickable {
+                                        when (index) {
+                                            0 -> showConfirmScope = true
+                                            1 -> showOptimize = true
+                                            2 -> showConfirmHooker = true
+                                            3 -> {
+                                                PowerService.get(context) { controller ->
+                                                    controller?.reboot(false, null, false)
+                                                }
+                                                onDismiss()
+                                            }
+                                            else -> {
+                                                ShellUtils.fastCmd(CommandUtils.killzygote)
+                                                onDismiss()
+                                            }
+                                        }
+                                    }.padding(horizontal = 24.dp, vertical = 14.dp)
+                                )
+                            }
+                        }
+                    },
+                    confirmButton = {}
+                )
+            }
         }
     }
 
@@ -138,14 +183,17 @@ object RestartMenuUtils {
             showConfirmScope -> ConfirmRestartAllScopeDialog(context, onDismiss)
             showConfirmHooker -> ConfirmRestartAllHookerDialog(context, onDismiss)
             showOptimize -> OptimizeDexDialog(context, optimizeScopes, optimizeConfirmFirst, onDismiss)
-            else -> AlertDialog(
-                onDismissRequest = onDismiss,
-                text = {
+            else -> when (LocalUiMode.current) {
+                UiMode.Miuix -> OverlayDialog(
+                    show = true,
+                    onDismissRequest = onDismiss,
+                ) {
                     Column {
                         items.forEachIndexed { index, label ->
-                            Text(
-                                label,
-                                Modifier.fillMaxWidth().clickable {
+                            BasicComponent(
+                                title = label,
+                                insideMargin = PaddingValues(horizontal = 24.dp, vertical = 14.dp),
+                                onClick = {
                                     if (isSystemPage) {
                                         when (index) {
                                             0 -> showConfirmHooker = true
@@ -181,13 +229,63 @@ object RestartMenuUtils {
                                             }
                                         }
                                     }
-                                }.padding(horizontal = 24.dp, vertical = 14.dp)
+                                },
                             )
                         }
                     }
-                },
-                confirmButton = {}
-            )
+                }
+
+                UiMode.Material -> AlertDialog(
+                    onDismissRequest = onDismiss,
+                    text = {
+                        Column {
+                            items.forEachIndexed { index, label ->
+                                Text(
+                                    label,
+                                    Modifier.fillMaxWidth().clickable {
+                                        if (isSystemPage) {
+                                            when (index) {
+                                                0 -> showConfirmHooker = true
+                                                else -> {
+                                                    restartHooker(context, scopes)
+                                                    onDismiss()
+                                                }
+                                            }
+                                        } else {
+                                            when (index) {
+                                                0 -> showConfirmScope = true
+                                                1 -> {
+                                                    optimizeScopes = buildScopeMaps(
+                                                        context,
+                                                        context.resources.getStringArray(R.array.xposed_scope)
+                                                    )
+                                                    optimizeConfirmFirst = true
+                                                    showOptimize = true
+                                                }
+                                                2 -> showConfirmHooker = true
+                                                3 -> {
+                                                    restartScope(context, scopes)
+                                                    onDismiss()
+                                                }
+                                                4 -> {
+                                                    optimizeScopes = buildScopeMaps(context, scopes)
+                                                    optimizeConfirmFirst = false
+                                                    showOptimize = true
+                                                }
+                                                else -> {
+                                                    restartHooker(context, scopes)
+                                                    onDismiss()
+                                                }
+                                            }
+                                        }
+                                    }.padding(horizontal = 24.dp, vertical = 14.dp)
+                                )
+                            }
+                        }
+                    },
+                    confirmButton = {}
+                )
+            }
         }
     }
 
@@ -197,21 +295,34 @@ object RestartMenuUtils {
     @Composable
     private fun ConfirmRestartAllScopeDialog(context: Context, onDismiss: () -> Unit) {
         val xposedScope = remember { context.resources.getStringArray(R.array.xposed_scope) }
-        AlertDialog(
-            onDismissRequest = onDismiss,
-            text = { Text(context.getString(R.string.restart_scope_message)) },
-            confirmButton = {
-                TextButton(onClick = {
+        when (LocalUiMode.current) {
+            UiMode.Miuix -> MiuixMessageDialog(
+                message = context.getString(R.string.restart_scope_message),
+                onConfirm = {
                     coroutineScope.launch(Dispatchers.Default) {
                         restartScope(context, xposedScope)
                     }
                     onDismiss()
-                }) { Text(context.getString(android.R.string.ok)) }
-            },
-            dismissButton = {
-                TextButton(onClick = onDismiss) { Text(context.getString(android.R.string.cancel)) }
-            }
-        )
+                },
+                onDismiss = onDismiss,
+            )
+
+            UiMode.Material -> AlertDialog(
+                onDismissRequest = onDismiss,
+                text = { Text(context.getString(R.string.restart_scope_message)) },
+                confirmButton = {
+                    TextButton(onClick = {
+                        coroutineScope.launch(Dispatchers.Default) {
+                            restartScope(context, xposedScope)
+                        }
+                        onDismiss()
+                    }) { Text(context.getString(android.R.string.ok)) }
+                },
+                dismissButton = {
+                    TextButton(onClick = onDismiss) { Text(context.getString(android.R.string.cancel)) }
+                }
+            )
+        }
     }
 
     /**
@@ -220,19 +331,66 @@ object RestartMenuUtils {
     @Composable
     private fun ConfirmRestartAllHookerDialog(context: Context, onDismiss: () -> Unit) {
         val xposedScope = remember { context.resources.getStringArray(R.array.xposed_scope) }
-        AlertDialog(
-            onDismissRequest = onDismiss,
-            text = { Text(context.getString(R.string.reload_hooker_message)) },
-            confirmButton = {
-                TextButton(onClick = {
+        when (LocalUiMode.current) {
+            UiMode.Miuix -> MiuixMessageDialog(
+                message = context.getString(R.string.reload_hooker_message),
+                onConfirm = {
                     restartHooker(context, xposedScope)
                     onDismiss()
-                }) { Text(context.getString(android.R.string.ok)) }
-            },
-            dismissButton = {
-                TextButton(onClick = onDismiss) { Text(context.getString(android.R.string.cancel)) }
+                },
+                onDismiss = onDismiss,
+            )
+
+            UiMode.Material -> AlertDialog(
+                onDismissRequest = onDismiss,
+                text = { Text(context.getString(R.string.reload_hooker_message)) },
+                confirmButton = {
+                    TextButton(onClick = {
+                        restartHooker(context, xposedScope)
+                        onDismiss()
+                    }) { Text(context.getString(android.R.string.ok)) }
+                },
+                dismissButton = {
+                    TextButton(onClick = onDismiss) { Text(context.getString(android.R.string.cancel)) }
+                }
+            )
+        }
+    }
+
+    /**
+     * Miuix 线的“消息 + 确认/取消”对话框。
+     *
+     * 弹层走 `overlay.OverlayDialog`，由根部 Miuix Scaffold 的 popup host 承载
+     * （`renderInRootScaffold` 保持默认 true，不自装 host）。
+     */
+    @Composable
+    private fun MiuixMessageDialog(
+        message: String,
+        onConfirm: () -> Unit,
+        onDismiss: () -> Unit,
+        title: String? = null,
+    ) {
+        OverlayDialog(
+            show = true,
+            title = title,
+            onDismissRequest = onDismiss,
+        ) {
+            MiuixText(text = message, modifier = Modifier.fillMaxWidth())
+            Row(modifier = Modifier.padding(top = 12.dp)) {
+                MiuixTextButton(
+                    text = stringResource(android.R.string.cancel),
+                    onClick = onDismiss,
+                    modifier = Modifier.weight(1f),
+                )
+                Spacer(Modifier.width(20.dp))
+                MiuixTextButton(
+                    text = stringResource(android.R.string.ok),
+                    onClick = onConfirm,
+                    modifier = Modifier.weight(1f),
+                    colors = ButtonDefaults.textButtonColorsPrimary(),
+                )
             }
-        )
+        }
     }
 
     /**
@@ -330,20 +488,31 @@ object RestartMenuUtils {
             stage = OptimizeStage.Running
         }
         when (stage) {
-            OptimizeStage.Confirm -> AlertDialog(
-                onDismissRequest = onDismiss,
-                text = { Text(context.getString(R.string.re_optimize_dex_message)) },
-                confirmButton = {
-                    TextButton(onClick = { launch(current) }) {
-                        Text(context.getString(android.R.string.ok))
-                    }
-                },
-                dismissButton = {
-                    TextButton(onClick = onDismiss) {
-                        Text(context.getString(android.R.string.cancel))
-                    }
+            OptimizeStage.Confirm -> {
+                when (LocalUiMode.current) {
+                    UiMode.Miuix -> MiuixMessageDialog(
+                        message = context.getString(R.string.re_optimize_dex_message),
+                        onConfirm = { launch(current) },
+                        onDismiss = onDismiss,
+                    )
+
+                    UiMode.Material -> AlertDialog(
+                        onDismissRequest = onDismiss,
+                        text = { Text(context.getString(R.string.re_optimize_dex_message)) },
+                        confirmButton = {
+                            TextButton(onClick = { launch(current) }) {
+                                Text(context.getString(android.R.string.ok))
+                            }
+                        },
+                        dismissButton = {
+                            TextButton(onClick = onDismiss) {
+                                Text(context.getString(android.R.string.cancel))
+                            }
+                        }
+                    )
                 }
-            )
+            }
+
             OptimizeStage.Running -> {
                 LaunchedEffect(Unit) {
                     runOptimize(context, current, { progressText = it }) { failed ->
@@ -356,35 +525,60 @@ object RestartMenuUtils {
                         }
                     }
                 }
-                AlertDialog(
-                    onDismissRequest = {},
-                    title = { Text(context.getString(R.string.re_optimize_dex_optimizing)) },
-                    text = { Text(progressText) },
-                    confirmButton = {}
-                )
+                when (LocalUiMode.current) {
+                    UiMode.Miuix -> OverlayDialog(
+                        show = true,
+                        title = context.getString(R.string.re_optimize_dex_optimizing),
+                        onDismissRequest = {},
+                    ) {
+                        MiuixText(text = progressText, modifier = Modifier.fillMaxWidth())
+                    }
+
+                    UiMode.Material -> AlertDialog(
+                        onDismissRequest = {},
+                        title = { Text(context.getString(R.string.re_optimize_dex_optimizing)) },
+                        text = { Text(progressText) },
+                        confirmButton = {}
+                    )
+                }
             }
-            OptimizeStage.Failed -> AlertDialog(
-                onDismissRequest = onDismiss,
-                title = { Text(context.getString(R.string.re_optimize_dex_failed)) },
-                text = {
-                    Text(
-                        context.getString(
+
+            OptimizeStage.Failed -> {
+                when (LocalUiMode.current) {
+                    UiMode.Miuix -> MiuixMessageDialog(
+                        title = context.getString(R.string.re_optimize_dex_failed),
+                        message = context.getString(
                             R.string.re_optimize_dex_faile_message,
                             failedApps.values.joinToString("\n")
-                        )
+                        ),
+                        onConfirm = { launch(failedApps) },
+                        onDismiss = onDismiss,
                     )
-                },
-                confirmButton = {
-                    TextButton(onClick = { launch(failedApps) }) {
-                        Text(context.getString(android.R.string.ok))
-                    }
-                },
-                dismissButton = {
-                    TextButton(onClick = onDismiss) {
-                        Text(context.getString(android.R.string.cancel))
-                    }
+
+                    UiMode.Material -> AlertDialog(
+                        onDismissRequest = onDismiss,
+                        title = { Text(context.getString(R.string.re_optimize_dex_failed)) },
+                        text = {
+                            Text(
+                                context.getString(
+                                    R.string.re_optimize_dex_faile_message,
+                                    failedApps.values.joinToString("\n")
+                                )
+                            )
+                        },
+                        confirmButton = {
+                            TextButton(onClick = { launch(failedApps) }) {
+                                Text(context.getString(android.R.string.ok))
+                            }
+                        },
+                        dismissButton = {
+                            TextButton(onClick = onDismiss) {
+                                Text(context.getString(android.R.string.cancel))
+                            }
+                        }
+                    )
                 }
-            )
+            }
         }
     }
 

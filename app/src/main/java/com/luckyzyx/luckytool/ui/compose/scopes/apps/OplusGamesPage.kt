@@ -4,7 +4,6 @@ import android.content.Intent
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Text
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -14,7 +13,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.luckyzyx.luckytool.R
 import com.luckyzyx.luckytool.ui.components.AppPickerDialog
-import com.luckyzyx.luckytool.ui.compose.components.material.SegmentedListItem
+import com.luckyzyx.luckytool.ui.compose.components.PrefRow
 import com.luckyzyx.luckytool.ui.compose.scopes.ScopePageSpec
 import com.luckyzyx.luckytool.utils.A14
 import com.luckyzyx.luckytool.utils.AppUtils
@@ -55,19 +54,16 @@ object OplusGamesPage {
                 )
             )
         ) {
-            custom(title = c.getString(R.string.game_assistant_page)) { slot ->
+            custom(title = c.getString(R.string.game_assistant_page)) {
                 Box(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
-                    SegmentedListItem(
+                    PrefRow(
+                        title = c.getString(R.string.game_assistant_page),
+                        summary = "(${appUtils.getAppLabel("com.oplus.games")})",
                         onClick = {
                             launchShell(
                                 "com.oplus.games/business.compact.activity.GameBoxCoverActivity"
                             )
                         },
-                        supportingContent = {
-                            Text("(${appUtils.getAppLabel("com.oplus.games")})")
-                        },
-                        colors = itemColors(slot),
-                        headlineContent = { Text(c.getString(R.string.game_assistant_page)) },
                     )
                 }
             }
@@ -80,20 +76,17 @@ object OplusGamesPage {
                 )
             )
         ) {
-            custom(title = c.getString(R.string.game_space_page)) { slot ->
+            custom(title = c.getString(R.string.game_space_page)) {
                 Box(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
-                    SegmentedListItem(
+                    PrefRow(
+                        title = c.getString(R.string.game_space_page),
+                        summary = "(${appUtils.getAppLabel("com.nearme.gamecenter")})",
                         onClick = {
                             launchShell(
                                 "com.nearme.gamecenter/" +
                                     "com.nearme.gamespace.desktopspace.ui.DesktopSpaceMainActivity"
                             )
                         },
-                        supportingContent = {
-                            Text("(${appUtils.getAppLabel("com.nearme.gamecenter")})")
-                        },
-                        colors = itemColors(slot),
-                        headlineContent = { Text(c.getString(R.string.game_space_page)) },
                     )
                 }
             }
@@ -136,21 +129,16 @@ object OplusGamesPage {
         )
         if (state.getBoolean("enable_developer_page")) {
             if (c.checkPackName("com.oplus.games")) {
-                custom(title = c.getString(R.string.game_assistant_develop_page)) { slot ->
+                custom(title = c.getString(R.string.game_assistant_develop_page)) {
                     Box(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
-                        SegmentedListItem(
+                        PrefRow(
+                            title = c.getString(R.string.game_assistant_develop_page),
+                            summary = "(${appUtils.getAppLabel("com.oplus.games")})",
                             onClick = {
                                 launchShell(
                                     "com.oplus.games/" +
                                         "business.compact.activity.GameDevelopOptionsActivity"
                                 )
-                            },
-                            supportingContent = {
-                                Text("(${appUtils.getAppLabel("com.oplus.games")})")
-                            },
-                            colors = itemColors(slot),
-                            headlineContent = {
-                                Text(c.getString(R.string.game_assistant_develop_page))
                             },
                         )
                     }
@@ -160,16 +148,15 @@ object OplusGamesPage {
         custom(
             key = "custom_media_player_support_list",
             title = c.getString(R.string.custom_media_player_support),
-        ) { slot ->
+        ) {
             val saved by state.stringSetFlow("custom_media_player_support_list")
                 .collectAsStateWithLifecycle()
             var show by remember { mutableStateOf(false) }
             Box(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
-                SegmentedListItem(
+                PrefRow(
+                    title = c.getString(R.string.custom_media_player_support),
+                    summary = saved.toString(),
                     onClick = { show = true },
-                    supportingContent = { Text(saved.toString()) },
-                    colors = itemColors(slot),
-                    headlineContent = { Text(c.getString(R.string.custom_media_player_support)) },
                 )
             }
             if (show) {
@@ -191,19 +178,16 @@ object OplusGamesPage {
         custom(
             key = "custom_barrage_notification_whitelist_list",
             title = c.getString(R.string.custom_barrage_notification_whitelist),
-        ) { slot ->
+        ) {
             val saved by state
                 .stringSetFlow("custom_barrage_notification_whitelist_list")
                 .collectAsStateWithLifecycle()
             var show by remember { mutableStateOf(false) }
             Box(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
-                SegmentedListItem(
+                PrefRow(
+                    title = c.getString(R.string.custom_barrage_notification_whitelist),
+                    summary = saved.toString(),
                     onClick = { show = true },
-                    supportingContent = { Text(saved.toString()) },
-                    colors = itemColors(slot),
-                    headlineContent = {
-                        Text(c.getString(R.string.custom_barrage_notification_whitelist))
-                    },
                 )
             }
             if (show) {

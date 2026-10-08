@@ -6,7 +6,6 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Text
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -17,7 +16,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.luckyzyx.luckytool.R
 import com.luckyzyx.luckytool.ui.components.AppPickerDialog
-import com.luckyzyx.luckytool.ui.compose.components.material.SegmentedListItem
+import com.luckyzyx.luckytool.ui.compose.components.PrefRow
 import com.luckyzyx.luckytool.ui.compose.scopes.ScopePageSpec
 import com.luckyzyx.luckytool.utils.A13
 import com.luckyzyx.luckytool.utils.FileUtils
@@ -67,27 +66,20 @@ object OplusGesturePage {
             custom(
                 key = "custom_aon_gesture_scroll_page_whitelist_list",
                 title = c.getString(R.string.custom_aon_gesture_scroll_page_whitelist),
-            ) { slot ->
+            ) {
                 val saved by state
                     .stringSetFlow("custom_aon_gesture_scroll_page_whitelist_list")
                     .collectAsStateWithLifecycle()
                 var show by remember { mutableStateOf(false) }
                 Box(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
-                    SegmentedListItem(
+                    PrefRow(
+                        title = c.getString(R.string.custom_aon_gesture_scroll_page_whitelist),
+                        summary = arraySummaryLine(
+                            c.getString(R.string.custom_aon_gesture_whitelist_tips),
+                            saved.toString(),
+                        ),
                         onClick = { show = true },
-                        supportingContent = {
-                            Text(
-                                arraySummaryLine(
-                                    c.getString(R.string.custom_aon_gesture_whitelist_tips),
-                                    saved.toString(),
-                                )
-                            )
-                        },
                         enabled = c.checkPackName("com.aiunit.aon"),
-                        colors = itemColors(slot),
-                        headlineContent = {
-                            Text(c.getString(R.string.custom_aon_gesture_scroll_page_whitelist))
-                        },
                     )
                 }
                 if (show) {
@@ -139,7 +131,7 @@ object OplusGesturePage {
             custom(
                 key = "replace_side_slider_icon_on_left",
                 title = c.getString(R.string.replace_side_slider_icon_on_left),
-            ) { slot ->
+            ) {
                 val path by state.stringFlow("replace_side_slider_icon_on_left")
                     .collectAsStateWithLifecycle()
                 val activity = LocalContext.current as? Activity
@@ -155,20 +147,17 @@ object OplusGesturePage {
                     restart?.invoke()
                 }
                 Box(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
-                    SegmentedListItem(
+                    PrefRow(
+                        title = c.getString(R.string.replace_side_slider_icon_on_left),
+                        summary = path.ifBlank { "Null" },
                         onClick = { pickMedia.launch("image/*") },
-                        supportingContent = { Text(path.ifBlank { "Null" }) },
-                        colors = itemColors(slot),
-                        headlineContent = {
-                            Text(c.getString(R.string.replace_side_slider_icon_on_left))
-                        },
                     )
                 }
             }
             custom(
                 key = "replace_side_slider_icon_on_right",
                 title = c.getString(R.string.replace_side_slider_icon_on_right),
-            ) { slot ->
+            ) {
                 val path by state.stringFlow("replace_side_slider_icon_on_right")
                     .collectAsStateWithLifecycle()
                 val activity = LocalContext.current as? Activity
@@ -184,13 +173,10 @@ object OplusGesturePage {
                     restart?.invoke()
                 }
                 Box(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
-                    SegmentedListItem(
+                    PrefRow(
+                        title = c.getString(R.string.replace_side_slider_icon_on_right),
+                        summary = path.ifBlank { "Null" },
                         onClick = { pickMedia.launch("image/*") },
-                        supportingContent = { Text(path.ifBlank { "Null" }) },
-                        colors = itemColors(slot),
-                        headlineContent = {
-                            Text(c.getString(R.string.replace_side_slider_icon_on_right))
-                        },
                     )
                 }
             }
