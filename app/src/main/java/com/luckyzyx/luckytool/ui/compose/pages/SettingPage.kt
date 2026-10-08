@@ -28,7 +28,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.luckyzyx.luckytool.R
 import com.luckyzyx.luckytool.ui.activity.MainActivity
-import com.luckyzyx.luckytool.ui.compose.components.PrefCard
 import com.luckyzyx.luckytool.ui.compose.components.PrefCategoryHeader
 import com.luckyzyx.luckytool.ui.compose.components.PrefGroup
 import com.luckyzyx.luckytool.ui.compose.components.PrefRow
@@ -144,7 +143,11 @@ fun SettingPage(activity: MainActivity, onOpenTheme: () -> Unit = {}) {
                             onItemSelected = { index ->
                                 val target = UiMode.entries[index]
                                 uiMode = target
-                                context.putString(SettingsPrefs, ThemeController.KEY_UI_MODE, target.value)
+                                context.putString(
+                                    SettingsPrefs,
+                                    ThemeController.KEY_UI_MODE,
+                                    target.value
+                                )
                                 ThemePrefs.notifyChanged()
                             },
                         )
@@ -165,37 +168,12 @@ fun SettingPage(activity: MainActivity, onOpenTheme: () -> Unit = {}) {
             item(key = "other_header") {
                 PrefCategoryHeader(stringResource(R.string.other_settings))
             }
-            // 生物识别开关自带 remember 状态，单独成组以便条件显隐过渡独立计算
-            if (deviceSecure) {
-                item(key = "biometric_group") {
-                    var checked by remember {
-                        mutableStateOf(
-                            settings.getBoolean("enable_biometric_unlock_verification", false)
-                        )
-                    }
-                    PrefGroup {
-                        item {
-                            PrefSwitchRow(
-                                title = stringResource(R.string.enable_biometric_unlock_verification),
-                                checked = checked,
-                                onCheckedChange = { enable ->
-                                    if (enable) {
-                                        // 旧行为：验证通过才真正写入
-                                        BiometricUtils.showBiometricPrompt(activity, onSucceed = {
-                                            settings.set("enable_biometric_unlock_verification", true)
-                                            checked = true
-                                        })
-                                    } else {
-                                        settings.set("enable_biometric_unlock_verification", false)
-                                        checked = false
-                                    }
-                                },
-                            )
-                        }
-                    }
-                }
-            }
             item(key = "other_group") {
+                var biometricChecked by remember {
+                    mutableStateOf(
+                        settings.getBoolean("enable_biometric_unlock_verification", false)
+                    )
+                }
                 PrefGroup {
                     item {
                         SettingsSwitch(
@@ -205,6 +183,29 @@ fun SettingPage(activity: MainActivity, onOpenTheme: () -> Unit = {}) {
                             summary = stringResource(R.string.auto_check_update_summary),
                             default = true,
                         )
+                    }
+                    if (deviceSecure) {
+                        item {
+                            PrefSwitchRow(
+                                title = stringResource(R.string.enable_biometric_unlock_verification),
+                                checked = biometricChecked,
+                                onCheckedChange = { enable ->
+                                    if (enable) {
+                                        // 旧行为：验证通过才真正写入
+                                        BiometricUtils.showBiometricPrompt(activity, onSucceed = {
+                                            settings.set(
+                                                "enable_biometric_unlock_verification",
+                                                true
+                                            )
+                                            biometricChecked = true
+                                        })
+                                    } else {
+                                        settings.set("enable_biometric_unlock_verification", false)
+                                        biometricChecked = false
+                                    }
+                                },
+                            )
+                        }
                     }
                     item {
                         SettingsSwitch(
@@ -231,7 +232,10 @@ fun SettingPage(activity: MainActivity, onOpenTheme: () -> Unit = {}) {
                             summary = stringResource(R.string.hide_desktop_module_icon_summary),
                             onChanged = { value ->
                                 AppUtils(context).setComponentDisabled(
-                                    ComponentName(context.packageName, "${context.packageName}.Hide"),
+                                    ComponentName(
+                                        context.packageName,
+                                        "${context.packageName}.Hide"
+                                    ),
                                     value,
                                 )
                             },
@@ -338,25 +342,29 @@ fun SettingPage(activity: MainActivity, onOpenTheme: () -> Unit = {}) {
                     donateList.forEachIndexed { index, label ->
                         Text(
                             label,
-                            Modifier.fillMaxWidth().clickable {
-                                showDonateList = false
-                                when (index) {
-                                    0, 1, 2 -> showQrType = index
-                                    3 -> if (zh) {
-                                        activity.requestFunctionNavigation(
+                            Modifier
+                                .fillMaxWidth()
+                                .clickable {
+                                    showDonateList = false
+                                    when (index) {
+                                        0, 1, 2 -> showQrType = index
+                                        3 -> if (zh) {
+                                            activity.requestFunctionNavigation(
+                                                "donate",
+                                                context.getString(R.string.donation_list),
+                                            )
+                                        } else {
+                                            context.openUrl("https://www.patreon.com/LuckyTool")
+                                        }
+
+                                        4 -> context.openUrl("https://paypal.me/luckyzyx")
+                                        5 -> activity.requestFunctionNavigation(
                                             "donate",
                                             context.getString(R.string.donation_list),
                                         )
-                                    } else {
-                                        context.openUrl("https://www.patreon.com/LuckyTool")
                                     }
-                                    4 -> context.openUrl("https://paypal.me/luckyzyx")
-                                    5 -> activity.requestFunctionNavigation(
-                                        "donate",
-                                        context.getString(R.string.donation_list),
-                                    )
                                 }
-                            }.padding(horizontal = 24.dp, vertical = 14.dp),
+                                .padding(horizontal = 24.dp, vertical = 14.dp),
                         )
                     }
                 }
@@ -404,22 +412,25 @@ fun SettingPage(activity: MainActivity, onOpenTheme: () -> Unit = {}) {
                     items.forEachIndexed { index, label ->
                         Text(
                             label,
-                            Modifier.fillMaxWidth().clickable {
-                                showFeedbackDialog = false
-                                when (index) {
-                                    0 -> context.openUrl("coolmarket://u/1930284")
-                                    1 -> context.openUrl("https://luckyzyx.gitlab.io/LuckyTool_Doc")
-                                    2 -> context.openUrl(
-                                        "http://qm.qq.com/cgi-bin/qm/qr?_wv=1027&k=3fYu6lT8IHrBPKAfFTNSHbd8wcWX0oGs&authKey=dyIpjTWH8KWHMU3v6gI05T0bAzr6XigJKasMiCwmco1%2F8BRtPCN%2B1zOGgXyK7IUB&noverify=0&group_code=663884734"
-                                    )
+                            Modifier
+                                .fillMaxWidth()
+                                .clickable {
+                                    showFeedbackDialog = false
+                                    when (index) {
+                                        0 -> context.openUrl("coolmarket://u/1930284")
+                                        1 -> context.openUrl("https://luckyzyx.gitlab.io/LuckyTool_Doc")
+                                        2 -> context.openUrl(
+                                            "http://qm.qq.com/cgi-bin/qm/qr?_wv=1027&k=3fYu6lT8IHrBPKAfFTNSHbd8wcWX0oGs&authKey=dyIpjTWH8KWHMU3v6gI05T0bAzr6XigJKasMiCwmco1%2F8BRtPCN%2B1zOGgXyK7IUB&noverify=0&group_code=663884734"
+                                        )
 
-                                    3 -> context.openUrl("https://pd.qq.com/s/ahjm4zyxb")
-                                    4 -> context.openUrl("https://t.me/LuckyTool")
-                                    5 -> context.openUrl(
-                                        "https://modules.lsposed.org/module/com.luckyzyx.luckytool"
-                                    )
+                                        3 -> context.openUrl("https://pd.qq.com/s/ahjm4zyxb")
+                                        4 -> context.openUrl("https://t.me/LuckyTool")
+                                        5 -> context.openUrl(
+                                            "https://modules.lsposed.org/module/com.luckyzyx.luckytool"
+                                        )
+                                    }
                                 }
-                            }.padding(horizontal = 24.dp, vertical = 14.dp),
+                                .padding(horizontal = 24.dp, vertical = 14.dp),
                         )
                     }
                 }
@@ -435,7 +446,11 @@ fun SettingPage(activity: MainActivity, onOpenTheme: () -> Unit = {}) {
             text = {
                 Text(
                     """
-                    ${context.getString(R.string.data_backup_data_version)}: ${getOSVersionName(osCode)}
+                    ${context.getString(R.string.data_backup_data_version)}: ${
+                        getOSVersionName(
+                            osCode
+                        )
+                    }
                     ${context.getString(R.string.data_current_system_version)}: $getOSVersionName
                     
                     ${context.getString(R.string.data_restore_version_tips)}
