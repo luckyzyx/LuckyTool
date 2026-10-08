@@ -16,7 +16,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -25,7 +24,6 @@ import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.captionBar
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -50,10 +48,7 @@ import androidx.compose.material.icons.rounded.AspectRatio
 import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material.icons.rounded.Description
 import androidx.compose.material.icons.rounded.DesignServices
-import androidx.compose.material.icons.rounded.DisplaySettings
-import androidx.compose.material.icons.rounded.Pin
 import androidx.compose.material.icons.rounded.Style
-import androidx.compose.material.icons.rounded.Swipe
 import androidx.compose.material3.ButtonGroupDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LargeFlexibleTopAppBar
@@ -62,6 +57,7 @@ import androidx.compose.material3.Slider
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.rememberSliderState
 import androidx.compose.material3.rememberTopAppBarState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -148,32 +144,71 @@ fun ThemeScreen(onBack: () -> Unit) {
 @Composable
 fun ThemeScreenMaterial(onBack: () -> Unit) {
     val context = LocalContext.current
-    val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior(rememberTopAppBarState())
+    val scrollBehavior =
+        TopAppBarDefaults.exitUntilCollapsedScrollBehavior(rememberTopAppBarState())
 
-    var colorMode by remember { mutableStateOf(ColorMode.fromValue(context.getString(SettingsPrefs, "dark_theme", "0")?.toIntOrNull() ?: 0)) }
+    var colorMode by remember {
+        mutableStateOf(
+            ColorMode.fromValue(
+                context.getString(
+                    SettingsPrefs,
+                    "dark_theme",
+                    "0"
+                )?.toIntOrNull() ?: 0
+            )
+        )
+    }
     var keyColor by remember { mutableIntStateOf(context.getInt(SettingsPrefs, "key_color", 0)) }
-    var dynamicColor by remember { mutableStateOf(context.getBoolean(SettingsPrefs, "use_dynamic_color", true)) }
+    var dynamicColor by remember {
+        mutableStateOf(
+            context.getBoolean(
+                SettingsPrefs,
+                "use_dynamic_color",
+                true
+            )
+        )
+    }
     var paletteStyle by remember {
         mutableStateOf(
             PaletteStyle.entries.firstOrNull {
-                it.name == context.getString(SettingsPrefs, "palette_style", PaletteStyle.TonalSpot.name)
+                it.name == context.getString(
+                    SettingsPrefs,
+                    "palette_style",
+                    PaletteStyle.TonalSpot.name
+                )
             } ?: PaletteStyle.TonalSpot
         )
     }
     var colorSpec by remember {
         mutableStateOf(
             ColorSpec.SpecVersion.entries.firstOrNull {
-                it.name == context.getString(SettingsPrefs, "color_spec", ColorSpec.SpecVersion.SPEC_2025.name)
+                it.name == context.getString(
+                    SettingsPrefs,
+                    "color_spec",
+                    ColorSpec.SpecVersion.SPEC_2025.name
+                )
             } ?: ColorSpec.SpecVersion.SPEC_2025
         )
     }
 
     // KernelSU 主题页中与配色无关的外壳行为项（键名与默认值对齐 KernelSU）
     var navigationBadge by remember {
-        mutableStateOf(context.getBoolean(SettingsPrefs, ShellSettingsController.KEY_NAVIGATION_BADGE, true))
+        mutableStateOf(
+            context.getBoolean(
+                SettingsPrefs,
+                ShellSettingsController.KEY_NAVIGATION_BADGE,
+                true
+            )
+        )
     }
     var swipeDismiss by remember {
-        mutableStateOf(context.getBoolean(SettingsPrefs, ShellSettingsController.KEY_SWIPE_DISMISS, true))
+        mutableStateOf(
+            context.getBoolean(
+                SettingsPrefs,
+                ShellSettingsController.KEY_SWIPE_DISMISS,
+                true
+            )
+        )
     }
     var pageScale by remember {
         mutableFloatStateOf(
@@ -299,7 +334,11 @@ fun ThemeScreenMaterial(onBack: () -> Unit) {
                                         if (it) {
                                             haptic.performHapticFeedback(HapticFeedbackType.ContextClick)
                                             colorMode = mode
-                                            context.putString(SettingsPrefs, "dark_theme", mode.value.toString())
+                                            context.putString(
+                                                SettingsPrefs,
+                                                "dark_theme",
+                                                mode.value.toString()
+                                            )
                                             ThemePrefs.notifyChanged()
                                         }
                                     },
@@ -341,7 +380,11 @@ fun ThemeScreenMaterial(onBack: () -> Unit) {
                                 selectedIndex = styles.indexOf(paletteStyle),
                                 onItemSelected = { index ->
                                     paletteStyle = styles[index]
-                                    context.putString(SettingsPrefs, "palette_style", styles[index].name)
+                                    context.putString(
+                                        SettingsPrefs,
+                                        "palette_style",
+                                        styles[index].name
+                                    )
                                     ThemePrefs.notifyChanged()
                                 },
                             )
@@ -355,7 +398,11 @@ fun ThemeScreenMaterial(onBack: () -> Unit) {
                                 selectedIndex = specs.indexOf(colorSpec).coerceAtLeast(0),
                                 onItemSelected = { index ->
                                     colorSpec = specs[index]
-                                    context.putString(SettingsPrefs, "color_spec", specs[index].name)
+                                    context.putString(
+                                        SettingsPrefs,
+                                        "color_spec",
+                                        specs[index].name
+                                    )
                                     ThemePrefs.notifyChanged()
                                 },
                             )
@@ -390,105 +437,6 @@ fun ThemeScreenMaterial(onBack: () -> Unit) {
                         ),
                     )
                 }
-            }
-
-            // 界面风格（Material / Miuix，对齐 KernelSU settings_ui_mode）
-            item {
-                SegmentedColumn(
-                    modifier = Modifier.padding(horizontal = 16.dp),
-                    content = listOf(
-                        {
-                            SegmentedDropdownItem(
-                                icon = Icons.Rounded.DisplaySettings,
-                                title = stringResource(R.string.settings_ui_mode),
-                                summary = stringResource(R.string.settings_ui_mode_summary),
-                                items = UiMode.entries.map { it.name },
-                                selectedIndex = if (uiMode == UiMode.Material) 1 else 0,
-                                onItemSelected = { index ->
-                                    val target = UiMode.entries[index]
-                                    uiMode = target
-                                    context.putString(
-                                        SettingsPrefs,
-                                        ThemeController.KEY_UI_MODE,
-                                        target.value,
-                                    )
-                                    // 与 KernelSU 一致：切换外观线时归一化「Monet 模式」组合
-                                    val miuixMonet = context.getBoolean(
-                                        SettingsPrefs,
-                                        ThemeController.KEY_MIUIX_MONET,
-                                        false,
-                                    )
-                                    val normalized = when {
-                                        target == UiMode.Miuix && !miuixMonet && colorMode.isMonet ->
-                                            colorMode.toNonMonetMode()
-
-                                        target == UiMode.Material && colorMode.isMonet ->
-                                            colorMode.toNonMonetMode()
-
-                                        else -> colorMode
-                                    }
-                                    if (normalized != colorMode) {
-                                        colorMode = normalized
-                                        context.putString(
-                                            SettingsPrefs,
-                                            "dark_theme",
-                                            normalized.value.toString(),
-                                        )
-                                    }
-                                    ThemePrefs.notifyChanged()
-                                },
-                            )
-                        },
-                    ),
-                )
-            }
-
-            // 导航角标（对齐 KernelSU ColorPaletteScreenMaterial 的对应分段项）
-            item {
-                SegmentedColumn(
-                    modifier = Modifier.padding(horizontal = 16.dp),
-                    content = listOf(
-                        {
-                            SegmentedSwitchItem(
-                                icon = Icons.Rounded.Pin,
-                                title = stringResource(R.string.settings_navigation_badge),
-                                summary = stringResource(R.string.settings_navigation_badge_summary),
-                                checked = navigationBadge,
-                                onCheckedChange = {
-                                    navigationBadge = it
-                                    context.putBoolean(
-                                        SettingsPrefs,
-                                        ShellSettingsController.KEY_NAVIGATION_BADGE,
-                                        it
-                                    )
-                                    ThemePrefs.notifyChanged()
-                                },
-                            )
-                        },
-                    ),
-                )
-            }
-
-            // 横移返回（对齐 KernelSU 同名项；Material 外壳无翻页手势，故不提供“翻页手势”下拉）
-            item {
-                SegmentedColumn(
-                    modifier = Modifier.padding(horizontal = 16.dp),
-                    content = listOf(
-                        {
-                            SegmentedSwitchItem(
-                                icon = Icons.Rounded.Swipe,
-                                title = stringResource(R.string.settings_enable_swipe_dismiss),
-                                summary = stringResource(R.string.settings_enable_swipe_dismiss_summary),
-                                checked = swipeDismiss,
-                                onCheckedChange = {
-                                    swipeDismiss = it
-                                    context.putBoolean(SettingsPrefs, ShellSettingsController.KEY_SWIPE_DISMISS, it)
-                                    ThemePrefs.notifyChanged()
-                                },
-                            )
-                        },
-                    ),
-                )
             }
 
             // 界面缩放（page_scale）：拖动只更新页内状态，松手才提交偏好，避免重建全应用密度
@@ -528,15 +476,20 @@ fun ThemeScreenMaterial(onBack: () -> Unit) {
                             )
                         }
                         Slider(
-                            value = pageScale,
+                            state = rememberSliderState(
+                                value = pageScale,
+                                trackRange = PageScaleMin..PageScaleMax
+                            ),
                             onValueChange = { pageScale = it },
-                            valueRange = PageScaleMin..PageScaleMax,
-                            onValueChangeFinished = {
-                                context.putFloat(SettingsPrefs, ShellSettingsController.KEY_PAGE_SCALE, pageScale)
-                                ThemePrefs.notifyChanged()
-                            },
                             modifier = Modifier.fillMaxWidth(),
-                        )
+                            onValueChangeFinished = {
+                                context.putFloat(
+                                    SettingsPrefs,
+                                    ShellSettingsController.KEY_PAGE_SCALE,
+                                    pageScale
+                                )
+                                ThemePrefs.notifyChanged()
+                            })
                     }
                 }
             }
@@ -578,16 +531,21 @@ fun ThemeScreenMaterial(onBack: () -> Unit) {
                             )
                         }
                         Slider(
-                            value = moduleLines.toFloat(),
+                            state = rememberSliderState(
+                                value = moduleLines.toFloat(),
+                                steps = 3,
+                                trackRange = ModuleLinesMin.toFloat()..ModuleLinesMax.toFloat()
+                            ),
                             onValueChange = { moduleLines = it.roundToInt() },
-                            valueRange = ModuleLinesMin.toFloat()..ModuleLinesMax.toFloat(),
-                            steps = 3,
-                            onValueChangeFinished = {
-                                context.putInt(SettingsPrefs, ShellSettingsController.KEY_MODULE_LINES, moduleLines)
-                                ThemePrefs.notifyChanged()
-                            },
                             modifier = Modifier.fillMaxWidth(),
-                        )
+                            onValueChangeFinished = {
+                                context.putInt(
+                                    SettingsPrefs,
+                                    ShellSettingsController.KEY_MODULE_LINES,
+                                    moduleLines
+                                )
+                                ThemePrefs.notifyChanged()
+                            })
                     }
                 }
             }

@@ -37,9 +37,7 @@ import androidx.compose.material.icons.rounded.CallToAction
 import androidx.compose.material.icons.rounded.Colorize
 import androidx.compose.material.icons.rounded.Description
 import androidx.compose.material.icons.rounded.DesignServices
-import androidx.compose.material.icons.rounded.Pin
 import androidx.compose.material.icons.rounded.Style
-import androidx.compose.material.icons.rounded.Swipe
 import androidx.compose.material.icons.rounded.Wallpaper
 import androidx.compose.material.icons.rounded.WaterDrop
 import androidx.compose.runtime.Composable
@@ -153,25 +151,49 @@ fun ThemeScreenMiuix(onBack: () -> Unit) {
             )
         )
     }
-    var miuixMonet by remember { mutableStateOf(context.getBoolean(SettingsPrefs, ThemeController.KEY_MIUIX_MONET, false)) }
+    var miuixMonet by remember {
+        mutableStateOf(
+            context.getBoolean(
+                SettingsPrefs,
+                ThemeController.KEY_MIUIX_MONET,
+                false
+            )
+        )
+    }
     var keyColor by remember { mutableIntStateOf(context.getInt(SettingsPrefs, KeyKeyColor, 0)) }
     var paletteStyle by remember {
         mutableStateOf(
             PaletteStyle.entries.firstOrNull {
-                it.name == context.getString(SettingsPrefs, KeyPaletteStyle, PaletteStyle.TonalSpot.name)
+                it.name == context.getString(
+                    SettingsPrefs,
+                    KeyPaletteStyle,
+                    PaletteStyle.TonalSpot.name
+                )
             } ?: PaletteStyle.TonalSpot
         )
     }
     var colorSpec by remember {
         mutableStateOf(
             ColorSpec.SpecVersion.entries.firstOrNull {
-                it.name == context.getString(SettingsPrefs, KeyColorSpec, ColorSpec.SpecVersion.SPEC_2025.name)
+                it.name == context.getString(
+                    SettingsPrefs,
+                    KeyColorSpec,
+                    ColorSpec.SpecVersion.SPEC_2025.name
+                )
             } ?: ColorSpec.SpecVersion.SPEC_2025
         )
     }
 
     // Miuix 外观项
-    var enableBlur by remember { mutableStateOf(context.getBoolean(SettingsPrefs, KeyEnableBlur, false)) }
+    var enableBlur by remember {
+        mutableStateOf(
+            context.getBoolean(
+                SettingsPrefs,
+                KeyEnableBlur,
+                false
+            )
+        )
+    }
     var enableFloatingBottomBar by remember {
         mutableStateOf(context.getBoolean(SettingsPrefs, KeyEnableFloatingBottomBar, false))
     }
@@ -180,12 +202,6 @@ fun ThemeScreenMiuix(onBack: () -> Unit) {
     }
 
     // 外壳行为项
-    var navigationBadge by remember {
-        mutableStateOf(context.getBoolean(SettingsPrefs, ShellSettingsController.KEY_NAVIGATION_BADGE, true))
-    }
-    var swipeDismiss by remember {
-        mutableStateOf(context.getBoolean(SettingsPrefs, ShellSettingsController.KEY_SWIPE_DISMISS, true))
-    }
     var pageScale by remember {
         mutableFloatStateOf(
             context.getFloat(SettingsPrefs, ShellSettingsController.KEY_PAGE_SCALE, 1.0f)
@@ -244,16 +260,6 @@ fun ThemeScreenMiuix(onBack: () -> Unit) {
     val setEnableFloatingBottomBarBlur: (Boolean) -> Unit = { enabled ->
         enableFloatingBottomBarBlur = enabled
         context.putBoolean(SettingsPrefs, KeyEnableFloatingBottomBarBlur, enabled)
-        ThemePrefs.notifyChanged()
-    }
-    val setNavigationBadge: (Boolean) -> Unit = { enabled ->
-        navigationBadge = enabled
-        context.putBoolean(SettingsPrefs, ShellSettingsController.KEY_NAVIGATION_BADGE, enabled)
-        ThemePrefs.notifyChanged()
-    }
-    val setSwipeDismiss: (Boolean) -> Unit = { enabled ->
-        swipeDismiss = enabled
-        context.putBoolean(SettingsPrefs, ShellSettingsController.KEY_SWIPE_DISMISS, enabled)
         ThemePrefs.notifyChanged()
     }
     val setPageScale: (Float) -> Unit = { scale ->
@@ -396,7 +402,8 @@ fun ThemeScreenMiuix(onBack: () -> Unit) {
                                             tint = colorScheme.onBackground
                                         )
                                     },
-                                    selectedIndex = colorValues.indexOf(keyColor).takeIf { it >= 0 } ?: 0,
+                                    selectedIndex = colorValues.indexOf(keyColor).takeIf { it >= 0 }
+                                        ?: 0,
                                     onSelectedIndexChange = { index ->
                                         setKeyColor(colorValues[index])
                                     }
@@ -416,7 +423,8 @@ fun ThemeScreenMiuix(onBack: () -> Unit) {
                                                     tint = colorScheme.onBackground
                                                 )
                                             },
-                                            selectedIndex = styles.indexOf(paletteStyle).coerceAtLeast(0),
+                                            selectedIndex = styles.indexOf(paletteStyle)
+                                                .coerceAtLeast(0),
                                             onSelectedIndexChange = { index ->
                                                 setPaletteStyle(styles[index])
                                             }
@@ -434,7 +442,8 @@ fun ThemeScreenMiuix(onBack: () -> Unit) {
                                                     tint = colorScheme.onBackground
                                                 )
                                             },
-                                            selectedIndex = specs.indexOf(colorSpec).coerceAtLeast(0),
+                                            selectedIndex = specs.indexOf(colorSpec)
+                                                .coerceAtLeast(0),
                                             onSelectedIndexChange = { index ->
                                                 setColorSpec(specs[index])
                                             }
@@ -501,21 +510,6 @@ fun ThemeScreenMiuix(onBack: () -> Unit) {
                                 onCheckedChange = { setEnableFloatingBottomBarBlur(it) }
                             )
                         }
-
-                        SwitchPreference(
-                            title = stringResource(id = R.string.settings_navigation_badge),
-                            summary = stringResource(id = R.string.settings_navigation_badge_summary),
-                            startAction = {
-                                Icon(
-                                    Icons.Rounded.Pin,
-                                    modifier = Modifier.padding(end = 6.dp),
-                                    contentDescription = stringResource(id = R.string.settings_navigation_badge),
-                                    tint = colorScheme.onBackground
-                                )
-                            },
-                            checked = navigationBadge,
-                            onCheckedChange = { setNavigationBadge(it) }
-                        )
                     }
 
                     // 外壳行为：横移返回 + 界面缩放
@@ -524,21 +518,6 @@ fun ThemeScreenMiuix(onBack: () -> Unit) {
                             .padding(top = 12.dp)
                             .fillMaxWidth(),
                     ) {
-                        SwitchPreference(
-                            title = stringResource(id = R.string.settings_enable_swipe_dismiss),
-                            summary = stringResource(id = R.string.settings_enable_swipe_dismiss_summary),
-                            startAction = {
-                                Icon(
-                                    Icons.Rounded.Swipe,
-                                    modifier = Modifier.padding(end = 6.dp),
-                                    contentDescription = stringResource(id = R.string.settings_enable_swipe_dismiss),
-                                    tint = colorScheme.onBackground
-                                )
-                            },
-                            checked = swipeDismiss,
-                            onCheckedChange = { setSwipeDismiss(it) }
-                        )
-
                         // 拖动只更新页内状态，松手才提交偏好，避免重建全应用密度
                         var sliderValue by remember(pageScale) { mutableFloatStateOf(pageScale) }
                         ArrowPreference(
@@ -619,8 +598,10 @@ fun ThemeScreenMiuix(onBack: () -> Unit) {
                     Spacer(
                         modifier = Modifier.height(
                             12.dp +
-                                WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding() +
-                                WindowInsets.captionBar.asPaddingValues().calculateBottomPadding()
+                                    WindowInsets.navigationBars.asPaddingValues()
+                                        .calculateBottomPadding() +
+                                    WindowInsets.captionBar.asPaddingValues()
+                                        .calculateBottomPadding()
                         )
                     )
                 }
@@ -680,7 +661,8 @@ private fun ThemePreviewCardMiuix(
         isDark -> Color(0xFF1A3825)
         else -> Color(0xFFDFFAE4)
     }
-    val cardColor = if (miuixMonet) dynamicCs.surfaceContainerHighest else colorScheme.surfaceVariant
+    val cardColor =
+        if (miuixMonet) dynamicCs.surfaceContainerHighest else colorScheme.surfaceVariant
     val navBarColor = if (miuixMonet) dynamicCs.surfaceContainer else colorScheme.surface
     val iconColor = if (miuixMonet) dynamicCs.primary else colorScheme.primary
     val navSelectedColor = colorScheme.onSurfaceContainer
@@ -766,7 +748,10 @@ private fun ThemePreviewCardMiuix(
                             .fillMaxHeight()
                             .width(30.dp)
                             .background(navBarColor),
-                        verticalArrangement = Arrangement.spacedBy(10.dp, Alignment.CenterVertically),
+                        verticalArrangement = Arrangement.spacedBy(
+                            10.dp,
+                            Alignment.CenterVertically
+                        ),
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
                         repeat(4) {
