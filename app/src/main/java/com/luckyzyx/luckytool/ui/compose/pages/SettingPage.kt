@@ -53,6 +53,7 @@ import com.luckyzyx.luckytool.utils.DonateUtils
 import com.luckyzyx.luckytool.utils.FileUtils
 import com.luckyzyx.luckytool.utils.IntentPrefs
 import com.luckyzyx.luckytool.utils.IntentUtils
+import com.luckyzyx.luckytool.utils.LogUtils
 import com.luckyzyx.luckytool.utils.ModulePrefs
 import com.luckyzyx.luckytool.utils.OtherPrefs
 import com.luckyzyx.luckytool.utils.PrefState
@@ -671,15 +672,24 @@ private fun writeBackupData(context: Context, uri: Uri) {
         val jsons = JSONObject()
         dataMapList[prefs]?.keys?.forEach { key ->
             val value = dataMapList[prefs]?.get(key)
-            // 集合值一律写 JSONArray：JSONObject.put 只接受 Boolean/Number/String/JSONObject/JSONArray，
-            // 其余类型（如 SharedPreferences 复制出的 android.util.ArraySet）会被转成 toString() 字符串，
-            // 恢复时就会把集合语义的键写成 String，读取端 getStringSet 随即抛 ClassCastException
-            if (value is Set<*>) {
-                val arr = JSONArray()
-                value.forEach { arr.put(it) }
-                jsons.put(key, arr)
-            } else {
-                jsons.put(key, value)
+            // 逐类型显式落 JSON，绝不让 JSONObject 兜底：JSONObject.put 只接受
+            // Boolean/Number/String/JSONObject/JSONArray，其余类型会被它转成 toString() 字符串
+            // （历史上集合键就是这样被写成 "{a, b}"，恢复后整类键的类型就丢了）。
+            // 未知类型宁可不备份，也不写成字符串。
+            when (value) {
+                null -> Unit
+                is Set<*> -> {
+                    val arr = JSONArray()
+                    value.forEach { arr.put(it) }
+                    jsons.put(key, arr)
+                }
+                is String, is Boolean, is Int, is Long, is Float, is Double -> jsons.put(key, value)
+                else -> LogUtils.e(
+                    "SettingPage",
+                    "backup skip $key",
+                    "${value.javaClass.name} is not JSON-safe",
+                    false,
+                )
             }
         }
         json.put(prefs, jsons)
