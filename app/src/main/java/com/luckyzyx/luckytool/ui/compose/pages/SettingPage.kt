@@ -30,6 +30,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.luckyzyx.luckytool.R
 import com.luckyzyx.luckytool.ui.activity.MainActivity
 import com.luckyzyx.luckytool.ui.compose.components.PrefCategoryHeader
@@ -40,6 +41,8 @@ import com.luckyzyx.luckytool.ui.compose.components.PrefValueRow
 import com.luckyzyx.luckytool.ui.compose.components.material.ExpressiveList
 import com.luckyzyx.luckytool.ui.compose.components.material.ExpressivePageScaffold
 import com.luckyzyx.luckytool.ui.compose.components.material.SegmentedDropdownItem
+import com.luckyzyx.luckytool.ui.compose.components.miuix.MiuixArrowItem
+import com.luckyzyx.luckytool.ui.compose.components.miuix.MiuixDropdownItem
 import com.luckyzyx.luckytool.ui.theme.LocalUiMode
 import com.luckyzyx.luckytool.ui.theme.ThemeController
 import com.luckyzyx.luckytool.ui.theme.ThemePrefs
@@ -145,31 +148,56 @@ fun SettingPage(activity: MainActivity, onOpenTheme: () -> Unit = {}) {
                         var uiMode by remember {
                             mutableStateOf(ThemeController.getUiMode(context))
                         }
-                        SegmentedDropdownItem(
-                            title = stringResource(R.string.settings_ui_mode),
-                            summary = stringResource(R.string.settings_ui_mode_summary),
-                            items = UiMode.entries.map { it.name },
-                            selectedIndex = if (uiMode == UiMode.Material) 1 else 0,
-                            onItemSelected = { index ->
-                                val target = UiMode.entries[index]
-                                uiMode = target
-                                context.putString(
-                                    SettingsPrefs,
-                                    ThemeController.KEY_UI_MODE,
-                                    target.value
-                                )
-                                ThemePrefs.notifyChanged()
-                            },
-                        )
+                        val items = UiMode.entries.map { it.name }
+                        val selectedIndex = if (uiMode == UiMode.Material) 1 else 0
+                        val onSelect: (Int) -> Unit = { index ->
+                            val target = UiMode.entries[index]
+                            uiMode = target
+                            context.putString(
+                                SettingsPrefs,
+                                ThemeController.KEY_UI_MODE,
+                                target.value
+                            )
+                            ThemePrefs.notifyChanged()
+                        }
+                        if (LocalUiMode.current == UiMode.Miuix) {
+                            // Miuix 线：OverlayDropdownPreference（弹层挂根部 Miuix Scaffold popup host）
+                            MiuixDropdownItem(
+                                title = stringResource(R.string.settings_ui_mode),
+                                summary = stringResource(R.string.settings_ui_mode_summary),
+                                items = items,
+                                selectedIndex = selectedIndex,
+                                onItemSelected = onSelect,
+                            )
+                        } else {
+                            SegmentedDropdownItem(
+                                title = stringResource(R.string.settings_ui_mode),
+                                summary = stringResource(R.string.settings_ui_mode_summary),
+                                items = items,
+                                selectedIndex = selectedIndex,
+                                onItemSelected = onSelect,
+                            )
+                        }
                     }
                     item {
-                        PrefValueRow(
-                            title = stringResource(R.string.theme_palette),
-                            value = settings.getString("palette_style", "TonalSpot")
-                                ?: "TonalSpot",
-                            summary = stringResource(R.string.theme_palette_summary),
-                            onClick = onOpenTheme,
-                        )
+                        // Miuix 线对齐 KernelSU：主题入口为 ArrowPreference（尾部箭头）；
+                        // material 线保留取值行，取值改为响应式（主题页改完返回立即刷新）
+                        val paletteStyle by settings.stringFlow("palette_style", "TonalSpot")
+                            .collectAsStateWithLifecycle()
+                        if (LocalUiMode.current == UiMode.Miuix) {
+                            MiuixArrowItem(
+                                title = stringResource(R.string.theme_palette),
+                                summary = stringResource(R.string.theme_palette_summary),
+                                onClick = onOpenTheme,
+                            )
+                        } else {
+                            PrefValueRow(
+                                title = stringResource(R.string.theme_palette),
+                                value = paletteStyle,
+                                summary = stringResource(R.string.theme_palette_summary),
+                                onClick = onOpenTheme,
+                            )
+                        }
                     }
                 }
             }
