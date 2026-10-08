@@ -1,6 +1,7 @@
 package com.luckyzyx.luckytool.ui.compose
 
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
@@ -183,9 +184,12 @@ fun MainShell(activity: MainActivity) {
         MaterialTheme.colorScheme.surfaceContainer
     }
 
-    Scaffold(
-        containerColor = containerColor,
-        bottomBar = {
+    // 根脚手架按外观线分派（对齐 KernelSU MainActivity「UiMode.Miuix -> Scaffold { navDisplay() }」）：
+    // Miuix 脚手架的 popupHost 默认槽位即 MiuixPopupHost()，是本应用唯一能承载
+    // OverlayDropdownPreference / OverlayDialog 的挂载点 —— 库中 LocalPopupStates /
+    // LocalRootPopupStates 均为 internal，应用层无法自行提供，只能由根部 Miuix Scaffold 提供。
+    // 因此各页保留自己的空 popupHost 槽位（库内 Miuix 页面同样如此），弹层统一冒泡到此处渲染。
+    val rootBottomBar: @Composable () -> Unit = {
             when {
                 // 主题页为全屏子页：不显示底栏
                 !showBar -> Unit
@@ -256,8 +260,9 @@ fun MainShell(activity: MainActivity) {
                     }
                 }
             }
-        },
-    ) { innerPadding ->
+    }
+
+    val shellContent: @Composable (PaddingValues) -> Unit = { innerPadding ->
         CompositionLocalProvider(
             // 底部导航栏已消费系统导航栏 inset：告知页面列表不要重复叠加底部内边距
             LocalBottomBarPresent provides showBar,
@@ -331,5 +336,19 @@ fun MainShell(activity: MainActivity) {
                 }
             }
         }
+    }
+
+    if (isMiuix) {
+        top.yukonga.miuix.kmp.basic.Scaffold(
+            containerColor = containerColor,
+            bottomBar = rootBottomBar,
+            content = shellContent,
+        )
+    } else {
+        Scaffold(
+            containerColor = containerColor,
+            bottomBar = rootBottomBar,
+            content = shellContent,
+        )
     }
 }
