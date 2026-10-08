@@ -53,6 +53,7 @@ import com.luckyzyx.luckytool.utils.DonateUtils
 import com.luckyzyx.luckytool.utils.FileUtils
 import com.luckyzyx.luckytool.utils.IntentPrefs
 import com.luckyzyx.luckytool.utils.IntentUtils
+import com.luckyzyx.luckytool.utils.LogUtils
 import com.luckyzyx.luckytool.utils.ModulePrefs
 import com.luckyzyx.luckytool.utils.OtherPrefs
 import com.luckyzyx.luckytool.utils.PrefState
@@ -70,6 +71,7 @@ import com.luckyzyx.luckytool.utils.putBoolean
 import com.luckyzyx.luckytool.utils.putInt
 import com.luckyzyx.luckytool.utils.putString
 import com.luckyzyx.luckytool.utils.putStringSet
+import com.luckyzyx.luckytool.utils.removeKey
 import com.luckyzyx.luckytool.utils.showToast
 import org.json.JSONArray
 import org.json.JSONObject
@@ -668,15 +670,21 @@ private fun writeBackupData(context: Context, uri: Uri) {
         dataMapList[prefs]?.keys?.forEach { key ->
             val value = dataMapList[prefs]?.get(key)
             // 集合值一律写 JSONArray（不能只认 HashSet）：JSONObject.put 会把其它集合实现
-            // （SharedPreferences 复制出的 android.util.ArraySet 等）兜底成 toString() 字符串，
-            // 恢复时集合键就退化成 String 了。SP 只可能存 String/Boolean/Int/Long/Float/Set，
-            // 因此 else 分支只会遇到基础类型，直接写即可。
-            if (value is Set<*>) {
-                val arr = JSONArray()
-                value.forEach { arr.put(it) }
-                jsons.put(key, arr)
-            } else {
-                jsons.put(key, value)
+            // （SharedPreferences 复制出的 android.util.ArraySet 等）兜底成 toString() 字符串。
+            // 不认识的类型同样不能落到那个兜底分支：记录日志后跳过该键，绝不写成字符串。
+            try {
+                when (value) {
+                    null -> Unit
+                    is Set<*> -> {
+                        val arr = JSONArray()
+                        value.forEach { arr.put(it) }
+                        jsons.put(key, arr)
+                    }
+                    is String, is Boolean, is Int, is Long, is Float, is Double -> jsons.put(key, value)
+                    else -> error("${value.javaClass.name} is not JSON-safe")
+                }
+            } catch (t: Throwable) {
+                LogUtils.e("SettingPage", "backup skip $key", "$t", false)
             }
         }
         json.put(prefs, jsons)
@@ -705,18 +713,24 @@ private fun writeRestoreData(context: Context, json: JSONObject) {
         if (prefsDatas.length() > 0) {
             prefsDatas.keys().forEach { key ->
                 val value = prefsDatas.get(key)
-                when (value.javaClass.simpleName) {
-                    "Boolean" -> context.putBoolean(prefs, key, value as Boolean)
-                    "Integer" -> context.putInt(prefs, key, value as Int)
-                    "JSONArray" -> {
-                        val set = ArraySet<String>()
-                        val list = value as JSONArray
-                        for (i in 0 until list.length()) set.add(list[i] as String)
-                        context.putStringSet(prefs, key, set)
-                    }
+                try {
+                    when (value.javaClass.simpleName) {
+                        "Boolean" -> context.putBoolean(prefs, key, value as Boolean)
+                        "Integer" -> context.putInt(prefs, key, value as Int)
+                        "JSONArray" -> {
+                            val set = ArraySet<String>()
+                            val list = value as JSONArray
+                            for (i in 0 until list.length()) set.add(list[i] as String)
+                            context.putStringSet(prefs, key, set)
+                        }
 
-                    "String" -> context.putString(prefs, key, value as String)
-                    else -> context.showToast("Error: $key")
+                        "String" -> context.putString(prefs, key, value as String)
+                        else -> error("${value.javaClass.simpleName} is not restorable")
+                    }
+                } catch (t: Throwable) {
+                    // 恢复不了的值：记录日志、跳过，并把该键从本地 prefs 移除，不让坏数据留在设备上
+                    LogUtils.e("SettingPage", "restore skip $key", "$t", false)
+                    context.removeKey(prefs, key)
                 }
             }
         }
