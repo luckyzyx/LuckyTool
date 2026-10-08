@@ -105,6 +105,7 @@ import top.yukonga.miuix.kmp.preference.ArrowPreference
 import top.yukonga.miuix.kmp.preference.OverlayDropdownPreference
 import top.yukonga.miuix.kmp.preference.SwitchPreference
 import top.yukonga.miuix.kmp.theme.MiuixTheme.colorScheme
+import top.yukonga.miuix.kmp.utils.MiuixPopupUtils
 import top.yukonga.miuix.kmp.utils.overScrollVertical
 import top.yukonga.miuix.kmp.utils.scrollEndHaptic
 import kotlin.math.roundToInt
@@ -304,7 +305,10 @@ fun ThemeScreenMiuix(onBack: () -> Unit) {
                 )
             }
         },
-        popupHost = { },
+        // OverlayDropdownPreference / OverlayDialog 默认 renderInRootScaffold = true，
+        // 弹出内容只会投递到最近的 Scaffold 的 popup 宿主里；若该槽位为空，
+        // 强调色 / 色彩风格 / 色彩标准下拉与界面缩放对话框都不会有任何显示。
+        popupHost = { ThemeScreenPopupHost() },
         contentWindowInsets = WindowInsets.systemBars.add(WindowInsets.displayCutout)
             .only(WindowInsetsSides.Horizontal)
     ) { innerPadding ->
@@ -615,6 +619,18 @@ fun ThemeScreenMiuix(onBack: () -> Unit) {
             onVolumeChange = { setPageScale(it) },
         )
     }
+}
+
+/**
+ * 主题页的 popup 宿主：渲染本页 Scaffold 投递的 [top.yukonga.miuix.kmp.preference.OverlayDropdownPreference]
+ * 下拉与 [top.yukonga.miuix.kmp.overlay.OverlayDialog] 对话框。
+ *
+ * `MiuixPopupHost()` 声明在 `MiuixPopupUtils.Companion` 内部，无法直接 import，
+ * 因此这里包一层具名 Composable 供 `Scaffold(popupHost = ...)` 使用。
+ */
+@Composable
+private fun ThemeScreenPopupHost() {
+    MiuixPopupUtils.MiuixPopupHost()
 }
 
 /** 主题模式 Tab 下标（0 跟随系统 / 1 浅色 / 2 深色）→ ColorMode（普通变体） */
