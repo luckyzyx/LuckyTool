@@ -82,6 +82,27 @@ val LocalBottomBarPresent = staticCompositionLocalOf { false }
  */
 val LocalShellBottomInset = staticCompositionLocalOf { 0.dp }
 
+/**
+ * 内容列表底部内边距的统一公式：调用点的常规基准量 + 系统导航栏 / caption bar
+ * （宿主底栏未消费 inset 时叠加）+ 悬浮胶囊底栏占位（[LocalShellBottomInset]）。
+ *
+ * 供 [ExpressiveList]、[MiuixExpressiveList] 以及自带 LazyColumn 的页面
+ * （作用域特殊页的 Miuix 布局，见 `ScopePageSpec.contentMiuix`）复用同一份取值：
+ * 各自硬编码 8/16dp 会让最后一条在悬浮底栏开启时被胶囊永久遮挡。
+ */
+@Composable
+fun expressiveBottomInset(base: Dp = 16.dp): Dp {
+    val navBars = WindowInsets.navigationBars.asPaddingValues()
+    val captionBar = WindowInsets.captionBar.asPaddingValues()
+    // 宿主已有底部导航栏（已消费导航栏 inset）时不再重复叠加，避免底部空白
+    val navInset = if (LocalBottomBarPresent.current) {
+        0.dp
+    } else {
+        navBars.calculateBottomPadding() + captionBar.calculateBottomPadding()
+    }
+    return base + navInset + LocalShellBottomInset.current
+}
+
 /** Miuix 线内容列表的水平内缩：卡片自带 16dp insideMargin，列表侧只留 12dp（契约 §4）。 */
 private val MiuixListHorizontalPadding = 12.dp
 
@@ -305,14 +326,6 @@ fun ExpressiveList(
         )
         return
     }
-    val navBars = WindowInsets.navigationBars.asPaddingValues()
-    val captionBar = WindowInsets.captionBar.asPaddingValues()
-    // 宿主已有底部导航栏（已消费导航栏 inset）时不再重复叠加，避免底部空白
-    val bottomInset = if (LocalBottomBarPresent.current) {
-        0.dp
-    } else {
-        navBars.calculateBottomPadding() + captionBar.calculateBottomPadding()
-    }
     LazyColumn(
         modifier = modifier
             .fillMaxSize()
@@ -322,7 +335,7 @@ fun ExpressiveList(
             start = horizontalPadding,
             end = horizontalPadding,
             top = 4.dp,
-            bottom = 16.dp + bottomInset + LocalShellBottomInset.current,
+            bottom = expressiveBottomInset(),
         ),
         verticalArrangement = verticalArrangement,
         content = content,
@@ -352,14 +365,6 @@ private fun MiuixExpressiveList(
 ) {
     val innerPadding = page.innerPadding
     val layoutDirection = LocalLayoutDirection.current
-    val navBars = WindowInsets.navigationBars.asPaddingValues()
-    val captionBar = WindowInsets.captionBar.asPaddingValues()
-    // 宿主已有底部导航栏（已消费导航栏 inset）时不再重复叠加，避免底部空白
-    val bottomInset = if (LocalBottomBarPresent.current) {
-        0.dp
-    } else {
-        navBars.calculateBottomPadding() + captionBar.calculateBottomPadding()
-    }
     // miuix Scaffold 的 contentPadding.top 即顶栏实测高度（含其内部 window inset 内边距）
     val topInset = innerPadding.calculateTopPadding()
     val topInsetPx = with(LocalDensity.current) { topInset.roundToPx() }
@@ -376,7 +381,7 @@ private fun MiuixExpressiveList(
             start = innerPadding.calculateStartPadding(layoutDirection),
             end = innerPadding.calculateEndPadding(layoutDirection),
             top = topInset,
-            bottom = 16.dp + bottomInset + LocalShellBottomInset.current,
+            bottom = expressiveBottomInset(),
         ),
         verticalArrangement = Arrangement.Top,
         overscrollEffect = null,

@@ -24,6 +24,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.luckyzyx.luckytool.R
 import com.luckyzyx.luckytool.data.AppInfo
+import com.luckyzyx.luckytool.ui.compose.components.material.expressiveBottomInset
 import com.luckyzyx.luckytool.ui.compose.components.miuix.MiuixListItem
 import com.luckyzyx.luckytool.ui.compose.components.miuix.MiuixPrefDefaults
 import com.luckyzyx.luckytool.ui.compose.components.miuix.MiuixPrefItem
@@ -185,7 +186,7 @@ internal fun LazyItemScope.MultiAppMiuixContent(builder: PrefScopeBuilder) {
             contentPadding = PaddingValues(
                 start = MiuixPrefDefaults.CardHorizontalInset,
                 end = MiuixPrefDefaults.CardHorizontalInset,
-                bottom = 16.dp,
+                bottom = expressiveBottomInset(),
             ),
             verticalArrangement = Arrangement.spacedBy(MiuixPrefDefaults.ItemGap),
             overscrollEffect = null,

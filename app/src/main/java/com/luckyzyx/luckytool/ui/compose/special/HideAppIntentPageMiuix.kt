@@ -69,6 +69,7 @@ import kotlinx.serialization.json.Json
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.lazy.LazyItemScope
 import com.luckyzyx.luckytool.ui.compose.components.PrefSwitchCard
+import com.luckyzyx.luckytool.ui.compose.components.material.expressiveBottomInset
 import com.luckyzyx.luckytool.ui.compose.components.miuix.MiuixCheckboxItem
 import com.luckyzyx.luckytool.ui.compose.components.miuix.MiuixListItem
 import com.luckyzyx.luckytool.ui.compose.components.miuix.MiuixPrefDefaults
@@ -407,7 +408,7 @@ internal fun LazyItemScope.HideAppIntentContentMiuix() {
             contentPadding = PaddingValues(
                 start = MiuixPrefDefaults.CardHorizontalInset,
                 end = MiuixPrefDefaults.CardHorizontalInset,
-                bottom = 16.dp,
+                bottom = expressiveBottomInset(),
             ),
             verticalArrangement = Arrangement.spacedBy(MiuixPrefDefaults.ItemGap),
             overscrollEffect = null,

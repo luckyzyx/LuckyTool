@@ -38,6 +38,7 @@ import com.luckyzyx.luckytool.data.MemcConfigPackage
 import com.luckyzyx.luckytool.ui.components.AppPickerDialog
 import com.luckyzyx.luckytool.ui.compose.components.PrefGroup
 import com.luckyzyx.luckytool.ui.compose.components.PrefRow
+import com.luckyzyx.luckytool.ui.compose.components.material.expressiveBottomInset
 import com.luckyzyx.luckytool.ui.compose.components.miuix.MiuixListItem
 import com.luckyzyx.luckytool.ui.compose.components.miuix.MiuixPrefDefaults
 import com.luckyzyx.luckytool.ui.compose.components.miuix.MiuixPrefItem
@@ -304,7 +305,7 @@ internal fun MemcPackagePanelMiuix(
                 contentPadding = PaddingValues(
                     start = MiuixPrefDefaults.CardHorizontalInset,
                     end = MiuixPrefDefaults.CardHorizontalInset,
-                    bottom = 16.dp,
+                    bottom = expressiveBottomInset(),
                 ),
                 verticalArrangement = Arrangement.spacedBy(MiuixPrefDefaults.ItemGap),
             ) {
@@ -363,7 +364,7 @@ internal fun MemcActivityPanelMiuix(
                 contentPadding = PaddingValues(
                     start = MiuixPrefDefaults.CardHorizontalInset,
                     end = MiuixPrefDefaults.CardHorizontalInset,
-                    bottom = 16.dp,
+                    bottom = expressiveBottomInset(),
                 ),
                 verticalArrangement = Arrangement.spacedBy(MiuixPrefDefaults.ItemGap),
             ) {

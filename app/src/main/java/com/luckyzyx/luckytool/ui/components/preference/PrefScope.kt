@@ -9,12 +9,8 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.asPaddingValues
-import androidx.compose.foundation.layout.captionBar
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyItemScope
@@ -54,14 +50,13 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.luckyzyx.luckytool.ui.compose.components.material.LocalBottomBarPresent
-import com.luckyzyx.luckytool.ui.compose.components.material.LocalShellBottomInset
 import com.luckyzyx.luckytool.ui.compose.components.material.SegmentedDropdownItem
 import com.luckyzyx.luckytool.ui.compose.components.material.SegmentedItem
 import com.luckyzyx.luckytool.ui.compose.components.material.SegmentedItemContainer
 import com.luckyzyx.luckytool.ui.compose.components.material.SegmentedListItem
 import com.luckyzyx.luckytool.ui.compose.components.material.SegmentedSwitchItem
 import com.luckyzyx.luckytool.ui.compose.components.material.defaultSegmentedColors
+import com.luckyzyx.luckytool.ui.compose.components.material.expressiveBottomInset
 import com.luckyzyx.luckytool.ui.compose.components.miuix.MiuixArrowItem
 import com.luckyzyx.luckytool.ui.compose.components.miuix.MiuixDropdownItem
 import com.luckyzyx.luckytool.ui.compose.components.miuix.MiuixListItem
@@ -763,14 +758,7 @@ fun ScopeScreen(
             val scopeScrollBehavior = LocalScopeScrollBehavior.current
             // 底部 inset：悬浮胶囊底栏盖在内容之上（Miuix 骨架的 contentWindowInsets 只含水平方向，
             // innerPadding.bottom = 0），列表必须自己预留胶囊高度；系统导航栏/标题栏同理。
-            // LocalBottomBarPresent = true 表示底栏已消费系统导航栏 inset，不再重复叠加。
-            val navBars = WindowInsets.navigationBars.asPaddingValues()
-            val captionBar = WindowInsets.captionBar.asPaddingValues()
-            val bottomInset = if (LocalBottomBarPresent.current) {
-                0.dp
-            } else {
-                navBars.calculateBottomPadding() + captionBar.calculateBottomPadding()
-            }
+            // 取值统一走 expressiveBottomInset（导航栏/caption bar + 悬浮胶囊占位）。
             LazyColumn(
                 modifier = listModifier
                     .scrollEndHaptic()
@@ -787,7 +775,7 @@ fun ScopeScreen(
                     top = LocalScopeTopInset.current,
                     start = MiuixPrefDefaults.CardHorizontalInset,
                     end = MiuixPrefDefaults.CardHorizontalInset,
-                    bottom = 8.dp + bottomInset + LocalShellBottomInset.current,
+                    bottom = expressiveBottomInset(base = 8.dp),
                 ),
                 overscrollEffect = null,
                 content = listItems,
