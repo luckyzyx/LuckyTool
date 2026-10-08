@@ -3,8 +3,10 @@ package com.luckyzyx.luckytool.utils
 import android.content.Context
 import android.content.SharedPreferences
 import androidx.test.core.app.ApplicationProvider
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withTimeoutOrNull
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
@@ -132,5 +134,43 @@ class PrefStateTest {
         // 重新绑定 provider（模拟 XposedServiceBridge 绑定/解绑切换数据源）
         val switched = PrefState.ofProvider { secondRaw }
         assertEquals("in-other", switched.stringFlow("str", "dft").first())
+    }
+
+    @Test
+    fun `remove deletes the key explicitly`() {
+        raw.edit().putString("str", "old").commit()
+        val state = state()
+        assertTrue(state.remove("str"))
+        assertFalse(raw.contains("str"))
+    }
+
+    @Test
+    fun `stringSetFlow recovers and heals the legacy string form`() = runBlocking {
+        // 备份 JSONObject.put(Set) 等历史路径会把集合键写成 "{a, b}" 形态的字符串
+        raw.edit().putString("set", "{com.a, com.b}").commit()
+        val state = state()
+
+        val flow = state.stringSetFlow("set", emptySet())
+        assertEquals(setOf("com.a", "com.b"), flow.first())
+
+        // 自愈：异步写回规范形态，之后任何 getStringSet 都不再抛 ClassCastException
+        val healed = withTimeoutOrNull(5_000) {
+            while (raw.all["set"] !is Set<*>) delay(20)
+            raw.getStringSet("set", null)
+        }
+        assertEquals(setOf("com.a", "com.b"), healed)
+    }
+
+    @Test
+    fun `typed flows ignore values of another type`() = runBlocking {
+        raw.edit().putStringSet("set", setOf("a")).commit()
+        val state = state()
+
+        // 集合键被 stringFlow 读到：不再抛 ClassCastException，回落默认值
+        assertEquals("dft", state.stringFlow("set", "dft").first())
+
+        // 字符串键被 stringSetFlow 读到：按逗号做 best-effort 还原
+        raw.edit().putString("str", "pkg.a,pkg.b").commit()
+        assertEquals(setOf("pkg.a", "pkg.b"), state.stringSetFlow("str", setOf("x")).first())
     }
 }

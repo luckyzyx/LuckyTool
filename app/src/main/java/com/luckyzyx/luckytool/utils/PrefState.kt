@@ -159,6 +159,13 @@ class PrefState private constructor(
 
     // ---------------- 写（commit 语义，与 SPUtils 一致；写入后监听器同步回流对应 Flow） ----------------
 
+    /**
+     * 写入键值（commit 语义）。
+     *
+     * [value] 传 null 等价于 [remove]：SharedPreferences 本身没有 null 类型——`all` 里不存在 null 值，
+     * `getXxx(key, default)` 也只能用默认值表达「键不存在」。所以「把值写成 null」在存储层不可表达，
+     * 唯一能表达的语义就是「删除该键」；需要显式表达时调用 [remove]（行为与既有测试约定一致）。
+     */
     fun set(key: String, value: Any?): Boolean = try {
         val editor = current().edit()
         when (value) {
@@ -177,6 +184,9 @@ class PrefState private constructor(
     } catch (t: Throwable) {
         false
     }
+
+    /** 删除键（[set] 传 null 的显式写法；与 `SPUtils.removeKey` 同语义）。 */
+    fun remove(key: String): Boolean = set(key, null)
 
     @Suppress("UNCHECKED_CAST")
     private fun <T> flow(
