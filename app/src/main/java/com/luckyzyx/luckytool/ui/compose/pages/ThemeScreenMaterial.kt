@@ -39,6 +39,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.filled.Brightness1
 import androidx.compose.material.icons.filled.Brightness3
 import androidx.compose.material.icons.filled.Brightness4
@@ -103,6 +104,7 @@ import com.luckyzyx.luckytool.ui.theme.keyColorOptions
 import com.luckyzyx.luckytool.ui.theme.rememberLuckyColorScheme
 import com.luckyzyx.luckytool.ui.theme.rememberSeedColor
 import com.luckyzyx.luckytool.ui.theme.resolveDarkTheme
+import com.luckyzyx.luckytool.utils.PredictiveBackUtils
 import com.luckyzyx.luckytool.utils.SettingsPrefs
 import com.luckyzyx.luckytool.utils.getBoolean
 import com.luckyzyx.luckytool.utils.getFloat
@@ -121,11 +123,11 @@ import kotlin.math.roundToInt
  *
  * 组成对齐 KernelSU ColorPaletteScreenMaterial：
  * 主题预览卡片 → 主题色选择（跟随系统 + 15 预设）→ 主题模式分段按钮
- * → 调色风格 / 色彩规格下拉 → 动态取色开关。
+ * → 调色风格 / 色彩规格下拉 → 动态取色开关 → 预测式返回开关。
  *
  * 偏好键沿用 LuckyTool 既有约定（SettingsPrefs）：
  * dark_theme（0 跟随系统 / 1 浅色 / 2 深色 / 3 深色 AMOLED）、key_color、
- * palette_style、color_spec、use_dynamic_color。
+ * palette_style、color_spec、use_dynamic_color、enable_predictive_back。
  * 写入后通过 [ThemePrefs.notifyChanged] 让应用主题即时重算，无需 recreate。
  */
 @Composable
@@ -196,6 +198,10 @@ fun ThemeScreenMaterial(onBack: () -> Unit) {
                 true
             )
         )
+    }
+    // 预测式返回手势（需 Android 14+，反射 ApplicationInfo.setEnableOnBackInvokedCallback）
+    var predictiveBack by remember {
+        mutableStateOf(context.getBoolean(SettingsPrefs, ShellSettingsController.KEY_PREDICTIVE_BACK, false))
     }
     var pageScale by remember {
         mutableFloatStateOf(
@@ -418,6 +424,34 @@ fun ThemeScreenMaterial(onBack: () -> Unit) {
                                             context.putInt(SettingsPrefs, "key_color", 0)
                                         }
                                         ThemePrefs.notifyChanged()
+                                    },
+                                )
+                            },
+                        ),
+                    )
+                }
+            }
+
+            // 预测式返回手势（需 Android 14+，反射 ApplicationInfo.setEnableOnBackInvokedCallback）
+            if (PredictiveBackUtils.isSupported()) {
+                item {
+                    SegmentedColumn(
+                        modifier = Modifier.padding(horizontal = 16.dp),
+                        content = listOf(
+                            {
+                                SegmentedSwitchItem(
+                                    icon = Icons.AutoMirrored.Rounded.ArrowBack,
+                                    title = stringResource(R.string.settings_enable_predictive_back),
+                                    summary = stringResource(R.string.settings_enable_predictive_back_summary),
+                                    checked = predictiveBack,
+                                    onCheckedChange = {
+                                        predictiveBack = it
+                                        context.putBoolean(
+                                            SettingsPrefs,
+                                            ShellSettingsController.KEY_PREDICTIVE_BACK,
+                                            it
+                                        )
+                                        // 生效于下次启动：ApplicationInfo 于进程启动时同步
                                     },
                                 )
                             },

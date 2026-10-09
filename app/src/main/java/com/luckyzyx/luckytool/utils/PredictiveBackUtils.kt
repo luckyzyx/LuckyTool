@@ -12,8 +12,9 @@ import org.lsposed.lsparanoid.Obfuscate
  * `ApplicationInfo.setEnableOnBackInvokedCallback` 不是公开 API，反射调用前需要经 HiddenApiBypass
  * 添加豁免；豁免申请失败时退回 best-effort（失败即静默忽略）。
  *
- * 另注意：应用 targetSdk 为 28，系统不会为它派发预测性返回回调，
- * 因此本项在本工程内属于「开关与偏好已就位、需 targetSdk >= 33 才真正生效」。
+ * 自 targetSdk 提升到 37（>= 33）后，系统默认即为应用派发预测性返回回调；本工具据此在启动期
+ * 把 `enable_predictive_back` 偏好同步到 ApplicationInfo，实现「开 → 启用、关 → 回落旧返回」，
+ * 与 KernelSU 启动期行为一致（偏好变更生效于下次启动）。
  */
 @Obfuscate
 object PredictiveBackUtils {

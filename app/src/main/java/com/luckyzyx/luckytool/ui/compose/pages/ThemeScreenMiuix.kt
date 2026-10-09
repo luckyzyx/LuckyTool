@@ -76,6 +76,7 @@ import com.luckyzyx.luckytool.ui.theme.ThemePrefs
 import com.luckyzyx.luckytool.ui.theme.keyColorOptions
 import com.luckyzyx.luckytool.ui.theme.rememberLuckyColorScheme
 import com.luckyzyx.luckytool.ui.theme.resolveDarkTheme
+import com.luckyzyx.luckytool.utils.PredictiveBackUtils
 import com.luckyzyx.luckytool.utils.SettingsPrefs
 import com.luckyzyx.luckytool.utils.getBoolean
 import com.luckyzyx.luckytool.utils.getFloat
@@ -124,17 +125,18 @@ private const val KeyDarkTheme = "dark_theme"
  * 组成对齐 KernelSU ColorPaletteScreenMiuix：
  * 主题预览卡片 → 主题模式 TabRow（跟随系统 / 浅色 / 深色）→ Monet 取色卡片（含强调色 /
  * 色彩风格 / 色彩标准）→ Miuix 外观卡片（模糊 / 悬浮底栏 / 液态玻璃 / 导航角标）
- * → 外壳行为卡片（横移返回 + 界面缩放，含输入对话框）→ 模块描述最大行数 → 底部留白。
+ * → 外壳行为卡片（预测式返回 + 界面缩放，含输入对话框）→ 模块描述最大行数 → 底部留白。
  *
  * 与 KernelSU 的差异：
  * 1. 不做 UiState / Actions 抽象，直接读写 SettingsPrefs；
- * 2. 不提供「预测式返回」开关与「翻页手势」下拉（本应用已隐藏，无对应功能）；
+ * 2. 不提供「翻页手势」下拉（本应用已隐藏，无对应功能）；「预测式返回」开关已提供（targetSdk 37）；
  * 3. 不调用 MonetColorsProvider.UpdateCss()（本应用无该实现）。
  *
  * 偏好键沿用 LuckyTool 既有约定（SettingsPrefs）：
  * dark_theme（0-3 普通 / 4-7 Monet）、miuix_monet、key_color、palette_style、color_spec、
  * enable_blur、enable_floating_bottom_bar、enable_floating_bottom_bar_blur、
- * enable_navigation_badge、enable_swipe_dismiss、page_scale、module_description_max_lines。
+ * enable_navigation_badge、enable_predictive_back、enable_swipe_dismiss、page_scale、
+ * module_description_max_lines。
  * 写入后通过 [ThemePrefs.notifyChanged] 让应用主题即时重算，无需 recreate。
  */
 @Composable
@@ -214,6 +216,10 @@ fun ThemeScreenMiuix(onBack: () -> Unit) {
                 .coerceIn(ModuleLinesMin, ModuleLinesMax)
         )
     }
+    // 预测式返回手势（需 Android 14+，反射 ApplicationInfo.setEnableOnBackInvokedCallback）
+    var predictiveBack by remember {
+        mutableStateOf(context.getBoolean(SettingsPrefs, ShellSettingsController.KEY_PREDICTIVE_BACK, false))
+    }
 
     // 写入偏好：统一走「先落盘、再通知主题重算」
     val setColorMode: (ColorMode) -> Unit = { mode ->
@@ -273,6 +279,11 @@ fun ThemeScreenMiuix(onBack: () -> Unit) {
         moduleLines = clamped
         context.putInt(SettingsPrefs, ShellSettingsController.KEY_MODULE_LINES, clamped)
         ThemePrefs.notifyChanged()
+    }
+    val setPredictiveBack: (Boolean) -> Unit = { enabled ->
+        predictiveBack = enabled
+        context.putBoolean(SettingsPrefs, ShellSettingsController.KEY_PREDICTIVE_BACK, enabled)
+        // 生效于下次启动：ApplicationInfo 于进程启动时同步（对齐 KernelSU 启动期行为）
     }
 
     // 模糊开关仅对预览与顶栏生效，与 KernelSU 一样由偏好直接驱动
@@ -516,12 +527,29 @@ fun ThemeScreenMiuix(onBack: () -> Unit) {
                         }
                     }
 
-                    // 外壳行为：横移返回 + 界面缩放
+                    // 外壳行为：预测式返回 + 界面缩放
                     Card(
                         modifier = Modifier
                             .padding(top = 12.dp)
                             .fillMaxWidth(),
                     ) {
+                        if (PredictiveBackUtils.isSupported()) {
+                            SwitchPreference(
+                                title = stringResource(id = R.string.settings_enable_predictive_back),
+                                summary = stringResource(id = R.string.settings_enable_predictive_back_summary),
+                                startAction = {
+                                    Icon(
+                                        MiuixIcons.Back,
+                                        modifier = Modifier.padding(end = 6.dp),
+                                        contentDescription = stringResource(id = R.string.settings_enable_predictive_back),
+                                        tint = colorScheme.onBackground
+                                    )
+                                },
+                                checked = predictiveBack,
+                                onCheckedChange = { setPredictiveBack(it) }
+                            )
+                        }
+
                         // 拖动只更新页内状态，松手才提交偏好，避免重建全应用密度
                         var sliderValue by remember(pageScale) { mutableFloatStateOf(pageScale) }
                         ArrowPreference(
