@@ -20,6 +20,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
@@ -48,6 +49,7 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.core.graphics.toColorInt
@@ -57,6 +59,7 @@ import com.luckyzyx.luckytool.ui.theme.UiMode
 import top.yukonga.miuix.kmp.basic.ButtonDefaults
 import top.yukonga.miuix.kmp.overlay.OverlayDialog
 import top.yukonga.miuix.kmp.theme.MiuixTheme
+import top.yukonga.miuix.kmp.basic.Text as MiuixText
 import top.yukonga.miuix.kmp.basic.TextButton as MiuixTextButton
 import top.yukonga.miuix.kmp.basic.TextField as MiuixTextField
 import top.yukonga.miuix.kmp.basic.TextFieldDefaults as MiuixTextFieldDefaults
@@ -92,7 +95,28 @@ private val HexKeyboardOptions = KeyboardOptions(
     imeAction = ImeAction.Done,
 )
 
-/** 颜色选择器内部状态（ARGB / 色相 / 十六进制输入文本），两条外观线共用 */
+/**
+ * 取色模式切换的按钮文案。
+ *
+ * 同 [HEX_HINT]：`SV` / `ARGB` 都是与语言无关的技术名词，用字面量以免为这两条文案补齐 13 个语言目录。
+ */
+private const val MODE_SV_LABEL = "SV"
+private const val MODE_ARGB_LABEL = "ARGB"
+
+/**
+ * ARGB 四通道在颜色 int 中的位偏移（与存储格式 `#AARRGGBB` 一致）。
+ *
+ * `internal` 仅为单元测试可见（`ColorPickerChannelTest`），组件内按文件私有使用。
+ */
+internal const val ALPHA_SHIFT = 24
+internal const val RED_SHIFT = 16
+internal const val GREEN_SHIFT = 8
+internal const val BLUE_SHIFT = 0
+
+/** 取色面板模式：色相 + SV 面板，或 A/R/G/B 四通道滑杆 */
+private enum class PickerMode { Sv, Argb }
+
+/** 颜色选择器内部状态（ARGB / 色相 / 十六进制输入文本 / 面板模式），两条外观线共用 */
 private class ColorPickerUiState(initialColor: Int) {
     var colorInt by mutableIntStateOf(initialColor)
         private set
@@ -104,13 +128,22 @@ private class ColorPickerUiState(initialColor: Int) {
     var hue by mutableFloatStateOf(hsvOf(initialColor)[0])
         private set
 
+    /** 当前取色模式（纯界面状态，不参与确认时的颜色计算） */
+    var mode by mutableStateOf(PickerMode.Sv)
+
     val rgb: Int get() = colorInt and 0xFFFFFF
 
     /** 透明度（0f..1f），供透明度条定位 */
-    val alphaFraction: Float get() = ((colorInt ushr 24) and 0xFF) / 255f
+    val alphaFraction: Float get() = channelFraction(ALPHA_SHIFT)
 
     /** 输入文本能否解析为颜色；false 时两条线各用原生方式显示错误态 */
     val isHexValid: Boolean get() = parseHex(hexText) != null
+
+    /** 单通道取值（0..255） */
+    fun channel(shift: Int): Int = (colorInt ushr shift) and 0xFF
+
+    /** 单通道归一到 0f..1f，供通道滑杆定位 */
+    fun channelFraction(shift: Int): Float = channel(shift) / 255f
 
     fun colorFromHsv(h: Float, s: Float, v: Float) {
         setColor(
@@ -125,9 +158,19 @@ private class ColorPickerUiState(initialColor: Int) {
         colorFromHsv(h, curHsv[1], curHsv[2])
     }
 
-    fun applyAlpha(fraction: Float) {
-        val a = (fraction * 255f).roundToInt().coerceIn(0, 255)
-        setColor((a shl 24) or rgb)
+    fun applyAlpha(fraction: Float) = applyChannel(ALPHA_SHIFT, fraction)
+
+    /** 拖动单通道滑杆：只改该通道字节，其余通道保持不变 */
+    fun applyChannel(shift: Int, fraction: Float) {
+        val color = withChannel(colorInt, shift, (fraction * 255f).roundToInt())
+        setColor(color)
+
+        // R/G/B 变化会改变色相：同步给色相条与 SV 面板底色，切回 SV 模式时不至于停在旧色相。
+        // 灰色（饱和度 0）时色相无意义，保留原值，避免色相条凭空跳回 0°。
+        if (shift != ALPHA_SHIFT) {
+            val hsv = hsvOf(color)
+            if (hsv[1] > 0f) hue = hsv[0]
+        }
     }
 
     /**
@@ -158,7 +201,9 @@ private fun hsvOf(color: Int): FloatArray =
 /**
  * Compose 颜色选择器对话框。
  *
- * 面板结构：SV 面板（x=饱和度，y=明度，hue 固定）+ 色相条 + 透明度条 + 预览色块 + 十六进制输入框。
+ * 面板结构：模式切换（SV / ARGB）+ 预览色块 + 十六进制输入框；SV 模式为 SV 面板（x=饱和度，
+ * y=明度，hue 固定）+ 色相条 + 透明度条，ARGB 模式为 A/R/G/B 四通道滑杆。两种模式改的是同一个
+ * 颜色，切换不影响已选颜色。
  * 回调 onColorSelected(colorInt, hexString)，十六进制格式为 `#AARRGGBB`。
  *
  * 外观按 [LocalUiMode] 分派：Miuix 线走 Miuix 弹层，Material 线走 M3 AlertDialog；
@@ -259,13 +304,89 @@ private fun MiuixColorPickerDialog(
 
 /**
  * 选择器主体（标题与按钮之外的全部内容），两条外观线共用，保证两线布局完全一致：
- * SV 面板 → 色相条 → 透明度条 → 预览色块 + 十六进制输入框。
+ * 模式切换 → SV 面板 + 色相条 + 透明度条（或 A/R/G/B 四通道滑杆）→ 预览色块 + 十六进制输入框。
  */
 @Composable
 private fun ColorPickerBody(state: ColorPickerUiState) {
     val isMiuix = LocalUiMode.current == UiMode.Miuix
 
     Column(Modifier.fillMaxWidth()) {
+        PickerModeSwitch(state = state, isMiuix = isMiuix)
+
+        Spacer(Modifier.height(12.dp))
+
+        when (state.mode) {
+            PickerMode.Sv -> SvPickers(state = state)
+            PickerMode.Argb -> ArgbChannelBars(state = state, isMiuix = isMiuix)
+        }
+
+        Spacer(Modifier.height(16.dp))
+
+        Row(
+            Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            ColorSwatch(
+                colorInt = state.colorInt,
+                shape = RoundedCornerShape(14.dp),
+                borderColor = if (isMiuix) {
+                    MiuixTheme.colorScheme.outline
+                } else {
+                    MaterialTheme.colorScheme.outline
+                },
+                modifier = Modifier.size(44.dp),
+            )
+            Spacer(Modifier.width(14.dp))
+            HexField(
+                state = state,
+                isMiuix = isMiuix,
+                modifier = Modifier.weight(1f),
+            )
+        }
+    }
+}
+
+/**
+ * 取色模式切换：SV 面板与 ARGB 四通道滑杆二选一。
+ *
+ * 两条外观线各用各自的选择控件（Material 走 M3 `FilterChip`，Miuix 走 `MiuixToggleChip`），
+ * 与 `AppPickerDialog` 的筛选行保持一致的观感与实现。
+ */
+@Composable
+private fun PickerModeSwitch(
+    state: ColorPickerUiState,
+    isMiuix: Boolean,
+    modifier: Modifier = Modifier,
+) {
+    Row(
+        modifier = modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.Center,
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            PickerMode.entries.forEach { mode ->
+                val selected = state.mode == mode
+                val onClick = { state.mode = mode }
+                val label = if (mode == PickerMode.Sv) MODE_SV_LABEL else MODE_ARGB_LABEL
+
+                if (isMiuix) {
+                    MiuixToggleChip(selected = selected, onClick = onClick, label = label)
+                } else {
+                    FilterChip(
+                        selected = selected,
+                        onClick = onClick,
+                        label = { Text(label) },
+                    )
+                }
+            }
+        }
+    }
+}
+
+/** SV 模式：SV 面板（饱和度/明度）+ 色相条 + 透明度条 */
+@Composable
+private fun SvPickers(state: ColorPickerUiState, modifier: Modifier = Modifier) {
+    Column(modifier.fillMaxWidth()) {
         SvPanel(
             state = state,
             modifier = Modifier
@@ -298,30 +419,99 @@ private fun ColorPickerBody(state: ColorPickerUiState) {
                 .clip(CircleShape),
             checkerboard = true,
         )
+    }
+}
 
-        Spacer(Modifier.height(16.dp))
+/**
+ * ARGB 模式：A/R/G/B 四条通道滑杆，顺序与存储格式 `#AARRGGBB` 一致。
+ *
+ * 通道字母（A/R/G/B）是国际通用记法，与 [MODE_SV_LABEL] 同理用字面量，不引入字符串资源。
+ */
+@Composable
+private fun ArgbChannelBars(
+    state: ColorPickerUiState,
+    isMiuix: Boolean,
+    modifier: Modifier = Modifier,
+) {
+    Column(
+        modifier = modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        ChannelBar(state = state, isMiuix = isMiuix, label = "A", shift = ALPHA_SHIFT)
+        ChannelBar(state = state, isMiuix = isMiuix, label = "R", shift = RED_SHIFT)
+        ChannelBar(state = state, isMiuix = isMiuix, label = "G", shift = GREEN_SHIFT)
+        ChannelBar(state = state, isMiuix = isMiuix, label = "B", shift = BLUE_SHIFT)
+    }
+}
 
-        Row(
-            Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            ColorSwatch(
-                colorInt = state.colorInt,
-                shape = RoundedCornerShape(14.dp),
-                borderColor = if (isMiuix) {
-                    MiuixTheme.colorScheme.outline
-                } else {
-                    MaterialTheme.colorScheme.outline
-                },
-                modifier = Modifier.size(44.dp),
-            )
-            Spacer(Modifier.width(14.dp))
-            HexField(
-                state = state,
-                isMiuix = isMiuix,
-                modifier = Modifier.weight(1f),
-            )
-        }
+/**
+ * 单通道滑杆：通道字母 + 渐变胶囊 + 当前值（0..255）。
+ *
+ * 数值只用于读准当前通道，精确输入仍走十六进制框；渐变直接展示该通道 0→255 的效果。
+ */
+@Composable
+private fun ChannelBar(
+    state: ColorPickerUiState,
+    isMiuix: Boolean,
+    label: String,
+    shift: Int,
+    modifier: Modifier = Modifier,
+) {
+    Row(
+        modifier = modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        ChannelText(text = label, isMiuix = isMiuix, modifier = Modifier.width(16.dp))
+
+        Spacer(Modifier.width(10.dp))
+
+        GradientBar(
+            fraction = state.channelFraction(shift),
+            colors = channelGradientColors(state.rgb, shift),
+            onFractionChange = { state.applyChannel(shift, it) },
+            modifier = Modifier
+                .weight(1f)
+                .height(BarHeight)
+                .clip(CircleShape),
+            checkerboard = shift == ALPHA_SHIFT,
+        )
+
+        Spacer(Modifier.width(10.dp))
+
+        ChannelText(
+            text = state.channel(shift).toString(),
+            isMiuix = isMiuix,
+            modifier = Modifier.width(32.dp),
+            textAlign = TextAlign.End,
+        )
+    }
+}
+
+/** 通道字母与数值文本：两条外观线各用自己的排版与前景色，等宽字体避免数值变化时抖动 */
+@Composable
+private fun ChannelText(
+    text: String,
+    isMiuix: Boolean,
+    modifier: Modifier = Modifier,
+    textAlign: TextAlign = TextAlign.Start,
+) {
+    if (isMiuix) {
+        MiuixText(
+            text = text,
+            modifier = modifier,
+            color = MiuixTheme.colorScheme.onBackground,
+            style = MiuixTheme.textStyles.body2.copy(fontFamily = FontFamily.Monospace),
+            textAlign = textAlign,
+            maxLines = 1,
+        )
+    } else {
+        Text(
+            text = text,
+            modifier = modifier,
+            style = MaterialTheme.typography.labelLarge.copy(fontFamily = FontFamily.Monospace),
+            textAlign = textAlign,
+            maxLines = 1,
+        )
     }
 }
 
@@ -536,6 +726,18 @@ private fun alphaGradientColors(rgb: Int): List<Color> {
     return listOf(base.copy(alpha = 0f), base.copy(alpha = 1f))
 }
 
+/**
+ * 单通道条底色渐变：A 通道复用 [alphaGradientColors]（本来就要看透明效果）；
+ * R/G/B 三通道强制不透明，否则 alpha 为 0 时整条滑杆看不见颜色。
+ */
+private fun channelGradientColors(rgb: Int, shift: Int): List<Color> {
+    if (shift == ALPHA_SHIFT) return alphaGradientColors(rgb)
+
+    val mask = 0xFF shl shift
+    val low = (rgb or (0xFF shl ALPHA_SHIFT)) and mask.inv()
+    return listOf(Color(low), Color(low or mask))
+}
+
 private fun formatHex(color: Int): String = String.format("#%08X", color)
 
 /**
@@ -572,3 +774,12 @@ internal fun filterHexInput(raw: String): String {
 
 private fun isHexDigit(char: Char): Boolean =
     char in '0'..'9' || char in 'a'..'f' || char in 'A'..'F'
+
+/**
+ * 替换颜色的单个通道（[shift] 取 [ALPHA_SHIFT] / [RED_SHIFT] / [GREEN_SHIFT] / [BLUE_SHIFT]），
+ * 其余通道保持不变，越界值收敛到 0..255。
+ *
+ * `internal` 仅为单元测试可见（`ColorPickerChannelTest`），组件内按文件私有使用。
+ */
+internal fun withChannel(color: Int, shift: Int, value: Int): Int =
+    (color and (0xFF shl shift).inv()) or (value.coerceIn(0, 255) shl shift)

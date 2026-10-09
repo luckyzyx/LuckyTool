@@ -441,9 +441,14 @@ private fun MiuixAppPickerDialog(
     }
 }
 
-/** Miuix 筛选开关（等价 M3 FilterChip，选中态用 primary 实心按钮） */
+/**
+ * Miuix 筛选开关（等价 M3 FilterChip，选中态用 primary 实心按钮）。
+ *
+ * `internal` 以便同包的 [com.luckyzyx.luckytool.ui.compose.components.ColorPickerDialog]
+ * 复用同一实现（取色模式切换行）。
+ */
 @Composable
-private fun MiuixToggleChip(
+internal fun MiuixToggleChip(
     selected: Boolean,
     onClick: () -> Unit,
     label: String,
