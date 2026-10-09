@@ -1,17 +1,21 @@
 package com.luckyzyx.luckytool.ui.compose.special
 
+import com.drake.net.Get
 import com.luckyzyx.luckytool.data.DonateDetailInfo
 import com.luckyzyx.luckytool.data.DonateInfo
 import com.luckyzyx.luckytool.ui.compose.scopes.ScopePageSpec
 import com.luckyzyx.luckytool.ui.theme.LocalUiMode
 import com.luckyzyx.luckytool.ui.theme.UiMode
+import com.luckyzyx.luckytool.utils.LogUtils
 import com.luckyzyx.luckytool.utils.SettingsPrefs
+import kotlinx.coroutines.CoroutineScope
 import org.json.JSONArray
+import java.io.File
 import java.text.DecimalFormat
 
 /**
  * Donate 页（旧 ui.fragment.settings.DonateFragment 的 Compose 等价物）。
- * 捐赠数据经 GitHub API 检查更新、GitMirror 下载、AESCrypt 加密缓存后由
+ * 捐赠数据经 GitHub API 检查更新、jsDelivr 镜像下载、AESCrypt 加密缓存后由
  * Markwon(+TablePlugin) 渲染为 Markdown 表格；筛选/排序选项在排序过滤弹层中。
  * 下拉刷新（onRefresh）重跑 initData 管线。
  *
@@ -25,8 +29,35 @@ internal val lastUpdateKey = "last_update_dd_date"
 internal val developKey = "hidden_function"
 internal const val DONATE_DATA_URL =
     "https://api.github.com/repos/LuckyOSTeam/LuckyOSTeam.github.io/releases/tags/luckytool_donates"
+// raw.gitmirror.com 域名已下线，改用 jsDelivr 镜像（国内可访问）
 internal const val DONATE_JSON_URL =
-    "https://raw.gitmirror.com/LuckyOSTeam/LuckyOSTeam.github.io/main/LuckyTool/donate.json"
+    "https://cdn.jsdelivr.net/gh/LuckyOSTeam/LuckyOSTeam.github.io@main/LuckyTool/donate.json"
+
+/** 备用下载镜像：主地址不可用时依次回退（同一文件的不同 CDN 节点） */
+internal val DONATE_JSON_URLS = listOf(
+    DONATE_JSON_URL,
+    "https://fastly.jsdelivr.net/gh/LuckyOSTeam/LuckyOSTeam.github.io@main/LuckyTool/donate.json",
+)
+
+/**
+ * 依次尝试各镜像下载 donate.json，返回第一个成功落盘的临时文件；
+ * 全部失败返回 null（每个地址的失败原因记录日志，由调用方提示用户）。
+ */
+internal suspend fun CoroutineScope.downloadDonateJson(tempDir: File): File? {
+    for (url in DONATE_JSON_URLS) {
+        try {
+            val file = Get<File>(url) {
+                setDownloadDir(tempDir)
+                setDownloadMd5Verify()
+                setDownloadTempFile()
+            }.await()
+            if (file.exists()) return file
+        } catch (e: Exception) {
+            LogUtils.e("downloadDonateJson", url, e.toString(), true)
+        }
+    }
+    return null
+}
 
 /** 由内容组合时注册的加载器驱动 onRefresh */
 internal var donateReloader: (suspend () -> Unit)? = null

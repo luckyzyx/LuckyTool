@@ -99,12 +99,8 @@ internal fun PrefScopeBuilder.DonateBodyMaterial(c: Context) {
     suspend fun downloadJson(date: String) {
         try {
             val tempDir = File(appContext.cacheDir, "dTemp")
-            val file = scope.Get<File>(DONATE_JSON_URL) {
-                setDownloadDir(tempDir)
-                setDownloadMd5Verify()
-                setDownloadTempFile()
-            }.await()
-            if (file.exists()) {
+            val file = scope.downloadDonateJson(tempDir)
+            if (file != null && file.exists()) {
                 val jsonEncrypt = withContext(Dispatchers.IO) { AESCrypt.encrypt(file.readText()) }
                 val dd = File(appContext.filesDir, "dd")
                 withContext(Dispatchers.IO) {
@@ -113,6 +109,8 @@ internal fun PrefScopeBuilder.DonateBodyMaterial(c: Context) {
                 }
                 state.set(lastUpdateKey, date)
                 loadJson()?.let { markdown = it }
+            } else {
+                c.showToast("Exception while download data!")
             }
         } catch (e: Exception) {
             c.showToast("Exception while download data!")
