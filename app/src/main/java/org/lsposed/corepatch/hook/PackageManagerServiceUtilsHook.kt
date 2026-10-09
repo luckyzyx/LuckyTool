@@ -2,11 +2,8 @@ package org.lsposed.corepatch.hook
 
 import android.annotation.SuppressLint
 import android.os.Build
+import com.highcapable.yukihookapi.hook.log.YLog
 import org.lsposed.corepatch.Config
-import org.lsposed.corepatch.XposedHelper
-import org.lsposed.corepatch.XposedHelper.hookBefore
-import org.lsposed.corepatch.XposedHelper.hostClassLoader
-import org.lsposed.corepatch.XposedHelper.log
 
 object PackageManagerServiceUtilsHook : BaseHook() {
     override val name = "PackageManagerServiceUtilsHook"
@@ -14,7 +11,7 @@ object PackageManagerServiceUtilsHook : BaseHook() {
     @SuppressLint("PrivateApi")
     override fun hook() {
         val packageManagerServiceUtilsClazz =
-            hostClassLoader.loadClass("com.android.server.pm.PackageManagerServiceUtils")
+            "com.android.server.pm.PackageManagerServiceUtils".toClass()
 
         // https://cs.android.com/android/platform/superproject/+/android-9.0.0_r61:frameworks/base/services/core/java/com/android/server/pm/PackageManagerServiceUtils.java;l=552
         // public static boolean verifySignatures(
@@ -33,10 +30,12 @@ object PackageManagerServiceUtilsHook : BaseHook() {
         //     boolean isRollback)
         val verifySignaturesMethod =
             packageManagerServiceUtilsClazz.declaredMethods.first { m -> m.name == "verifySignatures" && m.returnType == Boolean::class.java }
-        if (!XposedHelper.deoptimize(verifySignaturesMethod)) log("failed to deoptimize verifySignatures")
-        hookBefore(verifySignaturesMethod) { callback ->
-            if (Config.isBypassVerificationEnabled()) {
-                callback.returnAndSkip(false)
+        if (!verifySignaturesMethod.deoptimize()) YLog.debug("failed to deoptimize verifySignatures")
+        verifySignaturesMethod.hook {
+            before {
+                if (Config.isBypassVerificationEnabled()) {
+                    result = false
+                }
             }
         }
 
@@ -53,8 +52,11 @@ object PackageManagerServiceUtilsHook : BaseHook() {
                         "android.content.pm.PackageInfoLite"
                 }
                 .forEach { checkDowngradeMethod ->
-                    hookBefore(checkDowngradeMethod) { callback ->
-                        if (Config.isBypassDowngradeEnabled()) callback.returnAndSkip(null)
+                    //经典 before 钩子无法可靠跳过 void 方法的原始调用，改用 intercept
+                    checkDowngradeMethod.hook {
+                        intercept {
+                            if (Config.isBypassDowngradeEnabled()) null else callOriginal()
+                        }
                     }
                 }
         }
@@ -64,7 +66,7 @@ object PackageManagerServiceUtilsHook : BaseHook() {
             // https://cs.android.com/android/platform/superproject/main/+/main:frameworks/base/services/core/java/com/android/server/pm/PackageManagerServiceUtils.java;l=621
             val canJoinSharedUserIdMethod =
                 packageManagerServiceUtilsClazz.declaredMethods.first { m -> m.name == "canJoinSharedUserId" }
-            if (!XposedHelper.deoptimize(canJoinSharedUserIdMethod)) log("failed to deoptimize canJoinSharedUserId")
+            if (!canJoinSharedUserIdMethod.deoptimize()) YLog.debug("failed to deoptimize canJoinSharedUserId")
         }
     }
 }

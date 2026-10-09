@@ -3,8 +3,6 @@ package org.lsposed.corepatch.hook
 import android.annotation.SuppressLint
 import android.os.Build
 import org.lsposed.corepatch.Config
-import org.lsposed.corepatch.XposedHelper.hookBefore
-import org.lsposed.corepatch.XposedHelper.hostClassLoader
 
 object AssetManagerHook : BaseHook() {
     override val name = "AssetManagerHook"
@@ -13,7 +11,7 @@ object AssetManagerHook : BaseHook() {
     override fun hook() {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.R) return
 
-        val assetManagerClazz = hostClassLoader.loadClass("android.content.res.AssetManager")
+        val assetManagerClazz = "android.content.res.AssetManager".toClass()
 
         // Targeting R+ (version " + Build.VERSION_CODES.R + " and above) requires"
         // + " the resources.arsc of installed APKs to be stored uncompressed"
@@ -22,9 +20,11 @@ object AssetManagerHook : BaseHook() {
         // public boolean containsAllocatedTable()
         val containsAllocatedTableMethod =
             assetManagerClazz.getDeclaredMethod("containsAllocatedTable")
-        hookBefore(containsAllocatedTableMethod) { callback ->
-            if (Config.isBypassResourceArscRestrictionsEnabled()) {
-                callback.returnAndSkip(false)
+        containsAllocatedTableMethod.hook {
+            before {
+                if (Config.isBypassResourceArscRestrictionsEnabled()) {
+                    result = false
+                }
             }
         }
     }

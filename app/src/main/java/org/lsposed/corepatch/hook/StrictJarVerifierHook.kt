@@ -2,9 +2,6 @@ package org.lsposed.corepatch.hook
 
 import android.annotation.SuppressLint
 import org.lsposed.corepatch.Config
-import org.lsposed.corepatch.XposedHelper.hookAfter
-import org.lsposed.corepatch.XposedHelper.hookBefore
-import org.lsposed.corepatch.XposedHelper.hostClassLoader
 import java.security.cert.Certificate
 
 object StrictJarVerifierHook : BaseHook() {
@@ -12,15 +9,17 @@ object StrictJarVerifierHook : BaseHook() {
 
     @SuppressLint("PrivateApi", "DiscouragedPrivateApi")
     override fun hook() {
-        val strictJarVerifierClazz = hostClassLoader.loadClass("android.util.jar.StrictJarVerifier")
+        val strictJarVerifierClazz = "android.util.jar.StrictJarVerifier".toClass()
 
         // https://cs.android.com/android/platform/superproject/main/+/main:frameworks/base/core/java/android/util/jar/StrictJarVerifier.java;l=529
         // private static boolean verifyMessageDigest(byte[] expected, byte[] encodedActual)
         val verifyMessageDigestMethod =
             strictJarVerifierClazz.declaredMethods.first { m -> m.name == "verifyMessageDigest" && m.returnType == Boolean::class.java }
-        hookBefore(verifyMessageDigestMethod) { callback ->
-            if (Config.isBypassVerificationEnabled()) {
-                callback.returnAndSkip(true)
+        verifyMessageDigestMethod.hook {
+            before {
+                if (Config.isBypassVerificationEnabled()) {
+                    result = true
+                }
             }
         }
 
@@ -35,9 +34,11 @@ object StrictJarVerifierHook : BaseHook() {
         //     boolean ignorable)
         val verifyMethod =
             strictJarVerifierClazz.declaredMethods.first { m -> m.name == "verify" && m.returnType == Boolean::class.java }
-        hookBefore(verifyMethod) { callback ->
-            if (Config.isBypassVerificationEnabled()) {
-                callback.returnAndSkip(true)
+        verifyMethod.hook {
+            before {
+                if (Config.isBypassVerificationEnabled()) {
+                    result = true
+                }
             }
         }
 
@@ -45,20 +46,22 @@ object StrictJarVerifierHook : BaseHook() {
         val signatureSchemeRollbackProtectionsEnforcedField =
             strictJarVerifierClazz.declaredFields.first { f -> f.name == "signatureSchemeRollbackProtectionsEnforced" }
         signatureSchemeRollbackProtectionsEnforcedField.isAccessible = true
-        hookAfter(strictJarVerifierConstructor) { callback ->
-            if (Config.isBypassVerificationEnabled()) {
-                signatureSchemeRollbackProtectionsEnforcedField.set(
-                    callback.thisObject, false
-                )
+        strictJarVerifierConstructor.hook {
+            after {
+                if (Config.isBypassVerificationEnabled()) {
+                    signatureSchemeRollbackProtectionsEnforcedField.set(
+                        instance, false
+                    )
+                }
             }
         }
 
-        val pkcs7Clazz = hostClassLoader.loadClass("sun.security.pkcs.PKCS7")
+        val pkcs7Clazz = "sun.security.pkcs.PKCS7".toClass()
         val pkcs7Constructor = pkcs7Clazz.declaredConstructors.first { c ->
             c.parameterTypes.size == 1 && c.parameterTypes[0] == ByteArray::class.java
         }
         val getSignerInfosMethod = pkcs7Clazz.getDeclaredMethod("getSignerInfos")
-        val signerInfoClazz = hostClassLoader.loadClass("sun.security.pkcs.SignerInfo")
+        val signerInfoClazz = "sun.security.pkcs.SignerInfo".toClass()
         val getCertificateChainMethod =
             signerInfoClazz.getDeclaredMethod("getCertificateChain", pkcs7Clazz)
 
@@ -67,18 +70,20 @@ object StrictJarVerifierHook : BaseHook() {
         val verifyBytesMethod = strictJarVerifierClazz.getDeclaredMethod(
             "verifyBytes", ByteArray::class.java, ByteArray::class.java
         )
-        hookAfter(verifyBytesMethod) { callback ->
-            if (Config.isBypassDigestEnabled() && !Config.isUsePreviousSignaturesEnabled()) {
-                val block = pkcs7Constructor.newInstance(callback.args[0])
-                val signerInfo = getSignerInfosMethod.invoke(block) as Array<*>
-                if (signerInfo.isEmpty()) return@hookAfter
-                val signer = signerInfo[0]
-                // libcore 的 SignerInfo.getCertificateChain 返回 ArrayList<X509Certificate>（List 而非数组），
-                // 需转换为 Certificate[] 以匹配 verifyBytes 的声明返回类型，否则框架返回值类型校验会抛
-                // ClassCastException: Return value's type from hook callback does not match the hooked method
-                val certs = getCertificateChainMethod.invoke(signer, block) as List<*>
-                callback.result = certs.map { it as Certificate }.toTypedArray()
-                callback.throwable = null
+        verifyBytesMethod.hook {
+            after {
+                if (Config.isBypassDigestEnabled() && !Config.isUsePreviousSignaturesEnabled()) {
+                    val block = pkcs7Constructor.newInstance(args[0])
+                    val signerInfo = getSignerInfosMethod.invoke(block) as Array<*>
+                    if (signerInfo.isEmpty()) return@after
+                    val signer = signerInfo[0]
+                    // libcore 的 SignerInfo.getCertificateChain 返回 ArrayList<X509Certificate>（List 而非数组），
+                    // 需转换为 Certificate[] 以匹配 verifyBytes 的声明返回类型，否则框架返回值类型校验会抛
+                    // ClassCastException: Return value's type from hook callback does not match the hooked method
+                    val certs = getCertificateChainMethod.invoke(signer, block) as List<*>
+                    // 新 API 中给 result 赋值会同时清除 throwable，无需再显式置空
+                    result = certs.map { it as Certificate }.toTypedArray()
+                }
             }
         }
     }

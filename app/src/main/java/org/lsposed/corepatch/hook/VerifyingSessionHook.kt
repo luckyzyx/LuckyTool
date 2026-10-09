@@ -3,8 +3,6 @@ package org.lsposed.corepatch.hook
 import android.annotation.SuppressLint
 import android.os.Build
 import org.lsposed.corepatch.Config
-import org.lsposed.corepatch.XposedHelper.hookBefore
-import org.lsposed.corepatch.XposedHelper.hostClassLoader
 
 object VerifyingSessionHook : BaseHook() {
     override val name = "VerifyingSessionHook"
@@ -18,19 +16,21 @@ object VerifyingSessionHook : BaseHook() {
         }
 
         val verifyingSessionClazz =
-            hostClassLoader.loadClass("com.android.server.pm.VerifyingSession")
+            "com.android.server.pm.VerifyingSession".toClass()
 
         val installFlagsField =
             verifyingSessionClazz.getDeclaredField("mInstallFlags").apply { isAccessible = true }
         val handleStartVerifyMethod =
             verifyingSessionClazz.declaredMethods.first { m -> m.name == "handleStartVerify" }
-        hookBefore(handleStartVerifyMethod) { callback ->
-            if (Config.isDisableVerificationAgentEnabled()) {
-                val session = callback.thisObject ?: return@hookBefore
-                installFlagsField.setInt(
-                    session,
-                    installFlagsField.getInt(session) or INSTALL_DISABLE_VERIFICATION
-                )
+        handleStartVerifyMethod.hook {
+            before {
+                if (Config.isDisableVerificationAgentEnabled()) {
+                    val session = instance
+                    installFlagsField.setInt(
+                        session,
+                        installFlagsField.getInt(session) or INSTALL_DISABLE_VERIFICATION
+                    )
+                }
             }
         }
 
@@ -40,9 +40,11 @@ object VerifyingSessionHook : BaseHook() {
                     m.returnType == Boolean::class.java
             }
 
-        hookBefore(isAdbVerificationEnabledMethod) { callback ->
-            if (Config.isDisableVerificationAgentEnabled()) {
-                callback.returnAndSkip(false)
+        isAdbVerificationEnabledMethod.hook {
+            before {
+                if (Config.isDisableVerificationAgentEnabled()) {
+                    result = false
+                }
             }
         }
     }

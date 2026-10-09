@@ -1,6 +1,7 @@
 package org.lsposed.corepatch
 
-import org.lsposed.corepatch.XposedHelper.prefs
+import com.highcapable.yukihookapi.hook.log.YLog
+import com.highcapable.yukihookapi.hook.xposed.preference.YukiHookPreferences
 
 object Config {
     const val BYPASS_DOWNGRADE = "downgrade"
@@ -25,49 +26,61 @@ object Config {
         BYPASS_BLOCK
     )
 
+    //LuckyTool：配置统一存 ModulePrefs 组，键名沿用上游，由 BaseHook 在 hook 前绑定
+    @Volatile
+    private var preferences: YukiHookPreferences? = null
+
+    fun bind(preferences: YukiHookPreferences) {
+        this.preferences = preferences
+    }
+
     fun printAllConfig() {
         allConfig.forEach {
-            XposedHelper.log("$it: ${prefs.getBoolean(it, false)}")
+            YLog.debug("$it: ${getBoolean(it)}")
         }
     }
 
+    private fun getBoolean(key: String): Boolean {
+        return preferences?.getBoolean(key, false) ?: false
+    }
+
     fun isBypassDowngradeEnabled(): Boolean {
-        return prefs.getBoolean(BYPASS_DOWNGRADE, false)
+        return getBoolean(BYPASS_DOWNGRADE)
     }
 
     fun isBypassVerificationEnabled(): Boolean {
-        return prefs.getBoolean(BYPASS_VERIFICATION, false)
+        return getBoolean(BYPASS_VERIFICATION)
     }
 
     fun isBypassResourceArscRestrictionsEnabled(): Boolean {
-        return prefs.getBoolean(BYPASS_RESOURCE_ARSC_RESTRICTIONS, false)
+        return getBoolean(BYPASS_RESOURCE_ARSC_RESTRICTIONS)
     }
 
     fun isBypassDigestEnabled(): Boolean {
-        return prefs.getBoolean(BYPASS_DIGEST, false)
+        return getBoolean(BYPASS_DIGEST)
     }
 
     fun isBypassExactSignatureMatch(): Boolean {
-        return prefs.getBoolean(BYPASS_EXACT_SIGNATURE_MATCH, false)
+        return getBoolean(BYPASS_EXACT_SIGNATURE_MATCH)
     }
 
     fun isUsePreviousSignaturesEnabled(): Boolean {
-        return prefs.getBoolean(USE_PREVIOUS_SIGNATURES, false)
+        return getBoolean(USE_PREVIOUS_SIGNATURES)
     }
 
     fun isAllowHiddenApisForSystemAppsEnabled(): Boolean {
-        return prefs.getBoolean(ALLOW_HIDDEN_APIS_FOR_SYSTEM_APPS, false)
+        return getBoolean(ALLOW_HIDDEN_APIS_FOR_SYSTEM_APPS)
     }
 
     fun isBypassSharedUserEnabled(): Boolean {
-        return prefs.getBoolean(BYPASS_SHARED_USER, false)
+        return getBoolean(BYPASS_SHARED_USER)
     }
 
     fun isDisableVerificationAgentEnabled(): Boolean {
-        return prefs.getBoolean(DISABLE_VERIFICATION_AGENT, false)
+        return getBoolean(DISABLE_VERIFICATION_AGENT)
     }
 
     fun isBypassBlockEnabled(): Boolean {
-        return prefs.getBoolean(BYPASS_BLOCK, false)
+        return getBoolean(BYPASS_BLOCK)
     }
 }
