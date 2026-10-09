@@ -14,15 +14,14 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
-import com.luckyzyx.luckytool.ui.compose.components.material.SegmentedItem
-import com.luckyzyx.luckytool.ui.compose.components.material.SegmentedListItem
-import com.luckyzyx.luckytool.ui.compose.components.material.SegmentedSwitchItem
-import com.luckyzyx.luckytool.ui.compose.components.miuix.MaterialPrefCardScope
+import com.luckyzyx.luckytool.ui.compose.components.material.MaterialItem
+import com.luckyzyx.luckytool.ui.compose.components.material.MaterialListItem
+import com.luckyzyx.luckytool.ui.compose.components.material.MaterialPrefCardScope
+import com.luckyzyx.luckytool.ui.compose.components.material.MaterialSwitchItem
 import com.luckyzyx.luckytool.ui.compose.components.miuix.MiuixListItem
 import com.luckyzyx.luckytool.ui.compose.components.miuix.MiuixPrefCardScope
 import com.luckyzyx.luckytool.ui.compose.components.miuix.MiuixPrefItem
 import com.luckyzyx.luckytool.ui.compose.components.miuix.MiuixSwitchItem
-import com.luckyzyx.luckytool.ui.compose.components.miuix.PrefCardScope
 import com.luckyzyx.luckytool.ui.theme.LocalUiMode
 import com.luckyzyx.luckytool.ui.theme.UiMode
 
@@ -30,7 +29,7 @@ import com.luckyzyx.luckytool.ui.theme.UiMode
  * 卡片行 / 卡原语（KernelSU 风格分段卡片 / 独立卡片）。
  *
  * **「设置区块」的唯一 API 是 `PrefScope` DSL**（`category()` / `switch()` / `click()` / `list()` /
- * `custom()`，见 `ui/components/preference/PrefScope.kt`）—— 所有标准设置页与作用域页都走它。
+ * `custom()`，见 `ui/compose/components/PrefScope.kt`）—— 所有标准设置页与作用域页都走它。
  * 本文件只保留 `custom()` 逃生舱（无法走 DSL 的自定义控件里的单行 / 单卡）所需的原始行 / 卡原语：
  * [PrefGroup] + [PrefRow] + [PrefSwitchRow]（组内行，形状由所属 [PrefGroup] 决定）、
  * [PrefCard] + [PrefSwitchCard]（不属于任何分段组的独立卡片）、[PrefIconBadge]（左侧彩色徽标）。
@@ -43,7 +42,7 @@ import com.luckyzyx.luckytool.ui.theme.UiMode
  * 分段卡片组：组内连续条目合并成一张连续卡片
  * （首条上端、尾条下端 16dp 外圆角，组内条目不设圆角与间距，显隐带弹性过渡）。
  *
- * 组容器由 [PrefCardScope] 的两个实现分派：material 线走 `SegmentedColumn` 动态重放
+ * 组容器由 [PrefCardScope] 的两个实现分派：material 线走 `MaterialGroup` 动态重放
  * （保留弹性显隐过渡），Miuix 线走 `MiuixPrefGroup`（首条 12dp 组间距 + 卡片圆角）。
  *
  * 用法：
@@ -93,7 +92,7 @@ fun PrefRow(
             endActions = endActions,
         )
     } else {
-        SegmentedListItem(
+        MaterialListItem(
             modifier = modifier,
             onClick = onClick,
             onLongClick = onLongClick,
@@ -154,7 +153,7 @@ fun PrefSwitchRow(
         )
     } else {
         Box(modifier = modifier) {
-            SegmentedSwitchItem(
+            MaterialSwitchItem(
                 title = title,
                 summary = summary,
                 checked = checked,
@@ -168,7 +167,7 @@ fun PrefSwitchRow(
 
 /**
  * 独立卡片（不属于任何分段组时使用）。
- * 外观与主题页一致：KernelSU SegmentedListItem（surfaceBright 容器 + 16dp 外圆角）/
+ * 外观与主题页一致：KernelSU MaterialListItem（surfaceBright 容器 + 16dp 外圆角）/
  * Miuix `MiuixPrefItem`（16dp 外圆角 + 12dp 水平内缩）。
  */
 @Composable
@@ -194,7 +193,7 @@ fun PrefCard(
             )
         }
     } else {
-        SegmentedItem(index = 0, count = 1) {
+        MaterialItem(index = 0, count = 1) {
             PrefRow(
                 title = title,
                 modifier = modifier,
@@ -230,7 +229,7 @@ fun PrefSwitchCard(
             )
         }
     } else {
-        SegmentedItem(index = 0, count = 1) {
+        MaterialItem(index = 0, count = 1) {
             PrefSwitchRow(
                 title = title,
                 checked = checked,

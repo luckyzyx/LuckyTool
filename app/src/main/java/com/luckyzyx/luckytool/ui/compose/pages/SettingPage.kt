@@ -50,10 +50,10 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.luckyzyx.luckytool.R
 import com.luckyzyx.luckytool.ui.activity.MainActivity
-import com.luckyzyx.luckytool.ui.components.preference.LocalScopeTopInset
-import com.luckyzyx.luckytool.ui.components.preference.ScopeScreen
+import com.luckyzyx.luckytool.ui.compose.components.LocalScopeTopInset
+import com.luckyzyx.luckytool.ui.compose.components.ScopeScreen
 import com.luckyzyx.luckytool.ui.compose.components.PrefIconBadge
-import com.luckyzyx.luckytool.ui.compose.components.material.ExpressivePageScaffold
+import com.luckyzyx.luckytool.ui.compose.components.material.MaterialPageScaffold
 import com.luckyzyx.luckytool.ui.theme.LocalUiMode
 import com.luckyzyx.luckytool.ui.theme.ThemeController
 import com.luckyzyx.luckytool.ui.theme.ThemePrefs
@@ -137,7 +137,7 @@ fun SettingPage(activity: MainActivity, onOpenTheme: () -> Unit = {}) {
     var showClearDialog by remember { mutableStateOf(false) }
     var showFeedbackDialog by remember { mutableStateOf(false) }
 
-    ExpressivePageScaffold(
+    MaterialPageScaffold(
         title = stringResource(R.string.nav_setting),
     ) { padding ->
         val layoutDirection = LocalLayoutDirection.current

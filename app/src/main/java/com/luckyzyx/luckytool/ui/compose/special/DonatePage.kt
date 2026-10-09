@@ -32,8 +32,8 @@ import com.drake.net.Get
 import com.luckyzyx.luckytool.R
 import com.luckyzyx.luckytool.data.DonateDetailInfo
 import com.luckyzyx.luckytool.data.DonateInfo
-import com.luckyzyx.luckytool.ui.components.preference.PrefScopeBuilder
-import com.luckyzyx.luckytool.ui.compose.components.material.ExpressiveSwitch
+import com.luckyzyx.luckytool.ui.compose.components.PrefScopeBuilder
+import com.luckyzyx.luckytool.ui.compose.components.material.MaterialSwitch
 import com.luckyzyx.luckytool.ui.compose.components.miuix.MiuixCheckboxItem
 import com.luckyzyx.luckytool.ui.compose.components.miuix.MiuixPrefCategoryHeader
 import com.luckyzyx.luckytool.ui.compose.components.miuix.MiuixRadioItem
@@ -467,7 +467,7 @@ internal fun PrefScopeBuilder.DonateBody(c: Context) {
                     ) {
                         Text(c.getString(R.string.appinfo_sort_by), Modifier.weight(1f))
                         Text(c.getString(R.string.appinfo_reverse))
-                        ExpressiveSwitch(
+                        MaterialSwitch(
                             checked = isReverse,
                             onCheckedChange = {
                                 isReverse = it

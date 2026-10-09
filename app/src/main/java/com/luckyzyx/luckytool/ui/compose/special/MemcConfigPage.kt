@@ -48,13 +48,13 @@ import androidx.compose.ui.unit.dp
 import com.luckyzyx.luckytool.R
 import com.luckyzyx.luckytool.data.MemcConfigActivity
 import com.luckyzyx.luckytool.data.MemcConfigPackage
-import com.luckyzyx.luckytool.ui.components.AppPickerDialog
+import com.luckyzyx.luckytool.ui.compose.components.AppPickerDialog
 import com.luckyzyx.luckytool.ui.compose.components.PrefCard
 import com.luckyzyx.luckytool.ui.compose.components.PrefGroup
 import com.luckyzyx.luckytool.ui.compose.components.PrefRow
-import com.luckyzyx.luckytool.ui.compose.components.material.SegmentedItem
-import com.luckyzyx.luckytool.ui.compose.components.material.SegmentedListItem
-import com.luckyzyx.luckytool.ui.compose.components.material.expressiveBottomInset
+import com.luckyzyx.luckytool.ui.compose.components.material.MaterialItem
+import com.luckyzyx.luckytool.ui.compose.components.material.MaterialListItem
+import com.luckyzyx.luckytool.ui.compose.components.material.materialBottomInset
 import com.luckyzyx.luckytool.ui.compose.components.miuix.MiuixListItem
 import com.luckyzyx.luckytool.ui.compose.components.miuix.MiuixPrefDefaults
 import com.luckyzyx.luckytool.ui.compose.components.miuix.MiuixPrefItem
@@ -576,7 +576,7 @@ internal fun MemcPackagePanel(
                     contentPadding = PaddingValues(
                         start = MiuixPrefDefaults.CardHorizontalInset,
                         end = MiuixPrefDefaults.CardHorizontalInset,
-                        bottom = expressiveBottomInset(),
+                        bottom = materialBottomInset(),
                     ),
                     verticalArrangement = Arrangement.spacedBy(MiuixPrefDefaults.ItemGap),
                 ) {
@@ -603,8 +603,8 @@ internal fun MemcPackagePanel(
                         state.pkgFilter,
                         key = { _, info -> "${info.packName}|${info.rate}|${info.type}" },
                     ) { index, info ->
-                        SegmentedItem(index = index, count = state.pkgFilter.size) {
-                            SegmentedListItem(
+                        MaterialItem(index = index, count = state.pkgFilter.size) {
+                            MaterialListItem(
                                 onClick = { onEdit(info) },
                                 headlineContent = { Text(info.packName) },
                                 supportingContent = {
@@ -671,7 +671,7 @@ internal fun MemcActivityPanel(
                     contentPadding = PaddingValues(
                         start = MiuixPrefDefaults.CardHorizontalInset,
                         end = MiuixPrefDefaults.CardHorizontalInset,
-                        bottom = expressiveBottomInset(),
+                        bottom = materialBottomInset(),
                     ),
                     verticalArrangement = Arrangement.spacedBy(MiuixPrefDefaults.ItemGap),
                 ) {
@@ -698,8 +698,8 @@ internal fun MemcActivityPanel(
                         state.actFilter,
                         key = { _, info -> "${info.packName}|${info.activity}|${info.type}" },
                     ) { index, info ->
-                        SegmentedItem(index = index, count = state.actFilter.size) {
-                            SegmentedListItem(
+                        MaterialItem(index = index, count = state.actFilter.size) {
+                            MaterialListItem(
                                 onClick = { onEdit(info) },
                                 headlineContent = { Text(info.packName) },
                                 supportingContent = {

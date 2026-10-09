@@ -11,17 +11,17 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 
 /**
- * Expressive 切换按钮（迁移自 KernelSU `ui/component/material/ExpressiveToggleButton.kt`），
+ * Expressive 切换按钮（迁移自 KernelSU `ui/component/material/MaterialToggleButton.kt`），
  * 配合 ButtonGroupDefaults 的分段形状可组成按钮组。
  */
 @Composable
-fun ExpressiveToggleButton(
+fun MaterialToggleButton(
     checked: Boolean,
     onCheckedChange: (Boolean) -> Unit,
     shapes: ToggleButtonShapes,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
-    colors: ToggleButtonColors = expressiveToggleButtonColors(),
+    colors: ToggleButtonColors = materialToggleButtonColors(),
     content: @Composable RowScope.() -> Unit,
 ) {
     ToggleButton(
@@ -36,7 +36,7 @@ fun ExpressiveToggleButton(
 }
 
 @Composable
-fun expressiveToggleButtonColors(
+fun materialToggleButtonColors(
     checkedContainerColor: Color = MaterialTheme.colorScheme.primary,
     checkedContentColor: Color = MaterialTheme.colorScheme.onPrimary,
     containerColor: Color = MaterialTheme.colorScheme.surfaceContainerHighest,

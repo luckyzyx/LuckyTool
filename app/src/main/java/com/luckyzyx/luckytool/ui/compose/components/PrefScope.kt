@@ -1,6 +1,6 @@
 @file:Suppress("unused")
 
-package com.luckyzyx.luckytool.ui.components.preference
+package com.luckyzyx.luckytool.ui.compose.components
 
 import android.content.Context
 import androidx.compose.animation.animateColorAsState
@@ -48,13 +48,13 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.luckyzyx.luckytool.ui.compose.components.material.SegmentedDropdownItem
-import com.luckyzyx.luckytool.ui.compose.components.material.SegmentedItem
-import com.luckyzyx.luckytool.ui.compose.components.material.SegmentedItemContainer
-import com.luckyzyx.luckytool.ui.compose.components.material.SegmentedListItem
-import com.luckyzyx.luckytool.ui.compose.components.material.SegmentedSwitchItem
-import com.luckyzyx.luckytool.ui.compose.components.material.defaultSegmentedColors
-import com.luckyzyx.luckytool.ui.compose.components.material.expressiveBottomInset
+import com.luckyzyx.luckytool.ui.compose.components.material.MaterialDropdownItem
+import com.luckyzyx.luckytool.ui.compose.components.material.MaterialItem
+import com.luckyzyx.luckytool.ui.compose.components.material.MaterialItemContainer
+import com.luckyzyx.luckytool.ui.compose.components.material.MaterialListItem
+import com.luckyzyx.luckytool.ui.compose.components.material.MaterialSwitchItem
+import com.luckyzyx.luckytool.ui.compose.components.material.materialGroupColors
+import com.luckyzyx.luckytool.ui.compose.components.material.materialBottomInset
 import com.luckyzyx.luckytool.ui.compose.components.miuix.MiuixArrowItem
 import com.luckyzyx.luckytool.ui.compose.components.miuix.MiuixDropdownItem
 import com.luckyzyx.luckytool.ui.compose.components.miuix.MiuixListItem
@@ -141,7 +141,7 @@ private fun miuixTopGap(slot: Int, segIndex: Int): Dp = when {
 }
 
 /**
- * Miuix 线的分段卡片容器（渲染缝里唯一的卡片主题分派点，与 material 线的 `SegmentedItem` 对齐）：
+ * Miuix 线的分段卡片容器（渲染缝里唯一的卡片主题分派点，与 material 线的 `MaterialItem` 对齐）：
  * 按 index/count 复用 t11 的 [MiuixPrefItemShape]（圆角）与 [MiuixPrefItemColors]（底色 /
  * 搜索跳转高亮）。**水平 12dp 内缩由列表级 `contentPadding` 单一提供**（`MiuixPrefDefaults.CardHorizontalInset`），
  * 这里不再叠一层 item 级 padding（避免双倍内缩）；行内缩进仍由 Miuix 行自身的 `insideMargin(16dp)` 提供。
@@ -232,9 +232,9 @@ class PrefScopeBuilder internal constructor(
     internal fun itemColors(slot: Int): ListItemColors {
         val bg = highlightColor(slot)
         return if (bg == Color.Transparent) {
-            defaultSegmentedColors()
+            materialGroupColors()
         } else {
-            defaultSegmentedColors(containerColor = bg)
+            materialGroupColors(containerColor = bg)
         }
     }
 
@@ -364,7 +364,7 @@ class PrefScopeBuilder internal constructor(
             )
         } else {
             Box(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
-                SegmentedSwitchItem(
+                MaterialSwitchItem(
                     title = title,
                     summary = summary,
                     colors = itemColors(slot),
@@ -410,7 +410,7 @@ class PrefScopeBuilder internal constructor(
             )
         } else {
             Box(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
-                SegmentedDropdownItem(
+                MaterialDropdownItem(
                     title = title,
                     summary = shownSummary,
                     items = entries.toList(),
@@ -419,7 +419,7 @@ class PrefScopeBuilder internal constructor(
                     leading = leading,
                     selectedIndex = entryValues.indexOf(current).coerceAtLeast(0),
                     onItemSelected = { index ->
-                        val newValue = entryValues.getOrNull(index) ?: return@SegmentedDropdownItem
+                        val newValue = entryValues.getOrNull(index) ?: return@MaterialDropdownItem
                         state.set(key, newValue)
                         if (notify) sendValue(key, newValue)
                         onChange?.invoke(newValue)
@@ -490,7 +490,7 @@ class PrefScopeBuilder internal constructor(
             }
             val current = sliderState.value.roundToInt()
             Box(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
-                SegmentedItemContainer(modifier = Modifier.fillMaxWidth()) {
+                MaterialItemContainer(modifier = Modifier.fillMaxWidth()) {
                     Column(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -585,7 +585,7 @@ class PrefScopeBuilder internal constructor(
             )
         } else {
             Box(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
-                SegmentedListItem(
+                MaterialListItem(
                     onClick = { showDialog = true },
                     enabled = enabled,
                     colors = itemColors(slot),
@@ -662,7 +662,7 @@ class PrefScopeBuilder internal constructor(
                 )
             } else {
                 Box(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
-                    SegmentedListItem(
+                    MaterialListItem(
                         onClick = { navigate?.invoke(target, title) },
                         enabled = enabled,
                         colors = itemColors(slot),
@@ -716,7 +716,7 @@ class PrefScopeBuilder internal constructor(
             }
         } else {
             Box(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
-                SegmentedListItem(
+                MaterialListItem(
                     onClick = onClick,
                     onLongClick = onLongClick,
                     enabled = enabled,
@@ -845,7 +845,7 @@ fun ScopeScreen(
                             entry.render(entry.slot)
                         }
                     } else {
-                        SegmentedItem(index = entry.segIndex, count = entry.segCount) {
+                        MaterialItem(index = entry.segIndex, count = entry.segCount) {
                             Box(
                                 modifier = Modifier.padding(
                                     top = when {
@@ -872,7 +872,7 @@ fun ScopeScreen(
             // 水平 12dp 内缩是列表级单一来源（item 层不再叠）；bottom 见下方 inset 计算。
             // 底部 inset：悬浮胶囊底栏盖在内容之上（Miuix 骨架的 contentWindowInsets 只含水平方向，
             // innerPadding.bottom = 0），列表必须自己预留胶囊高度；系统导航栏/标题栏同理。
-            // 取值统一走 expressiveBottomInset（导航栏/caption bar + 悬浮胶囊占位）。
+            // 取值统一走 materialBottomInset（导航栏/caption bar + 悬浮胶囊占位）。
             LazyColumn(
                 modifier = listModifier
                     .scrollEndHaptic()
@@ -882,7 +882,7 @@ fun ScopeScreen(
                     top = LocalScopeTopInset.current,
                     start = MiuixPrefDefaults.CardHorizontalInset,
                     end = MiuixPrefDefaults.CardHorizontalInset,
-                    bottom = expressiveBottomInset(base = 8.dp),
+                    bottom = materialBottomInset(base = 8.dp),
                 ),
                 overscrollEffect = null,
                 content = listItems,

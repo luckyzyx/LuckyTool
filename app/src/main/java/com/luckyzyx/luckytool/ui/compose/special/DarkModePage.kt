@@ -41,15 +41,15 @@ import androidx.core.graphics.drawable.toBitmap
 import com.luckyzyx.luckytool.R
 import com.luckyzyx.luckytool.data.AppInfo
 import com.luckyzyx.luckytool.data.DarkModeInfo
-import com.luckyzyx.luckytool.ui.components.preference.PrefScopeBuilder
+import com.luckyzyx.luckytool.ui.compose.components.PrefScopeBuilder
 import com.luckyzyx.luckytool.ui.compose.components.PrefGroup
 import com.luckyzyx.luckytool.ui.compose.components.PrefRow
 import com.luckyzyx.luckytool.ui.compose.components.PrefSwitchRow
-import com.luckyzyx.luckytool.ui.compose.components.material.ExpressiveSwitch
-import com.luckyzyx.luckytool.ui.compose.components.material.SegmentedItem
-import com.luckyzyx.luckytool.ui.compose.components.material.SegmentedItemContainer
-import com.luckyzyx.luckytool.ui.compose.components.material.SegmentedListItem
-import com.luckyzyx.luckytool.ui.compose.components.material.expressiveBottomInset
+import com.luckyzyx.luckytool.ui.compose.components.material.MaterialSwitch
+import com.luckyzyx.luckytool.ui.compose.components.material.MaterialItem
+import com.luckyzyx.luckytool.ui.compose.components.material.MaterialItemContainer
+import com.luckyzyx.luckytool.ui.compose.components.material.MaterialListItem
+import com.luckyzyx.luckytool.ui.compose.components.material.materialBottomInset
 import com.luckyzyx.luckytool.ui.compose.components.miuix.MiuixListItem
 import com.luckyzyx.luckytool.ui.compose.components.miuix.MiuixPrefDefaults
 import com.luckyzyx.luckytool.ui.compose.components.miuix.MiuixPrefItem
@@ -240,7 +240,7 @@ internal fun LazyItemScope.DarkModeContent(builder: PrefScopeBuilder) {
                 contentPadding = PaddingValues(
                     start = MiuixPrefDefaults.CardHorizontalInset,
                     end = MiuixPrefDefaults.CardHorizontalInset,
-                    bottom = expressiveBottomInset(),
+                    bottom = materialBottomInset(),
                 ),
                 verticalArrangement = Arrangement.spacedBy(MiuixPrefDefaults.ItemGap),
                 overscrollEffect = null,
@@ -276,7 +276,7 @@ internal fun LazyItemScope.DarkModeContent(builder: PrefScopeBuilder) {
                 verticalArrangement = Arrangement.spacedBy(MiuixPrefDefaults.ItemGap),
             ) {
                 itemsIndexed(filterAppInfos, key = { _, info -> info.packageName }) { index, info ->
-                    SegmentedItem(index = index, count = filterAppInfos.size) {
+                    MaterialItem(index = index, count = filterAppInfos.size) {
                         DarkModeAppRow(
                             info = info,
                             enabled = allEnabledInfos.containsKey(info.packageName),
@@ -380,9 +380,9 @@ internal fun DarkModeAppRow(
         }
     } else {
         val interactionSource = remember { MutableInteractionSource() }
-        SegmentedItemContainer {
+        MaterialItemContainer {
             Column {
-                SegmentedListItem(
+                MaterialListItem(
                     onClick = {
                         haptic.performHapticFeedback(HapticFeedbackType.VirtualKey)
                         onToggle(!enabled)
@@ -413,7 +413,7 @@ internal fun DarkModeAppRow(
                         }
                     },
                     trailingContent = {
-                        ExpressiveSwitch(
+                        MaterialSwitch(
                             checked = enabled,
                             onCheckedChange = null,
                             interactionSource = interactionSource,

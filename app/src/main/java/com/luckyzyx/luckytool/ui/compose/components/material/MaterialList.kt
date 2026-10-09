@@ -32,7 +32,7 @@ import androidx.compose.material3.MenuDefaults
 import androidx.compose.material3.ProvideTextStyle
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.SelectableDropdownMenuItem
-import androidx.compose.material3.SegmentedListItem
+import androidx.compose.material3.SegmentedListItem as M3SegmentedListItem
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -83,11 +83,11 @@ private const val SegmentedSpringStiffness = 800f
 private const val SegmentedSpringDamping = 0.9f
 
 @DslMarker
-annotation class SegmentedColumnDsl
+annotation class MaterialGroupDsl
 
 /** 分段条目配色（containerColor 可覆盖，用于搜索跳转高亮等场景） */
 @Composable
-fun defaultSegmentedColors(
+fun materialGroupColors(
     containerColor: Color = colorScheme.surfaceBright,
 ): ListItemColors = ListItemDefaults.segmentedColors(
     containerColor = containerColor,
@@ -124,7 +124,7 @@ private fun defaultSingleSegmentedShape(index: Int, count: Int): ListItemShapes 
 
 /** 静态分段列：传入已确定的条目内容列表（不可增删时使用） */
 @Composable
-fun SegmentedColumn(
+fun MaterialGroup(
     modifier: Modifier = Modifier,
     title: String = "",
     visibleLen: Int = 0,
@@ -156,8 +156,8 @@ fun SegmentedColumn(
     }
 }
 
-@SegmentedColumnDsl
-class SegmentedColumnScope {
+@MaterialGroupDsl
+class MaterialGroupScope {
     internal data class Entry(
         val key: Any?,
         val visible: Boolean,
@@ -177,12 +177,12 @@ class SegmentedColumnScope {
 
 /** 动态分段列：条目可显隐，显隐时带弹性过渡（对齐 KernelSU） */
 @Composable
-fun SegmentedColumn(
+fun MaterialGroup(
     modifier: Modifier = Modifier,
     title: String = "",
-    content: SegmentedColumnScope.() -> Unit,
+    content: MaterialGroupScope.() -> Unit,
 ) {
-    val entries = SegmentedColumnScope().apply(content).entries
+    val entries = MaterialGroupScope().apply(content).entries
     if (entries.isEmpty()) return
 
     Column(modifier = modifier) {
@@ -281,7 +281,7 @@ fun SegmentedColumn(
 }
 
 @Composable
-fun SegmentedItem(
+fun MaterialItem(
     index: Int,
     count: Int,
     content: @Composable () -> Unit,
@@ -294,7 +294,7 @@ fun SegmentedItem(
 }
 
 @Composable
-fun SegmentedItemContainer(
+fun MaterialItemContainer(
     modifier: Modifier = Modifier,
     content: @Composable () -> Unit,
 ) {
@@ -311,12 +311,12 @@ fun SegmentedItemContainer(
 }
 
 @Composable
-fun SegmentedListItem(
+fun MaterialListItem(
     modifier: Modifier = Modifier,
     onClick: (() -> Unit)? = null,
     onLongClick: (() -> Unit)? = null,
     enabled: Boolean = true,
-    colors: ListItemColors = defaultSegmentedColors(),
+    colors: ListItemColors = materialGroupColors(),
     interactionSource: MutableInteractionSource? = null,
     headlineContent: @Composable () -> Unit,
     overlineContent: @Composable (() -> Unit)? = null,
@@ -324,7 +324,7 @@ fun SegmentedListItem(
     leadingContent: @Composable (() -> Unit)? = null,
     trailingContent: @Composable (() -> Unit)? = null,
 ) {
-    SegmentedListItem(
+    M3SegmentedListItem(
         onClick = onClick ?: {},
         onLongClick = onLongClick,
         enabled = enabled,
@@ -343,11 +343,11 @@ fun SegmentedListItem(
 
 /** 开关条目：点击整行切换，尾部为 Expressive 开关 */
 @Composable
-fun SegmentedSwitchItem(
+fun MaterialSwitchItem(
     icon: ImageVector? = null,
     title: String,
     summary: String? = null,
-    colors: ListItemColors = defaultSegmentedColors(),
+    colors: ListItemColors = materialGroupColors(),
     checked: Boolean,
     enabled: Boolean = true,
     leading: (@Composable () -> Unit)? = null,
@@ -356,7 +356,7 @@ fun SegmentedSwitchItem(
     val haptic = LocalHapticFeedback.current
     val interactionSource = remember { MutableInteractionSource() }
 
-    SegmentedListItem(
+    MaterialListItem(
         onClick = {
             haptic.performHapticFeedback(HapticFeedbackType.VirtualKey)
             onCheckedChange(!checked)
@@ -367,7 +367,7 @@ fun SegmentedSwitchItem(
         headlineContent = { Text(title) },
         leadingContent = leading ?: icon?.let { { Icon(it, title) } },
         trailingContent = {
-            ExpressiveSwitch(
+            MaterialSwitch(
                 checked = checked,
                 enabled = enabled,
                 onCheckedChange = null,
@@ -380,12 +380,12 @@ fun SegmentedSwitchItem(
 
 /** 下拉选择条目：尾部显示当前值，点击在按压点弹出菜单 */
 @Composable
-fun SegmentedDropdownItem(
+fun MaterialDropdownItem(
     icon: ImageVector? = null,
     title: String,
     summary: String? = null,
     items: List<String>,
-    colors: ListItemColors = defaultSegmentedColors(),
+    colors: ListItemColors = materialGroupColors(),
     enabled: Boolean = true,
     leading: (@Composable () -> Unit)? = null,
     onClick: (() -> Unit)? = null,
@@ -404,7 +404,7 @@ fun SegmentedDropdownItem(
     }
 
     Box(modifier = Modifier.trackPressPosition { anchorOffset = it.round() }) {
-        SegmentedListItem(
+        MaterialListItem(
             onClick = if (enabled) {
                 {
                     onClick?.invoke()
@@ -429,7 +429,7 @@ fun SegmentedDropdownItem(
                 )
             },
         )
-        OffsetAnchoredExpressiveMenu(
+        MaterialAnchoredMenu(
             expanded = expanded,
             onDismissRequest = { expanded = false },
             anchorOffset = anchorOffset,
@@ -467,17 +467,17 @@ fun SegmentedDropdownItem(
 
 /** 单选项条目：点击整行选中，头部为单选按钮 */
 @Composable
-fun SegmentedRadioItem(
+fun MaterialRadioItem(
     title: String,
     summary: String? = null,
-    colors: ListItemColors = defaultSegmentedColors(),
+    colors: ListItemColors = materialGroupColors(),
     selected: Boolean,
     enabled: Boolean = true,
     onClick: () -> Unit,
 ) {
     val haptic = LocalHapticFeedback.current
 
-    SegmentedListItem(
+    M3SegmentedListItem(
         selected = selected,
         onClick = {
             haptic.performHapticFeedback(HapticFeedbackType.VirtualKey)
@@ -500,14 +500,14 @@ fun SegmentedRadioItem(
 
 /** 文本输入条目：整行聚焦，头部为输入框 */
 @Composable
-fun SegmentedTextField(
+fun MaterialTextField(
     modifier: Modifier = Modifier,
     label: String = "",
     value: String,
     onValueChange: (String) -> Unit,
     enabled: Boolean = true,
     readOnly: Boolean = false,
-    colors: ListItemColors = defaultSegmentedColors(),
+    colors: ListItemColors = materialGroupColors(),
     textStyle: TextStyle = MaterialTheme.typography.bodyLarge,
     keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
     keyboardActions: KeyboardActions = KeyboardActions.Default,
@@ -528,7 +528,7 @@ fun SegmentedTextField(
     val coroutineScope = rememberCoroutineScope()
     val focusRequester = remember { FocusRequester() }
 
-    SegmentedListItem(
+    MaterialListItem(
         modifier = modifier
             .bringIntoViewRequester(bringIntoViewRequester)
             .focusRequester(focusRequester),

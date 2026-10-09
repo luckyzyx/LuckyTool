@@ -12,8 +12,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.luckyzyx.luckytool.R
-import com.luckyzyx.luckytool.ui.components.AppPickerDialog
-import com.luckyzyx.luckytool.ui.compose.components.material.SegmentedListItem
+import com.luckyzyx.luckytool.ui.compose.components.AppPickerDialog
+import com.luckyzyx.luckytool.ui.compose.components.material.MaterialListItem
 import com.luckyzyx.luckytool.ui.compose.components.miuix.MiuixListItem
 import com.luckyzyx.luckytool.ui.theme.LocalUiMode
 import com.luckyzyx.luckytool.ui.theme.UiMode
@@ -106,7 +106,7 @@ object StatusBarRelatedPage {
                         )
                     } else {
                         Box(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
-                            SegmentedListItem(
+                            MaterialListItem(
                                 onClick = { if (enabled) showPicker = true },
                                 supportingContent = { Text(whitelist.toString()) },
                                 enabled = enabled,

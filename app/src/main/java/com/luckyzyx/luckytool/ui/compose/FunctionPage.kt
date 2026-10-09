@@ -65,15 +65,15 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
 import com.luckyzyx.luckytool.R
 import com.luckyzyx.luckytool.ui.activity.MainActivity
-import com.luckyzyx.luckytool.ui.components.preference.LocalScopeTopInset
-import com.luckyzyx.luckytool.ui.components.preference.PrefIndexItem
-import com.luckyzyx.luckytool.ui.components.preference.ScopeScreen
-import com.luckyzyx.luckytool.ui.components.preference.ScrollTarget
+import com.luckyzyx.luckytool.ui.compose.components.LocalScopeTopInset
+import com.luckyzyx.luckytool.ui.compose.components.PrefIndexItem
+import com.luckyzyx.luckytool.ui.compose.components.ScopeScreen
+import com.luckyzyx.luckytool.ui.compose.components.ScrollTarget
 import com.luckyzyx.luckytool.ui.compose.components.EdgeSwipeDismiss
 import com.luckyzyx.luckytool.ui.compose.components.PrefIconBadge
-import com.luckyzyx.luckytool.ui.compose.components.material.ExpressivePageScaffold
-import com.luckyzyx.luckytool.ui.compose.components.material.SegmentedTextField
-import com.luckyzyx.luckytool.ui.components.rememberAppIconPainter
+import com.luckyzyx.luckytool.ui.compose.components.material.MaterialPageScaffold
+import com.luckyzyx.luckytool.ui.compose.components.material.MaterialTextField
+import com.luckyzyx.luckytool.ui.compose.components.rememberAppIconPainter
 import com.luckyzyx.luckytool.ui.compose.scopes.ScopePageContent
 import com.luckyzyx.luckytool.ui.compose.scopes.ScopePageRegistry
 import com.luckyzyx.luckytool.ui.compose.scopes.ScopePageSpec
@@ -302,7 +302,7 @@ private fun FunctionTreeScreen(
         }
     }
 
-    ExpressivePageScaffold(
+    MaterialPageScaffold(
         title = stringResource(R.string.nav_function),
         actions = {
             IconButton(onClick = onOpenSearch) {
@@ -403,7 +403,7 @@ private fun FunctionSearchScreen(onBack: () -> Unit, onOpen: (ScopeRoute) -> Uni
         }
     }
 
-    ExpressivePageScaffold(
+    MaterialPageScaffold(
         title = stringResource(R.string.menu_search),
         onBack = onBack,
     ) { padding ->
@@ -430,7 +430,7 @@ private fun FunctionSearchScreen(onBack: () -> Unit, onOpen: (ScopeRoute) -> Uni
             ScopeScreen(state = settings, modifier = scopeModifier) {
                 // 搜索框不是「选项行」，独占一张卡片（否则会与紧随其后的结果行拼在一起）
                 custom(key = "search_field", standalone = true) {
-                    SegmentedTextField(
+                    MaterialTextField(
                         value = queryNow,
                         onValueChange = { query = it },
                         placeholder = { Text(stringResource(R.string.menu_search)) },
@@ -528,7 +528,7 @@ internal fun ScopePageHost(
     val spec = ScopePageRegistry[route.pageKey]
     var showRestartScope by remember { mutableStateOf(false) }
 
-    ExpressivePageScaffold(
+    MaterialPageScaffold(
         title = route.title.ifBlank { spec?.let { pageTitle(context, it) } ?: route.pageKey },
         onBack = onBack,
         actions = {

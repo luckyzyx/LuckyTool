@@ -22,7 +22,7 @@ import com.luckyzyx.luckytool.ui.compose.components.miuix.modifier.inspectDragGe
 import org.intellij.lang.annotations.Language
 
 @SuppressLint("NewApi")
-class InteractiveHighlight(
+class MiuixInteractiveHighlight(
     val animationScope: CoroutineScope,
     val position: (size: Size, offset: Offset) -> Offset = { _, offset -> offset }
 ) {

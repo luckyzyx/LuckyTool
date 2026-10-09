@@ -22,12 +22,12 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import com.luckyzyx.luckytool.R
 import com.luckyzyx.luckytool.data.AppInfo
-import com.luckyzyx.luckytool.ui.compose.components.material.SegmentedItem
-import com.luckyzyx.luckytool.ui.compose.components.material.expressiveBottomInset
+import com.luckyzyx.luckytool.ui.compose.components.material.MaterialItem
+import com.luckyzyx.luckytool.ui.compose.components.material.materialBottomInset
 import com.luckyzyx.luckytool.ui.compose.components.miuix.MiuixPrefDefaults
 import com.luckyzyx.luckytool.ui.compose.components.miuix.MiuixPrefItem
 import com.luckyzyx.luckytool.ui.compose.scopes.ScopePageSpec
-import com.luckyzyx.luckytool.ui.components.preference.PrefScopeBuilder
+import com.luckyzyx.luckytool.ui.compose.components.PrefScopeBuilder
 import com.luckyzyx.luckytool.ui.theme.LocalUiMode
 import com.luckyzyx.luckytool.ui.theme.UiMode
 import com.luckyzyx.luckytool.utils.ModulePrefs
@@ -163,7 +163,7 @@ internal fun LazyItemScope.ZoomWindowContent(builder: PrefScopeBuilder) {
                     AppToggleRow(info = info, enabled = enabled) { v -> toggle(info, v) }
                 }
             } else {
-                SegmentedItem(index = index, count = filterAppInfos.size) {
+                MaterialItem(index = index, count = filterAppInfos.size) {
                     AppToggleRow(info = info, enabled = enabled) { v -> toggle(info, v) }
                 }
             }
@@ -195,7 +195,7 @@ internal fun LazyItemScope.ZoomWindowContent(builder: PrefScopeBuilder) {
                 contentPadding = PaddingValues(
                     start = MiuixPrefDefaults.CardHorizontalInset,
                     end = MiuixPrefDefaults.CardHorizontalInset,
-                    bottom = expressiveBottomInset(),
+                    bottom = materialBottomInset(),
                 ),
                 verticalArrangement = Arrangement.spacedBy(MiuixPrefDefaults.ItemGap),
                 overscrollEffect = null,

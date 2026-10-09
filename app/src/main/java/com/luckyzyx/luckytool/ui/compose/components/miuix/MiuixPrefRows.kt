@@ -52,7 +52,7 @@ private fun iconStartAction(icon: ImageVector?, enabled: Boolean): (@Composable 
  * 只有 `onClick`、没有长按参数），并把 `BasicComponent` 的 `onClick` 置空，使短按与长按由同一
  * 处理器仲裁——避免「外层长按检测 + 内层 clickable」两套检测器争用同一批指针事件；共享
  * `interactionSource` 保证按压反馈（`HoldDownObserver`）仍然生效。短按与长按互斥，`enabled = false`
- * 时两者都不触发，与 material 侧 `SegmentedListItem` 一致；不产生额外触感。
+ * 时两者都不触发，与 material 侧 `MaterialListItem` 一致；不产生额外触感。
  */
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -103,7 +103,7 @@ fun MiuixListItem(
  * 开关条目：整行可点、尾部开关。
  *
  * 库内 `SwitchPreference` 无触感，这里补齐 `HapticFeedbackType.VirtualKey`，
- * 与 material 侧 `SegmentedSwitchItem`（每次切换一次 VirtualKey）一致。
+ * 与 material 侧 `MaterialSwitchItem`（每次切换一次 VirtualKey）一致。
  */
 @Composable
 fun MiuixSwitchItem(
@@ -158,7 +158,7 @@ fun MiuixArrowItem(
  * 使用 `OverlayDropdownPreference`（`renderInRootScaffold` 保持默认 true，不传 `popupHost`）。
  * 库内没有 `onClick` 参数，[onClick] 映射到 `onExpandedChange` 的展开时刻；
  * 展开触感由库内 `HapticFeedbackType.ContextClick` 提供（不叠加 VirtualKey，避免双震），
- * 选中回调则补 `HapticFeedbackType.VirtualKey`，与 material 侧 `SegmentedDropdownItem` 一致。
+ * 选中回调则补 `HapticFeedbackType.VirtualKey`，与 material 侧 `MaterialDropdownItem` 一致。
  */
 @Composable
 fun MiuixDropdownItem(

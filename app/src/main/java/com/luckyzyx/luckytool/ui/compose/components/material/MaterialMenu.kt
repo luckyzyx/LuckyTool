@@ -21,7 +21,7 @@ import androidx.compose.ui.unit.IntOffset
  * 以按压点为锚点的下拉菜单（迁移自 KernelSU `ui/component/material/ExpressiveMenu.kt`）。
  */
 @Composable
-fun OffsetAnchoredExpressiveMenu(
+fun MaterialAnchoredMenu(
     expanded: Boolean,
     onDismissRequest: () -> Unit,
     anchorOffset: IntOffset = IntOffset.Zero,

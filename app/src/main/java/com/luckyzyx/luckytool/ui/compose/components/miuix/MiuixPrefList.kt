@@ -17,6 +17,10 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.luckyzyx.luckytool.ui.compose.components.PrefCardEntries
+import com.luckyzyx.luckytool.ui.compose.components.PrefCardEntry
+import com.luckyzyx.luckytool.ui.compose.components.PrefCardGroupRenderer
+import com.luckyzyx.luckytool.ui.compose.components.PrefCardScope
 import com.luckyzyx.luckytool.ui.theme.DesignTokens
 import top.yukonga.miuix.kmp.basic.Surface
 import top.yukonga.miuix.kmp.basic.Text
@@ -158,22 +162,31 @@ annotation class MiuixPrefScopeDsl
 
 /**
  * Miuix 设置卡片组的 DSL 作用域：条目以中性三元组（key / visible / content）登记，
- * 渲染与解析分离，与 material 侧 `SegmentedColumnScope` 的 key 语义逐字对齐。
+ * 渲染与解析分离，与 material 侧 `MaterialGroupScope` 的 key 语义逐字对齐。
  */
 @MiuixPrefScopeDsl
 class MiuixPrefScope internal constructor() {
 
-    internal data class Entry(
-        val key: Any?,
-        val visible: Boolean,
-        val content: @Composable () -> Unit,
-    )
+    internal val entries = mutableListOf<PrefCardEntry>()
 
-    internal val entries = mutableListOf<Entry>()
-
-    /** 登记一个条目；`key` 缺省取当前条目数，与 material 侧 `SegmentedColumnScope.item` 一致。 */
+    /** 登记一个条目；`key` 缺省取当前条目数，与 material 侧 `MaterialGroupScope.item` 一致。 */
     fun item(key: Any? = null, visible: Boolean = true, content: @Composable () -> Unit) {
-        entries.add(Entry(key ?: entries.size, visible, content))
+        entries.add(PrefCardEntry(key ?: entries.size, visible, content))
+    }
+}
+
+/** Miuix 线的卡片组作用域实现（默认渲染 Miuix 卡片组）。 */
+class MiuixPrefCardScope internal constructor(private val title: String = "") : PrefCardScope {
+
+    private val collected = PrefCardEntries()
+
+    override fun item(key: Any?, visible: Boolean, content: @Composable () -> Unit) {
+        collected.add(key, visible, content)
+    }
+
+    @Composable
+    override fun render(preferMiuix: Boolean, modifier: Modifier) {
+        PrefCardGroupRenderer(collected.entries, preferMiuix, modifier, title)
     }
 }
 
@@ -182,12 +195,12 @@ class MiuixPrefScope internal constructor() {
  *
  * 条目不再被「直接跳过」，而是始终留在组合树里用 [AnimatedVisibility] 折叠/展开，
  * 使 `visible = false → true` 出现时带淡入 + 纵向展开过渡（与 material 侧
- * `SegmentedColumn` 的弹性显隐对齐），避免 AIDL 服务连上后条目突然弹出。
+ * `MaterialGroup` 的弹性显隐对齐），避免 AIDL 服务连上后条目突然弹出。
  * 分段圆角仍按「可见索引 / 可见总数」计算，隐藏条目不计入。
  */
 @Composable
 internal fun MiuixPreferenceGroup(
-    entries: List<MiuixPrefScope.Entry>,
+    entries: List<PrefCardEntry>,
     modifier: Modifier = Modifier,
     title: String = "",
 ) {
@@ -244,7 +257,7 @@ fun MiuixPrefGroup(
     items: List<@Composable () -> Unit>,
 ) {
     MiuixPreferenceGroup(
-        entries = items.mapIndexed { index, item -> MiuixPrefScope.Entry(index, true, item) },
+        entries = items.mapIndexed { index, item -> PrefCardEntry(index, true, item) },
         modifier = modifier,
         title = title,
     )

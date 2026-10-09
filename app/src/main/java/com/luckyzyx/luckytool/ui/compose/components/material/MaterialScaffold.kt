@@ -14,11 +14,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 
 /**
- * Expressive 脚手架（迁移自 KernelSU `ui/component/material/ExpressiveScaffold.kt`）：
+ * Expressive 脚手架（迁移自 KernelSU `ui/component/material/MaterialScaffold.kt`）：
  * 默认使用 surfaceContainer 作容器色。
  */
 @Composable
-fun ExpressiveScaffold(
+fun MaterialScaffold(
     modifier: Modifier = Modifier,
     topBar: @Composable () -> Unit = {},
     bottomBar: @Composable () -> Unit = {},
@@ -45,7 +45,7 @@ fun ExpressiveScaffold(
 }
 
 @Composable
-fun expressiveTopAppBarColors(
+fun materialTopAppBarColors(
     containerColor: Color = MaterialTheme.colorScheme.surfaceContainer,
     scrolledContainerColor: Color = containerColor,
 ): TopAppBarColors = TopAppBarDefaults.topAppBarColors(

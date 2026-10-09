@@ -33,9 +33,9 @@ import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
-import com.luckyzyx.luckytool.ui.compose.components.miuix.BlurredBar
+import com.luckyzyx.luckytool.ui.compose.components.miuix.MiuixBlurredBar
 import com.luckyzyx.luckytool.ui.compose.components.miuix.MiuixCompactTopBar
-import com.luckyzyx.luckytool.ui.compose.components.miuix.rememberBlurBackdrop
+import com.luckyzyx.luckytool.ui.compose.components.miuix.rememberMiuixBlurBackdrop
 import com.luckyzyx.luckytool.ui.shell.LocalEnableBlur
 import com.luckyzyx.luckytool.ui.theme.LocalUiMode
 import com.luckyzyx.luckytool.ui.theme.UiMode
@@ -69,7 +69,7 @@ val LocalShellBottomInset = staticCompositionLocalOf { 0.dp }
  * 各自硬编码 8/16dp 会让最后一条在悬浮底栏开启时被胶囊永久遮挡。
  */
 @Composable
-fun expressiveBottomInset(base: Dp = 16.dp): Dp {
+fun materialBottomInset(base: Dp = 16.dp): Dp {
     val navBars = WindowInsets.navigationBars.asPaddingValues()
     val captionBar = WindowInsets.captionBar.asPaddingValues()
     // 宿主已有底部导航栏（已消费导航栏 inset）时不再重复叠加，避免底部空白
@@ -90,14 +90,14 @@ private class MiuixPageScaffoldValues(
     val innerPadding: PaddingValues,
 )
 
-/** Miuix 线页面骨架的内部传递通道：由 [ExpressivePageScaffold] 提供、[ExpressiveList] 消费。 */
+/** Miuix 线页面骨架的内部传递通道：由 [MaterialPageScaffold] 提供、[ExpressiveList] 消费。 */
 private val LocalMiuixPageScaffold = staticCompositionLocalOf<MiuixPageScaffoldValues?> { null }
 
 /**
  * 统一页面外壳（无返回键时传 onBack = null，用于底部导航主页面）。
  */
 @Composable
-fun ExpressivePageScaffold(
+fun MaterialPageScaffold(
     title: String,
     modifier: Modifier = Modifier,
     onBack: (() -> Unit)? = null,
@@ -115,7 +115,7 @@ fun ExpressivePageScaffold(
     }
     // Miuix 线：换成 KernelSU 骨架。material 线分支保持原样（只加分支，取值未改）。
     if (LocalUiMode.current == UiMode.Miuix) {
-        MiuixExpressivePageScaffold(
+        MiuixPageScaffold(
             title = title,
             modifier = modifier,
             onBack = onBack,
@@ -126,16 +126,16 @@ fun ExpressivePageScaffold(
         )
         return
     }
-    ExpressiveScaffold(
+    MaterialScaffold(
         modifier = modifier,
         topBar = {
             TopAppBar(
                 navigationIcon = {
-                    if (onBack != null) TopBarBackButton(onClick = onBack)
+                    if (onBack != null) MaterialTopBarBackButton(onClick = onBack)
                 },
                 title = { Text(title) },
                 actions = actions,
-                colors = expressiveTopAppBarColors(),
+                colors = materialTopAppBarColors(),
                 windowInsets = WindowInsets.safeDrawing.only(
                     WindowInsetsSides.Top + WindowInsetsSides.Horizontal
                 ),
@@ -152,7 +152,7 @@ fun ExpressivePageScaffold(
 
 /**
  * Miuix 线页面骨架（KernelSU SettingsMiuix.kt:75-107 定式，与本仓库 ThemeScreenMiuix.kt:279-326 同款）：
- * 模糊采样层 → BlurredBar{MiuixCompactTopBar} → Scaffold(popupHost = {}) → 内容列表。
+ * 模糊采样层 → MiuixBlurredBar{MiuixCompactTopBar} → Scaffold(popupHost = {}) → 内容列表。
  *
  * 与调用点的契约（调用点冻结、零改动）：content 拿到的仍是真实骨架内边距（top = 顶栏实测高度），
  * 因此把内边距当 `Modifier.padding(padding)` 用的调用点保持正确 —— LogPage 的居中 Box，
@@ -165,7 +165,7 @@ fun ExpressivePageScaffold(
  * MainShell.kt:187-191）；采样层录制盒只包内容、绝不含绘制该图层的顶栏（MainShell.kt:160-163）。
  */
 @Composable
-private fun MiuixExpressivePageScaffold(
+private fun MiuixPageScaffold(
     title: String,
     modifier: Modifier = Modifier,
     onBack: (() -> Unit)? = null,
@@ -174,12 +174,12 @@ private fun MiuixExpressivePageScaffold(
     bottomBar: @Composable () -> Unit = {},
     content: @Composable (PaddingValues) -> Unit,
 ) {
-    val backdrop = rememberBlurBackdrop(LocalEnableBlur.current)
+    val backdrop = rememberMiuixBlurBackdrop(LocalEnableBlur.current)
     val barColor = if (backdrop != null) Color.Transparent else MiuixTheme.colorScheme.surface
     Scaffold(
         modifier = modifier,
         topBar = {
-            BlurredBar(backdrop) {
+            MiuixBlurredBar(backdrop) {
                 MiuixCompactTopBar(
                     title = title,
                     color = barColor,

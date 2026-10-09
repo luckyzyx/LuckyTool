@@ -13,9 +13,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.luckyzyx.luckytool.R
-import com.luckyzyx.luckytool.ui.components.AppPickerDialog
-import com.luckyzyx.luckytool.ui.compose.components.material.SegmentedListItem
-import com.luckyzyx.luckytool.ui.compose.components.material.SegmentedSwitchItem
+import com.luckyzyx.luckytool.ui.compose.components.AppPickerDialog
+import com.luckyzyx.luckytool.ui.compose.components.material.MaterialListItem
+import com.luckyzyx.luckytool.ui.compose.components.material.MaterialSwitchItem
 import com.luckyzyx.luckytool.ui.compose.components.miuix.MiuixListItem
 import com.luckyzyx.luckytool.ui.compose.components.miuix.MiuixSwitchItem
 import com.luckyzyx.luckytool.ui.compose.scopes.ScopePageSpec
@@ -301,7 +301,7 @@ object ApplicationRelatedPage {
                     )
                 } else {
                     Box(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
-                        SegmentedSwitchItem(
+                        MaterialSwitchItem(
                             title = c.getString(R.string.disable_app_archiving),
                             summary = c.getString(R.string.disable_app_archiving_summary),
                             checked = checked,
@@ -318,7 +318,7 @@ object ApplicationRelatedPage {
         }
     }
 
-    private fun com.luckyzyx.luckytool.ui.components.preference.PrefScopeBuilder.wlanWhitelist(
+    private fun com.luckyzyx.luckytool.ui.compose.components.PrefScopeBuilder.wlanWhitelist(
         c: android.content.Context,
         key: String,
     ) {
@@ -337,7 +337,7 @@ object ApplicationRelatedPage {
                 )
             } else {
                 Box(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
-                    SegmentedListItem(
+                    MaterialListItem(
                         onClick = { showPicker = true },
                         supportingContent = { Text(current) },
                         colors = itemColors(slot),

@@ -1,6 +1,6 @@
 @file:Suppress("unused")
 
-package com.luckyzyx.luckytool.ui.components
+package com.luckyzyx.luckytool.ui.compose.components
 
 import android.graphics.Canvas
 import android.graphics.drawable.BitmapDrawable
@@ -48,7 +48,7 @@ import androidx.compose.ui.unit.dp
 import androidx.core.graphics.createBitmap
 import com.luckyzyx.luckytool.R
 import com.luckyzyx.luckytool.data.AppInfo
-import com.luckyzyx.luckytool.ui.compose.components.material.SegmentedListItem
+import com.luckyzyx.luckytool.ui.compose.components.material.MaterialListItem
 import com.luckyzyx.luckytool.ui.theme.LocalUiMode
 import com.luckyzyx.luckytool.ui.theme.UiMode
 import com.luckyzyx.luckytool.utils.PackageUtils
@@ -470,7 +470,7 @@ private fun AppRow(
     checked: Boolean,
     onSelect: () -> Unit,
 ) {
-    SegmentedListItem(
+    MaterialListItem(
         onClick = { onSelect() },
         headlineContent = { Text(app.name) },
         supportingContent = { Text(app.packageName) },

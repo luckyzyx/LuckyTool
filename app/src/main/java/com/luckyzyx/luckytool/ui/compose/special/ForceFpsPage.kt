@@ -24,7 +24,7 @@ import com.luckyzyx.luckytool.data.DisplayMode
 import com.luckyzyx.luckytool.service.RefreshRateService
 import com.luckyzyx.luckytool.ui.compose.components.PrefGroup
 import com.luckyzyx.luckytool.ui.compose.components.PrefSwitchRow
-import com.luckyzyx.luckytool.ui.compose.components.material.SegmentedRadioItem
+import com.luckyzyx.luckytool.ui.compose.components.material.MaterialRadioItem
 import com.luckyzyx.luckytool.ui.compose.components.miuix.MiuixRadioItem
 import com.luckyzyx.luckytool.ui.compose.scopes.ScopePageSpec
 import com.luckyzyx.luckytool.ui.theme.LocalUiMode
@@ -50,7 +50,7 @@ private tailrec fun Context.findActivity(): Activity? = when (this) {
  *
  * 线分派：行呈现（`PrefGroup` / `PrefSwitchRow`）由共享层按 [LocalUiMode] 自行分派，
  * 页面只分派自己写死的 material 件 —— 文字（`MiuixText`）、重置按钮（miuix `Button`）、
- * 模式单选项（t11 的 `MiuixRadioItem`，material 线仍为 `SegmentedRadioItem`）。
+ * 模式单选项（t11 的 `MiuixRadioItem`，material 线仍为 `MaterialRadioItem`）。
  */
 object ForceFpsPage {
 
@@ -132,7 +132,7 @@ object ForceFpsPage {
                                         onClick = onSelect,
                                     )
                                 } else {
-                                    SegmentedRadioItem(
+                                    MaterialRadioItem(
                                         title = title,
                                         selected = mode.id == fpsCur,
                                         onClick = onSelect,

@@ -13,7 +13,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.sp
 import com.luckyzyx.luckytool.R
-import com.luckyzyx.luckytool.ui.compose.components.material.ExpressivePageScaffold
+import com.luckyzyx.luckytool.ui.compose.components.material.MaterialPageScaffold
 
 /**
  * Logs 页：旧 LoggerFragment 的 fragment_logs.xml 仅一个居中占位文本
@@ -21,7 +21,7 @@ import com.luckyzyx.luckytool.ui.compose.components.material.ExpressivePageScaff
  */
 @Composable
 fun LogPage() {
-    ExpressivePageScaffold(
+    MaterialPageScaffold(
         title = stringResource(R.string.nav_log),
         actions = {
             IconButton(onClick = {}) {

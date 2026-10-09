@@ -13,7 +13,7 @@ import top.yukonga.miuix.kmp.shader.isRenderEffectSupported
 import top.yukonga.miuix.kmp.theme.MiuixTheme
 
 @Composable
-fun rememberBlurBackdrop(enableBlur: Boolean): LayerBackdrop? {
+fun rememberMiuixBlurBackdrop(enableBlur: Boolean): LayerBackdrop? {
     if (!enableBlur || !isRenderEffectSupported()) return null
     val surfaceColor = MiuixTheme.colorScheme.surface
     return rememberLayerBackdrop {
@@ -23,7 +23,7 @@ fun rememberBlurBackdrop(enableBlur: Boolean): LayerBackdrop? {
 }
 
 @Composable
-fun BlurredBar(
+fun MiuixBlurredBar(
     backdrop: LayerBackdrop?,
     blurActive: Boolean = true,
     content: @Composable () -> Unit,

@@ -63,10 +63,10 @@ import com.luckyzyx.luckytool.enums.IntentType
 import com.luckyzyx.luckytool.ui.compose.components.PrefGroup
 import com.luckyzyx.luckytool.ui.compose.components.PrefRow
 import com.luckyzyx.luckytool.ui.compose.components.PrefSwitchRow
-import com.luckyzyx.luckytool.ui.compose.components.material.SegmentedItem
-import com.luckyzyx.luckytool.ui.compose.components.material.SegmentedItemContainer
-import com.luckyzyx.luckytool.ui.compose.components.material.SegmentedListItem
-import com.luckyzyx.luckytool.ui.compose.components.material.expressiveBottomInset
+import com.luckyzyx.luckytool.ui.compose.components.material.MaterialItem
+import com.luckyzyx.luckytool.ui.compose.components.material.MaterialItemContainer
+import com.luckyzyx.luckytool.ui.compose.components.material.MaterialListItem
+import com.luckyzyx.luckytool.ui.compose.components.material.materialBottomInset
 import com.luckyzyx.luckytool.ui.compose.components.miuix.MiuixCheckboxItem
 import com.luckyzyx.luckytool.ui.compose.components.miuix.MiuixListItem
 import com.luckyzyx.luckytool.ui.compose.components.miuix.MiuixPrefDefaults
@@ -459,7 +459,7 @@ internal fun LazyItemScope.HideAppIntentContent() {
                 contentPadding = PaddingValues(
                     start = MiuixPrefDefaults.CardHorizontalInset,
                     end = MiuixPrefDefaults.CardHorizontalInset,
-                    bottom = expressiveBottomInset(),
+                    bottom = materialBottomInset(),
                 ),
                 verticalArrangement = Arrangement.spacedBy(MiuixPrefDefaults.ItemGap),
                 overscrollEffect = null,
@@ -488,7 +488,7 @@ internal fun LazyItemScope.HideAppIntentContent() {
                     filterAppInfos,
                     key = { _, info -> info.packageName },
                 ) { index, info ->
-                    SegmentedItem(index = index, count = filterAppInfos.size) {
+                    MaterialItem(index = index, count = filterAppInfos.size) {
                         IntentAppRow(
                             info = info,
                             allIntentInfos = allIntentInfos,
@@ -717,7 +717,7 @@ internal fun LazyItemScope.HideAppIntentContent() {
 /**
  * 应用行：图标 + 应用名 + 包名 + 四组类型计数按钮。
  * 与 material/miuix 两线旧实现行为等价：每组类型 (share/text/open/browser) 各自回调
- * `(packName, 全部条目, 已启用条目, 类型组)`；容器分派在调用点（`MiuixPrefItem`/`SegmentedItem`），
+ * `(packName, 全部条目, 已启用条目, 类型组)`；容器分派在调用点（`MiuixPrefItem`/`MaterialItem`），
  * 行内 ListItem 与计数按钮在此按线分派。
  */
 @Composable
@@ -755,9 +755,9 @@ internal fun IntentAppRow(
             }
         }
     } else {
-        SegmentedItemContainer {
+        MaterialItemContainer {
             Column {
-                SegmentedListItem(
+                MaterialListItem(
                     headlineContent = {
                         Text(
                             info.name,

@@ -19,10 +19,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.luckyzyx.luckytool.R
-import com.luckyzyx.luckytool.ui.components.preference.PrefIndexItem
-import com.luckyzyx.luckytool.ui.components.preference.PrefScopeBuilder
-import com.luckyzyx.luckytool.ui.components.preference.ScopeScreen
-import com.luckyzyx.luckytool.ui.components.preference.ScrollTarget
+import com.luckyzyx.luckytool.ui.compose.components.PrefIndexItem
+import com.luckyzyx.luckytool.ui.compose.components.PrefScopeBuilder
+import com.luckyzyx.luckytool.ui.compose.components.ScopeScreen
+import com.luckyzyx.luckytool.ui.compose.components.ScrollTarget
 import com.luckyzyx.luckytool.ui.compose.scopes.apps.OplusAlarmClockPage
 import com.luckyzyx.luckytool.ui.compose.scopes.apps.OplusBatteryPage
 import com.luckyzyx.luckytool.ui.compose.scopes.apps.OplusBeaconLinkPage

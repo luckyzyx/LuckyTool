@@ -22,12 +22,12 @@ import top.yukonga.miuix.kmp.overlay.OverlayDialog
 import top.yukonga.miuix.kmp.theme.MiuixTheme.colorScheme
 
 /**
- * 界面缩放输入对话框（迁移 KernelSU `ui/component/miuix/ScaleDialog.kt`）。
+ * 界面缩放输入对话框（迁移 KernelSU `ui/component/miuix/MiuixScaleDialog.kt`）。
  *
  * 输入百分比（限制在 80% - 110%），确认后经 [onVolumeChange] 回写缩放值。
  */
 @Composable
-fun ScaleDialog(
+fun MiuixScaleDialog(
     show: Boolean,
     onDismissRequest: () -> Unit,
     volumeState: () -> Float,

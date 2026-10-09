@@ -63,12 +63,12 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.util.fastCoerceIn
 import androidx.compose.ui.util.lerp
 import kotlinx.coroutines.launch
-import com.luckyzyx.luckytool.ui.compose.components.miuix.animation.DampedDragAnimation
-import com.luckyzyx.luckytool.ui.compose.components.miuix.animation.InteractiveHighlight
+import com.luckyzyx.luckytool.ui.compose.components.miuix.animation.MiuixDampedDragAnimation
+import com.luckyzyx.luckytool.ui.compose.components.miuix.animation.MiuixInteractiveHighlight
 import com.luckyzyx.luckytool.ui.compose.components.miuix.liquid.InnerShadow
 import com.luckyzyx.luckytool.ui.compose.components.miuix.liquid.innerShadow
 import com.luckyzyx.luckytool.ui.compose.components.miuix.liquid.lens
-import com.luckyzyx.luckytool.ui.compose.components.miuix.liquid.rememberCombinedBackdrop
+import com.luckyzyx.luckytool.ui.compose.components.miuix.liquid.rememberMiuixCombinedBackdrop
 import com.luckyzyx.luckytool.ui.compose.components.miuix.liquid.vibrancy
 import com.luckyzyx.luckytool.ui.theme.isInDarkTheme
 import top.yukonga.miuix.kmp.blur.Backdrop
@@ -163,7 +163,7 @@ private fun rememberGravityRotatedHighlight(
 }
 
 @Composable
-fun RowScope.FloatingBottomBarItem(
+fun RowScope.MiuixFloatingBottomBarItem(
     selected: Boolean,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
@@ -203,7 +203,7 @@ fun RowScope.FloatingBottomBarItem(
 }
 
 @Composable
-fun FloatingBottomBar(
+fun MiuixFloatingBottomBar(
     modifier: Modifier = Modifier,
     selectedIndex: Int,
     onSelected: (index: Int) -> Unit,
@@ -253,7 +253,7 @@ fun FloatingBottomBar(
     }
 
     val dampedDragAnimation = remember(animationScope, tabsCount, density, isLtr) {
-        DampedDragAnimation(
+        MiuixDampedDragAnimation(
             animationScope = animationScope,
             initialValue = selectedIndex.toFloat(),
             valueRange = 0f..(tabsCount - 1).toFloat(),
@@ -314,7 +314,7 @@ fun FloatingBottomBar(
     }
 
     val interactiveHighlight = remember(animationScope, tabWidthPx, dampedDragAnimation) {
-        InteractiveHighlight(
+        MiuixInteractiveHighlight(
             animationScope = animationScope,
             position = { size, _ ->
                 Offset(
@@ -329,7 +329,7 @@ fun FloatingBottomBar(
     val baseHighlight = rememberGravityRotatedHighlight(iosIndicatorSpecular, extraDegrees = -45f)
     val pillHighlight = rememberGravityRotatedHighlight(iosIndicatorSpecular, extraDegrees = 90f)
 
-    val combinedBackdrop = rememberCombinedBackdrop(backdrop, tabsBackdrop)
+    val combinedBackdrop = rememberMiuixCombinedBackdrop(backdrop, tabsBackdrop)
 
     Box(
         modifier = modifier.width(IntrinsicSize.Min),

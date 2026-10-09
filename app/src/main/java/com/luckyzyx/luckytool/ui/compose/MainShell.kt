@@ -108,7 +108,7 @@ private data class ShellTab(
     val route: Any,
 )
 
-/** 悬浮胶囊底栏占位高度（对齐 FloatingBottomBar 的 64.dp 胶囊 + 12.dp 余量） */
+/** 悬浮胶囊底栏占位高度（对齐 MiuixFloatingBottomBar 的 64.dp 胶囊 + 12.dp 余量） */
 private val FloatingBarInset = 76.dp
 
 @Composable
@@ -119,7 +119,7 @@ fun MainShell(activity: MainActivity) {
 
     val onFunctionTab = currentDestination?.hasRoute<FunctionRoute>() == true
     val onHomeTab = currentDestination?.hasRoute<HomeRoute>() == true
-    // 主题页为全屏子页：隐藏底部导航，避免与页内 ExpressiveScaffold 顶栏叠加
+    // 主题页为全屏子页：隐藏底部导航，避免与页内 MaterialScaffold 顶栏叠加
     val onThemePage = currentDestination?.hasRoute<ThemeRoute>() == true
     // 跨 tab 直达的作用域页为全屏页：同样隐藏底栏，返回时回到来源 tab，不再切到 Function tab
     val onScopePage = currentDestination?.hasRoute<ScopeRoute>() == true

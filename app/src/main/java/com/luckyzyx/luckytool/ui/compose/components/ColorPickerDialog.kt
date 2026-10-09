@@ -1,4 +1,4 @@
-package com.luckyzyx.luckytool.ui.components
+package com.luckyzyx.luckytool.ui.compose.components
 
 import android.graphics.Bitmap
 import androidx.compose.foundation.Canvas

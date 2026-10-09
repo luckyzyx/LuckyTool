@@ -28,8 +28,8 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.luckyzyx.luckytool.R
 import com.luckyzyx.luckytool.data.CameraFilter
-import com.luckyzyx.luckytool.ui.components.AppPickerDialog
-import com.luckyzyx.luckytool.ui.compose.components.material.SegmentedListItem
+import com.luckyzyx.luckytool.ui.compose.components.AppPickerDialog
+import com.luckyzyx.luckytool.ui.compose.components.material.MaterialListItem
 import com.luckyzyx.luckytool.ui.compose.components.miuix.MiuixCheckboxItem
 import com.luckyzyx.luckytool.ui.compose.components.miuix.MiuixListItem
 import com.luckyzyx.luckytool.ui.compose.scopes.ScopePageSpec
@@ -89,7 +89,7 @@ object OplusCameraPage {
                     )
                 } else {
                     Box(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
-                        SegmentedListItem(
+                        MaterialListItem(
                             onClick = { show = true },
                             supportingContent = {
                                 Text(arraySummaryLine(current.ifBlank { c.getString(R.string.not_set) }))
@@ -186,7 +186,7 @@ object OplusCameraPage {
                     )
                 } else {
                     Box(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
-                        SegmentedListItem(
+                        MaterialListItem(
                             onClick = { showDialog = true },
                             supportingContent = {
                                 Text(filters.filter { it.isEnable }.map { it.title }.toString())
@@ -234,7 +234,7 @@ object OplusCameraPage {
                     )
                 } else {
                     Box(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
-                        SegmentedListItem(
+                        MaterialListItem(
                             onClick = { showDialog = true },
                             supportingContent = {
                                 Text(filters.filter { it.isEnable }.map { it.title }.toString())
@@ -277,7 +277,7 @@ object OplusCameraPage {
                     )
                 } else {
                     Box(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
-                        SegmentedListItem(
+                        MaterialListItem(
                             onClick = { showDialog = true },
                             supportingContent = {
                                 Text(filters.filter { it.isEnable }.map { it.title }.toString())

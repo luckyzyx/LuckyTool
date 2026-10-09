@@ -19,7 +19,7 @@ import com.luckyzyx.luckytool.ui.compose.components.miuix.modifier.inspectDragGe
 import kotlin.math.abs
 import kotlin.time.TimeSource
 
-class DampedDragAnimation(
+class MiuixDampedDragAnimation(
     private val animationScope: CoroutineScope,
     val initialValue: Float,
     val valueRange: ClosedRange<Float>,
@@ -27,10 +27,10 @@ class DampedDragAnimation(
     val initialScale: Float,
     val pressedScale: Float,
     val canDrag: (Offset) -> Boolean = { true },
-    val onDragStarted: DampedDragAnimation.(position: Offset) -> Unit,
-    val onDragStopped: DampedDragAnimation.() -> Unit,
-    val onDragCancelled: DampedDragAnimation.() -> Unit = onDragStopped,
-    val onDrag: DampedDragAnimation.(size: IntSize, dragAmount: Offset) -> Unit,
+    val onDragStarted: MiuixDampedDragAnimation.(position: Offset) -> Unit,
+    val onDragStopped: MiuixDampedDragAnimation.() -> Unit,
+    val onDragCancelled: MiuixDampedDragAnimation.() -> Unit = onDragStopped,
+    val onDrag: MiuixDampedDragAnimation.(size: IntSize, dragAmount: Offset) -> Unit,
 ) {
 
     private val valueAnimationSpec =

@@ -72,11 +72,11 @@ import com.luckyzyx.luckytool.R
 import com.luckyzyx.luckytool.service.AdbService
 import com.luckyzyx.luckytool.service.TilesService
 import com.luckyzyx.luckytool.ui.activity.MainActivity
-import com.luckyzyx.luckytool.ui.components.AppPickerDialog
-import com.luckyzyx.luckytool.ui.components.preference.LocalScopeTopInset
-import com.luckyzyx.luckytool.ui.components.preference.ScopeScreen
+import com.luckyzyx.luckytool.ui.compose.components.AppPickerDialog
+import com.luckyzyx.luckytool.ui.compose.components.LocalScopeTopInset
+import com.luckyzyx.luckytool.ui.compose.components.ScopeScreen
 import com.luckyzyx.luckytool.ui.compose.components.PrefIconBadge
-import com.luckyzyx.luckytool.ui.compose.components.material.ExpressivePageScaffold
+import com.luckyzyx.luckytool.ui.compose.components.material.MaterialPageScaffold
 import com.luckyzyx.luckytool.ui.theme.LocalUiMode
 import com.luckyzyx.luckytool.ui.theme.UiMode
 import com.luckyzyx.luckytool.utils.A13
@@ -136,7 +136,7 @@ fun OtherPage(activity: MainActivity) {
     LaunchedEffect(Unit) { loadControllers() }
     LifecycleEventEffect(Lifecycle.Event.ON_RESUME) { loadControllers() }
 
-    ExpressivePageScaffold(
+    MaterialPageScaffold(
         title = stringResource(R.string.nav_other),
         actions = {
             IconButton(onClick = { showOptimizePicker = true }) {

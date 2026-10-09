@@ -22,8 +22,8 @@ import androidx.compose.ui.unit.dp
 import androidx.core.graphics.drawable.toBitmap
 import com.luckyzyx.luckytool.R
 import com.luckyzyx.luckytool.data.AppInfo
-import com.luckyzyx.luckytool.ui.compose.components.material.ExpressiveSwitch
-import com.luckyzyx.luckytool.ui.compose.components.material.SegmentedListItem
+import com.luckyzyx.luckytool.ui.compose.components.material.MaterialSwitch
+import com.luckyzyx.luckytool.ui.compose.components.material.MaterialListItem
 import com.luckyzyx.luckytool.ui.compose.components.miuix.MiuixListItem
 import com.luckyzyx.luckytool.ui.theme.LocalUiMode
 import com.luckyzyx.luckytool.ui.theme.UiMode
@@ -78,7 +78,7 @@ internal fun AppToggleRow(
         )
     } else {
         val interactionSource = remember { MutableInteractionSource() }
-        SegmentedListItem(
+        MaterialListItem(
             onClick = {
                 haptic.performHapticFeedback(HapticFeedbackType.VirtualKey)
                 onToggle(!enabled)
@@ -101,7 +101,7 @@ internal fun AppToggleRow(
                 }
             },
             trailingContent = {
-                ExpressiveSwitch(
+                MaterialSwitch(
                     checked = enabled,
                     onCheckedChange = null,
                     interactionSource = interactionSource,

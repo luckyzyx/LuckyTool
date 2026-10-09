@@ -93,18 +93,18 @@ import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.luckyzyx.luckytool.R
-import com.luckyzyx.luckytool.ui.compose.components.material.ExpressiveScaffold
-import com.luckyzyx.luckytool.ui.compose.components.material.ExpressiveToggleButton
-import com.luckyzyx.luckytool.ui.compose.components.material.SegmentedColumn
-import com.luckyzyx.luckytool.ui.compose.components.material.SegmentedDropdownItem
-import com.luckyzyx.luckytool.ui.compose.components.material.SegmentedSwitchItem
-import com.luckyzyx.luckytool.ui.compose.components.material.TonalCard
-import com.luckyzyx.luckytool.ui.compose.components.material.TopBarBackButton
-import com.luckyzyx.luckytool.ui.compose.components.material.expressiveTopAppBarColors
-import com.luckyzyx.luckytool.ui.compose.components.miuix.BlurredBar
+import com.luckyzyx.luckytool.ui.compose.components.material.MaterialScaffold
+import com.luckyzyx.luckytool.ui.compose.components.material.MaterialToggleButton
+import com.luckyzyx.luckytool.ui.compose.components.material.MaterialGroup
+import com.luckyzyx.luckytool.ui.compose.components.material.MaterialDropdownItem
+import com.luckyzyx.luckytool.ui.compose.components.material.MaterialSwitchItem
+import com.luckyzyx.luckytool.ui.compose.components.material.MaterialTonalCard
+import com.luckyzyx.luckytool.ui.compose.components.material.MaterialTopBarBackButton
+import com.luckyzyx.luckytool.ui.compose.components.material.materialTopAppBarColors
+import com.luckyzyx.luckytool.ui.compose.components.miuix.MiuixBlurredBar
 import com.luckyzyx.luckytool.ui.compose.components.miuix.MiuixCompactTopBar
-import com.luckyzyx.luckytool.ui.compose.components.miuix.ScaleDialog
-import com.luckyzyx.luckytool.ui.compose.components.miuix.rememberBlurBackdrop
+import com.luckyzyx.luckytool.ui.compose.components.miuix.MiuixScaleDialog
+import com.luckyzyx.luckytool.ui.compose.components.miuix.rememberMiuixBlurBackdrop
 import com.luckyzyx.luckytool.ui.shell.ModuleLinesMax
 import com.luckyzyx.luckytool.ui.shell.ModuleLinesMin
 import com.luckyzyx.luckytool.ui.shell.PageScaleMax
@@ -284,12 +284,12 @@ private fun ThemeScreenMaterial(onBack: () -> Unit) {
         dynamicColor = dynamicColor,
     )
 
-    ExpressiveScaffold(
+    MaterialScaffold(
         topBar = {
             TopAppBar(
-                navigationIcon = { TopBarBackButton(onClick = onBack) },
+                navigationIcon = { MaterialTopBarBackButton(onClick = onBack) },
                 title = { Text(stringResource(R.string.theme_title)) },
-                colors = expressiveTopAppBarColors(),
+                colors = materialTopAppBarColors(),
                 windowInsets = WindowInsets.safeDrawing.only(
                     WindowInsetsSides.Top + WindowInsetsSides.Horizontal
                 ),
@@ -378,7 +378,7 @@ private fun ThemeScreenMaterial(onBack: () -> Unit) {
                         ) {
                             rowModes.forEachIndexed { index, (mode, labelRes) ->
                                 val label = stringResource(labelRes)
-                                ExpressiveToggleButton(
+                                MaterialToggleButton(
                                     checked = colorMode == mode,
                                     onCheckedChange = {
                                         if (it) {
@@ -421,12 +421,12 @@ private fun ThemeScreenMaterial(onBack: () -> Unit) {
             }
 
             item {
-                SegmentedColumn(
+                MaterialGroup(
                     modifier = Modifier.padding(horizontal = 16.dp),
                     content = listOf(
                         {
                             val styles = PaletteStyle.entries
-                            SegmentedDropdownItem(
+                            MaterialDropdownItem(
                                 icon = Icons.Rounded.Style,
                                 title = stringResource(R.string.palette_style_title),
                                 items = styles.map { it.name },
@@ -444,7 +444,7 @@ private fun ThemeScreenMaterial(onBack: () -> Unit) {
                         },
                         {
                             val specs = ColorSpec.SpecVersion.entries
-                            SegmentedDropdownItem(
+                            MaterialDropdownItem(
                                 icon = Icons.Rounded.DesignServices,
                                 title = stringResource(R.string.color_spec_title),
                                 items = specs.map { it.name },
@@ -466,11 +466,11 @@ private fun ThemeScreenMaterial(onBack: () -> Unit) {
 
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
                 item {
-                    SegmentedColumn(
+                    MaterialGroup(
                         modifier = Modifier.padding(horizontal = 16.dp),
                         content = listOf(
                             {
-                                SegmentedSwitchItem(
+                                MaterialSwitchItem(
                                     icon = Icons.Rounded.Style,
                                     title = stringResource(R.string.use_dynamic_color),
                                     summary = stringResource(R.string.use_dynamic_color_summary),
@@ -495,11 +495,11 @@ private fun ThemeScreenMaterial(onBack: () -> Unit) {
             // 预测式返回手势（需 Android 14+，反射 ApplicationInfo.setEnableOnBackInvokedCallback）
             if (PredictiveBackUtils.isSupported()) {
                 item {
-                    SegmentedColumn(
+                    MaterialGroup(
                         modifier = Modifier.padding(horizontal = 16.dp),
                         content = listOf(
                             {
-                                SegmentedSwitchItem(
+                                MaterialSwitchItem(
                                     icon = Icons.AutoMirrored.Rounded.ArrowBack,
                                     title = stringResource(R.string.settings_enable_predictive_back),
                                     summary = stringResource(R.string.settings_enable_predictive_back_summary),
@@ -523,7 +523,7 @@ private fun ThemeScreenMaterial(onBack: () -> Unit) {
 
             // 界面缩放（page_scale）：拖动只更新页内状态，松手才提交偏好，避免重建全应用密度
             item {
-                TonalCard(
+                MaterialTonalCard(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(horizontal = 16.dp),
@@ -578,7 +578,7 @@ private fun ThemeScreenMaterial(onBack: () -> Unit) {
 
             // 模块描述最大行数（module_description_max_lines）
             item {
-                TonalCard(
+                MaterialTonalCard(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(horizontal = 16.dp),
@@ -702,7 +702,7 @@ private fun ThemePreviewCard(
                             .padding(horizontal = 6.dp, vertical = 2.dp),
                         verticalArrangement = Arrangement.spacedBy(6.dp),
                     ) {
-                        TonalCard(
+                        MaterialTonalCard(
                             containerColor = colorScheme.secondaryContainer,
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -711,7 +711,7 @@ private fun ThemePreviewCard(
                             content = {},
                         )
                         if (showInfoCard) {
-                            TonalCard(
+                            MaterialTonalCard(
                                 containerColor = colorScheme.surfaceBright,
                                 modifier = Modifier
                                     .fillMaxWidth()
@@ -1014,14 +1014,14 @@ private fun ThemeScreenMiuix(onBack: () -> Unit) {
     }
 
     // 模糊开关仅对预览与顶栏生效，与 KernelSU 一样由偏好直接驱动
-    val backdrop = rememberBlurBackdrop(enableBlur)
+    val backdrop = rememberMiuixBlurBackdrop(enableBlur)
     val blurActive = backdrop != null
     val barColor = if (blurActive) Color.Transparent else colorScheme.surface
     val isDark = colorMode.resolveDarkTheme()
 
     MiuixScaffold(
         topBar = {
-            BlurredBar(backdrop) {
+            MiuixBlurredBar(backdrop) {
                 MiuixCompactTopBar(
                     color = barColor,
                     title = stringResource(R.string.settings_theme),
@@ -1365,7 +1365,7 @@ private fun ThemeScreenMiuix(onBack: () -> Unit) {
             }
         }
 
-        ScaleDialog(
+        MiuixScaleDialog(
             show = showScaleDialog.value,
             onDismissRequest = { showScaleDialog.value = false },
             volumeState = { pageScale },

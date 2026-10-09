@@ -16,17 +16,17 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 
 /**
- * Expressive 开关（迁移自 KernelSU `ui/component/material/ExpressiveSwitch.kt`）：
+ * Expressive 开关（迁移自 KernelSU `ui/component/material/MaterialSwitch.kt`）：
  * 选中显示对勾、未选中显示叉号图标。
  */
 @Composable
-fun ExpressiveSwitch(
+fun MaterialSwitch(
     checked: Boolean,
     onCheckedChange: ((Boolean) -> Unit)?,
     modifier: Modifier = Modifier,
     thumbContent: (@Composable () -> Unit)? = null,
     enabled: Boolean = true,
-    colors: SwitchColors = expressiveSwitchColors(),
+    colors: SwitchColors = materialSwitchColors(),
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
     showThumbIcon: Boolean = true,
 ) {
@@ -50,7 +50,7 @@ fun ExpressiveSwitch(
 }
 
 @Composable
-fun expressiveSwitchColors(
+fun materialSwitchColors(
     checkedIconColor: Color = MaterialTheme.colorScheme.primary,
     uncheckedIconColor: Color = MaterialTheme.colorScheme.surfaceContainerHighest,
     disabledCheckedThumbColor: Color = MaterialTheme.colorScheme.surface.copy(alpha = 0.38f),

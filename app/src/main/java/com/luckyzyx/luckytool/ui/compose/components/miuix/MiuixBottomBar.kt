@@ -50,7 +50,7 @@ fun MiuixBottomBar(
     modifier: Modifier = Modifier,
 ) {
     if (!floating) {
-        BlurredBar(blurBackdrop) {
+        MiuixBlurredBar(blurBackdrop) {
             NavigationBar(
                 modifier = modifier,
                 color = if (blurBackdrop != null) Color.Transparent else MiuixTheme.colorScheme.surface,
@@ -71,7 +71,7 @@ fun MiuixBottomBar(
     } else {
         val bottomPadding = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
             .let { inset -> if (inset != 0.dp) 8.dp + inset else 28.dp }
-        FloatingBottomBar(
+        MiuixFloatingBottomBar(
             modifier = modifier
                 .pointerInput(Unit) {
                     detectTapGestures { }
@@ -84,7 +84,7 @@ fun MiuixBottomBar(
             isBlurEnabled = floatingBlur,
         ) { activateTab ->
             items.forEachIndexed { index, item ->
-                FloatingBottomBarItem(
+                MiuixFloatingBottomBarItem(
                     selected = selectedIndex == index,
                     onClick = { activateTab(index) },
                     modifier = Modifier.defaultMinSize(minWidth = 76.dp),

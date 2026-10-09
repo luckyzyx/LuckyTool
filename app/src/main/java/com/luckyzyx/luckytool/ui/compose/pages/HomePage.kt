@@ -45,10 +45,10 @@ import com.luckyzyx.luckytool.BuildConfig
 import com.luckyzyx.luckytool.R
 import com.luckyzyx.luckytool.service.GlobalFuncService
 import com.luckyzyx.luckytool.ui.activity.MainActivity
-import com.luckyzyx.luckytool.ui.components.preference.LocalScopeTopInset
-import com.luckyzyx.luckytool.ui.components.preference.ScopeScreen
-import com.luckyzyx.luckytool.ui.compose.components.material.ExpressivePageScaffold
-import com.luckyzyx.luckytool.ui.compose.components.material.TonalCard
+import com.luckyzyx.luckytool.ui.compose.components.LocalScopeTopInset
+import com.luckyzyx.luckytool.ui.compose.components.ScopeScreen
+import com.luckyzyx.luckytool.ui.compose.components.material.MaterialPageScaffold
+import com.luckyzyx.luckytool.ui.compose.components.material.MaterialTonalCard
 import com.luckyzyx.luckytool.ui.service.XposedServiceBridge
 import com.luckyzyx.luckytool.ui.shell.ShellBadgeState
 import com.luckyzyx.luckytool.ui.theme.LocalUiMode
@@ -164,7 +164,7 @@ fun HomePage(activity: MainActivity) {
     LaunchedEffect(Unit) { loadHomeData() }
     LifecycleEventEffect(Lifecycle.Event.ON_RESUME) { loadHomeData() }
 
-    ExpressivePageScaffold(
+    MaterialPageScaffold(
         title = stringResource(R.string.app_name),
         actions = {
             IconButton(onClick = { showRestartMenu = true }) {
@@ -211,7 +211,7 @@ fun HomePage(activity: MainActivity) {
             ScopeScreen(state = settings, modifier = scopeModifier) {
                 // 状态卡沿用主色/灰色实心配色（保留原强调外观），bare 全宽自定义
                 custom(key = "status_card", bare = true) {
-                    TonalCard(
+                    MaterialTonalCard(
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(horizontal = if (uiMode == UiMode.Miuix) 0.dp else 16.dp)

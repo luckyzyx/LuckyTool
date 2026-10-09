@@ -13,7 +13,7 @@ import androidx.compose.ui.unit.Density
 import top.yukonga.miuix.kmp.blur.Backdrop
 
 @Stable
-class CombinedBackdrop(
+class MiuixCombinedBackdrop(
     val first: Backdrop,
     val second: Backdrop,
 ) : Backdrop {
@@ -35,5 +35,5 @@ class CombinedBackdrop(
 }
 
 @Composable
-fun rememberCombinedBackdrop(first: Backdrop, second: Backdrop): Backdrop =
-    remember(first, second) { CombinedBackdrop(first, second) }
+fun rememberMiuixCombinedBackdrop(first: Backdrop, second: Backdrop): Backdrop =
+    remember(first, second) { MiuixCombinedBackdrop(first, second) }

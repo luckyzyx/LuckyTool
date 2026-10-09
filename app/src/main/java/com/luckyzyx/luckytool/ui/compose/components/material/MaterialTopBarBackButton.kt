@@ -11,9 +11,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 
-/** 顶栏返回按钮（迁移自 KernelSU `ui/component/material/TopBarBackButton.kt`） */
+/** 顶栏返回按钮（迁移自 KernelSU `ui/component/material/MaterialTopBarBackButton.kt`） */
 @Composable
-fun TopBarBackButton(
+fun MaterialTopBarBackButton(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     contentDescription: String? = null,
