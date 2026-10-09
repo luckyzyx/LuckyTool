@@ -19,6 +19,7 @@ import com.luckyzyx.luckytool.utils.FileUtils
 import com.luckyzyx.luckytool.utils.ModulePrefs
 import com.luckyzyx.luckytool.utils.SDK
 import com.luckyzyx.luckytool.utils.arraySummaryLine
+import com.luckyzyx.luckytool.utils.checkPackName
 import com.luckyzyx.luckytool.utils.getOSVersionCode
 import com.luckyzyx.luckytool.utils.putString
 
@@ -26,7 +27,7 @@ import com.luckyzyx.luckytool.utils.putString
  * 息屏显示页（旧 ui.fragment.scopes.related.AodRelated 的 Compose 等价物）。
  * 逐项对齐：键、默认值、条件可见性（osCode = getOSVersionCode、SDK = Android API）、
  * restart 回调。旧 loadRootPreference 的 isVisible = SDK >= A13 && checkPackName("com.oplus.aod")
- * 属功能树可见性，由功能树 Compose 化终局统一处理（本页无条件渲染）。
+ * 平移为 spec.isVisible（本页 DSL 无条件渲染）。
  * set_random_text_display_mode 的构建期 when("1"→选文件点击项;"2"→EditText) 迁移为
  * builder 内 when(state.getString(...))（每次 revision 重组重跑，等价）。
  */
@@ -38,6 +39,7 @@ object AodRelatedPage {
         packName = "com.android.systemui",
         scopes = arrayOf("com.android.systemui", "com.oplus.aod", "com.oplus.uiengine"),
         restartEnabled = true,
+        isVisible = { SDK >= A13 && checkPackName("com.oplus.aod") },
     ) {
         val c = requireNotNull(context) { "ScopeScreen 未注入 Context" }
         val osCode = getOSVersionCode

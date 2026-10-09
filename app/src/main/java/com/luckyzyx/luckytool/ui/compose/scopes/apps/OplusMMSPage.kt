@@ -5,6 +5,7 @@ import com.luckyzyx.luckytool.ui.compose.scopes.ScopePageSpec
 import com.luckyzyx.luckytool.utils.A13
 import com.luckyzyx.luckytool.utils.ModulePrefs
 import com.luckyzyx.luckytool.utils.SDK
+import com.luckyzyx.luckytool.utils.checkPackName
 
 /**
  * 短信页（旧 ui.fragment.scopes.apps.OplusMMS 的 Compose 等价物）。
@@ -17,6 +18,7 @@ object OplusMMSPage {
         packName = "com.android.mms",
         scopes = arrayOf("com.android.mms"),
         restartEnabled = true,
+        isVisible = { SDK >= A13 && checkPackName("com.android.mms") },
     ) {
         val c = requireNotNull(context) { "ScopeScreen 未注入 Context" }
         if (SDK >= A13) {

@@ -18,9 +18,10 @@ object StatusBarLayoutPage {
         packName = "com.android.systemui",
         scopes = arrayOf("com.android.systemui"),
         restartEnabled = true,
+        isVisible = { SDK == A13 },
     ) {
         val c = requireNotNull(context) { "ScopeScreen 未注入 Context" }
-        // 旧 root 条目与本页所有条目均 isVisible = SDK == A13
+        // 旧 root 条目 isVisible = SDK == A13 已平移为 spec.isVisible；本页所有条目亦同条件
         if (SDK != A13) return@ScopePageSpec
         list(
             key = "statusbar_layout_mode",

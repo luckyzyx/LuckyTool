@@ -40,6 +40,7 @@ object OplusGesturePage {
         packName = "com.android.systemui",
         scopes = arrayOf("com.android.systemui", "com.oplus.gesture"),
         restartEnabled = true,
+        isVisible = { checkPackName("com.oplus.gesture") },
     ) {
         val c = requireNotNull(context) { "ScopeScreen 未注入 Context" }
 

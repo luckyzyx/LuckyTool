@@ -25,6 +25,7 @@ object OplusSoundRecorderPage {
             "com.oplus.audio.effectcenter"
         ),
         restartEnabled = false,
+        isVisible = { getOSVersionCode >= 30 && checkPackName("com.coloros.soundrecorder") },
     ) {
         val c = requireNotNull(context) { "ScopeScreen 未注入 Context" }
         val osCode = getOSVersionCode

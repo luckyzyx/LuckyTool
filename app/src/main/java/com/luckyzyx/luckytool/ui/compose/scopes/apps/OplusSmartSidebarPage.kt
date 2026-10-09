@@ -6,6 +6,7 @@ import com.luckyzyx.luckytool.utils.A12
 import com.luckyzyx.luckytool.utils.A13
 import com.luckyzyx.luckytool.utils.ModulePrefs
 import com.luckyzyx.luckytool.utils.SDK
+import com.luckyzyx.luckytool.utils.checkPackName
 import com.luckyzyx.luckytool.utils.getOSVersionCode
 
 /**
@@ -19,6 +20,7 @@ object OplusSmartSidebarPage {
         packName = "com.coloros.smartsidebar",
         scopes = arrayOf("com.coloros.smartsidebar"),
         restartEnabled = false,
+        isVisible = { SDK >= A12 && checkPackName("com.coloros.smartsidebar") },
     ) {
         val c = requireNotNull(context) { "ScopeScreen 未注入 Context" }
         val osCode = getOSVersionCode

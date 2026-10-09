@@ -41,6 +41,7 @@ import com.luckyzyx.luckytool.utils.ModulePrefs
 import com.luckyzyx.luckytool.utils.PrefState
 import com.luckyzyx.luckytool.utils.SDK
 import com.luckyzyx.luckytool.utils.arraySummaryLine
+import com.luckyzyx.luckytool.utils.checkPackName
 import com.luckyzyx.luckytool.utils.getOSVersionCode
 import top.yukonga.miuix.kmp.basic.TextButton as MiuixTextButton
 import top.yukonga.miuix.kmp.overlay.OverlayDialog
@@ -48,7 +49,8 @@ import top.yukonga.miuix.kmp.overlay.OverlayDialog
 /**
  * 相机页（旧 ui.fragment.scopes.apps.OplusCamera 的 Compose 等价物）。
  * 逐项对齐：键、默认值、条件可见性（osCode 沿用 getOSVersionCode、SDK 用 Android 版本）、
- * 滤镜多选对话框与自定义水印。旧 open 菜单（openApp）不在 Compose 页呈现。
+ * 滤镜多选对话框与自定义水印。旧 loadRootPreference 根条目
+ * isVisible = checkPackName(oneplus 或 oplus 相机) 平移为 spec.isVisible。旧 open 菜单（openApp）不在 Compose 页呈现。
  */
 object OplusCameraPage {
 
@@ -58,6 +60,7 @@ object OplusCameraPage {
         packName = "com.oplus.camera",
         scopes = arrayOf("com.oplus.camera", "com.oneplus.camera"),
         restartEnabled = true,
+        isVisible = { checkPackName("com.oneplus.camera") || checkPackName("com.oplus.camera") },
     ) {
         val c = requireNotNull(context) { "ScopeScreen 未注入 Context" }
 

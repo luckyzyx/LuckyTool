@@ -6,6 +6,7 @@ import com.luckyzyx.luckytool.utils.A13
 import com.luckyzyx.luckytool.utils.A14
 import com.luckyzyx.luckytool.utils.ModulePrefs
 import com.luckyzyx.luckytool.utils.SDK
+import com.luckyzyx.luckytool.utils.checkPackName
 
 /**
  * 旧 ui.fragment.scopes.apps.OplusTeleService 的 Compose 等价物（机械翻译 loadPreferences）。
@@ -18,6 +19,7 @@ object OplusTeleServicePage {
         packName = "com.android.phone",
         scopes = arrayOf("com.android.phone", "com.android.incallui"),
         restartEnabled = false,
+        isVisible = { SDK >= A13 && checkPackName("com.android.phone") },
     ) {
         val c = requireNotNull(context) { "ScopeScreen 未注入 Context" }
         if (SDK >= A13) {

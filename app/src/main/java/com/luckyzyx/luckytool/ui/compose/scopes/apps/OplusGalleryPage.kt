@@ -5,6 +5,7 @@ import com.luckyzyx.luckytool.ui.compose.scopes.ScopePageSpec
 import com.luckyzyx.luckytool.utils.A15
 import com.luckyzyx.luckytool.utils.ModulePrefs
 import com.luckyzyx.luckytool.utils.SDK
+import com.luckyzyx.luckytool.utils.checkPackName
 import com.luckyzyx.luckytool.utils.getOSVersionCode
 import com.luckyzyx.luckytool.utils.isZh
 
@@ -20,6 +21,7 @@ object OplusGalleryPage {
         packName = "com.coloros.gallery3d",
         scopes = arrayOf("com.coloros.gallery3d", "com.oplus.aiunit"),
         restartEnabled = true,
+        isVisible = { getOSVersionCode >= 27 && checkPackName("com.coloros.gallery3d") },
     ) {
         val c = requireNotNull(context) { "ScopeScreen 未注入 Context" }
         if (getOSVersionCode < 27) return@ScopePageSpec

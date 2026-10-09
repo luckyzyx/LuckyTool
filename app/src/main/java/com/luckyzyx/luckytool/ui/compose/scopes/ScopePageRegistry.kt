@@ -19,6 +19,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.luckyzyx.luckytool.R
+import com.luckyzyx.luckytool.ui.components.preference.PrefIndexItem
 import com.luckyzyx.luckytool.ui.components.preference.PrefScopeBuilder
 import com.luckyzyx.luckytool.ui.components.preference.ScopeScreen
 import com.luckyzyx.luckytool.ui.components.preference.ScrollTarget
@@ -94,7 +95,9 @@ import com.luckyzyx.luckytool.ui.compose.special.MultiAppPage
 import com.luckyzyx.luckytool.ui.compose.special.ZoomWindowPage
 import com.luckyzyx.luckytool.ui.theme.LocalUiMode
 import com.luckyzyx.luckytool.ui.theme.UiMode
+import com.luckyzyx.luckytool.utils.LogUtils
 import com.luckyzyx.luckytool.utils.PrefState
+import com.luckyzyx.luckytool.utils.checkPackName
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlin.time.Duration.Companion.milliseconds
@@ -108,6 +111,7 @@ import kotlin.time.Duration.Companion.milliseconds
  * @param packName       宿主包名（sendPrefsValue 通知目标）
  * @param scopes         Xposed 作用域包名列表（重启作用域对话框用）
  * @param restartEnabled 是否显示"重启作用域"菜单
+ * @param isVisible      页面级可见性（旧 loadRootPreference 根条目 isVisible 平移）：false 时功能树、搜索与子页入口均不出现此页
  * @param onRefresh      下拉刷新回调（null = 无下拉刷新；如 OTA 提取、捐赠数据页）
  * @param content        页面内容 DSL（每次重组重跑，条件可见性写 Kotlin if）
  * @param contentMiuix   页面自带的 Miuix 呈现（null = 走共享渲染层 [ScopeScreen]）
@@ -124,6 +128,11 @@ class ScopePageSpec(
     val packName: String,
     val scopes: Array<String>,
     val restartEnabled: Boolean,
+    /**
+     * 页面级可见性（旧 loadRootPreference 根条目 isVisible 平移）：
+     * false 时功能树、搜索与子页入口均不出现此页；默认恒可见。
+     */
+    val isVisible: Context.() -> Boolean = { true },
     val onRefresh: (suspend () -> Unit)? = null,
     val fullContent: (@Composable LazyItemScope.(PrefScopeBuilder) -> Unit)? = null,
     val contentMiuix: (@Composable ScopeContentScope.(PrefScopeBuilder) -> Unit)? = null,
@@ -323,6 +332,55 @@ object ScopePageRegistry {
 
     /** 全部已注册页（搜索索引用） */
     fun all(): List<ScopePageSpec> = pages.values.toList()
+
+    /**
+     * headless 构建一页的搜索索引（等价旧 getAllPrefsItem：条件可见性已由 DSL 的 Kotlin if 应用，
+     * 空索引 = 该页不可见）。构建是纯记录（emit 不渲染），可在任意线程运行；
+     * 功能树、全屏搜索与 DSL page() 子页入口可达性判断共用。
+     */
+    fun buildIndex(context: Context, spec: ScopePageSpec): List<PrefIndexItem> = try {
+        val state = PrefState.of(context.applicationContext, spec.prefsName)
+        val builder = PrefScopeBuilder(state)
+        builder.context = context.applicationContext
+        builder.beginBuild()
+        spec.content(builder)
+        builder.snapshotIndex()
+    } catch (t: Throwable) {
+        // 单页构建失败只丢弃该页，不得拖垮整棵功能树/搜索索引
+        LogUtils.e("buildIndex", spec.pageKey, t.toString(), true)
+        emptyList()
+    }
+
+    /**
+     * 旧 BaseScopePreferenceFeagment.getAllPrefsItem 开头的「单 App 作用域存在性检查」平移：
+     * 恰有一个作用域且不是 system、且该包未安装 → 整页不可见（功能树/搜索/子页入口共用）。
+     */
+    fun isScopeAppPresent(context: Context, spec: ScopePageSpec): Boolean {
+        val scopes = spec.scopes
+        return !(scopes.size == 1 && scopes.first() != "system") || context.checkPackName(scopes.first())
+    }
+
+    /** 可达性探测栈（线程内防环）：page() 目标链理论上是树，防御性保护未来出现回链 */
+    private val reachabilityProbeStack: ThreadLocal<ArrayDeque<String>> = ThreadLocal.withInitial { ArrayDeque() }
+
+    /**
+     * 一页是否可进入（旧 getRootPreference 三级判断的集中版，供 DSL page() 子页入口使用）：
+     * spec.isVisible（旧根条目 isVisible）&& 单 App 作用域已安装 && 存在可见条目（旧检查2「可见子 item<=0 隐藏」）。
+     * 目标页不可达时父页不发射入口行。未注册的 pageKey 视为可达（不拦截未知目标，保持旧行为）。
+     */
+    fun isPageReachable(context: Context, pageKey: String): Boolean {
+        val spec = pages[pageKey] ?: return true
+        if (!spec.isVisible(context)) return false
+        if (!isScopeAppPresent(context, spec)) return false
+        val stack = reachabilityProbeStack.get()
+        if (pageKey in stack) return true
+        stack.addLast(pageKey)
+        return try {
+            buildIndex(context, spec).isNotEmpty()
+        } finally {
+            stack.removeLast()
+        }
+    }
 
     /** 功能树页面顺序（对齐旧 XposedFragment.loadPreferences 的 addFragmentPreference 顺序，49 页） */
     val treeOrder: List<String> = listOf(

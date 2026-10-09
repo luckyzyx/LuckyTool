@@ -36,6 +36,7 @@ object OplusGamesPage {
         packName = "com.oplus.games",
         scopes = arrayOf("com.oplus.games", "com.oplus.cosa"),
         restartEnabled = true,
+        isVisible = { checkPackName("com.oplus.games") },
     ) {
         val c = requireNotNull(context) { "ScopeScreen 未注入 Context" }
         val appUtils = AppUtils(c)

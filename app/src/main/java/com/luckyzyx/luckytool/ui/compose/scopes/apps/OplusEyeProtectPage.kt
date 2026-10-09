@@ -3,6 +3,7 @@ package com.luckyzyx.luckytool.ui.compose.scopes.apps
 import com.luckyzyx.luckytool.R
 import com.luckyzyx.luckytool.ui.compose.scopes.ScopePageSpec
 import com.luckyzyx.luckytool.utils.ModulePrefs
+import com.luckyzyx.luckytool.utils.checkPackName
 import com.luckyzyx.luckytool.utils.getOSVersionCode
 
 /**
@@ -16,6 +17,7 @@ object OplusEyeProtectPage {
         packName = "com.oplus.eyeprotect",
         scopes = arrayOf("com.oplus.eyeprotect"),
         restartEnabled = true,
+        isVisible = { getOSVersionCode >= 33 && checkPackName("com.oplus.eyeprotect") },
     ) {
         val c = requireNotNull(context) { "ScopeScreen 未注入 Context" }
         if (getOSVersionCode >= 33) {

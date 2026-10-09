@@ -3,6 +3,7 @@ package com.luckyzyx.luckytool.ui.compose.scopes.apps
 import com.luckyzyx.luckytool.R
 import com.luckyzyx.luckytool.ui.compose.scopes.ScopePageSpec
 import com.luckyzyx.luckytool.utils.ModulePrefs
+import com.luckyzyx.luckytool.utils.checkPackName
 
 /**
  * DirectUI 页（旧 ui.fragment.scopes.apps.OplusDirectUI 的 Compose 等价物）。
@@ -15,6 +16,9 @@ object OplusDirectUIPage {
         packName = "com.coloros.directui",
         scopes = arrayOf("com.coloros.directui", "com.coloros.colordirectservice"),
         restartEnabled = true,
+        isVisible = {
+            checkPackName("com.coloros.directui") && checkPackName("com.coloros.colordirectservice")
+        },
     ) {
         val c = requireNotNull(context) { "ScopeScreen 未注入 Context" }
         switch(

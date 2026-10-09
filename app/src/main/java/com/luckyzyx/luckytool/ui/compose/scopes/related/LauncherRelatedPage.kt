@@ -6,6 +6,7 @@ import com.luckyzyx.luckytool.utils.A13
 import com.luckyzyx.luckytool.utils.ModulePrefs
 import com.luckyzyx.luckytool.utils.SDK
 import com.luckyzyx.luckytool.utils.arraySummaryLine
+import com.luckyzyx.luckytool.utils.checkPackName
 import com.luckyzyx.luckytool.utils.getOSVersionCode
 import com.luckyzyx.luckytool.utils.sendPrefsValue
 import com.topjohnwu.superuser.ShellUtils
@@ -22,6 +23,7 @@ object LauncherRelatedPage {
         packName = "com.android.launcher",
         scopes = arrayOf("com.android.launcher", "com.oppo.launcher"),
         restartEnabled = true,
+        isVisible = { checkPackName("com.android.launcher") },
     ) {
         val c = requireNotNull(context) { "ScopeScreen 未注入 Context" }
         val osCode = getOSVersionCode

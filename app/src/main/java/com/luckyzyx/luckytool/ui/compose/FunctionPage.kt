@@ -3,11 +3,10 @@ package com.luckyzyx.luckytool.ui.compose
 import android.content.Context
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.calculateEndPadding
 import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
@@ -54,7 +53,6 @@ import com.luckyzyx.luckytool.R
 import com.luckyzyx.luckytool.ui.activity.MainActivity
 import com.luckyzyx.luckytool.ui.components.preference.LocalScopeTopInset
 import com.luckyzyx.luckytool.ui.components.preference.PrefIndexItem
-import com.luckyzyx.luckytool.ui.components.preference.PrefScopeBuilder
 import com.luckyzyx.luckytool.ui.components.preference.ScrollTarget
 import com.luckyzyx.luckytool.ui.compose.components.EdgeSwipeDismiss
 import com.luckyzyx.luckytool.ui.compose.components.PrefGroup
@@ -65,25 +63,23 @@ import com.luckyzyx.luckytool.ui.compose.components.material.SegmentedTextField
 import com.luckyzyx.luckytool.ui.compose.scopes.ScopePageContent
 import com.luckyzyx.luckytool.ui.compose.scopes.ScopePageRegistry
 import com.luckyzyx.luckytool.ui.compose.scopes.ScopePageSpec
+import com.luckyzyx.luckytool.ui.shell.LocalEnableSwipeDismiss
 import com.luckyzyx.luckytool.ui.theme.LocalUiMode
 import com.luckyzyx.luckytool.ui.theme.UiMode
-import com.luckyzyx.luckytool.utils.LogUtils
-import com.luckyzyx.luckytool.ui.shell.LocalEnableSwipeDismiss
 import com.luckyzyx.luckytool.utils.AppUtils
 import com.luckyzyx.luckytool.utils.PrefState
 import com.luckyzyx.luckytool.utils.RestartMenuUtils
 import com.luckyzyx.luckytool.utils.formatStringAuto
 import com.luckyzyx.luckytool.utils.sendPrefsValue
-import top.yukonga.miuix.kmp.basic.ButtonDefaults
-import top.yukonga.miuix.kmp.basic.Text as MiuixText
-import top.yukonga.miuix.kmp.basic.TextButton as MiuixTextButton
-import top.yukonga.miuix.kmp.overlay.OverlayDialog
 import io.noties.markwon.Markwon
 import io.noties.markwon.ext.tables.TablePlugin
-import java.util.Arrays
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.Serializable
+import top.yukonga.miuix.kmp.basic.ButtonDefaults
+import top.yukonga.miuix.kmp.overlay.OverlayDialog
+import java.util.Arrays
+import top.yukonga.miuix.kmp.basic.TextButton as MiuixTextButton
 
 // Function 子树类型安全路由（迁移方案 §7：ScopeRoute(scopeId, key, position) 等价物）
 // 注意：FunctionRoute 是 shell 级 tab 路由（MainShell），此处是 Function tab 内部导航。
@@ -197,26 +193,9 @@ private fun pageTitle(context: Context, spec: ScopePageSpec): String {
     return AppUtils(context).getAppLabel(pack).toString()
 }
 
-/**
- * headless 构建一页的搜索索引（等价旧 getAllPrefsItem：条件可见性已由 Kotlin if 应用，
- * 空索引 = 该页不可见）。构建是纯记录（emit 不渲染），可在任意线程运行。
- */
-private fun buildIndex(context: Context, spec: ScopePageSpec): List<PrefIndexItem> = try {
-    val state = PrefState.of(context.applicationContext, spec.prefsName)
-    val builder = PrefScopeBuilder(state)
-    builder.context = context.applicationContext
-    builder.beginBuild()
-    spec.content(builder)
-    builder.snapshotIndex()
-} catch (t: Throwable) {
-    // 单页构建失败只丢弃该页，不得拖垮整棵功能树/搜索索引
-    LogUtils.e("buildIndex", spec.pageKey, t.toString(), true)
-    emptyList()
-}
-
 private data class TreeRow(val pageKey: String, val title: String, val summary: String?)
 
-/** 功能树：49 页固定顺序（ScopePageRegistry.treeOrder），空索引页隐藏 */
+/** 功能树：49 页固定顺序（ScopePageRegistry.treeOrder），spec 手动不可见、单 App 作用域未安装或空索引页隐藏 */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun FunctionTreeScreen(
@@ -230,7 +209,9 @@ private fun FunctionTreeScreen(
         value = withContext(Dispatchers.IO) {
             ScopePageRegistry.treeOrder.mapNotNull { key ->
                 val spec = ScopePageRegistry[key] ?: return@mapNotNull null
-                val index = buildIndex(context, spec)
+                if (!spec.isVisible(context)) return@mapNotNull null
+                if (!ScopePageRegistry.isScopeAppPresent(context, spec)) return@mapNotNull null
+                val index = ScopePageRegistry.buildIndex(context, spec)
                 if (index.isEmpty()) return@mapNotNull null
                 val summary = index.mapNotNull { it.title }.take(3).joinToString(" · ").ifEmpty { null }
                 TreeRow(key, pageTitle(context, spec), summary)
@@ -296,7 +277,7 @@ private fun FunctionTreeScreen(
 
 private data class SearchEntry(val pageKey: String, val pageTitle: String, val item: PrefIndexItem)
 
-/** 全屏搜索：索引 = 全部已注册页 headless 构建，过滤平移旧 SearchResultAdapter 规则 */
+/** 全屏搜索：索引 = 全部已注册页 headless 构建，spec 手动不可见与单 App 作用域未安装页不入索引；过滤平移旧 SearchResultAdapter 规则 */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun FunctionSearchScreen(onBack: () -> Unit, onOpen: (ScopeRoute) -> Unit) {
@@ -305,8 +286,8 @@ private fun FunctionSearchScreen(onBack: () -> Unit, onOpen: (ScopeRoute) -> Uni
 
     val entries by produceState(initialValue = emptyList<SearchEntry>(), key1 = Unit) {
         value = withContext(Dispatchers.IO) {
-            ScopePageRegistry.all().flatMap { spec ->
-                buildIndex(context, spec).map { item -> SearchEntry(spec.pageKey, pageTitle(context, spec), item) }
+            ScopePageRegistry.all().filter { it.isVisible(context) && ScopePageRegistry.isScopeAppPresent(context, it) }.flatMap { spec ->
+                ScopePageRegistry.buildIndex(context, spec).map { item -> SearchEntry(spec.pageKey, pageTitle(context, spec), item) }
             }
         }
     }
