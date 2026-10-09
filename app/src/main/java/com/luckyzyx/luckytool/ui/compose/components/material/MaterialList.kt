@@ -231,9 +231,13 @@ fun MaterialGroup(
                             dpSpring, label = "SegmentedGap",
                         )
 
+                        // 阻尼比 0.9 < 1 的弹簧会冲过头：16dp→0dp 的过程中 radius 可短暂为负，
+                        // 负圆角会触发 RoundedCornerShape 的「Corner size in Px can't be negative」崩溃
                         val shape = RoundedCornerShape(
-                            topStart = topRadius, topEnd = topRadius,
-                            bottomStart = bottomRadius, bottomEnd = bottomRadius,
+                            topStart = topRadius.coerceAtLeast(0.dp),
+                            topEnd = topRadius.coerceAtLeast(0.dp),
+                            bottomStart = bottomRadius.coerceAtLeast(0.dp),
+                            bottomEnd = bottomRadius.coerceAtLeast(0.dp),
                         )
 
                         Box(
