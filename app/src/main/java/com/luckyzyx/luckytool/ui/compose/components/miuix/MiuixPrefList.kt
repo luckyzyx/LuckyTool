@@ -25,9 +25,9 @@ import top.yukonga.miuix.kmp.theme.MiuixTheme
 /**
  * Miuix 线设置行几何常量（对齐《Miuix 共享渲染层契约与差异化清单》§4）。
  *
- * 与 material 线的下列差异是登记过的允许差异，不算缺陷：内圆角 ±2dp（对 M3
- * `ListItemDefaults.segmentedShapes`）、卡片水平内缩 12dp（material 为整宽）、
- * 组间距 12dp（material 为 `Arrangement.spacedBy(2.dp)` + 8dp 分类标题）。
+ * 与 material 线的下列差异是登记过的允许差异，不算缺陷：卡片水平内缩 12dp（material 为整宽）、
+ * 组间距 12dp（material 为 8dp 分类标题间距）。组内条目不设内圆角与间距
+ * （见 [DesignTokens.ItemInnerRadius] / [DesignTokens.ItemGap]），同一分组渲染为一张连续卡片。
  */
 object MiuixPrefDefaults {
 
@@ -67,8 +67,9 @@ fun MiuixPrefItemColors(highlighted: Boolean = false): Color = if (highlighted) 
 /**
  * 按卡片组内索引计算分段圆角。
  *
- * count <= 1 → 四角 [MiuixPrefDefaults.OuterRadius]；首条上端外圆角 / 下端内圆角；
- * 尾条上端内圆角 / 下端外圆角；中间条四角 [MiuixPrefDefaults.InnerRadius]。
+ * count <= 1 → 四角 [MiuixPrefDefaults.OuterRadius]；分组首条上端外圆角、尾条下端外圆角（外角取
+ * [MiuixPrefDefaults.OuterRadius]）；其余相邻边取 [MiuixPrefDefaults.InnerRadius]（0dp）——
+ * 同一分组的条目因此拼成一张连续卡片，而不会各自成卡。
  */
 @Composable
 fun MiuixPrefItemShape(index: Int, count: Int): Shape = remember(index, count) {

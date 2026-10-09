@@ -66,6 +66,7 @@ import com.luckyzyx.luckytool.ui.compose.components.miuix.MiuixPrefTextDialog
 import com.luckyzyx.luckytool.ui.compose.components.miuix.MiuixSliderRow
 import com.luckyzyx.luckytool.ui.compose.components.miuix.MiuixSwitchItem
 import com.luckyzyx.luckytool.ui.compose.scopes.ScopePageRegistry
+import com.luckyzyx.luckytool.ui.theme.DesignTokens
 import com.luckyzyx.luckytool.ui.theme.LocalUiMode
 import com.luckyzyx.luckytool.ui.theme.UiMode
 import com.luckyzyx.luckytool.utils.PrefState
@@ -107,8 +108,9 @@ data class PrefIndexItem(
 /**
  * 渲染单元：一个 LazyColumn item 槽位。
  *
- * [segIndex]/[segCount] 用于把相邻条目合并成 KernelSU 分段卡片（首条 16dp 外圆角、中间 4dp 内圆角、
- * 组内间距 2dp）；[groupable] = false 的条目（分类标题、滑条、自定义控件）独占一张卡片。
+ * [segIndex]/[segCount] 用于把相邻条目合并成同一张分组卡片（首条上端 16dp 外圆角、尾条下端 16dp 外圆角、
+ * 组内条目不设内圆角与间距，见 [com.luckyzyx.luckytool.ui.theme.DesignTokens]）；
+ * [groupable] = false 的条目独占一张卡片（分类标题，以及 [PrefScopeBuilder.custom] 显式声明 standalone 的逃生舱）。
  * [bare] = true 的条目（仅分类标题）完全裸渲染，不套任何卡片容器，对齐旧 PreferenceCategory 观感。
  */
 internal class PrefEntry(
@@ -127,10 +129,10 @@ internal class PrefEntry(
 }
 
 /**
- * Miuix 线卡片行的垂直间距（与 material 线的 8dp / [ListItemDefaults.SegmentedGap] 语义对齐）：
- * 列表首槽 0dp、每个分段组首条 12dp（组间）、其余 2dp（组内）。
+ * Miuix 线卡片行的垂直间距（与 material 线的 8dp 分组间距语义对齐）：
+ * 列表首槽 0dp、每个分组首条 12dp（组间）、其余 0dp（组内条目连成一张卡片）。
  *
- * 取值来自 [MiuixPrefDefaults]（t11 冻结），material 线不受影响。
+ * 取值来自 [MiuixPrefDefaults]，material 线不受影响。
  */
 private fun miuixTopGap(slot: Int, segIndex: Int): Dp = when {
     slot == 0 -> 0.dp
@@ -261,8 +263,10 @@ class PrefScopeBuilder internal constructor(
     }
 
     /**
-     * 计算分段分组：连续且 [PrefEntry.groupable] 的条目合并为一组
-     * （分类标题 / 滑条 / 自定义控件强制独占一张卡片）。
+     * 计算分组：连续且 [PrefEntry.groupable] 的条目合并为一组。
+     *
+     * 分类标题（裸渲染）把相邻条目切成不同分组；滑条与普通自定义控件都属于组内选项行，
+     * 不再独占卡片——只有显式声明 standalone 的逃生舱条目才单独成卡。
      */
     internal fun computeSegments() {
         var i = 0
@@ -425,7 +429,11 @@ class PrefScopeBuilder internal constructor(
         }
     }
 
-    /** 整数滑条（对应 SeekBarPreference；拖动结束才落盘，避免 commit() 拖拽风暴） */
+    /**
+     * 整数滑条（对应 SeekBarPreference；拖动结束才落盘，避免 commit() 拖拽风暴）。
+     *
+     * 滑条属于分组内的「选项行」，与相邻开关/滑条合并成同一张卡片。
+     */
     fun slider(
         key: String,
         title: String,
@@ -437,7 +445,7 @@ class PrefScopeBuilder internal constructor(
         enabled: Boolean = true,
         notify: Boolean = false,
         onChange: ((Int) -> Unit)? = null,
-    ) = emit(key, key, title, summary, groupable = false) { slot ->
+    ) = emit(key, key, title, summary) { slot ->
         val stored by state.intFlow(key, default ?: valueRange.first).collectAsStateWithLifecycle()
         if (LocalUiMode.current == UiMode.Miuix) {
             val min = valueRange.first
@@ -730,14 +738,26 @@ class PrefScopeBuilder internal constructor(
         }
     }
 
-    /** 逃生舱：任意自定义 Composable（ColorPicker、应用选择器等特殊控件用），receiver 可访问 state/restart 等 */
+    /**
+     * 逃生舱：任意自定义 Composable（ColorPicker、应用选择器等特殊控件用），receiver 可访问 state/restart 等。
+     *
+     * [standalone] = true 时独占一张卡片（非「选项行」内容，如搜索框、页面级 body）；
+     * 默认 false 时并入所在分组卡片——分类分组内不允许出现独立卡片。
+     * [bare] = true 的条目自身不套卡片容器，因而永远不参与分组合并。
+     */
     fun custom(
         key: String? = null,
         title: String? = null,
         summary: String? = null,
         bare: Boolean = false,
+        standalone: Boolean = false,
         content: @Composable PrefScopeBuilder.(slot: Int) -> Unit,
-    ) = emit(key, key, title, summary, groupable = false, bare = bare, render = { slot -> content(this, slot) })
+    ) = emit(
+        key, key, title, summary,
+        groupable = !standalone && !bare,
+        bare = bare,
+        render = { slot -> content(this, slot) },
+    )
 }
 
 /**
@@ -831,7 +851,8 @@ fun ScopeScreen(
                                     top = when {
                                         entry.slot == 0 -> 0.dp
                                         entry.segIndex == 0 -> 8.dp
-                                        else -> ListItemDefaults.SegmentedGap
+                                        // 组内条目：0dp 与 Miuix 线一致，同一分组拼成一张连续卡片
+                                        else -> DesignTokens.ItemGap
                                     }
                                 )
                             ) {

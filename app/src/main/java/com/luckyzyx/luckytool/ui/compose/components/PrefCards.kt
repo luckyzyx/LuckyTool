@@ -40,8 +40,8 @@ import com.luckyzyx.luckytool.ui.theme.UiMode
  */
 
 /**
- * 分段卡片组：组内连续条目自动合并成 KernelSU 风格分段卡片
- * （首条 16dp 外圆角、中间 4dp 内圆角、组内 2dp 间距，显隐带弹性过渡）。
+ * 分段卡片组：组内连续条目合并成一张连续卡片
+ * （首条上端、尾条下端 16dp 外圆角，组内条目不设圆角与间距，显隐带弹性过渡）。
  *
  * 组容器由 [PrefCardScope] 的两个实现分派：material 线走 `SegmentedColumn` 动态重放
  * （保留弹性显隐过渡），Miuix 线走 `MiuixPrefGroup`（首条 12dp 组间距 + 卡片圆角）。

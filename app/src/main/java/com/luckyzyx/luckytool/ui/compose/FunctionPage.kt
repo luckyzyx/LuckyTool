@@ -428,7 +428,8 @@ private fun FunctionSearchScreen(onBack: () -> Unit, onOpen: (ScopeRoute) -> Uni
             val entriesNow = entries
             val filteredNow = filtered
             ScopeScreen(state = settings, modifier = scopeModifier) {
-                custom(key = "search_field") {
+                // 搜索框不是「选项行」，独占一张卡片（否则会与紧随其后的结果行拼在一起）
+                custom(key = "search_field", standalone = true) {
                     SegmentedTextField(
                         value = queryNow,
                         onValueChange = { query = it },

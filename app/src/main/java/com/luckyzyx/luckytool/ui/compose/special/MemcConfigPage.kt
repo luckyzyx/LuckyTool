@@ -23,7 +23,6 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.ListItem
-import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.SecondaryTabRow
@@ -598,7 +597,7 @@ internal fun MemcPackagePanel(
                 LazyColumn(
                     modifier = Modifier.weight(1f),
                     contentPadding = PaddingValues(start = 16.dp, end = 16.dp, bottom = 16.dp),
-                    verticalArrangement = Arrangement.spacedBy(ListItemDefaults.SegmentedGap),
+                    verticalArrangement = Arrangement.spacedBy(MiuixPrefDefaults.ItemGap),
                 ) {
                     itemsIndexed(
                         state.pkgFilter,
@@ -693,7 +692,7 @@ internal fun MemcActivityPanel(
                 LazyColumn(
                     modifier = Modifier.weight(1f),
                     contentPadding = PaddingValues(start = 16.dp, end = 16.dp, bottom = 16.dp),
-                    verticalArrangement = Arrangement.spacedBy(ListItemDefaults.SegmentedGap),
+                    verticalArrangement = Arrangement.spacedBy(MiuixPrefDefaults.ItemGap),
                 ) {
                     itemsIndexed(
                         state.actFilter,

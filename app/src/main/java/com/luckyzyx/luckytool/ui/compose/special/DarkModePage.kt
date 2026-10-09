@@ -14,7 +14,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyItemScope
 import androidx.compose.foundation.lazy.itemsIndexed
-import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Text
@@ -267,7 +266,7 @@ internal fun LazyItemScope.DarkModeContent(builder: PrefScopeBuilder) {
             LazyColumn(
                 modifier = Modifier.weight(1f),
                 contentPadding = PaddingValues(start = 16.dp, end = 16.dp, bottom = 16.dp),
-                verticalArrangement = Arrangement.spacedBy(ListItemDefaults.SegmentedGap),
+                verticalArrangement = Arrangement.spacedBy(MiuixPrefDefaults.ItemGap),
             ) {
                 itemsIndexed(filterAppInfos, key = { _, info -> info.packageName }) { index, info ->
                     SegmentedItem(index = index, count = filterAppInfos.size) {

@@ -32,7 +32,6 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
-import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.SuggestionChip
@@ -484,7 +483,7 @@ internal fun LazyItemScope.HideAppIntentContent() {
             LazyColumn(
                 modifier = Modifier.weight(1f),
                 contentPadding = PaddingValues(start = 16.dp, end = 16.dp, bottom = 16.dp),
-                verticalArrangement = Arrangement.spacedBy(ListItemDefaults.SegmentedGap),
+                verticalArrangement = Arrangement.spacedBy(MiuixPrefDefaults.ItemGap),
             ) {
                 itemsIndexed(
                     filterAppInfos,
@@ -515,7 +514,7 @@ internal fun LazyItemScope.HideAppIntentContent() {
                         onClick = { showClearDialog = false },
                         modifier = Modifier.weight(1f),
                     )
-                    Spacer(Modifier.width(MiuixPrefDefaults.ItemGap))
+                    Spacer(Modifier.width(8.dp))
                     MiuixTextButton(
                         text = stringResource(android.R.string.ok),
                         onClick = {
@@ -971,7 +970,7 @@ internal fun IntentInfoSelectDialog(
                         onClick = onDismiss,
                         modifier = Modifier.weight(1f),
                     )
-                    Spacer(Modifier.width(MiuixPrefDefaults.ItemGap))
+                    Spacer(Modifier.width(8.dp))
                     MiuixTextButton(
                         text = stringResource(android.R.string.ok),
                         onClick = { onConfirm(ArrayList(selected)) },

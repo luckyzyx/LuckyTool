@@ -101,14 +101,25 @@ fun defaultSegmentedColors(
     selectedSupportingContentColor = colorScheme.onPrimaryContainer,
 )
 
+/**
+ * 分组内条目形状：单条卡片保持原有整块圆角；分组内相邻边取 [SegmentedInnerRadius]
+ * （0dp，与 Miuix 线 [com.luckyzyx.luckytool.ui.compose.components.miuix.MiuixPrefItemShape] 一致），
+ * 使同一分组的条目拼成一张连续卡片，而不是各自成卡。
+ */
 @Composable
 private fun defaultSingleSegmentedShape(index: Int, count: Int): ListItemShapes {
     val base = ListItemDefaults.segmentedShapes(index, count)
-    return if (count == 1) {
-        base.copy(shape = MaterialTheme.shapes.large)
-    } else {
-        base
+    if (count <= 1) {
+        return base.copy(shape = MaterialTheme.shapes.large)
     }
+    return base.copy(
+        shape = RoundedCornerShape(
+            topStart = if (index <= 0) SegmentedOuterRadius else SegmentedInnerRadius,
+            topEnd = if (index <= 0) SegmentedOuterRadius else SegmentedInnerRadius,
+            bottomStart = if (index >= count - 1) SegmentedOuterRadius else SegmentedInnerRadius,
+            bottomEnd = if (index >= count - 1) SegmentedOuterRadius else SegmentedInnerRadius,
+        ),
+    )
 }
 
 /** 静态分段列：传入已确定的条目内容列表（不可增删时使用） */
@@ -216,7 +227,7 @@ fun SegmentedColumn(
                             dpSpring, label = "SegmentedBottomRadius",
                         )
                         val gap by animateDpAsState(
-                            if (isFirst) 0.dp else ListItemDefaults.SegmentedGap,
+                            if (isFirst) 0.dp else DesignTokens.ItemGap,
                             dpSpring, label = "SegmentedGap",
                         )
 

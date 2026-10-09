@@ -20,11 +20,18 @@ object DesignTokens {
     /** 卡片 / 分组外层圆角：单条卡片四角，分组首条上端、尾条下端。 */
     val CardRadius: Dp = 16.dp
 
-    /** 分组内部相邻条目的圆角。 */
-    val ItemInnerRadius: Dp = 4.dp
+    /**
+     * 分组内部相邻条目的圆角：0dp 让组内条目与组卡片连成一体
+     * （对齐旧 PreferenceCategory 观感：Category 与 Category 之间是一个分组，
+     * 分组内不允许任何条目单独呈现为卡片）。
+     */
+    val ItemInnerRadius: Dp = 0.dp
 
-    /** 分组内相邻条目之间的垂直间距。 */
-    val ItemGap: Dp = 2.dp
+    /**
+     * 分组内相邻条目之间的垂直间距：0dp 与 [ItemInnerRadius] 配合，
+     * 使同一个分组内的条目合并渲染为一张连续卡片（组间间距由 [GroupGap] 承载）。
+     */
+    val ItemGap: Dp = 0.dp
 
     /** 分组之间的垂直间距（由组内首条承载）。 */
     val GroupGap: Dp = 12.dp
