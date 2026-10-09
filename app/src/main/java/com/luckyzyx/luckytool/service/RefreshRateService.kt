@@ -95,23 +95,29 @@ object RefreshRateService : BaseControllerService<IRefreshRateController>() {
                         val dynamicInfo = getDynamicDisplayInfo(displayInfo)
                         if (dynamicInfo == null) {
                             LogUtils.e(
-                                TAG, "getSupportModes",
-                                "dynamicInfo is null, address = ${displayInfo.address}", true
+                                TAG,
+                                "getSupportModes",
+                                "dynamicInfo is null, address = ${displayInfo.address}",
+                                true
                             )
                             return@apply
                         }
                         DynamicDisplayInfoUtils(dynamicInfo).apply {
                             val allDisplayModes = getSupportedDisplayModes()
                             LogUtils.e(
-                                TAG, "getSupportModes",
-                                "supportedDisplayModes size = ${allDisplayModes.size}", true
+                                TAG,
+                                "getSupportModes",
+                                "supportedDisplayModes size = ${allDisplayModes.size}",
+                                true
                             )
                             allDisplayModes.forEach {
                                 val mode = getDisplayMode(it)
                                 if (mode == null) {
-                                    LogUtils.e(TAG, "getSupportModes", "parse mode failed -> $it", true)
+                                    LogUtils.e(
+                                        TAG, "getSupportModes", "parse mode failed -> $it", true
+                                    )
                                 } else {
-                                    list.add(mode.first, mode.second)
+                                    list.add(mode.second)
                                     LogUtils.d(TAG, "getSupportModes", "Mode is add", isDebug)
                                 }
                             }
