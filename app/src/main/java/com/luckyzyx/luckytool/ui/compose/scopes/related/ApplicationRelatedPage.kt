@@ -29,8 +29,6 @@ import com.luckyzyx.luckytool.utils.arraySummaryLine
 import com.luckyzyx.luckytool.utils.getOSVersionCode
 import com.luckyzyx.luckytool.utils.sendPrefsKey
 import com.luckyzyx.luckytool.utils.sendPrefsValue
-import top.yukonga.miuix.kmp.basic.Text as MiuixText
-import top.yukonga.miuix.kmp.theme.MiuixTheme
 
 /**
  * 应用相关页（旧 ui.fragment.scopes.related.ApplicationRelated 的 Compose 等价物）。
@@ -164,24 +162,10 @@ object ApplicationRelatedPage {
             wlanWhitelist(c, key = "custom_wlan_sla_game_whitelist")
         }
         // 应用安装
-        category(c.getString(R.string.AppInstallationRelated))
-        custom {
-            if (LocalUiMode.current == UiMode.Miuix) {
-                MiuixText(
-                    c.getString(R.string.PackageInstaller_summary),
-                    style = MiuixTheme.textStyles.footnote1,
-                    color = MiuixTheme.colorScheme.onBackgroundVariant,
-                    modifier = Modifier.padding(horizontal = 16.dp),
-                )
-            } else {
-                Text(
-                    c.getString(R.string.PackageInstaller_summary),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.padding(horizontal = 16.dp),
-                )
-            }
-        }
+        category(
+            c.getString(R.string.AppInstallationRelated),
+            c.getString(R.string.PackageInstaller_summary),
+        )
         page(
             title = c.getString(R.string.corepatch),
             target = "corePatch",

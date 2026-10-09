@@ -286,25 +286,43 @@ class PrefScopeBuilder internal constructor(
 
     // ---------------- DSL 项 ----------------
 
-    /** 分类标题（对应旧 addCategory / categoryPreference）：不套卡片，裸渲染在分组卡片之上 */
-    fun category(title: String) = emit(null, null, null, null, groupable = false, bare = true) { _ ->
-        if (LocalUiMode.current == UiMode.Miuix) {
-            MiuixPrefCategoryHeader(
-                title = title,
-                modifier = Modifier.fillMaxWidth(),
-            )
-        } else {
-            Text(
-                text = title,
-                style = MaterialTheme.typography.titleSmall,
-                color = MaterialTheme.colorScheme.primary,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(start = 16.dp)
-                    .padding(vertical = 8.dp),
-            )
+    /**
+     * 分类标题（对应旧 addCategory / categoryPreference）：不套卡片，裸渲染在分组卡片之上。
+     * [summary] 对应旧 PreferenceCategory 的 summary：与标题同组渲染（标题在上、说明在下），
+     * 不再作为独立的文字组件悬在分类之下。
+     */
+    fun category(title: String, summary: String? = null) =
+        emit(null, null, null, null, groupable = false, bare = true) { _ ->
+            if (LocalUiMode.current == UiMode.Miuix) {
+                MiuixPrefCategoryHeader(
+                    title = title,
+                    summary = summary,
+                    modifier = Modifier.fillMaxWidth(),
+                )
+            } else {
+                Column(modifier = Modifier.fillMaxWidth()) {
+                    Text(
+                        text = title,
+                        style = MaterialTheme.typography.titleSmall,
+                        color = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(start = 16.dp)
+                            .padding(vertical = 8.dp),
+                    )
+                    if (summary != null) {
+                        Text(
+                            text = summary,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(start = 16.dp, end = 16.dp, bottom = 8.dp),
+                        )
+                    }
+                }
+            }
         }
-    }
 
     /** 开关（对应 SwitchPreference + setOnPreferenceChangeListener）：整行点击 + Expressive 开关 */
     fun switch(

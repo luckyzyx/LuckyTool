@@ -126,16 +126,29 @@ fun MiuixPrefItem(
  * 垂直方向与 material 侧 `titleSmall` 对齐：`subtitle`（14sp Bold）本无显式行高，
  * 字形贴齐行盒顶部；material 的 `titleSmall` 行高 20sp 且字形在行盒内居中，导致
  * Miuix 侧文字「偏上」。此处显式 `lineHeight = 20.sp` 使字形同样居中，消除偏移。
+ *
+ * [summary] 对应旧 PreferenceCategory 的 summary：紧随标题之下以 `footnote1` 渲染，
+ * 与标题同属一个分类头，不再是单独悬挂的文字条目。
  */
 @Composable
-fun MiuixPrefCategoryHeader(title: String, modifier: Modifier = Modifier) {
-    Text(
-        text = title,
-        modifier = modifier.padding(16.dp, 8.dp),
-        color = MiuixTheme.colorScheme.onBackgroundVariant,
-        style = MiuixTheme.textStyles.subtitle,
-        lineHeight = 20.sp,
-    )
+fun MiuixPrefCategoryHeader(title: String, summary: String? = null, modifier: Modifier = Modifier) {
+    Column(modifier = modifier) {
+        Text(
+            text = title,
+            modifier = Modifier.padding(16.dp, 8.dp),
+            color = MiuixTheme.colorScheme.onBackgroundVariant,
+            style = MiuixTheme.textStyles.subtitle,
+            lineHeight = 20.sp,
+        )
+        if (summary != null) {
+            Text(
+                text = summary,
+                modifier = Modifier.padding(start = 16.dp, end = 16.dp, bottom = 8.dp),
+                color = MiuixTheme.colorScheme.onBackgroundVariant,
+                style = MiuixTheme.textStyles.footnote1,
+            )
+        }
+    }
 }
 
 /** Miuix 设置卡片组的 DSL 作用域标记。 */
