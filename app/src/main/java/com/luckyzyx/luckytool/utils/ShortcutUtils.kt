@@ -110,19 +110,20 @@ class ShortcutUtils(val context: Context) {
      * @param status Boolean
      */
     fun setShortcutStatus(defBeans: ArrayList<ShortcutBean>, bean: ShortcutBean, status: Boolean) {
-        val enabledList = getEnabledShortcutList()
-        val newList = ArrayList<ShortcutInfo>()
-
-        defBeans.forEachIndexed { _, shortcutBean ->
-            val findEnabled = enabledList.find { it.id == shortcutBean.key }
-            val findCurrent = enabledList.find { it.id == bean.key }
-            if (findEnabled != null || findCurrent == null) {
-                newList.add(shortcutBean.toShortcutInfo(context))
+        if (status) {
+            // 保留已开启的快捷方式，并加入本次勾选的快捷方式（避免开启单个时误开启全部）
+            val enabledList = getEnabledShortcutList()
+            val newList = ArrayList<ShortcutInfo>()
+            defBeans.forEach { shortcutBean ->
+                val findEnabled = enabledList.find { it.id == shortcutBean.key }
+                if (findEnabled != null || shortcutBean.key == bean.key) {
+                    newList.add(shortcutBean.toShortcutInfo(context))
+                }
             }
+            updateDynamicShortcuts(newList)
+        } else {
+            removeDynamicShortcuts(arrayListOf(bean.key))
         }
-
-        if (status) updateDynamicShortcuts(newList)
-        else removeDynamicShortcuts(arrayListOf(bean.key))
     }
 
     /**
