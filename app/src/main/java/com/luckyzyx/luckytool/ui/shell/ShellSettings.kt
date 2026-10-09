@@ -28,15 +28,19 @@ const val ModuleLinesMax = 5
 /**
  * 外壳行为偏好（迁移 KernelSU 主题页中与配色无关的项）。
  *
- * 偏好键与 KernelSU 保持一致，默认值取其仓库默认值：
- * enable_navigation_badge = true、enable_predictive_back = false、enable_swipe_dismiss = true、
+ * 偏好键与 KernelSU 保持一致，默认值基本取其仓库默认值：
+ * enable_navigation_badge = true、enable_predictive_back = true、enable_swipe_dismiss = true、
  * pager_interception_mode = 1、page_scale = 1.0f、module_description_max_lines = 4、
  * enable_blur = false、enable_floating_bottom_bar = false、enable_floating_bottom_bar_blur = false。
+ *
+ * 注意：enable_predictive_back 与 KernelSU（默认 false）不同，本应用默认 true ——
+ * targetSdk 已提升到 37（>= 33），系统默认即为应用派发预测性返回，故改为「默认开启、可手动关闭」
+ * 的 opt-out 语义；KernelSU 的 false 是因为其 targetSdk 较低、需要 opt-in。
  */
 @Immutable
 data class ShellSettings(
     val navigationBadge: Boolean = true,
-    val predictiveBack: Boolean = false,
+    val predictiveBack: Boolean = true,
     val swipeDismiss: Boolean = true,
     val pagerInterceptionMode: Int = PagerModeCrossAxis,
     val pageScale: Float = 1.0f,
@@ -62,7 +66,7 @@ object ShellSettingsController {
 
     fun get(context: Context): ShellSettings = ShellSettings(
         navigationBadge = context.getBoolean(SettingsPrefs, KEY_NAVIGATION_BADGE, true),
-        predictiveBack = context.getBoolean(SettingsPrefs, KEY_PREDICTIVE_BACK, false),
+        predictiveBack = context.getBoolean(SettingsPrefs, KEY_PREDICTIVE_BACK, true),
         swipeDismiss = context.getBoolean(SettingsPrefs, KEY_SWIPE_DISMISS, true),
         pagerInterceptionMode = context.getInt(SettingsPrefs, KEY_PAGER_MODE, PagerModeCrossAxis)
             .coerceIn(PagerModeNative, PagerModeIosLike),

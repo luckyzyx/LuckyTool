@@ -515,7 +515,8 @@ private fun ThemeScreenMaterial(onBack: () -> Unit) {
                                             ShellSettingsController.KEY_PREDICTIVE_BACK,
                                             it
                                         )
-                                        // 生效于下次启动：ApplicationInfo 于进程启动时同步
+                                        // 即时生效：反射改写 ApplicationInfo 后重建 Activity（新窗口读取新 flag）
+                                        PredictiveBackUtils.applyImmediately(context, it)
                                     },
                                 )
                             },
@@ -1010,7 +1011,8 @@ private fun ThemeScreenMiuix(onBack: () -> Unit) {
     val setPredictiveBack: (Boolean) -> Unit = { enabled ->
         predictiveBack = enabled
         context.putBoolean(SettingsPrefs, ShellSettingsController.KEY_PREDICTIVE_BACK, enabled)
-        // 生效于下次启动：ApplicationInfo 于进程启动时同步（对齐 KernelSU 启动期行为）
+        // 即时生效：反射改写 ApplicationInfo 后重建 Activity（新窗口读取新 flag）
+        PredictiveBackUtils.applyImmediately(context, enabled)
     }
 
     // 模糊开关仅对预览与顶栏生效，与 KernelSU 一样由偏好直接驱动
