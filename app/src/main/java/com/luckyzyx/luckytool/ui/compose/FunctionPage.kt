@@ -1,7 +1,6 @@
 package com.luckyzyx.luckytool.ui.compose
 
 import android.content.Context
-import android.graphics.drawable.Drawable
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.slideInHorizontally
@@ -49,6 +48,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.painter.BitmapPainter
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLayoutDirection
@@ -73,13 +73,13 @@ import com.luckyzyx.luckytool.ui.compose.components.EdgeSwipeDismiss
 import com.luckyzyx.luckytool.ui.compose.components.PrefIconBadge
 import com.luckyzyx.luckytool.ui.compose.components.material.MaterialPageScaffold
 import com.luckyzyx.luckytool.ui.compose.components.material.MaterialTextField
-import com.luckyzyx.luckytool.ui.compose.components.rememberAppIconPainter
 import com.luckyzyx.luckytool.ui.compose.scopes.ScopePageContent
 import com.luckyzyx.luckytool.ui.compose.scopes.ScopePageRegistry
 import com.luckyzyx.luckytool.ui.compose.scopes.ScopePageSpec
 import com.luckyzyx.luckytool.ui.shell.LocalEnableSwipeDismiss
 import com.luckyzyx.luckytool.ui.theme.LocalUiMode
 import com.luckyzyx.luckytool.ui.theme.UiMode
+import com.luckyzyx.luckytool.utils.AppIconCache
 import com.luckyzyx.luckytool.utils.AppUtils
 import com.luckyzyx.luckytool.utils.LogUtils
 import com.luckyzyx.luckytool.utils.PrefState
@@ -236,14 +236,17 @@ private fun TreeRowLeading(pageKey: String, title: String, packName: String?) {
         PrefIconBadge(badge.icon, badge.color, contentDescription = title)
         return
     }
+    // 图标走进程级缓存（AppIconCache）：取图标与光栅化都在后台线程，且按包名缓存复用。
+    // 旧实现每行在组合期同步 getAppIcon（binder IPC）并在主线程光栅化，行每次滑入视口都要重做一遍，
+    // 滑动越快单位时间新进视口的行越多 → 卡顿越明显。
     val context = LocalContext.current
-    // 图标延迟加载：树构建在 IO 线程，这里按 packName 在每行组合期异步取 App 图标，
-    // 避免 produceState 里同步 getAppIcon 拖慢整棵树首帧（白屏根因）
-    val appIcon by produceState<Drawable?>(initialValue = null, key1 = packName) {
-        value = packName?.let { AppUtils(context).getAppIcon(it) }
+    val iconState = remember(packName) {
+        packName?.takeIf { it.isNotEmpty() }
+            ?.let { AppIconCache.state(context.applicationContext, it) }
     }
-    val painter = rememberAppIconPainter(appIcon)
-    if (painter != null) {
+    val appIcon = iconState?.value
+    if (appIcon != null) {
+        val painter = remember(appIcon) { BitmapPainter(appIcon) }
         Image(
             painter = painter,
             contentDescription = title,
