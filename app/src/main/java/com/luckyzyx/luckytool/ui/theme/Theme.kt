@@ -15,21 +15,27 @@ import com.materialkolor.PaletteStyle
 import com.materialkolor.dynamiccolor.ColorSpec
 
 /**
- * 主题模式（迁移自 KernelSU `ui/theme/Theme.kt` 的 ColorMode，取值完全一致）。
+ * 主题模式（迁移自 KernelSU `ui/theme/Theme.kt` 的 ColorMode）。
  *
- * LuckyTool 沿用既有偏好键 `SettingsPrefs["dark_theme"]`，其历史取值 0/1/2/3 与
- * KernelSU 的 SYSTEM / LIGHT / DARK / DARK_AMOLED 一一对应，因此升级不会改变既有观感。
- * KernelSU 的 MONET_*（3/4/5，动态取色跨明暗）在 LuckyTool 由 `use_dynamic_color`
- * 开关独立承担，故此处不再作为独立模式暴露，但 [fromValue] 仍可解析这些历史值。
+ * 注意 [value] 不是枚举声明顺序，而是偏好键 `SettingsPrefs["dark_theme"]` 的存量取值：
+ * 0 跟随系统 / 1 深色 / 2 浅色 / 3 深色(AMOLED) 沿用旧版 `res/values/arrays.xml` 的
+ * `dark_theme` 条目顺序（旧版 DropDownPreference 的 entryValues 即 0/1/2，见提交
+ * 24a68742b「修改暗黑模式配置的存储值」），4-7 为动态取色(Monet)的同义变体，规则为
+ * 「非 Monet 值 + 4」（4 跟随系统 / 5 深色 / 6 浅色 / 7 深色 AMOLED）。
+ * 因此升级不会改变既有观感：旧版存下的「总是开启(1)」仍解析为深色。
+ *
+ * 该取值表同时被 [com.luckyzyx.luckytool.utils.ThemeUtils] 用于设置 Activity 的
+ * DayNight 模式。两侧必须保持同一明暗：Compose 界面为深色而平台主题为浅色时，
+ * 矢量图的 `?attr/colorControlNormal` 会解析成浅色主题下的黑色，深色界面上图标不可见。
  */
 enum class ColorMode(val value: Int) {
     SYSTEM(0),
-    LIGHT(1),
-    DARK(2),
+    LIGHT(2),
+    DARK(1),
     DARK_AMOLED(3),
     MONET_SYSTEM(4),
-    MONET_LIGHT(5),
-    MONET_DARK(6),
+    MONET_LIGHT(6),
+    MONET_DARK(5),
     MONET_DARK_AMOLED(7);
 
     /** 是否跟随系统明暗 */

@@ -122,6 +122,7 @@ import com.luckyzyx.luckytool.ui.theme.rememberSeedColor
 import com.luckyzyx.luckytool.ui.theme.resolveDarkTheme
 import com.luckyzyx.luckytool.utils.PredictiveBackUtils
 import com.luckyzyx.luckytool.utils.SettingsPrefs
+import com.luckyzyx.luckytool.utils.ThemeUtils
 import com.luckyzyx.luckytool.utils.getBoolean
 import com.luckyzyx.luckytool.utils.getFloat
 import com.luckyzyx.luckytool.utils.getInt
@@ -186,7 +187,7 @@ private const val KeyDarkTheme = "dark_theme"
  * → 调色风格 / 色彩规格下拉 → 动态取色开关 → 预测式返回开关。
  *
  * 偏好键沿用 LuckyTool 既有约定（SettingsPrefs）：
- * dark_theme（0 跟随系统 / 1 浅色 / 2 深色 / 3 深色 AMOLED）、key_color、
+ * dark_theme（0 跟随系统 / 1 深色 / 2 浅色 / 3 深色 AMOLED）、key_color、
  * palette_style、color_spec、use_dynamic_color、enable_predictive_back。
  * 写入后通过 [ThemePrefs.notifyChanged] 让应用主题即时重算，无需 recreate。
  */
@@ -389,6 +390,9 @@ private fun ThemeScreenMaterial(onBack: () -> Unit) {
                                                 mode.value.toString()
                                             )
                                             ThemePrefs.notifyChanged()
+                                            // 同步平台 DayNight 主题：否则矢量图 ?attr/colorControlNormal
+                                            // 仍按旧明暗解析，深色界面上的图标会变成黑色不可见
+                                            ThemeUtils.initTheme(context)
                                         }
                                     },
                                     modifier = Modifier
@@ -945,6 +949,9 @@ private fun ThemeScreenMiuix(onBack: () -> Unit) {
         colorMode = mode
         context.putString(SettingsPrefs, KeyDarkTheme, mode.value.toString())
         ThemePrefs.notifyChanged()
+        // 同步平台 DayNight 主题（与旧版 DropDownPreference 改完重启 Activity 等价，
+        // AppCompat 会在明暗变化时自行重建）；取值未变时 setDefaultNightMode 是空操作
+        ThemeUtils.initTheme(context)
     }
     val setMiuixMonet: (Boolean) -> Unit = { enabled ->
         miuixMonet = enabled

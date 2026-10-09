@@ -146,7 +146,9 @@ internal fun themeWindowAppearance(darkTheme: Boolean) {
  * Compose 界面的统一入口：P1 试点 ComposeView、P2 主壳 setContent 均包一层 LuckyAppTheme。
  *
  * 主题页（ThemeScreen）写入偏好后会调用 [ThemePrefs.notifyChanged]，revision 自增即重读设置，
- * 全应用配色、明暗与外壳行为均无需 recreate Activity 即时生效。
+ * 全应用配色与外壳行为均无需 recreate Activity 即时生效；明暗模式另外要经
+ * `ThemeUtils.initTheme(context)` 同步平台 DayNight 主题（AppCompat 在明暗实际变化时
+ * 会重建 Activity），否则矢量图的 `?attr/colorControlNormal` 仍按旧明暗解析而不可见。
  *
  * 界面缩放（page_scale）对齐 KernelSU：覆盖 [LocalDensity]，只缩放 density，fontScale 原样透传。
  */
