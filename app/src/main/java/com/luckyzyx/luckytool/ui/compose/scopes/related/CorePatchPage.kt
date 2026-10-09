@@ -40,7 +40,7 @@ object CorePatchPage {
         restartEnabled = false,
     ) {
         val c = requireNotNull(context) { "ScopeScreen 未注入 Context" }
-        custom(key = "ColorOSCorePatchTip", title = c.getString(R.string.ColorOSCorePatchTip)) {
+        custom(key = "ColorOSCorePatchTip", title = c.getString(R.string.ColorOSCorePatchTip), bare = true) {
             PrefCard(
                 title = c.getString(R.string.ColorOSCorePatchTip),
                 modifier = Modifier.padding(horizontal = 16.dp),

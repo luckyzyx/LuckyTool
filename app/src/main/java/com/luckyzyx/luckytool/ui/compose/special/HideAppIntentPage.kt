@@ -62,7 +62,7 @@ import com.luckyzyx.luckytool.data.AppIntentInfo
 import com.luckyzyx.luckytool.enums.IntentType
 import com.luckyzyx.luckytool.ui.compose.components.PrefGroup
 import com.luckyzyx.luckytool.ui.compose.components.PrefRow
-import com.luckyzyx.luckytool.ui.compose.components.PrefSwitchCard
+import com.luckyzyx.luckytool.ui.compose.components.PrefSwitchRow
 import com.luckyzyx.luckytool.ui.compose.components.material.SegmentedItem
 import com.luckyzyx.luckytool.ui.compose.components.material.SegmentedItemContainer
 import com.luckyzyx.luckytool.ui.compose.components.material.SegmentedListItem
@@ -103,8 +103,8 @@ import top.yukonga.miuix.kmp.utils.scrollEndHaptic
  * 使用 ScopeScreen 的 fullContent 全屏自定义渲染 + onRefresh 下拉刷新。
  *
  * 原「三文件制」已合并为单文件：状态/加载/写值逻辑唯一一份，渲染差异集中在
- * [HideAppIntentContent] 的 `if (miuix)` 分派上——开关卡片统一用 prefCard 的
- * [PrefSwitchCard]、搜索框复用 [AppSearchField]、批量选择/清空用 [PrefGroup]+[PrefRow]、
+ * [HideAppIntentContent] 的 `if (miuix)` 分派上——开关与批量操作合并为一张卡（[PrefGroup] 内
+ * [PrefSwitchRow]+[PrefRow]）、搜索框复用 [AppSearchField]、
  * 应用行 [IntentAppRow] 与多选对话框 [IntentInfoSelectDialog] 按线分派。
  */
 object HideAppIntentPage {
@@ -149,7 +149,7 @@ internal fun intentTypeLabel(type: IntentType): String = stringResource(
 
 /**
  * 页面渲染体：状态/加载逻辑唯一一份（两线旧实现逐字一致），渲染差异集中在此：
- * 顶部开关卡片 [PrefSwitchCard]、搜索框 [AppSearchField]、批量操作 [PrefGroup]+[PrefRow]，
+ * 顶部开关 + 批量操作合并为一张卡（[PrefGroup] 内 [PrefSwitchRow]+[PrefRow]）、搜索框 [AppSearchField]，
  * 列表容器与行、清空对话框、多选对话框、排序过滤弹层均按 `if (miuix)` 分派。
  */
 @Composable
@@ -386,25 +386,17 @@ internal fun LazyItemScope.HideAppIntentContent() {
             modifier = Modifier.padding(horizontal = 16.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
-            PrefSwitchCard(
-                title = stringResource(R.string.custom_config_app_intent_list),
-                checked = context.getBoolean(IntentPrefs, HIDE_APP_INTENT_ENABLE_KEY, false),
-                onCheckedChange = { v ->
-                    context.putBoolean(IntentPrefs, HIDE_APP_INTENT_ENABLE_KEY, v)
-                    context.sendPrefsValue("android", HIDE_APP_INTENT_ENABLE_KEY, v)
-                },
-                modifier = Modifier.fillMaxWidth(),
-            )
-            AppSearchField(
-                query = query,
-                enabled = !loading,
-                onQueryChange = { q ->
-                    query = q
-                    filterAppInfos = applyQuery(q)
-                },
-                onSortClick = { showSortSheet = true },
-            )
             PrefGroup {
+                item {
+                    PrefSwitchRow(
+                        title = stringResource(R.string.custom_config_app_intent_list),
+                        checked = context.getBoolean(IntentPrefs, HIDE_APP_INTENT_ENABLE_KEY, false),
+                        onCheckedChange = { v ->
+                            context.putBoolean(IntentPrefs, HIDE_APP_INTENT_ENABLE_KEY, v)
+                            context.sendPrefsValue("android", HIDE_APP_INTENT_ENABLE_KEY, v)
+                        },
+                    )
+                }
                 item {
                     PrefRow(
                         title = stringResource(R.string.select_all_share_intent),
@@ -441,8 +433,6 @@ internal fun LazyItemScope.HideAppIntentContent() {
                         },
                     )
                 }
-            }
-            PrefGroup {
                 item {
                     PrefRow(
                         title = stringResource(R.string.clear_all_data),
@@ -450,6 +440,15 @@ internal fun LazyItemScope.HideAppIntentContent() {
                     )
                 }
             }
+            AppSearchField(
+                query = query,
+                enabled = !loading,
+                onQueryChange = { q ->
+                    query = q
+                    filterAppInfos = applyQuery(q)
+                },
+                onSortClick = { showSortSheet = true },
+            )
         }
         if (miuix) {
             LazyColumn(

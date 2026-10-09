@@ -42,8 +42,9 @@ import com.luckyzyx.luckytool.R
 import com.luckyzyx.luckytool.data.AppInfo
 import com.luckyzyx.luckytool.data.DarkModeInfo
 import com.luckyzyx.luckytool.ui.components.preference.PrefScopeBuilder
-import com.luckyzyx.luckytool.ui.compose.components.PrefCard
-import com.luckyzyx.luckytool.ui.compose.components.PrefSwitchCard
+import com.luckyzyx.luckytool.ui.compose.components.PrefGroup
+import com.luckyzyx.luckytool.ui.compose.components.PrefRow
+import com.luckyzyx.luckytool.ui.compose.components.PrefSwitchRow
 import com.luckyzyx.luckytool.ui.compose.components.material.ExpressiveSwitch
 import com.luckyzyx.luckytool.ui.compose.components.material.SegmentedItem
 import com.luckyzyx.luckytool.ui.compose.components.material.SegmentedItemContainer
@@ -202,18 +203,24 @@ internal fun LazyItemScope.DarkModeContent(builder: PrefScopeBuilder) {
             ),
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
-            PrefSwitchCard(
-                title = stringResource(R.string.enable_dark_mode_list),
-                checked = context.getBoolean(ModulePrefs, DarkModePage.ENABLE_KEY, false),
-                onCheckedChange = { v ->
-                    context.putBoolean(ModulePrefs, DarkModePage.ENABLE_KEY, v)
-                    context.sendPrefsValue("android", DarkModePage.ENABLE_KEY, v)
-                },
-            )
-            PrefCard(
-                title = stringResource(R.string.open),
-                onClick = { IntentUtils(context).jumpDarkMode() },
-            )
+            PrefGroup {
+                item {
+                    PrefSwitchRow(
+                        title = stringResource(R.string.enable_dark_mode_list),
+                        checked = context.getBoolean(ModulePrefs, DarkModePage.ENABLE_KEY, false),
+                        onCheckedChange = { v ->
+                            context.putBoolean(ModulePrefs, DarkModePage.ENABLE_KEY, v)
+                            context.sendPrefsValue("android", DarkModePage.ENABLE_KEY, v)
+                        },
+                    )
+                }
+                item {
+                    PrefRow(
+                        title = stringResource(R.string.open),
+                        onClick = { IntentUtils(context).jumpDarkMode() },
+                    )
+                }
+            }
             AppSearchField(
                 query = query,
                 enabled = !loading,

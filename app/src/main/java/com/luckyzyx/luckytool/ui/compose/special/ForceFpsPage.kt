@@ -3,10 +3,6 @@ package com.luckyzyx.luckytool.ui.compose.special
 import android.app.Activity
 import android.content.Context
 import android.content.ContextWrapper
-import androidx.compose.animation.AnimatedContent
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -27,7 +23,7 @@ import com.luckyzyx.luckytool.R
 import com.luckyzyx.luckytool.data.DisplayMode
 import com.luckyzyx.luckytool.service.RefreshRateService
 import com.luckyzyx.luckytool.ui.compose.components.PrefGroup
-import com.luckyzyx.luckytool.ui.compose.components.PrefSwitchCard
+import com.luckyzyx.luckytool.ui.compose.components.PrefSwitchRow
 import com.luckyzyx.luckytool.ui.compose.components.material.SegmentedRadioItem
 import com.luckyzyx.luckytool.ui.compose.components.miuix.MiuixRadioItem
 import com.luckyzyx.luckytool.ui.compose.scopes.ScopePageSpec
@@ -52,7 +48,7 @@ private tailrec fun Context.findActivity(): Activity? = when (this) {
  * 刷新率控制器状态在 RootService 控制器而非 prefs，故整页用 custom() 手工构建
  * （不用 DSL switch/slider）。下拉刷新重新拉取 controller 并重算全部状态。
  *
- * 线分派：行呈现（`PrefGroup` / `PrefSwitchCard`）由共享层按 [LocalUiMode] 自行分派，
+ * 线分派：行呈现（`PrefGroup` / `PrefSwitchRow`）由共享层按 [LocalUiMode] 自行分派，
  * 页面只分派自己写死的 material 件 —— 文字（`MiuixText`）、重置按钮（miuix `Button`）、
  * 模式单选项（t11 的 `MiuixRadioItem`，material 线仍为 `SegmentedRadioItem`）。
  */
@@ -70,7 +66,7 @@ object ForceFpsPage {
         onRefresh = { reloader?.invoke() },
     ) {
         val c = requireNotNull(context) { "ScopeScreen 未注入 Context" }
-        custom(key = "force_fps_body") {
+        custom(key = "force_fps_body", bare = true) {
             // 进程级缓存做种子：进入子页不重新加载，直接用 RefreshRateService 已缓存的存活控制器
             var controller by remember { mutableStateOf(RefreshRateService.getCachedController()) }
 
@@ -108,75 +104,72 @@ object ForceFpsPage {
                     .padding(horizontal = 16.dp, vertical = 8.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
-                // fpsSelfStart（旧逻辑：controller!=null 且 !isUnsupport 且 fpsCur!=-1 才可用）
-                // 卡片式开关：Miuix 线由 PrefSwitchCard 内部走 MiuixPrefItem + MiuixSwitchItem
-                PrefSwitchCard(
-                    title = c.getString(R.string.fps_autostart),
-                    checked = fpsAutostart,
-                    enabled = controller != null && !isUnsupport && fpsCur != -1,
-                    onCheckedChange = { v -> state.set(keyFpsAutoStart, v) },
-                )
-                // 控制器连上前后在「无数据提示」与「模式单选列表」之间平滑过渡，避免整块突然切换
-                AnimatedContent(
-                    targetState = isUnsupport,
-                    transitionSpec = { fadeIn() togetherWith fadeOut() },
-                    label = "fps_modes",
-                ) { unsupported ->
-                    if (unsupported) {
-                        if (miuix) {
-                            MiuixText(
-                                text = c.getString(R.string.fps_no_data),
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(vertical = 24.dp),
-                                textAlign = TextAlign.Center,
-                            )
-                        } else {
-                            Text(
-                                c.getString(R.string.fps_no_data),
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(vertical = 24.dp),
-                                textAlign = TextAlign.Center,
-                            )
-                        }
-                    } else {
-                        // 模式单选列表（旧 ListView CHOICE_MODE_SINGLE；选中/设置均以 mode.id 为准）
-                        PrefGroup {
-                            modes.forEach { mode ->
-                                item {
-                                    val title =
-                                        "${mode.id}   ${mode.width} x ${mode.height}   ${mode.refreshRate}"
-                                    val onSelect: () -> Unit = {
-                                        state.set(keyFpsCur, mode.id)
-                                        controller?.setRefreshRateMode(mode.id)
-                                    }
-                                    if (miuix) {
-                                        // Miuix 线等价件（t11 产出，库内 RadioButtonPreference）
-                                        MiuixRadioItem(
-                                            title = title,
-                                            selected = mode.id == fpsCur,
-                                            onClick = onSelect,
-                                        )
-                                    } else {
-                                        SegmentedRadioItem(
-                                            title = title,
-                                            selected = mode.id == fpsCur,
-                                            onClick = onSelect,
-                                        )
-                                    }
+                // 自启动开关 + 模式单选列表 + 显示刷新率开关合并为一张连续卡片
+                PrefGroup {
+                    item {
+                        PrefSwitchRow(
+                            title = c.getString(R.string.fps_autostart),
+                            checked = fpsAutostart,
+                            enabled = controller != null && !isUnsupport && fpsCur != -1,
+                            onCheckedChange = { v -> state.set(keyFpsAutoStart, v) },
+                        )
+                    }
+                    // 模式单选列表（旧 ListView CHOICE_MODE_SINGLE；选中/设置均以 mode.id 为准）
+                    if (!isUnsupport) {
+                        modes.forEach { mode ->
+                            item {
+                                val title =
+                                    "${mode.id}   ${mode.width} x ${mode.height}   ${mode.refreshRate}"
+                                val onSelect: () -> Unit = {
+                                    state.set(keyFpsCur, mode.id)
+                                    controller?.setRefreshRateMode(mode.id)
+                                }
+                                if (miuix) {
+                                    // Miuix 线等价件（t11 产出，库内 RadioButtonPreference）
+                                    MiuixRadioItem(
+                                        title = title,
+                                        selected = mode.id == fpsCur,
+                                        onClick = onSelect,
+                                    )
+                                } else {
+                                    SegmentedRadioItem(
+                                        title = title,
+                                        selected = mode.id == fpsCur,
+                                        onClick = onSelect,
+                                    )
                                 }
                             }
                         }
                     }
+                    item {
+                        PrefSwitchRow(
+                            title = c.getString(R.string.display_refresh_rate),
+                            checked = controller?.refreshRateDisplay == true,
+                            enabled = controller != null,
+                            onCheckedChange = { v -> controller?.refreshRateDisplay = v },
+                        )
+                    }
                 }
-                // fpsShow（旧代码 isPressed 守卫 → M3 Switch onCheckedChange 仅用户手势触发）
-                PrefSwitchCard(
-                    title = c.getString(R.string.display_refresh_rate),
-                    checked = controller?.refreshRateDisplay == true,
-                    enabled = controller != null,
-                    onCheckedChange = { v -> controller?.refreshRateDisplay = v },
-                )
+                // 控制器未返回模式列表时：无数据提示
+                if (isUnsupport) {
+                    if (miuix) {
+                        MiuixText(
+                            text = c.getString(R.string.fps_no_data),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 24.dp),
+                            textAlign = TextAlign.Center,
+                        )
+                    } else {
+                        Text(
+                            c.getString(R.string.fps_no_data),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 24.dp),
+                            textAlign = TextAlign.Center,
+                        )
+                    }
+                }
                 // fpsRecover（旧 resetRefreshRate：持久化 -1 + 重置模式；开关可用性随 fpsCur==-1 自动失效）
                 if (miuix) {
                     MiuixButton(
