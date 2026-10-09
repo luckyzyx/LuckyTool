@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -22,8 +23,10 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.highcapable.betterandroid.ui.extension.view.toast
 import com.luckyzyx.luckytool.IPackageServiceController
@@ -45,9 +48,9 @@ import kotlinx.coroutines.withContext
 import org.lsposed.lsparanoid.Obfuscate
 import top.yukonga.miuix.kmp.basic.BasicComponent
 import top.yukonga.miuix.kmp.basic.ButtonDefaults
+import top.yukonga.miuix.kmp.overlay.OverlayDialog
 import top.yukonga.miuix.kmp.basic.Text as MiuixText
 import top.yukonga.miuix.kmp.basic.TextButton as MiuixTextButton
-import top.yukonga.miuix.kmp.overlay.OverlayDialog
 
 @Obfuscate
 object RestartMenuUtils {
@@ -456,7 +459,7 @@ object RestartMenuUtils {
         scopes.toMutableList().apply {
             removeIf { it == "android" || it == "system" }
             removeIf { PackageUtils(context.packageManager).getPackageInfo(it, 0) == null }
-            forEach { it ->
+            forEach {
                 val name = PackageUtils(context.packageManager).getApplicationInfo(it, 0)
                     ?.loadLabel(context.packageManager)
                 scopeMaps[it] = name
@@ -531,13 +534,39 @@ object RestartMenuUtils {
                         title = context.getString(R.string.re_optimize_dex_optimizing),
                         onDismissRequest = {},
                     ) {
-                        MiuixText(text = progressText, modifier = Modifier.fillMaxWidth())
+                        Column(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                        ) {
+                            CircularProgressIndicator()
+                            MiuixText(
+                                text = progressText,
+                                textAlign = TextAlign.Center,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(top = 12.dp),
+                            )
+                        }
                     }
 
                     UiMode.Material -> AlertDialog(
                         onDismissRequest = {},
                         title = { Text(context.getString(R.string.re_optimize_dex_optimizing)) },
-                        text = { Text(progressText) },
+                        text = {
+                            Column(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                            ) {
+                                CircularProgressIndicator()
+                                Text(
+                                    text = progressText,
+                                    textAlign = TextAlign.Center,
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(top = 12.dp),
+                                )
+                            }
+                        },
                         confirmButton = {}
                     )
                 }
