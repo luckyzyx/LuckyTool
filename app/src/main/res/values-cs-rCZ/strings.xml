@@ -37,7 +37,6 @@
     <string name="switch_autostart_function_caller_summary">1.Metoda volání modulu otevře novou stránku modulu a spustí funkci samočinného spuštění, tato metoda může způsobit, že obrazovka nebude po odemknutí několik sekund reagovat\n2.Metoda volání System UI vyvolá funkci samočinného spuštění v procesu System UI, je třeba udělit oprávnění root procesu System UI, jinak nelze spustit samočinné spuštění</string>
     <string name="switch_autostart_function_caller_module">Volání modulu</string>
     <string name="switch_autostart_function_caller_systemui">Volání SystemUI</string>
-    <string name="hide_function_page_icon">Skrýt ikonu na stránce funkcí</string>
     <string name="hide_desktop_module_icon">Skrýt ikonu modulu v seznamu aplikací</string>
     <string name="hide_desktop_module_icon_summary">LSPosed musí být vypnut pro vynucení ikon v seznamu aplikací</string>
     <!--BackupRestoreClear-->

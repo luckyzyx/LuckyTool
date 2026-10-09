@@ -39,7 +39,6 @@
     <string name="switch_autostart_function_caller_summary">1.Phương thức gọi mô-đun sẽ mở một trang mới của mô-đun và kích hoạt chức năng tự khởi động,Phương thức này có thể khiến màn hình không thể chạm được trong vài giây khi nó được mở khóa\n2.Phương thức gọi ui hệ thống sẽ gọi chức năng tự khởi động trên quy trình của hệ thống ui, Cần cấp quyền root cho hệ thống ui, Nếu không, tính năng tự khởi động không thể được kích hoạt</string>
     <string name="switch_autostart_function_caller_module">Gọi module</string>
     <string name="switch_autostart_function_caller_systemui">Gọi giao diện hệ thống</string>
-    <string name="hide_function_page_icon">Ẩn biểu tượng trang chức năng</string>
     <string name="hide_desktop_module_icon">Ẩn biểu tượng mô-đun máy tính để bàn</string>
     <string name="hide_desktop_module_icon_summary">LSPosed phải được tắt để buộc các biểu tượng trên màn hình</string>
     <!--BackupRestoreClear-->

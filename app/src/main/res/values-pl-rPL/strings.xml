@@ -37,7 +37,6 @@
     <string name="switch_autostart_function_caller_summary">Wybierz metodę wywołania funkcji autostartu w LuckyTool, która pozwali na ustawienie odświeżania ekranu po uruchomieniu systemu</string>
     <string name="switch_autostart_function_caller_module">Wywołanie przez moduł</string>
     <string name="switch_autostart_function_caller_systemui">Wywołanie przez SystemUI</string>
-    <string name="hide_function_page_icon">Ukryj ikony w karcie „Funkcje”</string>
     <string name="hide_desktop_module_icon">Ukryj ikonę aplikacji</string>
     <string name="hide_desktop_module_icon_summary">Wymaga wyłączenia „Wymuś aplikacjom pokazywanie ikon launchera” w ustawieniach LSPosed</string>
     <!--BackupRestoreClear-->

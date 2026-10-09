@@ -91,7 +91,6 @@
     <string name="switch_autostart_function_caller_summary">1.模块调用方式，将打开模块的新页面并触发自启功能，当屏幕解锁时可能导致无法触摸几秒钟\n2.系统界面调用方式，将使用系统界面进程调用自启功能， 需要给予系统界面 Root 权限，否则无法触发自动启动</string>
     <string name="switch_autostart_function_caller_module">模块调用</string>
     <string name="switch_autostart_function_caller_systemui">系统界面调用</string>
-    <string name="hide_function_page_icon">隐藏功能页面图标</string>
     <string name="hide_desktop_module_icon">隐藏桌面模块图标</string>
     <string name="hide_desktop_module_icon_summary">LSPosed 内必须关闭强制显示桌面图标</string>
     <!--BackupRestoreClear-->

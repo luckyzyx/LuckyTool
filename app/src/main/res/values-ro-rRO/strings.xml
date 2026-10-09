@@ -37,7 +37,6 @@
     <string name="switch_autostart_function_caller_summary">1.The module calling method will open a new page of the module and trigger the self-starting function,This method may cause the screen to be untouchable for a few seconds when it is unlocked\n2.The system ui calling method will call the self-starting function on the process of the system ui,Need to give root permission to the system ui,Otherwise, the autostart cannot be triggered</string>
     <string name="switch_autostart_function_caller_module">Apel modul</string>
     <string name="switch_autostart_function_caller_systemui">Apel SystemUI</string>
-    <string name="hide_function_page_icon">Ascundeți pictograma paginii de funcții</string>
     <string name="hide_desktop_module_icon">Ascunde pictograma modulului desktop</string>
     <string name="hide_desktop_module_icon_summary">LSPosed trebuie să fie oprit pentru a forța pictogramele desktop</string>
     <!--BackupRestoreClear-->

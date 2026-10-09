@@ -41,7 +41,6 @@
     <string name="switch_autostart_function_caller_summary">1. Modül çağırma yöntemi, modül ekranını yeniden açarak otomatik başlatma işlevini tetikler. Bu yöntem ekran kilidi açıldığında birkaç saniyeliğine ekrana dokunulamamasına neden olabilir.\n2. System UI çağırma yöntemi, System UI süreci üzerinden otomatik başlatmayı tetikler. System UI işlemine Root izni vermek gerekir, aksi takdirde otomatik başlatma tetiklenemez.</string>
     <string name="switch_autostart_function_caller_module">Modül çağrısı</string>
     <string name="switch_autostart_function_caller_systemui">SystemUI çağrısı</string>
-    <string name="hide_function_page_icon">İşlev sayfası simgesini gizle</string>
     <string name="hide_desktop_module_icon">Masaüstü modül simgesini gizle</string>
     <string name="hide_desktop_module_icon_summary">Özelliği zorla uygulamak için LSPosed üzerinden masaüstü ikon gizleme devre dışı bırakılmalıdır</string>
     

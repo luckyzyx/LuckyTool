@@ -37,7 +37,6 @@
     <string name="switch_autostart_function_caller_summary">1. Il metodo di chiamata del modulo aprirà una nuova pagina del modulo e attiverà la funzione di auto-avviamento, il suo metodo può causare lo schermo intoccabile per alcuni secondi quando è sbloccato\n2. lui sistema ui metodo di chiamata chiamerà la funzione di auto-partenza sul processo del sistema ui, eed to give root permission to the system ui,Altrimenti, l\'autostart non può essere attivato</string>
     <string name="switch_autostart_function_caller_module">Avvio automatico modulo chiamata</string>
     <string name="switch_autostart_function_caller_systemui">Avvio automatico Interfaccia Utente di Sistema</string>
-    <string name="hide_function_page_icon">Nascondi icona pagina funzione</string>
     <string name="hide_desktop_module_icon">Nascondi icona modulo</string>
     <string name="hide_desktop_module_icon_summary">LSPosed deve essere disattivato per forzare le icone</string>
     <!--BackupRestoreClear-->

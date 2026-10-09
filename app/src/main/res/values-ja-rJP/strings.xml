@@ -37,7 +37,6 @@
     <string name="switch_autostart_function_caller_summary">1. モジュール呼び出しメソッドは、モジュールの新しいページを開いて自己起動機能をトリガーします。このメソッドでは、ロックを解除したときに数秒間画面を操作できないことがあります。\n2. システム UI 呼び出しメソッドは、システム UI のプロセスで自己起動関数を呼び出します。システム UI に root 権限を与える必要があり、与えなければ自動起動をトリガーできません</string>
     <string name="switch_autostart_function_caller_module">モジュール呼び出し</string>
     <string name="switch_autostart_function_caller_systemui">システム UI 呼び出し</string>
-    <string name="hide_function_page_icon">機能ページのアイコンを隠す</string>
     <string name="hide_desktop_module_icon">ホーム画面のモジュールアイコンを隠す</string>
     <string name="hide_desktop_module_icon_summary">ホーム画面でのアイコンを強制的に表示するには、LSPosed をオフにする必要があります</string>
     <!--BackupRestoreClear-->

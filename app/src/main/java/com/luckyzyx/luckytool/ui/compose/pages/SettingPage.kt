@@ -29,7 +29,6 @@ import androidx.compose.material.icons.filled.Restore
 import androidx.compose.material.icons.filled.Style
 import androidx.compose.material.icons.filled.SystemUpdate
 import androidx.compose.material.icons.filled.Translate
-import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material.icons.filled.VolunteerActivism
 import androidx.compose.material.icons.filled.Widgets
 import androidx.compose.material3.AlertDialog
@@ -219,12 +218,6 @@ fun SettingPage(activity: MainActivity, onOpenTheme: () -> Unit = {}) {
                     summary = context.getString(R.string.tile_auto_start_summary),
                     default = true,
                     leading = { PrefIconBadge(Icons.Filled.Widgets, Color(0xFF4CAF50)) },
-                )
-                switch(
-                    key = "hide_function_page_icon",
-                    title = context.getString(R.string.hide_function_page_icon),
-                    leading = { PrefIconBadge(Icons.Filled.VisibilityOff, Color(0xFFFF9800)) },
-                    onChange = { activity.restart() },
                 )
                 switch(
                     key = "hide_desktop_module_icon",

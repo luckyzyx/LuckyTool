@@ -37,7 +37,6 @@
     <string name="switch_autostart_function_caller_summary">1.Метод виклику модуля відкриє нову сторінку модуля та активує функцію автозапуску. Цей метод може призвести до того, що екран стане недоступним протягом декількох секунд, коли він розблокований\n2.Метод виклику системного користувальницького інтерфейсу викличе функцію автозапуску в процесі системного користувальницького інтерфейсу, необхідно надати root-права для системного інтерфейсу користувача, в іншому випадку автозапуск не може бути запущений</string>
     <string name="switch_autostart_function_caller_module">Виклик модуля</string>
     <string name="switch_autostart_function_caller_systemui">Виклик системного інтерфейсу користувача</string>
-    <string name="hide_function_page_icon">Приховати іконку сторінки функцій</string>
     <string name="hide_desktop_module_icon">Приховати іконку модуля на робочому столі</string>
     <string name="hide_desktop_module_icon_summary">LSPosed має бути вимкнено, щоб примусово відображалися іконки на робочому столі</string>
     <!--BackupRestoreClear-->
