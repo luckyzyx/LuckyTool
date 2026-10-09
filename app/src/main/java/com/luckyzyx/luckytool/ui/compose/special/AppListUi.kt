@@ -3,6 +3,7 @@ package com.luckyzyx.luckytool.ui.compose.special
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -123,23 +124,30 @@ internal fun AppSearchField(
     onQueryChange: (String) -> Unit,
     onSortClick: () -> Unit,
     modifier: Modifier = Modifier,
+    label: String = "Name / PackageName",
 ) {
     if (LocalUiMode.current == UiMode.Miuix) {
         MiuixTextField(
             value = query,
             onValueChange = onQueryChange,
-            label = "Name / PackageName",
+            label = label,
             useLabelAsPlaceholder = true,
             enabled = enabled,
             singleLine = true,
             leadingIcon = {
+                // miuix TextField 把 leading/trailing 图标直接贴边（无内边距），
+                // 这里手动补 start 内边距并留出与输入文字的间距
                 MiuixIcon(
                     painterResource(R.drawable.ic_baseline_search_24),
                     contentDescription = null,
+                    modifier = Modifier.padding(start = 16.dp, end = 8.dp),
                 )
             },
             trailingIcon = {
-                MiuixIconButton(onClick = onSortClick) {
+                MiuixIconButton(
+                    onClick = onSortClick,
+                    modifier = Modifier.padding(end = 8.dp),
+                ) {
                     MiuixIcon(
                         painterResource(R.drawable.baseline_filter_list_24),
                         contentDescription = null,
@@ -154,7 +162,7 @@ internal fun AppSearchField(
             onValueChange = onQueryChange,
             enabled = enabled,
             singleLine = true,
-            placeholder = { Text("Name / PackageName") },
+            placeholder = { Text(label) },
             leadingIcon = {
                 Icon(
                     painterResource(R.drawable.ic_baseline_search_24),
