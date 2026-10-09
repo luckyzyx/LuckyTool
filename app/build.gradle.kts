@@ -16,17 +16,14 @@ lsparanoid {
 }
 
 android {
-    namespace = "com.luckyzyx.luckytool"
-    compileSdk {
-        version = release(rootProject.extra.get("compileSdkVersion") as Int) {
-//            minorApiLevel = 1
-        }
-    }
-    defaultConfig {
-        applicationId = "com.luckyzyx.luckytool"
+    namespace = gropify.project.groupName
+    compileSdk = gropify.project.android.compileSdk
 
-        minSdk = rootProject.extra.get("minSdkVersion") as Int
-        targetSdk = rootProject.extra.get("targetSdkVersion") as Int
+    defaultConfig {
+        applicationId = gropify.project.groupName
+
+        minSdk = gropify.project.android.minSdk
+        targetSdk = gropify.project.android.targetSdk
 
         versionCode = getVersionCode()
         versionName = "1.3.5_beta"
@@ -88,7 +85,7 @@ android {
 }
 
 kotlin {
-    jvmToolchain(rootProject.extra.get("jdkVersion") as Int)
+    jvmToolchain(gropify.project.jdk.version)
 }
 
 @Suppress("UnstableApiUsage")

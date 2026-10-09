@@ -14,10 +14,6 @@ plugins {
     alias(libs.plugins.lsplugin.lsparanoid) apply false
 }
 
-extra["compileSdkVersion"] = 37
-extra["targetSdkVersion"] = 37
-extra["minSdkVersion"] = 30
-
 extra["jdkVersion"] = 21
 
 extra["storeFile"] = keystoreProperties["storeFile"]

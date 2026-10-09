@@ -3,12 +3,8 @@ plugins {
 }
 
 android {
-    namespace = "com.luckyzyx.internal"
-    compileSdk {
-        version = release(rootProject.extra.get("compileSdkVersion") as Int) {
-//            minorApiLevel = 1
-        }
-    }
+    namespace = gropify.project.stub.groupName
+    compileSdk = gropify.project.android.compileSdk
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_21
         targetCompatibility = JavaVersion.VERSION_21
@@ -16,7 +12,7 @@ android {
 }
 
 kotlin {
-    jvmToolchain(rootProject.extra.get("jdkVersion") as Int)
+    jvmToolchain(gropify.project.jdk.version)
 }
 
 dependencies {
