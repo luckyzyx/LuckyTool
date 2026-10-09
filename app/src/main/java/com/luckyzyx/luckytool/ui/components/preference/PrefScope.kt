@@ -656,6 +656,34 @@ class PrefScopeBuilder internal constructor(
         }
     }
 
+    /** 纯点击入口（跳转外部 Activity / 设置 / shell 命令等，非作用域页导航、无值/开关）：分组卡片内的一行 */
+    fun click(
+        title: String,
+        summary: String? = null,
+        enabled: Boolean = true,
+        onClick: () -> Unit,
+    ) = emit(null, null, title, summary) { slot ->
+        if (LocalUiMode.current == UiMode.Miuix) {
+            // Miuix 行自带 insideMargin(16dp)：不再套 material 线的 16dp 外层 padding
+            MiuixListItem(
+                title = title,
+                summary = summary,
+                onClick = onClick,
+                enabled = enabled,
+            )
+        } else {
+            Box(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
+                SegmentedListItem(
+                    onClick = onClick,
+                    enabled = enabled,
+                    colors = itemColors(slot),
+                    headlineContent = { Text(title) },
+                    supportingContent = summary?.let { { Text(it) } },
+                )
+            }
+        }
+    }
+
     /** 逃生舱：任意自定义 Composable（ColorPicker、应用选择器等特殊控件用），receiver 可访问 state/restart 等 */
     fun custom(
         key: String? = null,
