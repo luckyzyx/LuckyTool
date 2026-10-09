@@ -57,6 +57,7 @@ import com.luckyzyx.luckytool.ui.compose.components.material.SegmentedListItem
 import com.luckyzyx.luckytool.ui.compose.components.material.SegmentedSwitchItem
 import com.luckyzyx.luckytool.ui.compose.components.material.defaultSegmentedColors
 import com.luckyzyx.luckytool.ui.compose.components.material.expressiveBottomInset
+import com.luckyzyx.luckytool.ui.compose.scopes.ScopePageRegistry
 import com.luckyzyx.luckytool.ui.compose.components.miuix.MiuixArrowItem
 import com.luckyzyx.luckytool.ui.compose.components.miuix.MiuixDropdownItem
 import com.luckyzyx.luckytool.ui.compose.components.miuix.MiuixListItem
@@ -611,36 +612,46 @@ class PrefScopeBuilder internal constructor(
         }
     }
 
-    /** 页面入口（对应旧 addFragmentPreference：跳转其他作用域页；同时登记搜索索引） */
+    /**
+     * 页面入口（对应旧 addFragmentPreference：跳转其他作用域页；同时登记搜索索引）。
+     * 目标页不可达（spec.isVisible false / 单 App 作用域未安装 / 目标页无可见条目）时不发射入口，
+     * 对齐旧父页入口行 isVisible 条件与「选项=0 → 入口消失」规则（判断集中在 [ScopePageRegistry.isPageReachable]）。
+     */
     fun page(
         title: String,
         target: String,
         summary: String? = null,
         enabled: Boolean = true,
-    ) = emit("page:$target", "page:$target", title, summary, pageTarget = target) { slot ->
-        if (LocalUiMode.current == UiMode.Miuix) {
-            MiuixArrowItem(
-                title = title,
-                summary = summary,
-                onClick = { navigate?.invoke(target, title) },
-                enabled = enabled,
-            )
-        } else {
-            Box(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
-                SegmentedListItem(
+    ) {
+        val ctx = context
+        if (ctx != null && !ScopePageRegistry.isPageReachable(ctx, ScopePageRegistry.pageTargetMap[target] ?: target)) {
+            return
+        }
+        emit("page:$target", "page:$target", title, summary, pageTarget = target) { slot ->
+            if (LocalUiMode.current == UiMode.Miuix) {
+                MiuixArrowItem(
+                    title = title,
+                    summary = summary,
                     onClick = { navigate?.invoke(target, title) },
                     enabled = enabled,
-                    colors = itemColors(slot),
-                    headlineContent = { Text(title) },
-                    supportingContent = summary?.let { { Text(it) } },
-                    trailingContent = {
-                        Icon(
-                            Icons.AutoMirrored.Rounded.KeyboardArrowRight,
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
-                    },
                 )
+            } else {
+                Box(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
+                    SegmentedListItem(
+                        onClick = { navigate?.invoke(target, title) },
+                        enabled = enabled,
+                        colors = itemColors(slot),
+                        headlineContent = { Text(title) },
+                        supportingContent = summary?.let { { Text(it) } },
+                        trailingContent = {
+                            Icon(
+                                Icons.AutoMirrored.Rounded.KeyboardArrowRight,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        },
+                    )
+                }
             }
         }
     }
