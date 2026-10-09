@@ -1,8 +1,6 @@
 package com.luckyzyx.luckytool.ui.compose
 
 import androidx.compose.animation.core.tween
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.layout.Box
@@ -302,18 +300,20 @@ fun MainShell(activity: MainActivity) {
                                 Modifier
                             }
                         ),
-                    // 预测性返回：当前页横滑右移并淡出，上一页从左侧滑入并淡入，替代默认「向内缩小」
+                    // 预测性返回：当前页横滑右移，上一页从左侧滑入，替代默认「向内缩小」。
+                    // 不做淡入淡出：NavHost 按进入顺序分配 zIndex（当前页更高），当前页应保持
+                    // 不透明地滑走；一旦淡出，当前页变半透明、上一页从底下透出来，看起来像上一页在上层。
                     predictivePopEnterTransition = {
                         slideInHorizontally(
                             animationSpec = tween(400),
                             initialOffsetX = { fullWidth -> -fullWidth / 4 },
-                        ) + fadeIn(animationSpec = tween(400))
+                        )
                     },
                     predictivePopExitTransition = {
                         slideOutHorizontally(
                             animationSpec = tween(400),
                             targetOffsetX = { fullWidth -> fullWidth },
-                        ) + fadeOut(animationSpec = tween(400))
+                        )
                     },
                 ) {
                     composable<HomeRoute> { HomePage(activity) }
