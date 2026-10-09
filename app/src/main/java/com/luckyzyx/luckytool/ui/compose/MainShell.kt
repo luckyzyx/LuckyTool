@@ -1,5 +1,10 @@
 package com.luckyzyx.luckytool.ui.compose
 
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.WindowInsets
@@ -297,6 +302,19 @@ fun MainShell(activity: MainActivity) {
                                 Modifier
                             }
                         ),
+                    // 预测性返回：当前页横滑右移并淡出，上一页从左侧滑入并淡入，替代默认「向内缩小」
+                    predictivePopEnterTransition = {
+                        slideInHorizontally(
+                            animationSpec = tween(400),
+                            initialOffsetX = { fullWidth -> -fullWidth / 4 },
+                        ) + fadeIn(animationSpec = tween(400))
+                    },
+                    predictivePopExitTransition = {
+                        slideOutHorizontally(
+                            animationSpec = tween(400),
+                            targetOffsetX = { fullWidth -> fullWidth },
+                        ) + fadeOut(animationSpec = tween(400))
+                    },
                 ) {
                     composable<HomeRoute> { HomePage(activity) }
                     composable<OtherRoute> { OtherPage(activity) }

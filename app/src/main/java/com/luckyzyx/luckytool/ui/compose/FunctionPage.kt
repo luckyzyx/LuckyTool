@@ -3,6 +3,11 @@ package com.luckyzyx.luckytool.ui.compose
 import android.content.Context
 import android.graphics.drawable.Drawable
 import androidx.activity.compose.BackHandler
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
@@ -152,6 +157,19 @@ fun FunctionPage(activity: MainActivity, onShellBack: () -> Unit) {
             navController = navController,
             startDestination = FunctionTreeRoute,
             modifier = Modifier.fillMaxSize(),
+            // 预测性返回：当前页横滑右移并淡出，上一页从左侧滑入并淡入
+            predictivePopEnterTransition = {
+                slideInHorizontally(
+                    animationSpec = tween(400),
+                    initialOffsetX = { fullWidth -> -fullWidth / 4 },
+                ) + fadeIn(animationSpec = tween(400))
+            },
+            predictivePopExitTransition = {
+                slideOutHorizontally(
+                    animationSpec = tween(400),
+                    targetOffsetX = { fullWidth -> fullWidth },
+                ) + fadeOut(animationSpec = tween(400))
+            },
         ) {
             composable<FunctionTreeRoute> {
                 FunctionTreeScreen(
