@@ -17,6 +17,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.luckyzyx.luckytool.ui.theme.DesignTokens
 import top.yukonga.miuix.kmp.basic.Surface
 import top.yukonga.miuix.kmp.basic.Text
 import top.yukonga.miuix.kmp.theme.MiuixTheme
@@ -31,23 +32,23 @@ import top.yukonga.miuix.kmp.theme.MiuixTheme
 object MiuixPrefDefaults {
 
     /** 卡片外圆角：单条卡片四角，卡片组首条上端、尾条下端。 */
-    val OuterRadius = 16.dp
+    val OuterRadius = DesignTokens.CardRadius
 
     /** 卡片组内部相邻条目的圆角。 */
-    val InnerRadius = 4.dp
+    val InnerRadius = DesignTokens.ItemInnerRadius
 
     /** 卡片组内相邻条目之间的垂直间距。 */
-    val ItemGap = 2.dp
+    val ItemGap = DesignTokens.ItemGap
 
     /** 卡片组之间的垂直间距（由组内首条承载）。 */
-    val GroupGap = 12.dp
+    val GroupGap = DesignTokens.GroupGap
 
     /**
      * 卡片组相对屏幕左右两侧的水平内缩。**由列表级单一拥有**，本文件不再对条目应用：
      * `ExpressivePage` 的列表级 padding 与 `PrefScope.kt` ScopeScreen 路径的
      * `LazyColumn(contentPadding = …)` 各自引用本常量（契约 §4.2 / §10.5）。
      */
-    val CardHorizontalInset = 12.dp
+    val CardHorizontalInset = DesignTokens.CardHorizontalInset
 }
 
 /**

@@ -61,14 +61,12 @@ import androidx.compose.material.icons.rounded.Wallpaper
 import androidx.compose.material.icons.rounded.WaterDrop
 import androidx.compose.material3.ButtonGroupDefaults
 import androidx.compose.material3.Icon
-import androidx.compose.material3.LargeFlexibleTopAppBar
+import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberSliderState
-import androidx.compose.material3.rememberTopAppBarState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
@@ -83,7 +81,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
-import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
@@ -105,6 +102,7 @@ import com.luckyzyx.luckytool.ui.compose.components.material.TonalCard
 import com.luckyzyx.luckytool.ui.compose.components.material.TopBarBackButton
 import com.luckyzyx.luckytool.ui.compose.components.material.expressiveTopAppBarColors
 import com.luckyzyx.luckytool.ui.compose.components.miuix.BlurredBar
+import com.luckyzyx.luckytool.ui.compose.components.miuix.MiuixCompactTopBar
 import com.luckyzyx.luckytool.ui.compose.components.miuix.ScaleDialog
 import com.luckyzyx.luckytool.ui.compose.components.miuix.rememberBlurBackdrop
 import com.luckyzyx.luckytool.ui.shell.ModuleLinesMax
@@ -139,13 +137,11 @@ import top.yukonga.miuix.kmp.basic.BasicComponent as MiuixBasicComponent
 import top.yukonga.miuix.kmp.basic.Card as MiuixCard
 import top.yukonga.miuix.kmp.basic.Icon as MiuixIcon
 import top.yukonga.miuix.kmp.basic.IconButton as MiuixIconButton
-import top.yukonga.miuix.kmp.basic.MiuixScrollBehavior
 import top.yukonga.miuix.kmp.basic.Scaffold as MiuixScaffold
 import top.yukonga.miuix.kmp.basic.Slider as MiuixSlider
 import top.yukonga.miuix.kmp.basic.SliderDefaults
 import top.yukonga.miuix.kmp.basic.TabRow as MiuixTabRow
 import top.yukonga.miuix.kmp.basic.Text as MiuixText
-import top.yukonga.miuix.kmp.basic.TopAppBar as MiuixTopAppBar
 import top.yukonga.miuix.kmp.blur.layerBackdrop
 import top.yukonga.miuix.kmp.icon.MiuixIcons
 import top.yukonga.miuix.kmp.icon.extended.Back
@@ -197,8 +193,6 @@ private const val KeyDarkTheme = "dark_theme"
 @Composable
 private fun ThemeScreenMaterial(onBack: () -> Unit) {
     val context = LocalContext.current
-    val scrollBehavior =
-        TopAppBarDefaults.exitUntilCollapsedScrollBehavior(rememberTopAppBarState())
 
     var colorMode by remember {
         mutableStateOf(
@@ -291,14 +285,13 @@ private fun ThemeScreenMaterial(onBack: () -> Unit) {
 
     ExpressiveScaffold(
         topBar = {
-            LargeFlexibleTopAppBar(
+            TopAppBar(
                 navigationIcon = { TopBarBackButton(onClick = onBack) },
                 title = { Text(stringResource(R.string.theme_title)) },
                 colors = expressiveTopAppBarColors(),
                 windowInsets = WindowInsets.safeDrawing.only(
                     WindowInsetsSides.Top + WindowInsetsSides.Horizontal
                 ),
-                scrollBehavior = scrollBehavior,
             )
         },
         contentWindowInsets = WindowInsets.safeDrawing.only(
@@ -313,8 +306,7 @@ private fun ThemeScreenMaterial(onBack: () -> Unit) {
         LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(paddingValues)
-                .nestedScroll(scrollBehavior.nestedScrollConnection),
+                .padding(paddingValues),
             verticalArrangement = Arrangement.spacedBy(13.dp),
         ) {
             item {
@@ -870,7 +862,6 @@ private fun ColorButtonMaterial(
 @Composable
 private fun ThemeScreenMiuix(onBack: () -> Unit) {
     val context = LocalContext.current
-    val scrollBehavior = MiuixScrollBehavior()
 
     // 外观与配色
     var colorMode by remember {
@@ -1024,7 +1015,7 @@ private fun ThemeScreenMiuix(onBack: () -> Unit) {
     MiuixScaffold(
         topBar = {
             BlurredBar(backdrop) {
-                MiuixTopAppBar(
+                MiuixCompactTopBar(
                     color = barColor,
                     title = stringResource(R.string.settings_theme),
                     navigationIcon = {
@@ -1040,7 +1031,6 @@ private fun ThemeScreenMiuix(onBack: () -> Unit) {
                             )
                         }
                     },
-                    scrollBehavior = scrollBehavior,
                 )
             }
         },
@@ -1060,7 +1050,6 @@ private fun ThemeScreenMiuix(onBack: () -> Unit) {
                     .fillMaxHeight()
                     .scrollEndHaptic()
                     .overScrollVertical()
-                    .nestedScroll(scrollBehavior.nestedScrollConnection)
                     .padding(horizontal = 12.dp),
                 contentPadding = innerPadding,
                 overscrollEffect = null,

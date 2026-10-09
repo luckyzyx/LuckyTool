@@ -1,12 +1,10 @@
 package com.luckyzyx.luckytool.ui.compose.pages
 
-import androidx.compose.animation.AnimatedContent
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.layout.calculateEndPadding
+import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -23,9 +21,8 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.TopAppBarDefaults
-import androidx.compose.material3.rememberTopAppBarState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -36,6 +33,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
@@ -47,9 +45,8 @@ import com.luckyzyx.luckytool.BuildConfig
 import com.luckyzyx.luckytool.R
 import com.luckyzyx.luckytool.service.GlobalFuncService
 import com.luckyzyx.luckytool.ui.activity.MainActivity
-import com.luckyzyx.luckytool.ui.compose.components.PrefRow
-import com.luckyzyx.luckytool.ui.compose.components.prefGroup
-import com.luckyzyx.luckytool.ui.compose.components.material.ExpressiveList
+import com.luckyzyx.luckytool.ui.components.preference.LocalScopeTopInset
+import com.luckyzyx.luckytool.ui.components.preference.ScopeScreen
 import com.luckyzyx.luckytool.ui.compose.components.material.ExpressivePageScaffold
 import com.luckyzyx.luckytool.ui.compose.components.material.TonalCard
 import com.luckyzyx.luckytool.ui.service.XposedServiceBridge
@@ -95,7 +92,6 @@ fun HomePage(activity: MainActivity) {
     val settings = remember { PrefState.of(context, SettingsPrefs) }
     val zh = remember(context) { isZh(context) }
     val isDev = remember { settings.getBoolean("hidden_function", false) }
-    val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior(rememberTopAppBarState())
 
     var moduleActive by remember { mutableStateOf(XposedServiceBridge.isModuleActive) }
     // 用缓存做种子：切回主页时避免 systemInfo 从 null 起步（闪现「加载中」再淡入）
@@ -144,8 +140,10 @@ fun HomePage(activity: MainActivity) {
         }
     }
 
-    // 旧 onResume：系统信息 + 模块状态
-    LifecycleEventEffect(Lifecycle.Event.ON_RESUME) {
+    // 系统信息 + 模块状态：首次组合与每次恢复都触发。
+    // RootService 冷启动时 daemon 可能尚未就绪，首次 ON_RESUME 的 bind 回调未必能触发；
+    // 用 LaunchedEffect(Unit) 补一次首载触发，确保无需重新切换页面即可加载数据。
+    fun loadHomeData() {
         refreshModuleStatus()
         GlobalFuncService.get(activity) { controller ->
             val ota = controller?.otaVersion
@@ -163,10 +161,11 @@ fun HomePage(activity: MainActivity) {
             checkDexOptimize(controller)
         }
     }
+    LaunchedEffect(Unit) { loadHomeData() }
+    LifecycleEventEffect(Lifecycle.Event.ON_RESUME) { loadHomeData() }
 
     ExpressivePageScaffold(
-        title = stringResource(R.string.nav_home),
-        scrollBehavior = scrollBehavior,
+        title = stringResource(R.string.app_name),
         actions = {
             IconButton(onClick = { showRestartMenu = true }) {
                 Icon(
@@ -189,135 +188,145 @@ fun HomePage(activity: MainActivity) {
             }
         },
     ) { padding ->
-        ExpressiveList(
-            scrollBehavior = scrollBehavior,
-            modifier = Modifier.padding(padding),
-        ) {
-            item(key = "status_card") {
-                // 状态卡沿用主色/灰色实心配色（保留原强调外观），仅外壳换成 Expressive 圆角卡片
-                TonalCard(
-                    modifier = Modifier.clip(MaterialTheme.shapes.large),
-                    containerColor = if (moduleActive) {
-                        MaterialTheme.colorScheme.primary
-                    } else {
-                        Color.Gray
-                    },
-                    contentColor = Color.White,
-                ) {
-                    Row(
+        val layoutDirection = LocalLayoutDirection.current
+        val uiMode = LocalUiMode.current
+        val scopeModifier = if (uiMode == UiMode.Miuix) {
+            Modifier
+                .fillMaxSize()
+                .padding(
+                    start = padding.calculateStartPadding(layoutDirection),
+                    end = padding.calculateEndPadding(layoutDirection),
+                    bottom = padding.calculateBottomPadding(),
+                )
+        } else {
+            Modifier.fillMaxSize().padding(padding)
+        }
+        val scopeContent: @Composable () -> Unit = {
+            // 页面级状态必须在 @Composable 作用域内先读取：ScopeScreen 的参数都是稳定值
+            // （本身不可跳过），这里读取后 mutableStateOf 变化会重跑 scopeContent →
+            // ScopeScreen 重组 → 条目重建刷新。只在 ScopeScreen 的 content lambda 内读取
+            // 不会被列表追踪（旧症状：SYSTEMINFO 需切页后才显示）。
+            val systemInfoNow = systemInfo
+            val updateInfoNow = updateInfo
+            ScopeScreen(state = settings, modifier = scopeModifier) {
+                // 状态卡沿用主色/灰色实心配色（保留原强调外观），bare 全宽自定义
+                custom(key = "status_card", bare = true) {
+                    TonalCard(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .combinedClickable(
-                                onClick = {},
-                                onLongClick = { statusCardClick?.invoke() },
-                            )
-                            .padding(16.dp),
-                        verticalAlignment = Alignment.CenterVertically,
+                            .padding(horizontal = if (uiMode == UiMode.Miuix) 0.dp else 16.dp)
+                            .clip(MaterialTheme.shapes.large),
+                        containerColor = if (moduleActive) {
+                            MaterialTheme.colorScheme.primary
+                        } else {
+                            Color.Gray
+                        },
+                        contentColor = Color.White,
                     ) {
-                        Icon(
-                            painterResource(
-                                if (moduleActive) {
-                                    R.drawable.ic_round_check_24
-                                } else {
-                                    R.drawable.ic_round_warning_24
-                                }
-                            ),
-                            contentDescription = null,
-                            modifier = Modifier.size(24.dp),
-                            tint = Color.White,
-                        )
-                        Column(modifier = Modifier.padding(start = 16.dp)) {
-                            Text(
-                                text = stringResource(
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .combinedClickable(
+                                    onClick = {},
+                                    onLongClick = { statusCardClick?.invoke() },
+                                )
+                                .padding(16.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            Icon(
+                                painterResource(
                                     if (moduleActive) {
-                                        R.string.module_isactivated
+                                        R.drawable.ic_round_check_24
                                     } else {
-                                        R.string.module_is_disabled
+                                        R.drawable.ic_round_warning_24
                                     }
                                 ),
-                                style = MaterialTheme.typography.titleMedium,
-                                fontSize = 16.sp,
-                                color = Color.White,
+                                contentDescription = null,
+                                modifier = Modifier.size(24.dp),
+                                tint = Color.White,
                             )
-                            Text(
-                                text = "${stringResource(R.string.module_version)} " +
-                                        "$getVersionName ($getVersionCode) " +
-                                        BuildConfig.BUILD_TYPE.uppercase(),
-                                style = MaterialTheme.typography.bodyMedium,
-                                fontSize = 12.sp,
-                                color = Color.White,
-                            )
-                            Text(
-                                text = DeviceUtils.getRootVersion(context),
-                                style = MaterialTheme.typography.bodyMedium,
-                                fontSize = 12.sp,
-                                color = Color.White,
-                            )
-                            Text(
-                                text = DeviceUtils.getFrameWorkVersion(context),
-                                style = MaterialTheme.typography.bodyMedium,
-                                fontSize = 12.sp,
-                                color = Color.White,
-                            )
+                            Column(modifier = Modifier.padding(start = 16.dp)) {
+                                Text(
+                                    text = stringResource(
+                                        if (moduleActive) {
+                                            R.string.module_isactivated
+                                        } else {
+                                            R.string.module_is_disabled
+                                        }
+                                    ),
+                                    style = MaterialTheme.typography.titleMedium,
+                                    fontSize = 16.sp,
+                                    color = Color.White,
+                                )
+                                Text(
+                                    text = "${stringResource(R.string.module_version)} " +
+                                            "$getVersionName ($getVersionCode) " +
+                                            BuildConfig.BUILD_TYPE.uppercase(),
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    fontSize = 12.sp,
+                                    color = Color.White,
+                                )
+                                Text(
+                                    text = DeviceUtils.getRootVersion(context),
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    fontSize = 12.sp,
+                                    color = Color.White,
+                                )
+                                Text(
+                                    text = DeviceUtils.getFrameWorkVersion(context),
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    fontSize = 12.sp,
+                                    color = Color.White,
+                                )
+                            }
                         }
                     }
                 }
-            }
-            // 更新卡 / 系统信息卡 / 捐赠卡合并为一张分段卡片（KernelSU 主题页外观）
-            prefGroup(key = "cards_group") {
-                updateInfo?.let { info ->
-                    item(key = "update_card") {
-                        PrefRow(
-                            title = info,
-                            onClick = { updateClick?.invoke() },
+                // 更新卡 / 系统信息卡 / 捐赠卡合并为一张分段卡片（KernelSU 主题页外观）
+                updateInfoNow?.let { info ->
+                    click(title = info, onClick = { updateClick?.invoke() })
+                }
+                click(
+                    title = systemInfoNow ?: context.getString(R.string.loading),
+                    onLongClick = {
+                        context.copyStr(DeviceUtils.getOTACOnfigs())
+                        context.showToast("Copy Device OTA Data Success!")
+                    },
+                )
+                click(
+                    title = context.getString(R.string.donate_tv_title) + " by: 忆清鸣、luckyzyx",
+                    summary = context.getString(R.string.donate_tv__summary),
+                    onClick = {
+                        context.openUrl(
+                            if (zh) "https://docs.qq.com/doc/DS2ZDZlNIeUlpdlV1"
+                            else "https://luckyzyx.github.io/LuckyTool_Doc/en/donate"
+                        )
+                    },
+                    onLongClick = { showDonateList = true },
+                )
+                if (zh) {
+                    custom(key = "authorized", bare = true) {
+                        Text(
+                            text = stringResource(R.string.authorized),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable {
+                                    context.openUrl("https://luckyzyx.github.io/LuckyTool_Doc/use/download_link")
+                                },
+                            fontSize = 16.sp,
+                            color = Color.Red,
+                            textAlign = TextAlign.Center,
                         )
                     }
                 }
-                item(key = "system_info_card") {
-                    // 设备信息就绪后做淡入过渡，避免「加载中」→ 完整信息之间突兀跳变
-                    AnimatedContent(
-                        targetState = systemInfo,
-                        transitionSpec = { fadeIn() togetherWith fadeOut() },
-                        label = "system_info",
-                    ) { info ->
-                        PrefRow(
-                            title = info ?: stringResource(R.string.loading),
-                            onLongClick = {
-                                context.copyStr(DeviceUtils.getOTACOnfigs())
-                                context.showToast("Copy Device OTA Data Success!")
-                            },
-                        )
-                    }
-                }
-                item(key = "donate_card") {
-                    PrefRow(
-                        title = stringResource(R.string.donate_tv_title) + " by: 忆清鸣、luckyzyx",
-                        summary = stringResource(R.string.donate_tv__summary),
-                        onClick = {
-                            context.openUrl(
-                                if (zh) "https://docs.qq.com/doc/DS2ZDZlNIeUlpdlV1"
-                                else "https://luckyzyx.github.io/LuckyTool_Doc/en/donate"
-                            )
-                        },
-                        onLongClick = { showDonateList = true },
-                    )
-                }
             }
-            if (zh) {
-                item(key = "authorized") {
-                    Text(
-                        text = stringResource(R.string.authorized),
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable {
-                                context.openUrl("https://luckyzyx.github.io/LuckyTool_Doc/use/download_link")
-                            },
-                        fontSize = 16.sp,
-                        color = Color.Red,
-                        textAlign = TextAlign.Center,
-                    )
-                }
+        }
+        if (uiMode == UiMode.Miuix) {
+            CompositionLocalProvider(LocalScopeTopInset provides padding.calculateTopPadding()) {
+                scopeContent()
             }
+        } else {
+            scopeContent()
         }
     }
 

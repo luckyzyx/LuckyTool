@@ -39,8 +39,6 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.TopAppBarDefaults
-import androidx.compose.material3.rememberTopAppBarState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
@@ -54,7 +52,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.painterResource
@@ -72,12 +69,10 @@ import com.luckyzyx.luckytool.R
 import com.luckyzyx.luckytool.ui.activity.MainActivity
 import com.luckyzyx.luckytool.ui.components.preference.LocalScopeTopInset
 import com.luckyzyx.luckytool.ui.components.preference.PrefIndexItem
+import com.luckyzyx.luckytool.ui.components.preference.ScopeScreen
 import com.luckyzyx.luckytool.ui.components.preference.ScrollTarget
 import com.luckyzyx.luckytool.ui.compose.components.EdgeSwipeDismiss
-import com.luckyzyx.luckytool.ui.compose.components.PrefGroup
 import com.luckyzyx.luckytool.ui.compose.components.PrefIconBadge
-import com.luckyzyx.luckytool.ui.compose.components.PrefRow
-import com.luckyzyx.luckytool.ui.compose.components.material.ExpressiveList
 import com.luckyzyx.luckytool.ui.compose.components.material.ExpressivePageScaffold
 import com.luckyzyx.luckytool.ui.compose.components.material.SegmentedTextField
 import com.luckyzyx.luckytool.ui.components.rememberAppIconPainter
@@ -88,8 +83,10 @@ import com.luckyzyx.luckytool.ui.shell.LocalEnableSwipeDismiss
 import com.luckyzyx.luckytool.ui.theme.LocalUiMode
 import com.luckyzyx.luckytool.ui.theme.UiMode
 import com.luckyzyx.luckytool.utils.AppUtils
+import com.luckyzyx.luckytool.utils.LogUtils
 import com.luckyzyx.luckytool.utils.PrefState
 import com.luckyzyx.luckytool.utils.RestartMenuUtils
+import com.luckyzyx.luckytool.utils.SettingsPrefs
 import com.luckyzyx.luckytool.utils.formatStringAuto
 import com.luckyzyx.luckytool.utils.sendPrefsValue
 import io.noties.markwon.Markwon
@@ -216,7 +213,7 @@ private data class TreeRow(
     val pageKey: String,
     val title: String,
     val summary: String?,
-    val icon: Drawable? = null,
+    val packName: String? = null,
 )
 
 /** 分类页彩色徽标配色：固定色（不随深浅色模式变化，与应用图标一致）+ 白色矢量图标 */
@@ -234,12 +231,18 @@ private val categoryBadges: Map<String, CategoryBadge> = mapOf(
 
 /** 功能树条目左侧图标：分类页用彩色圆角徽标 + 白色矢量图标，应用页用 App 图标（圆角裁剪），无图标回退通用应用图标 */
 @Composable
-private fun TreeRowLeading(pageKey: String, title: String, appIcon: Drawable?) {
+private fun TreeRowLeading(pageKey: String, title: String, packName: String?) {
     val badgeShape = RoundedCornerShape(10.dp)
     val badge = categoryBadges[pageKey]
     if (badge != null) {
         PrefIconBadge(badge.icon, badge.color, contentDescription = title)
         return
+    }
+    val context = LocalContext.current
+    // 图标延迟加载：树构建在 IO 线程，这里按 packName 在每行组合期异步取 App 图标，
+    // 避免 produceState 里同步 getAppIcon 拖慢整棵树首帧（白屏根因）
+    val appIcon by produceState<Drawable?>(initialValue = null, key1 = packName) {
+        value = packName?.let { AppUtils(context).getAppIcon(it) }
     }
     val painter = rememberAppIconPainter(appIcon)
     if (painter != null) {
@@ -278,26 +281,31 @@ private fun FunctionTreeScreen(
     onShowRestartMenu: () -> Unit,
 ) {
     val context = LocalContext.current
+    val settings = remember { PrefState.of(context, SettingsPrefs) }
     val rows by produceState(initialValue = emptyList<TreeRow>(), key1 = Unit) {
-        value = withContext(Dispatchers.IO) {
-            ScopePageRegistry.treeOrder.mapNotNull { key ->
-                val spec = ScopePageRegistry[key] ?: return@mapNotNull null
-                if (!spec.isVisible(context)) return@mapNotNull null
-                if (!ScopePageRegistry.isScopeAppPresent(context, spec)) return@mapNotNull null
-                val index = ScopePageRegistry.buildIndex(context, spec)
-                if (index.isEmpty()) return@mapNotNull null
-                val summary = index.mapNotNull { it.title }.take(3).joinToString(" · ").ifEmpty { null }
-                val icon = if (key in categoryBadges) null else AppUtils(context).getAppIcon(spec.packName)
-                TreeRow(key, pageTitle(context, spec), summary, icon)
+        value = try {
+            withContext(Dispatchers.IO) {
+                ScopePageRegistry.treeOrder.mapNotNull { key ->
+                    val spec = ScopePageRegistry[key] ?: return@mapNotNull null
+                    if (!spec.isVisible(context)) return@mapNotNull null
+                    if (!ScopePageRegistry.isScopeAppPresent(context, spec)) return@mapNotNull null
+                    val index = ScopePageRegistry.buildIndex(context, spec)
+                    if (index.isEmpty()) return@mapNotNull null
+                    val summary = index.mapNotNull { it.title }.take(3).joinToString(" · ").ifEmpty { null }
+                    val packName = if (key in categoryBadges) null else spec.packName
+                    TreeRow(key, pageTitle(context, spec), summary, packName)
+                }
             }
+        } catch (t: Throwable) {
+            // buildIndex 内部已逐页兜底，此处再兜底 isVisible/图标/标题等外层自定义逻辑，
+            // 避免任一页面构建异常导致整棵功能树为空（白屏）
+            LogUtils.e("FunctionPage", "buildTree", t.toString(), true)
+            emptyList()
         }
     }
 
-    val scrollBehavior =
-        TopAppBarDefaults.exitUntilCollapsedScrollBehavior(rememberTopAppBarState())
     ExpressivePageScaffold(
         title = stringResource(R.string.nav_function),
-        scrollBehavior = scrollBehavior,
         actions = {
             IconButton(onClick = onOpenSearch) {
                 Icon(
@@ -319,33 +327,47 @@ private fun FunctionTreeScreen(
             }
         },
     ) { padding ->
-        ExpressiveList(
-            scrollBehavior = scrollBehavior,
-            modifier = Modifier
+        val layoutDirection = LocalLayoutDirection.current
+        val uiMode = LocalUiMode.current
+        val scopeModifier = if (uiMode == UiMode.Miuix) {
+            Modifier
                 .fillMaxSize()
-                .padding(padding),
-        ) {
-            // 整树合并为一张分段卡片（对齐主题页分组卡片），条目顺序与原 ListItem 完全一致
-            item(key = "function_tree") {
-                PrefGroup {
-                    rows.forEach { row ->
-                        item(key = row.pageKey) {
-                            PrefRow(
-                                title = row.title,
-                                summary = row.summary,
-                                leading = { TreeRowLeading(row.pageKey, row.title, row.icon) },
-                                trailing = {
-                                    Icon(
-                                        Icons.AutoMirrored.Rounded.KeyboardArrowRight,
-                                        contentDescription = null,
-                                    )
-                                },
-                                onClick = { onOpenPage(row.pageKey, row.title) },
+                .padding(
+                    start = padding.calculateStartPadding(layoutDirection),
+                    end = padding.calculateEndPadding(layoutDirection),
+                    bottom = padding.calculateBottomPadding(),
+                )
+        } else {
+            Modifier.fillMaxSize().padding(padding)
+        }
+        val scopeContent: @Composable () -> Unit = {
+            // 页面级状态在 @Composable 作用域内先读取：只在 ScopeScreen 的 content lambda 内
+            // 读取不会被列表追踪（旧症状：功能树一直白屏）
+            val rowsNow = rows
+            ScopeScreen(state = settings, modifier = scopeModifier) {
+                // 整树合并为一张分段卡片（对齐主题页分组卡片），条目顺序与原 ListItem 完全一致
+                rowsNow.forEach { row ->
+                    click(
+                        title = row.title,
+                        summary = row.summary,
+                        leading = { TreeRowLeading(row.pageKey, row.title, row.packName) },
+                        trailing = {
+                            Icon(
+                                Icons.AutoMirrored.Rounded.KeyboardArrowRight,
+                                contentDescription = null,
                             )
-                        }
-                    }
+                        },
+                        onClick = { onOpenPage(row.pageKey, row.title) },
+                    )
                 }
             }
+        }
+        if (uiMode == UiMode.Miuix) {
+            CompositionLocalProvider(LocalScopeTopInset provides padding.calculateTopPadding()) {
+                scopeContent()
+            }
+        } else {
+            scopeContent()
         }
     }
 }
@@ -360,10 +382,15 @@ private fun FunctionSearchScreen(onBack: () -> Unit, onOpen: (ScopeRoute) -> Uni
     var query by rememberSaveable { mutableStateOf("") }
 
     val entries by produceState(initialValue = emptyList<SearchEntry>(), key1 = Unit) {
-        value = withContext(Dispatchers.IO) {
-            ScopePageRegistry.all().filter { it.isVisible(context) && ScopePageRegistry.isScopeAppPresent(context, it) }.flatMap { spec ->
-                ScopePageRegistry.buildIndex(context, spec).map { item -> SearchEntry(spec.pageKey, pageTitle(context, spec), item) }
+        value = try {
+            withContext(Dispatchers.IO) {
+                ScopePageRegistry.all().filter { it.isVisible(context) && ScopePageRegistry.isScopeAppPresent(context, it) }.flatMap { spec ->
+                    ScopePageRegistry.buildIndex(context, spec).map { item -> SearchEntry(spec.pageKey, pageTitle(context, spec), item) }
+                }
             }
+        } catch (t: Throwable) {
+            LogUtils.e("FunctionPage", "buildSearchEntries", t.toString(), true)
+            emptyList()
         }
     }
 
@@ -378,115 +405,113 @@ private fun FunctionSearchScreen(onBack: () -> Unit, onOpen: (ScopeRoute) -> Uni
         }
     }
 
-    val scrollBehavior =
-        TopAppBarDefaults.exitUntilCollapsedScrollBehavior(rememberTopAppBarState())
     ExpressivePageScaffold(
         title = stringResource(R.string.menu_search),
         onBack = onBack,
-        scrollBehavior = scrollBehavior,
     ) { padding ->
-        ExpressiveList(
-            scrollBehavior = scrollBehavior,
-            modifier = Modifier
+        val layoutDirection = LocalLayoutDirection.current
+        val uiMode = LocalUiMode.current
+        val settings = remember { PrefState.of(context, SettingsPrefs) }
+        val scopeModifier = if (uiMode == UiMode.Miuix) {
+            Modifier
                 .fillMaxSize()
-                .padding(padding),
-        ) {
-            item(key = "search_field") {
-                PrefGroup {
-                    item {
-                        SegmentedTextField(
-                            value = query,
-                            onValueChange = { query = it },
-                            placeholder = { Text(stringResource(R.string.menu_search)) },
-                            singleLine = true,
-                            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
-                            leadingContent = {
-                                Icon(
-                                    painterResource(R.drawable.ic_baseline_search_24),
-                                    contentDescription = null,
-                                )
-                            },
-                            trailingContent = if (query.isNotEmpty()) {
-                                {
-                                    IconButton(onClick = { query = "" }) {
-                                        Icon(
-                                            painterResource(R.drawable.ic_baseline_close_24),
-                                            contentDescription = stringResource(R.string.clear),
-                                        )
-                                    }
-                                }
-                            } else {
-                                null
-                            },
-                        )
-                    }
-                }
-            }
-            if (query.isNotBlank() && entries.isEmpty()) {
-                item(key = "search_index_loading") {
-                    PrefGroup {
-                        item {
-                            PrefRow(title = stringResource(R.string.search_index_loading))
-                        }
-                    }
-                }
-            }
-            if (query.isNotBlank() && entries.isNotEmpty() && filtered.isEmpty()) {
-                item(key = "search_no_results") {
-                    PrefGroup {
-                        item {
-                            PrefRow(title = stringResource(R.string.search_no_results))
-                        }
-                    }
-                }
-            }
-            filtered.forEach { entry ->
-                item(key = "result_${entry.pageKey}/${entry.item.key}") {
-                    PrefGroup {
-                        item {
-                            PrefRow(
-                                title = entry.item.title ?: entry.item.key,
-                                summary = buildString {
-                                    if (!entry.item.summary.isNullOrBlank()) {
-                                        append(entry.item.summary)
-                                        append('\n')
-                                    }
-                                    append(entry.pageTitle)
-                                },
-                                trailing = {
-                                    Icon(
-                                        Icons.AutoMirrored.Rounded.KeyboardArrowRight,
-                                        contentDescription = null,
-                                    )
-                                },
-                                onClick = {
-                                    // page DSL 命中 → 跳目标页；普通偏好命中 → 本页滚动定位
-                                    val targetSpec = entry.item.pageTarget
-                                        ?.let { ScopePageRegistry.pageTargetMap[it] }
-                                        ?.let { ScopePageRegistry[it] }
-                                    if (targetSpec != null) {
-                                        onOpen(
-                                            ScopeRoute(
-                                                targetSpec.pageKey,
-                                                pageTitle(context, targetSpec)
-                                            )
-                                        )
-                                    } else {
-                                        onOpen(
-                                            ScopeRoute(
-                                                entry.pageKey,
-                                                entry.pageTitle,
-                                                entry.item.key,
-                                                entry.item.slot,
-                                            )
-                                        )
-                                    }
-                                },
+                .padding(
+                    start = padding.calculateStartPadding(layoutDirection),
+                    end = padding.calculateEndPadding(layoutDirection),
+                    bottom = padding.calculateBottomPadding(),
+                )
+        } else {
+            Modifier.fillMaxSize().padding(padding)
+        }
+        val scopeContent: @Composable () -> Unit = {
+            // 页面级状态在 @Composable 作用域内先读取：只在 ScopeScreen 的 content lambda 内
+            // 读取不会被列表追踪（旧症状：搜索结果不随输入刷新）
+            val queryNow = query
+            val entriesNow = entries
+            val filteredNow = filtered
+            ScopeScreen(state = settings, modifier = scopeModifier) {
+                custom(key = "search_field") {
+                    SegmentedTextField(
+                        value = queryNow,
+                        onValueChange = { query = it },
+                        placeholder = { Text(stringResource(R.string.menu_search)) },
+                        singleLine = true,
+                        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
+                        leadingContent = {
+                            Icon(
+                                painterResource(R.drawable.ic_baseline_search_24),
+                                contentDescription = null,
                             )
-                        }
-                    }
+                        },
+                        trailingContent = if (queryNow.isNotEmpty()) {
+                            {
+                                IconButton(onClick = { query = "" }) {
+                                    Icon(
+                                        painterResource(R.drawable.ic_baseline_close_24),
+                                        contentDescription = stringResource(R.string.clear),
+                                    )
+                                }
+                            }
+                        } else {
+                            null
+                        },
+                    )
+                }
+                if (queryNow.isNotBlank() && entriesNow.isEmpty()) {
+                    click(title = context.getString(R.string.search_index_loading))
+                }
+                if (queryNow.isNotBlank() && entriesNow.isNotEmpty() && filteredNow.isEmpty()) {
+                    click(title = context.getString(R.string.search_no_results))
+                }
+                filteredNow.forEach { entry ->
+                    click(
+                        title = entry.item.title ?: entry.item.key,
+                        summary = buildString {
+                            if (!entry.item.summary.isNullOrBlank()) {
+                                append(entry.item.summary)
+                                append('\n')
+                            }
+                            append(entry.pageTitle)
+                        },
+                        trailing = {
+                            Icon(
+                                Icons.AutoMirrored.Rounded.KeyboardArrowRight,
+                                contentDescription = null,
+                            )
+                        },
+                        onClick = {
+                            // page DSL 命中 → 跳目标页；普通偏好命中 → 本页滚动定位
+                            val targetSpec = entry.item.pageTarget
+                                ?.let { ScopePageRegistry.pageTargetMap[it] }
+                                ?.let { ScopePageRegistry[it] }
+                            if (targetSpec != null) {
+                                onOpen(
+                                    ScopeRoute(
+                                        targetSpec.pageKey,
+                                        pageTitle(context, targetSpec)
+                                    )
+                                )
+                            } else {
+                                onOpen(
+                                    ScopeRoute(
+                                        entry.pageKey,
+                                        entry.pageTitle,
+                                        entry.item.key,
+                                        entry.item.slot,
+                                    )
+                                )
+                            }
+                        },
+                    )
                 }
             }
+        }
+        if (uiMode == UiMode.Miuix) {
+            CompositionLocalProvider(LocalScopeTopInset provides padding.calculateTopPadding()) {
+                scopeContent()
+            }
+        } else {
+            scopeContent()
         }
     }
 }
@@ -504,12 +529,9 @@ internal fun ScopePageHost(
     val spec = ScopePageRegistry[route.pageKey]
     var showRestartScope by remember { mutableStateOf(false) }
 
-    val scrollBehavior =
-        TopAppBarDefaults.exitUntilCollapsedScrollBehavior(rememberTopAppBarState())
     ExpressivePageScaffold(
         title = route.title.ifBlank { spec?.let { pageTitle(context, it) } ?: route.pageKey },
         onBack = onBack,
-        scrollBehavior = scrollBehavior,
         actions = {
             if (spec?.restartEnabled == true) {
                 IconButton(
@@ -559,12 +581,8 @@ internal fun ScopePageHost(
             // - Miuix 线：骨架给的是真实 innerPadding，其中 top = 顶栏高度；top 经 LocalScopeTopInset 交给
             //   列表充当 contentPadding.top（内容滚动到模糊顶栏之下，KernelSU 式 scroll-under），这里只保留
             //   start/end/bottom 外置 padding（横屏 displayCutout 水平内缩与底部 inset 不能丢）。
-            // Miuix 线不接 m3 顶栏的 nestedScrollConnection：Miuix 骨架走的是自家 MiuixScrollBehavior
-            //（MiuixExpressivePageScaffold 自带 scrollBehavior，并经 LocalScopeScrollBehavior 下发，
-            // ScopeScreen 已在列表上接好）。m3 的 exitUntilCollapsed 行为只在真实 m3 TopAppBar 被布局时
-            // 才会写入 state.heightOffsetLimit（否则 limit 恒为 -Float.MAX_VALUE），Miuix 线没有 m3 顶栏，
-            // 接上去会让 ExitUntilCollapsedScrollBehavior.onPreScroll 把向上滚动的 delta 全部吃掉，
-            // 表现为页面完全无法上滑（内容下移不可见）。
+            // 顶栏不再折叠（标题恒定展开、不随上滑吸顶），两条线都不再把列表滚动联动到顶栏，
+            // 因此这里不接任何 nestedScrollConnection。
             val pageContentModifier = if (uiMode == UiMode.Miuix) {
                 val layoutDirection = LocalLayoutDirection.current
                 Modifier
@@ -578,7 +596,6 @@ internal fun ScopePageHost(
                 Modifier
                     .fillMaxSize()
                     .padding(padding)
-                    .nestedScroll(scrollBehavior.nestedScrollConnection)
             }
             val pageContent: @Composable () -> Unit = {
                 ScopePageContent(

@@ -42,7 +42,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
@@ -72,7 +71,6 @@ import com.luckyzyx.luckytool.ui.theme.UiMode
 import com.luckyzyx.luckytool.utils.PrefState
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import top.yukonga.miuix.kmp.basic.ScrollBehavior
 import top.yukonga.miuix.kmp.basic.Surface
 import top.yukonga.miuix.kmp.utils.overScrollVertical
 import top.yukonga.miuix.kmp.utils.scrollEndHaptic
@@ -89,19 +87,6 @@ import kotlin.time.Duration.Companion.milliseconds
  * 除本机制外不要再补任何 padding 去解决首行遮挡（会与它叠加）。
  */
 internal val LocalScopeTopInset = compositionLocalOf { 0.dp }
-
-/**
- * 顶栏滚动连接槽位（唯一机制）：Miuix 线的页面骨架把自己的 `MiuixScrollBehavior` 从此处下发，
- * 自带 LazyColumn 的消费者（[ScopeScreen] —— 按硬约束不能再套 ExpressiveList）把它接上
- * `nestedScroll(...)`，于是与 `ExpressiveList` 路径一样能驱动顶栏折叠 / 回弹
- * （KernelSU `SettingsMiuix.kt:98-106` 定式里 LazyColumn 的那一句 nestedScroll）。
- *
- * 默认 `null` → material 线、以及不在 Miuix 骨架内的宿主零影响（消费方按 null 跳过，行为与今天一致）。
- * **provide 方是页面骨架**（`ui/compose/components/material/ExpressivePage.kt` 的 Miuix 分支：
- * 那个 `MiuixScrollBehavior` 由骨架自己创建，调用点手里只有 m3 的 scrollBehavior，拿不到它，
- * 因此不在 FunctionPage 侧 provide）；本文件只声明 + 消费。页面自带的 Miuix 列表同样可以消费它。
- */
-internal val LocalScopeScrollBehavior = compositionLocalOf<ScrollBehavior?> { null }
 
 /** 搜索跳转目标：position 为 LazyColumn 槽位（与 [PrefIndexItem.slot] 对应） */
 data class ScrollTarget(val key: String, val position: Int)
@@ -326,24 +311,34 @@ class PrefScopeBuilder internal constructor(
         key: String,
         title: String,
         summary: String? = null,
+        default: Boolean = false,
         enabled: Boolean = true,
         notify: Boolean = false,
+        leading: (@Composable () -> Unit)? = null,
+        beforeApply: ((Boolean, (Boolean) -> Unit) -> Unit)? = null,
         onChange: ((Boolean) -> Unit)? = null,
     ) = emit(key, key, title, summary) { slot ->
-        val checked by state.booleanFlow(key).collectAsStateWithLifecycle()
+        val checked by state.booleanFlow(key, default).collectAsStateWithLifecycle()
         fun apply(newValue: Boolean) {
             state.set(key, newValue)
             if (notify) sendValue(key, newValue)
             onChange?.invoke(newValue)
+        }
+        // beforeApply 允许在落盘前拦截（如生物识别验证通过才写入）；不提供时直接落盘
+        val onCheckedChange: (Boolean) -> Unit = if (beforeApply != null) {
+            { newValue -> beforeApply(newValue, ::apply) }
+        } else {
+            ::apply
         }
         if (LocalUiMode.current == UiMode.Miuix) {
             // Miuix 行自带 insideMargin(16dp)：不再套 material 线的 16dp 外层 padding，触感由行件补 VirtualKey
             MiuixSwitchItem(
                 title = title,
                 checked = checked,
-                onCheckedChange = ::apply,
+                onCheckedChange = onCheckedChange,
                 summary = summary,
                 enabled = enabled,
+                startAction = leading,
             )
         } else {
             Box(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
@@ -353,7 +348,8 @@ class PrefScopeBuilder internal constructor(
                     colors = itemColors(slot),
                     checked = checked,
                     enabled = enabled,
-                    onCheckedChange = ::apply,
+                    leading = leading,
+                    onCheckedChange = onCheckedChange,
                 )
             }
         }
@@ -367,6 +363,7 @@ class PrefScopeBuilder internal constructor(
         entryValues: Array<String>,
         default: String = "",
         summary: String? = null,
+        leading: (@Composable () -> Unit)? = null,
         enabled: Boolean = true,
         notify: Boolean = false,
         onChange: ((String) -> Unit)? = null,
@@ -387,6 +384,7 @@ class PrefScopeBuilder internal constructor(
                 },
                 summary = shownSummary,
                 enabled = enabled,
+                startAction = leading,
             )
         } else {
             Box(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
@@ -396,6 +394,7 @@ class PrefScopeBuilder internal constructor(
                     items = entries.toList(),
                     colors = itemColors(slot),
                     enabled = enabled,
+                    leading = leading,
                     selectedIndex = entryValues.indexOf(current).coerceAtLeast(0),
                     onItemSelected = { index ->
                         val newValue = entryValues.getOrNull(index) ?: return@SegmentedDropdownItem
@@ -661,24 +660,53 @@ class PrefScopeBuilder internal constructor(
         title: String,
         summary: String? = null,
         enabled: Boolean = true,
-        onClick: () -> Unit,
+        leading: (@Composable () -> Unit)? = null,
+        value: String? = null,
+        trailing: (@Composable () -> Unit)? = null,
+        onLongClick: (() -> Unit)? = null,
+        onClick: (() -> Unit)? = null,
     ) = emit(null, null, title, summary) { slot ->
         if (LocalUiMode.current == UiMode.Miuix) {
+            // value 非空 → 导航入口（库内箭头）；否则纯点击行（可选自定义 trailing）。
             // Miuix 行自带 insideMargin(16dp)：不再套 material 线的 16dp 外层 padding
-            MiuixListItem(
-                title = title,
-                summary = summary,
-                onClick = onClick,
-                enabled = enabled,
-            )
+            if (value != null) {
+                MiuixArrowItem(
+                    title = title,
+                    summary = summary,
+                    startAction = leading,
+                    onClick = onClick,
+                    enabled = enabled,
+                )
+            } else {
+                MiuixListItem(
+                    title = title,
+                    summary = summary,
+                    onClick = onClick,
+                    onLongClick = onLongClick,
+                    enabled = enabled,
+                    startAction = leading,
+                    endActions = trailing?.let { content -> { content() } },
+                )
+            }
         } else {
             Box(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
                 SegmentedListItem(
                     onClick = onClick,
+                    onLongClick = onLongClick,
                     enabled = enabled,
                     colors = itemColors(slot),
                     headlineContent = { Text(title) },
                     supportingContent = summary?.let { { Text(it) } },
+                    leadingContent = leading,
+                    trailingContent = trailing ?: value?.let { v ->
+                        {
+                            Text(
+                                text = v,
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.primary,
+                            )
+                        }
+                    },
                 )
             }
         }
@@ -689,8 +717,9 @@ class PrefScopeBuilder internal constructor(
         key: String? = null,
         title: String? = null,
         summary: String? = null,
+        bare: Boolean = false,
         content: @Composable PrefScopeBuilder.(slot: Int) -> Unit,
-    ) = emit(key, key, title, summary, groupable = false, render = { slot -> content(this, slot) })
+    ) = emit(key, key, title, summary, groupable = false, bare = bare, render = { slot -> content(this, slot) })
 }
 
 /**
@@ -713,8 +742,10 @@ fun ScopeScreen(
     fullContent: (@Composable LazyItemScope.(PrefScopeBuilder) -> Unit)? = null,
     content: PrefScopeBuilder.() -> Unit,
 ) {
-    // 订阅 revision：任何偏好写入都会重组本页 → 构建 lambda 重跑 → 条件可见性自动重求值
-    state.revision.collectAsStateWithLifecycle()
+    // 订阅 revision：任何偏好写入都会重组本页 → 构建 lambda 重跑 → 条件可见性自动重求值。
+    // 必须读取 .value：仅调用 collectAsStateWithLifecycle() 并丢弃返回值，快照订阅不会建立，
+    // 条件可见性（基于 state.getXxx() 的 if/let 分支）将不会随偏好写入重求值。
+    state.revision.collectAsStateWithLifecycle().value
 
     val builder = remember(state) { PrefScopeBuilder(state) }
     builder.sendValue = sendValue
@@ -742,6 +773,14 @@ fun ScopeScreen(
 
     // 唯一的 LazyColumn item 缝：条目描述（槽位/分段/元数据）只构建一次，主题差异只在这里分派
     val listItems: LazyListScope.() -> Unit = {
+        // 条目重建必须在 LazyColumn 的 content lambda 内执行（而不是 ScopeScreen 函数体）：
+        // 本 lambda 由 LazyList 的 derivedStateOf 包裹，builder.content() 里对页面级状态
+        // （systemInfo / rows / entries / filtered 等 mutableStateOf）的读取因此进入快照订阅，
+        // 任一变化都会让条目重算、列表刷新。放在函数体里这些读取不参与列表追踪：
+        // 功能树 rows 由空变满不刷新（白屏）、搜索结果不出现、SYSTEMINFO 切页后才显示。
+        builder.beginBuild()
+        builder.content()
+        builder.computeSegments()
         if (fullContent != null) {
             item(key = "full") { fullContent(this, builder) }
         } else {
@@ -792,23 +831,13 @@ fun ScopeScreen(
             // Miuix 线：滚动到底触感 + 自绘回弹；关掉平台 overscroll glow 以免两套回弹叠加。
             // 顶部 inset 由 LocalScopeTopInset 注入（默认 0.dp，provide 方是页面骨架 Miuix 分支）；
             // 水平 12dp 内缩是列表级单一来源（item 层不再叠）；bottom 见下方 inset 计算。
-            // 滚动连接由 LocalScopeScrollBehavior 注入（骨架的 MiuixScrollBehavior）：接上后本列表
-            // 与 ExpressiveList 一样能折叠顶栏 —— 修饰符顺序与 KernelSU SettingsMiuix.kt:98-106 一致。
-            val scopeScrollBehavior = LocalScopeScrollBehavior.current
             // 底部 inset：悬浮胶囊底栏盖在内容之上（Miuix 骨架的 contentWindowInsets 只含水平方向，
             // innerPadding.bottom = 0），列表必须自己预留胶囊高度；系统导航栏/标题栏同理。
             // 取值统一走 expressiveBottomInset（导航栏/caption bar + 悬浮胶囊占位）。
             LazyColumn(
                 modifier = listModifier
                     .scrollEndHaptic()
-                    .overScrollVertical()
-                    .then(
-                        if (scopeScrollBehavior != null) {
-                            Modifier.nestedScroll(scopeScrollBehavior.nestedScrollConnection)
-                        } else {
-                            Modifier
-                        }
-                    ),
+                    .overScrollVertical(),
                 state = listState,
                 contentPadding = PaddingValues(
                     top = LocalScopeTopInset.current,

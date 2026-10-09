@@ -397,7 +397,7 @@ fun MainShell(activity: MainActivity) {
         top.yukonga.miuix.kmp.basic.Scaffold(
             containerColor = containerColor,
             bottomBar = rootBottomBar,
-            // 顶部 inset 由各页自己的顶栏（miuix TopAppBar 的 windowInsetsPadding）处理，
+            // 顶部 inset 由各页自己的顶栏（MiuixCompactTopBar 的 windowInsetsPadding）处理，
             // 根部脚手架不再下推内容，消除「状态栏高度 × 2」的顶部多余空白。
             // 底部/水平 inset 保留默认：底栏（含悬浮胶囊模式）与横屏仍需根部提供。
             contentWindowInsets = WindowInsets.systemBars.union(WindowInsets.displayCutout).only(
@@ -409,7 +409,7 @@ fun MainShell(activity: MainActivity) {
         Scaffold(
             containerColor = containerColor,
             bottomBar = rootBottomBar,
-            // 顶部 inset 由各页自己的顶栏（LargeFlexibleTopAppBar 的 windowInsets）处理，
+            // 顶部 inset 由各页自己的顶栏（TopAppBar / MiuixCompactTopBar 的 windowInsets）处理，
             // 根部脚手架不再下推内容，消除「状态栏高度 × 2」的顶部多余空白。
             // 底部/水平 inset 保留默认：底栏与横屏仍需根部提供。
             contentWindowInsets = ScaffoldDefaults.contentWindowInsets.only(

@@ -113,6 +113,7 @@ fun MiuixSwitchItem(
     modifier: Modifier = Modifier,
     summary: String? = null,
     icon: ImageVector? = null,
+    startAction: (@Composable () -> Unit)? = null,
     enabled: Boolean = true,
 ) {
     val hapticFeedback = LocalHapticFeedback.current
@@ -125,7 +126,7 @@ fun MiuixSwitchItem(
         title = title,
         modifier = modifier,
         summary = summary,
-        startAction = iconStartAction(icon, enabled),
+        startAction = startAction ?: iconStartAction(icon, enabled),
         enabled = enabled,
     )
 }

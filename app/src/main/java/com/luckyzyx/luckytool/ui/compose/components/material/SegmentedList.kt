@@ -72,12 +72,13 @@ import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.round
 import androidx.compose.ui.zIndex
+import com.luckyzyx.luckytool.ui.theme.DesignTokens
 import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
 
 val LocalListItemShapes = compositionLocalOf<ListItemShapes?> { null }
-private val SegmentedOuterRadius = 16.dp
-private val SegmentedInnerRadius = 4.dp
+private val SegmentedOuterRadius = DesignTokens.CardRadius
+private val SegmentedInnerRadius = DesignTokens.ItemInnerRadius
 private const val SegmentedSpringStiffness = 800f
 private const val SegmentedSpringDamping = 0.9f
 
@@ -338,6 +339,7 @@ fun SegmentedSwitchItem(
     colors: ListItemColors = defaultSegmentedColors(),
     checked: Boolean,
     enabled: Boolean = true,
+    leading: (@Composable () -> Unit)? = null,
     onCheckedChange: (Boolean) -> Unit,
 ) {
     val haptic = LocalHapticFeedback.current
@@ -352,7 +354,7 @@ fun SegmentedSwitchItem(
         interactionSource = interactionSource,
         colors = colors,
         headlineContent = { Text(title) },
-        leadingContent = icon?.let { { Icon(it, title) } },
+        leadingContent = leading ?: icon?.let { { Icon(it, title) } },
         trailingContent = {
             ExpressiveSwitch(
                 checked = checked,
@@ -410,6 +412,9 @@ fun SegmentedDropdownItem(
                     textAlign = TextAlign.End,
                     modifier = Modifier.fillMaxWidth(0.3f),
                     color = if (enabled) colorScheme.primary else colorScheme.onSurfaceVariant,
+                    // material3 1.5.0 尾部默认 ItemTrailingSupportingTextFont=LabelSmall(11sp)，
+                    // 覆盖为 bodyMedium(14sp)，与取值条目 PrefValueRow 的尾部值字号一致
+                    style = MaterialTheme.typography.bodyMedium,
                 )
             },
         )
@@ -542,7 +547,7 @@ fun SegmentedTextField(
                     enabled = enabled,
                     readOnly = readOnly,
                     textStyle = textStyle.copy(
-                        colors.supportingContentColor,
+                        colors.contentColor,
                         fontSize = MaterialTheme.typography.bodyMedium.fontSize,
                         lineHeight = MaterialTheme.typography.bodyMedium.lineHeight
                     ),
@@ -559,7 +564,7 @@ fun SegmentedTextField(
                         if (value.isEmpty() && placeholder != null) {
                             Box(contentAlignment = Alignment.CenterStart) {
                                 CompositionLocalProvider(
-                                    LocalContentColor provides colors.supportingContentColor
+                                    LocalContentColor provides colors.contentColor
                                 ) {
                                     ProvideTextStyle(value = MaterialTheme.typography.bodyMedium) {
                                         placeholder()

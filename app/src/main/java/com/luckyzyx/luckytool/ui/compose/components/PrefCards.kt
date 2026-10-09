@@ -3,12 +3,9 @@ package com.luckyzyx.luckytool.ui.compose.components
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.RowScope
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -23,22 +20,23 @@ import com.luckyzyx.luckytool.ui.compose.components.material.SegmentedSwitchItem
 import com.luckyzyx.luckytool.ui.compose.components.miuix.MaterialPrefCardScope
 import com.luckyzyx.luckytool.ui.compose.components.miuix.MiuixListItem
 import com.luckyzyx.luckytool.ui.compose.components.miuix.MiuixPrefCardScope
-import com.luckyzyx.luckytool.ui.compose.components.miuix.MiuixPrefCategoryHeader
 import com.luckyzyx.luckytool.ui.compose.components.miuix.MiuixPrefItem
 import com.luckyzyx.luckytool.ui.compose.components.miuix.MiuixSwitchItem
 import com.luckyzyx.luckytool.ui.compose.components.miuix.PrefCardScope
 import com.luckyzyx.luckytool.ui.theme.LocalUiMode
 import com.luckyzyx.luckytool.ui.theme.UiMode
-import top.yukonga.miuix.kmp.basic.Text as MiuixText
-import top.yukonga.miuix.kmp.theme.MiuixTheme
 
 /**
- * 共享卡片行件（KernelSU 风格分段卡片 / 独立卡片）。
+ * 卡片行 / 卡原语（KernelSU 风格分段卡片 / 独立卡片）。
  *
- * UI 线分派：material 线逐字保留原行为（`Segmented*` 原语 + `MaterialTheme`）；
- * Miuix 线改用 t11 的 `miuix/MiuixPref*` 原语 + `MiuixTheme`。分派开关统一读 [LocalUiMode]，
- * 每处只在渲染体里加一个分支，取值与公开签名不变 —— 15 处 `PrefGroup`/`prefGroup` 与 26 处
- * `PrefRow` 等既有调用点（含 `special/` 零 diff 的 9 处）无需改动。
+ * **「设置区块」的唯一 API 是 `PrefScope` DSL**（`category()` / `switch()` / `click()` / `list()` /
+ * `custom()`，见 `ui/components/preference/PrefScope.kt`）—— 所有标准设置页与作用域页都走它。
+ * 本文件只保留 `custom()` 逃生舱（无法走 DSL 的自定义控件里的单行 / 单卡）所需的原始行 / 卡原语：
+ * [PrefGroup] + [PrefRow] + [PrefSwitchRow]（组内行，形状由所属 [PrefGroup] 决定）、
+ * [PrefCard] + [PrefSwitchCard]（不属于任何分段组的独立卡片）、[PrefIconBadge]（左侧彩色徽标）。
+ *
+ * UI 线分派：material 线用 `Segmented*` 原语 + `MaterialTheme`；Miuix 线用 `miuix/MiuixPref*`
+ * 原语 + `MiuixTheme`；分派开关统一读 [LocalUiMode]。
  */
 
 /**
@@ -65,21 +63,6 @@ fun PrefGroup(
     val scope: PrefCardScope = if (miuix) MiuixPrefCardScope() else MaterialPrefCardScope()
     content(scope)
     scope.render(preferMiuix = miuix, modifier = modifier)
-}
-
-/**
- * 在 LazyListScope 中放置一个分段卡片组。
- * [PrefGroup] 是 @Composable，不能直接写在 `ExpressiveList { }` 的列表作用域里，
- * 因此用本扩展把它包进一个 item。
- */
-fun LazyListScope.prefGroup(
-    key: Any? = null,
-    modifier: Modifier = Modifier,
-    content: PrefCardScope.() -> Unit,
-) {
-    item(key = key) {
-        PrefGroup(modifier = modifier, content = content)
-    }
 }
 
 /** 分段卡片组内的普通条目（形状由所属 [PrefGroup] 决定） */
@@ -155,6 +138,7 @@ fun PrefSwitchRow(
     modifier: Modifier = Modifier,
     summary: String? = null,
     enabled: Boolean = true,
+    leading: (@Composable () -> Unit)? = null,
     onCheckedChange: (Boolean) -> Unit,
 ) {
     if (LocalUiMode.current == UiMode.Miuix) {
@@ -165,6 +149,7 @@ fun PrefSwitchRow(
             onCheckedChange = onCheckedChange,
             modifier = modifier,
             summary = summary,
+            startAction = leading,
             enabled = enabled,
         )
     } else {
@@ -174,48 +159,11 @@ fun PrefSwitchRow(
                 summary = summary,
                 checked = checked,
                 enabled = enabled,
+                leading = leading,
                 onCheckedChange = onCheckedChange,
             )
         }
     }
-}
-
-/** 分段卡片组内的取值条目：尾部显示当前值，点击弹出选择 */
-@Composable
-fun PrefValueRow(
-    title: String,
-    value: String,
-    modifier: Modifier = Modifier,
-    summary: String? = null,
-    enabled: Boolean = true,
-    leading: (@Composable () -> Unit)? = null,
-    onClick: () -> Unit,
-) {
-    PrefRow(
-        title = title,
-        modifier = modifier,
-        summary = summary,
-        onClick = onClick,
-        enabled = enabled,
-        leading = leading,
-        trailing = if (LocalUiMode.current == UiMode.Miuix) {
-            {
-                MiuixText(
-                    text = value,
-                    style = MiuixTheme.textStyles.body2,
-                    color = MiuixTheme.colorScheme.primary,
-                )
-            }
-        } else {
-            {
-                Text(
-                    text = value,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.primary,
-                )
-            }
-        },
-    )
 }
 
 /**
@@ -292,55 +240,5 @@ fun PrefSwitchCard(
                 onCheckedChange = onCheckedChange,
             )
         }
-    }
-}
-
-/** 独立取值卡片（不属于任何分段组时使用） */
-@Composable
-fun PrefValueCard(
-    title: String,
-    value: String,
-    modifier: Modifier = Modifier,
-    summary: String? = null,
-    enabled: Boolean = true,
-    onClick: () -> Unit,
-) {
-    if (LocalUiMode.current == UiMode.Miuix) {
-        MiuixPrefItem(index = 0, count = 1) {
-            PrefValueRow(
-                title = title,
-                value = value,
-                modifier = modifier,
-                summary = summary,
-                enabled = enabled,
-                onClick = onClick,
-            )
-        }
-    } else {
-        SegmentedItem(index = 0, count = 1) {
-            PrefValueRow(
-                title = title,
-                value = value,
-                modifier = modifier,
-                summary = summary,
-                enabled = enabled,
-                onClick = onClick,
-            )
-        }
-    }
-}
-
-/** 分类标题（旧 PreferenceCategory 等价物；样式与 SegmentedColumn title 一致） */
-@Composable
-fun PrefCategoryHeader(title: String, modifier: Modifier = Modifier) {
-    if (LocalUiMode.current == UiMode.Miuix) {
-        MiuixPrefCategoryHeader(title = title, modifier = modifier)
-    } else {
-        Text(
-            text = title,
-            modifier = modifier.padding(start = 16.dp).padding(vertical = 8.dp),
-            style = MaterialTheme.typography.titleSmall,
-            color = MaterialTheme.colorScheme.primary,
-        )
     }
 }

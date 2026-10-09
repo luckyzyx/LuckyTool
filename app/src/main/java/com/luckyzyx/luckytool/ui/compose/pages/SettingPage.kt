@@ -12,6 +12,9 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.calculateEndPadding
+import androidx.compose.foundation.layout.calculateStartPadding
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
@@ -19,18 +22,22 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Backup
 import androidx.compose.material.icons.filled.DeleteSweep
 import androidx.compose.material.icons.filled.Feedback
+import androidx.compose.material.icons.filled.Fingerprint
+import androidx.compose.material.icons.filled.HideImage
 import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.Restore
 import androidx.compose.material.icons.filled.Style
+import androidx.compose.material.icons.filled.SystemUpdate
 import androidx.compose.material.icons.filled.Translate
+import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material.icons.filled.VolunteerActivism
+import androidx.compose.material.icons.filled.Widgets
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.TopAppBarDefaults
-import androidx.compose.material3.rememberTopAppBarState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -38,22 +45,15 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.luckyzyx.luckytool.R
 import com.luckyzyx.luckytool.ui.activity.MainActivity
-import com.luckyzyx.luckytool.ui.compose.components.PrefCategoryHeader
-import com.luckyzyx.luckytool.ui.compose.components.PrefGroup
+import com.luckyzyx.luckytool.ui.components.preference.LocalScopeTopInset
+import com.luckyzyx.luckytool.ui.components.preference.ScopeScreen
 import com.luckyzyx.luckytool.ui.compose.components.PrefIconBadge
-import com.luckyzyx.luckytool.ui.compose.components.PrefRow
-import com.luckyzyx.luckytool.ui.compose.components.PrefSwitchRow
-import com.luckyzyx.luckytool.ui.compose.components.PrefValueRow
-import com.luckyzyx.luckytool.ui.compose.components.material.ExpressiveList
 import com.luckyzyx.luckytool.ui.compose.components.material.ExpressivePageScaffold
-import com.luckyzyx.luckytool.ui.compose.components.material.SegmentedDropdownItem
-import com.luckyzyx.luckytool.ui.compose.components.miuix.MiuixArrowItem
-import com.luckyzyx.luckytool.ui.compose.components.miuix.MiuixDropdownItem
 import com.luckyzyx.luckytool.ui.theme.LocalUiMode
 import com.luckyzyx.luckytool.ui.theme.ThemeController
 import com.luckyzyx.luckytool.ui.theme.ThemePrefs
@@ -86,15 +86,15 @@ import com.luckyzyx.luckytool.utils.removeKey
 import com.luckyzyx.luckytool.utils.showToast
 import org.json.JSONArray
 import org.json.JSONObject
+import top.yukonga.miuix.kmp.basic.BasicComponent
+import top.yukonga.miuix.kmp.basic.ButtonDefaults
+import top.yukonga.miuix.kmp.overlay.OverlayDialog
 import java.io.FileNotFoundException
 import java.io.FileOutputStream
 import java.io.IOException
 import kotlin.system.exitProcess
-import top.yukonga.miuix.kmp.basic.BasicComponent
-import top.yukonga.miuix.kmp.basic.ButtonDefaults
 import top.yukonga.miuix.kmp.basic.Text as MiuixText
 import top.yukonga.miuix.kmp.basic.TextButton as MiuixTextButton
-import top.yukonga.miuix.kmp.overlay.OverlayDialog
 
 /**
  * 设置页（旧 SettingsFragment 的 Compose 等价实现）。
@@ -137,251 +137,178 @@ fun SettingPage(activity: MainActivity, onOpenTheme: () -> Unit = {}) {
     var showClearDialog by remember { mutableStateOf(false) }
     var showFeedbackDialog by remember { mutableStateOf(false) }
 
-    val scrollBehavior =
-        TopAppBarDefaults.exitUntilCollapsedScrollBehavior(rememberTopAppBarState())
     ExpressivePageScaffold(
         title = stringResource(R.string.nav_setting),
-        scrollBehavior = scrollBehavior,
     ) { padding ->
-        ExpressiveList(
-            scrollBehavior = scrollBehavior,
-            modifier = Modifier.padding(padding),
-        ) {
-            // ---------------- 主题 ----------------
-            // 主题模式 / 主题色 / 调色风格 / 色彩规格 / 动态取色 全部迁至独立主题页（对齐 KernelSU colorpalette）
-            item(key = "theme_header") {
-                PrefCategoryHeader(stringResource(R.string.theme_title))
-            }
-            item(key = "theme_group") {
-                PrefGroup {
-                    // 界面风格切换（Material / Miuix）：放在设置页而不是主题页，
-                    // 保证切到 Miuix 后仍能在这里切回 Material。
-                    // 顺序对齐 KernelSU：界面风格在上，主题入口在下
-                    item {
-                        var uiMode by remember {
-                            mutableStateOf(ThemeController.getUiMode(context))
-                        }
-                        val items = UiMode.entries.map { it.name }
-                        val selectedIndex = if (uiMode == UiMode.Material) 1 else 0
-                        val onSelect: (Int) -> Unit = { index ->
-                            val target = UiMode.entries[index]
-                            uiMode = target
-                            context.putString(
-                                SettingsPrefs,
-                                ThemeController.KEY_UI_MODE,
-                                target.value
-                            )
-                            ThemePrefs.notifyChanged()
-                        }
-                        if (LocalUiMode.current == UiMode.Miuix) {
-                            // Miuix 线：OverlayDropdownPreference（弹层挂根部 Miuix Scaffold popup host）
-                            MiuixDropdownItem(
-                                title = stringResource(R.string.settings_ui_mode),
-                                startAction = { PrefIconBadge(Icons.Filled.Style, Color(0xFF9C27B0)) },
-                                summary = stringResource(R.string.settings_ui_mode_summary),
-                                items = items,
-                                selectedIndex = selectedIndex,
-                                onItemSelected = onSelect,
-                            )
-                        } else {
-                            SegmentedDropdownItem(
-                                title = stringResource(R.string.settings_ui_mode),
-                                leading = { PrefIconBadge(Icons.Filled.Style, Color(0xFF9C27B0)) },
-                                summary = stringResource(R.string.settings_ui_mode_summary),
-                                items = items,
-                                selectedIndex = selectedIndex,
-                                onItemSelected = onSelect,
-                            )
-                        }
-                    }
-                    item {
-                        // Miuix 线对齐 KernelSU：主题入口为 ArrowPreference（尾部箭头）；
-                        // material 线保留取值行，取值改为响应式（主题页改完返回立即刷新）
-                        val paletteStyle by settings.stringFlow("palette_style", "TonalSpot")
-                            .collectAsStateWithLifecycle()
-                        if (LocalUiMode.current == UiMode.Miuix) {
-                            MiuixArrowItem(
-                                title = stringResource(R.string.theme_palette),
-                                startAction = { PrefIconBadge(Icons.Filled.Palette, Color(0xFF673AB7)) },
-                                summary = stringResource(R.string.theme_palette_summary),
-                                onClick = onOpenTheme,
-                            )
-                        } else {
-                            PrefValueRow(
-                                title = stringResource(R.string.theme_palette),
-                                leading = { PrefIconBadge(Icons.Filled.Palette, Color(0xFF673AB7)) },
-                                value = paletteStyle,
-                                summary = stringResource(R.string.theme_palette_summary),
-                                onClick = onOpenTheme,
-                            )
-                        }
-                    }
-                }
-            }
+        val layoutDirection = LocalLayoutDirection.current
+        val uiMode = LocalUiMode.current
+        // 作用域内容列表自带 LazyColumn（不能再套 ExpressiveList）；Miuix 线只保留 start/end/bottom
+        // 外置 padding（top 归 0，顶栏高度经 LocalScopeTopInset 交给列表做 contentPadding.top）。
+        val scopeModifier = if (uiMode == UiMode.Miuix) {
+            Modifier
+                .fillMaxSize()
+                .padding(
+                    start = padding.calculateStartPadding(layoutDirection),
+                    end = padding.calculateEndPadding(layoutDirection),
+                    bottom = padding.calculateBottomPadding(),
+                )
+        } else {
+            Modifier
+                .fillMaxSize()
+                .padding(padding)
+        }
+        val scopeContent: @Composable () -> Unit = {
+            ScopeScreen(
+                state = settings,
+                modifier = scopeModifier,
+            ) {
+                // ---------------- 主题 ----------------
+                // 主题模式 / 主题色 / 调色风格 / 色彩规格 / 动态取色 全部迁至独立主题页（对齐 KernelSU colorpalette）
+                category(context.getString(R.string.theme_title))
+                // 界面风格切换（Material / Miuix）：放在设置页而不是主题页，
+                // 保证切到 Miuix 后仍能在这里切回 Material。顺序对齐 KernelSU：界面风格在上，主题入口在下
+                list(
+                    key = ThemeController.KEY_UI_MODE,
+                    title = context.getString(R.string.settings_ui_mode),
+                    entries = UiMode.entries.map { it.name }.toTypedArray(),
+                    entryValues = UiMode.entries.map { it.value }.toTypedArray(),
+                    default = UiMode.DEFAULT_VALUE,
+                    summary = context.getString(R.string.settings_ui_mode_summary),
+                    leading = { PrefIconBadge(Icons.Filled.Style, Color(0xFF9C27B0)) },
+                    onChange = { ThemePrefs.notifyChanged() },
+                )
+                // 主题入口：Miuix 线为箭头（对齐 KernelSU），material 线保留取值行；
+                // 取值随 revision 重建而刷新（主题页改完返回立即刷新）
+                click(
+                    title = context.getString(R.string.theme_palette),
+                    summary = context.getString(R.string.theme_palette_summary),
+                    leading = { PrefIconBadge(Icons.Filled.Palette, Color(0xFF673AB7)) },
+                    value = settings.stringFlow("palette_style", "TonalSpot").value,
+                    onClick = onOpenTheme,
+                )
 
-            // ---------------- 其他 ----------------
-            item(key = "other_header") {
-                PrefCategoryHeader(stringResource(R.string.other_settings))
-            }
-            item(key = "other_group") {
-                var biometricChecked by remember {
-                    mutableStateOf(
-                        settings.getBoolean("enable_biometric_unlock_verification", false)
+                // ---------------- 其他 ----------------
+                category(context.getString(R.string.other_settings))
+                switch(
+                    key = "auto_check_update",
+                    title = context.getString(R.string.auto_check_update),
+                    summary = context.getString(R.string.auto_check_update_summary),
+                    default = true,
+                    leading = { PrefIconBadge(Icons.Filled.SystemUpdate, Color(0xFF4285F4)) },
+                )
+                if (deviceSecure) {
+                    switch(
+                        key = "enable_biometric_unlock_verification",
+                        title = context.getString(R.string.enable_biometric_unlock_verification),
+                        leading = { PrefIconBadge(Icons.Filled.Fingerprint, Color(0xFF00ACC1)) },
+                        beforeApply = { enable, apply ->
+                            if (enable) {
+                                // 旧行为：验证通过才真正写入
+                                BiometricUtils.showBiometricPrompt(
+                                    activity,
+                                    onSucceed = { apply(true) })
+                            } else {
+                                apply(false)
+                            }
+                        },
                     )
                 }
-                PrefGroup {
-                    item {
-                        SettingsSwitch(
-                            settings = settings,
-                            key = "auto_check_update",
-                            title = stringResource(R.string.auto_check_update),
-                            summary = stringResource(R.string.auto_check_update_summary),
-                            default = true,
+                switch(
+                    key = "tile_auto_start",
+                    title = context.getString(R.string.tile_auto_start),
+                    summary = context.getString(R.string.tile_auto_start_summary),
+                    default = true,
+                    leading = { PrefIconBadge(Icons.Filled.Widgets, Color(0xFF4CAF50)) },
+                )
+                switch(
+                    key = "hide_function_page_icon",
+                    title = context.getString(R.string.hide_function_page_icon),
+                    leading = { PrefIconBadge(Icons.Filled.VisibilityOff, Color(0xFFFF9800)) },
+                    onChange = { activity.restart() },
+                )
+                switch(
+                    key = "hide_desktop_module_icon",
+                    title = context.getString(R.string.hide_desktop_module_icon),
+                    summary = context.getString(R.string.hide_desktop_module_icon_summary),
+                    leading = { PrefIconBadge(Icons.Filled.HideImage, Color(0xFF607D8B)) },
+                    onChange = { value ->
+                        AppUtils(context).setComponentDisabled(
+                            ComponentName(
+                                context.packageName,
+                                "${context.packageName}.Hide",
+                            ),
+                            value,
                         )
-                    }
-                    if (deviceSecure) {
-                        item {
-                            PrefSwitchRow(
-                                title = stringResource(R.string.enable_biometric_unlock_verification),
-                                checked = biometricChecked,
-                                onCheckedChange = { enable ->
-                                    if (enable) {
-                                        // 旧行为：验证通过才真正写入
-                                        BiometricUtils.showBiometricPrompt(activity, onSucceed = {
-                                            settings.set(
-                                                "enable_biometric_unlock_verification",
-                                                true
-                                            )
-                                            biometricChecked = true
-                                        })
-                                    } else {
-                                        settings.set("enable_biometric_unlock_verification", false)
-                                        biometricChecked = false
-                                    }
-                                },
-                            )
+                    },
+                )
+
+                // ---------------- 备份/恢复/清除 ----------------
+                category(context.getString(R.string.backup_restore_clear))
+                click(
+                    title = context.getString(R.string.backup_data),
+                    leading = { PrefIconBadge(Icons.Filled.Backup, Color(0xFF4285F4)) },
+                    onClick = {
+                        FileUtils.checkDownloadDir(context, "LuckyTool").apply {
+                            if (isFile) delete()
+                            if (!exists()) mkdirs()
                         }
-                    }
-                    item {
-                        SettingsSwitch(
-                            settings = settings,
-                            key = "tile_auto_start",
-                            title = stringResource(R.string.tile_auto_start),
-                            summary = stringResource(R.string.tile_auto_start_summary),
-                            default = true,
-                        )
-                    }
-                    item {
-                        SettingsSwitch(
-                            settings = settings,
-                            key = "hide_function_page_icon",
-                            title = stringResource(R.string.hide_function_page_icon),
-                            onChanged = { activity.restart() },
-                        )
-                    }
-                    item {
-                        SettingsSwitch(
-                            settings = settings,
-                            key = "hide_desktop_module_icon",
-                            title = stringResource(R.string.hide_desktop_module_icon),
-                            summary = stringResource(R.string.hide_desktop_module_icon_summary),
-                            onChanged = { value ->
-                                AppUtils(context).setComponentDisabled(
-                                    ComponentName(
-                                        context.packageName,
-                                        "${context.packageName}.Hide"
-                                    ),
-                                    value,
-                                )
-                            },
-                        )
-                    }
-                }
-            }
+                        val fileName =
+                            "LuckyTool_" + formatDate("yyyyMMdd_HHmmss") + "_backup.json"
+                        if (IntentUtils(activity).checkCreateDocument()) {
+                            backupLauncher.launch(fileName)
+                        } else {
+                            context.showToast("Intent Create Document Error!")
+                        }
+                    },
+                )
+                click(
+                    title = context.getString(R.string.restore_data),
+                    leading = { PrefIconBadge(Icons.Filled.Restore, Color(0xFF34A853)) },
+                    onClick = {
+                        FileUtils.checkDownloadDir(context, "LuckyTool").apply {
+                            if (isFile) delete()
+                            if (!exists()) mkdirs()
+                        }
+                        restoreLauncher.launch("application/json")
+                    },
+                )
+                click(
+                    title = context.getString(R.string.clear_all_data),
+                    summary = context.getString(R.string.clear_all_data_summary),
+                    leading = { PrefIconBadge(Icons.Filled.DeleteSweep, Color(0xFFEA4335)) },
+                    onClick = { showClearDialog = true },
+                )
 
-            // ---------------- 备份/恢复/清除 ----------------
-            item(key = "backup_header") {
-                PrefCategoryHeader(stringResource(R.string.backup_restore_clear))
+                // ---------------- 关于 ----------------
+                category(context.getString(R.string.about_title))
+                click(
+                    title = context.getString(R.string.donate),
+                    summary = context.getString(R.string.donate_summary),
+                    leading = { PrefIconBadge(Icons.Filled.VolunteerActivism, Color(0xFFE91E63)) },
+                    onClick = { showDonateList = true },
+                )
+                click(
+                    title = context.getString(R.string.feedback_download),
+                    summary = context.getString(R.string.feedback_download_summary),
+                    leading = { PrefIconBadge(Icons.Filled.Feedback, Color(0xFF00ACC1)) },
+                    onClick = { showFeedbackDialog = true },
+                )
+                click(
+                    title = context.getString(R.string.participate_translation),
+                    summary = context.getString(R.string.participate_translation_summary),
+                    leading = { PrefIconBadge(Icons.Filled.Translate, Color(0xFF00897B)) },
+                    onClick = {
+                        context.openUrl("https://github.com/luckyzyx/LuckyTool-Localization")
+                    },
+                )
             }
-            item(key = "backup_group") {
-                PrefGroup {
-                    item {
-                        PrefRow(
-                            title = stringResource(R.string.backup_data),
-                            leading = { PrefIconBadge(Icons.Filled.Backup, Color(0xFF4285F4)) },
-                            onClick = {
-                                FileUtils.checkDownloadDir(context, "LuckyTool").apply {
-                                    if (isFile) delete()
-                                    if (!exists()) mkdirs()
-                                }
-                                val fileName =
-                                    "LuckyTool_" + formatDate("yyyyMMdd_HHmmss") + "_backup.json"
-                                if (IntentUtils(activity).checkCreateDocument()) {
-                                    backupLauncher.launch(fileName)
-                                } else {
-                                    context.showToast("Intent Create Document Error!")
-                                }
-                            },
-                        )
-                    }
-                    item {
-                        PrefRow(
-                            title = stringResource(R.string.restore_data),
-                            leading = { PrefIconBadge(Icons.Filled.Restore, Color(0xFF34A853)) },
-                            onClick = {
-                                FileUtils.checkDownloadDir(context, "LuckyTool").apply {
-                                    if (isFile) delete()
-                                    if (!exists()) mkdirs()
-                                }
-                                restoreLauncher.launch("application/json")
-                            },
-                        )
-                    }
-                    item {
-                        PrefRow(
-                            title = stringResource(R.string.clear_all_data),
-                            leading = { PrefIconBadge(Icons.Filled.DeleteSweep, Color(0xFFEA4335)) },
-                            summary = stringResource(R.string.clear_all_data_summary),
-                            onClick = { showClearDialog = true },
-                        )
-                    }
-                }
+        }
+        if (uiMode == UiMode.Miuix) {
+            CompositionLocalProvider(LocalScopeTopInset provides padding.calculateTopPadding()) {
+                scopeContent()
             }
-
-            // ---------------- 关于 ----------------
-            item(key = "about_header") {
-                PrefCategoryHeader(stringResource(R.string.about_title))
-            }
-            item(key = "about_group") {
-                PrefGroup {
-                    item {
-                        PrefRow(
-                            title = stringResource(R.string.donate),
-                            leading = { PrefIconBadge(Icons.Filled.VolunteerActivism, Color(0xFFE91E63)) },
-                            summary = stringResource(R.string.donate_summary),
-                            onClick = { showDonateList = true },
-                        )
-                    }
-                    item {
-                        PrefRow(
-                            title = stringResource(R.string.feedback_download),
-                            leading = { PrefIconBadge(Icons.Filled.Feedback, Color(0xFF00ACC1)) },
-                            summary = stringResource(R.string.feedback_download_summary),
-                            onClick = { showFeedbackDialog = true },
-                        )
-                    }
-                    item {
-                        PrefRow(
-                            title = stringResource(R.string.participate_translation),
-                            leading = { PrefIconBadge(Icons.Filled.Translate, Color(0xFF00897B)) },
-                            summary = stringResource(R.string.participate_translation_summary),
-                            onClick = {
-                                context.openUrl("https://github.com/luckyzyx/LuckyTool-Localization")
-                            },
-                        )
-                    }
-                }
-            }
+        } else {
+            scopeContent()
         }
     }
 
@@ -495,7 +422,12 @@ fun SettingPage(activity: MainActivity, onOpenTheme: () -> Unit = {}) {
                         text = stringResource(android.R.string.ok),
                         onClick = {
                             showClearDialog = false
-                            context.clearAllPrefs(ModulePrefs, IntentPrefs, SettingsPrefs, OtherPrefs)
+                            context.clearAllPrefs(
+                                ModulePrefs,
+                                IntentPrefs,
+                                SettingsPrefs,
+                                OtherPrefs
+                            )
                             exitProcess(0)
                         },
                         modifier = Modifier.weight(1f),
@@ -657,31 +589,6 @@ fun SettingPage(activity: MainActivity, onOpenTheme: () -> Unit = {}) {
     }
 }
 
-/** 设置开关（写入 PrefState，可选 onChanged 副作用，如重启 Activity / 系统组件） */
-@Composable
-private fun SettingsSwitch(
-    settings: PrefState,
-    key: String,
-    title: String,
-    summary: String? = null,
-    default: Boolean = false,
-    visible: Boolean = true,
-    onChanged: ((Boolean) -> Unit)? = null,
-) {
-    if (!visible) return
-    var checked by remember { mutableStateOf(settings.getBoolean(key, default)) }
-    PrefSwitchRow(
-        title = title,
-        summary = summary,
-        checked = checked,
-        onCheckedChange = { value ->
-            checked = value
-            settings.set(key, value)
-            onChanged?.invoke(value)
-        },
-    )
-}
-
 /** 旧 writeBackupData：JSON(osCode + 四个 prefs 文件) → base64 → 写入 uri */
 private fun writeBackupData(context: Context, uri: Uri) {
     val json = JSONObject().apply { put("osCode", getOSVersionCode) }
@@ -701,7 +608,12 @@ private fun writeBackupData(context: Context, uri: Uri) {
                         value.forEach { arr.put(it) }
                         jsons.put(key, arr)
                     }
-                    is String, is Boolean, is Int, is Long, is Float, is Double -> jsons.put(key, value)
+
+                    is String, is Boolean, is Int, is Long, is Float, is Double -> jsons.put(
+                        key,
+                        value
+                    )
+
                     else -> error("${value.javaClass.name} is not JSON-safe")
                 }
             } catch (t: Throwable) {

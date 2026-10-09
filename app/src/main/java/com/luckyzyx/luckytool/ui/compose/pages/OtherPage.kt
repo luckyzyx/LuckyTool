@@ -12,10 +12,13 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.layout.calculateEndPadding
+import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
@@ -25,6 +28,7 @@ import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AddToHomeScreen
+import androidx.compose.material.icons.filled.AutoFixHigh
 import androidx.compose.material.icons.filled.Bolt
 import androidx.compose.material.icons.filled.GridView
 import androidx.compose.material.icons.filled.Speed
@@ -40,9 +44,8 @@ import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.TopAppBarDefaults
-import androidx.compose.material3.rememberTopAppBarState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -53,13 +56,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.core.graphics.drawable.toBitmap
+import androidx.compose.runtime.LaunchedEffect
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
 import com.luckyzyx.luckytool.IAdbDebugController
@@ -69,10 +73,9 @@ import com.luckyzyx.luckytool.service.AdbService
 import com.luckyzyx.luckytool.service.TilesService
 import com.luckyzyx.luckytool.ui.activity.MainActivity
 import com.luckyzyx.luckytool.ui.components.AppPickerDialog
+import com.luckyzyx.luckytool.ui.components.preference.LocalScopeTopInset
+import com.luckyzyx.luckytool.ui.components.preference.ScopeScreen
 import com.luckyzyx.luckytool.ui.compose.components.PrefIconBadge
-import com.luckyzyx.luckytool.ui.compose.components.PrefRow
-import com.luckyzyx.luckytool.ui.compose.components.prefGroup
-import com.luckyzyx.luckytool.ui.compose.components.material.ExpressiveList
 import com.luckyzyx.luckytool.ui.compose.components.material.ExpressivePageScaffold
 import com.luckyzyx.luckytool.ui.theme.LocalUiMode
 import com.luckyzyx.luckytool.ui.theme.UiMode
@@ -124,101 +127,114 @@ fun OtherPage(activity: MainActivity) {
     var showTouchDialog by remember { mutableStateOf(false) }
     var showAdbDialog by remember { mutableStateOf(false) }
 
-    val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior(rememberTopAppBarState())
-
-    // 旧 onResume：刷新 tiles / adb 控制器
-    LifecycleEventEffect(Lifecycle.Event.ON_RESUME) {
+    // tiles / adb 控制器：首次组合与每次恢复都触发（RootService 冷启动 daemon 未就绪时
+    // 首次 bind 回调未必触发，双触发确保首载）。
+    fun loadControllers() {
         TilesService.get(activity) { tileController = it }
         AdbService.get(activity) { adbController = it }
     }
+    LaunchedEffect(Unit) { loadControllers() }
+    LifecycleEventEffect(Lifecycle.Event.ON_RESUME) { loadControllers() }
 
     ExpressivePageScaffold(
         title = stringResource(R.string.nav_other),
-        scrollBehavior = scrollBehavior,
         actions = {
             IconButton(onClick = { showOptimizePicker = true }) {
                 Icon(
-                    painterResource(R.drawable.ic_baseline_extension_24),
+                    Icons.Filled.AutoFixHigh,
                     contentDescription = "优化App",
                 )
             }
         },
     ) { padding ->
-        ExpressiveList(
-            scrollBehavior = scrollBehavior,
-            modifier = Modifier.padding(padding),
-        ) {
-            // 全部入口合并为一张分段卡片（KernelSU 主题页外观）
-            prefGroup(key = "other_entries") {
-                item(key = "quick_entry") {
-                    PrefRow(
-                        title = stringResource(R.string.quick_entry),
-                        leading = { PrefIconBadge(Icons.Filled.Bolt, Color(0xFFFF9800)) },
-                        summary = stringResource(R.string.quick_entry_summary),
-                        onClick = {
-                            activity.requestFunctionNavigation(
-                                "quick_entry", context.getString(R.string.quick_entry)
-                            )
-                        },
-                    )
-                }
-                @SuppressLint("NewApi")
-                if (SDK >= A13) {
-                    item(key = "tile_list") {
-                        PrefRow(
-                            title = stringResource(R.string.tile_list),
-                            leading = { PrefIconBadge(Icons.Filled.GridView, Color(0xFF4CAF50)) },
-                            summary = stringResource(R.string.tile_list_summary),
-                            onClick = {
-                                context.showToast(context.getString(R.string.tile_list_click_tips))
-                                showTileDialog = true
-                            },
+        val layoutDirection = LocalLayoutDirection.current
+        val uiMode = LocalUiMode.current
+        // 作用域内容列表自带 LazyColumn（不能再套 ExpressiveList）；Miuix 线只保留 start/end/bottom
+        // 外置 padding（top 归 0，顶栏高度经 LocalScopeTopInset 交给列表做 contentPadding.top）。
+        val scopeModifier = if (uiMode == UiMode.Miuix) {
+            Modifier
+                .fillMaxSize()
+                .padding(
+                    start = padding.calculateStartPadding(layoutDirection),
+                    end = padding.calculateEndPadding(layoutDirection),
+                    bottom = padding.calculateBottomPadding(),
+                )
+        } else {
+            Modifier
+                .fillMaxSize()
+                .padding(padding)
+        }
+        val scopeContent: @Composable () -> Unit = {
+            // 控制器状态在 @Composable 作用域内先读取（原因见 HomePage.scopeContent 注释）：
+            // 否则 AIDL 控制器连上后入口不出现，需要切页才显示
+            val touchModeNow = tileController?.checkTouchMode() == true
+            val hasAdbNow = adbController != null
+            ScopeScreen(
+                state = settings,
+                modifier = scopeModifier,
+            ) {
+                // 全部入口合并为一张分段卡片（KernelSU 主题页外观）
+                click(
+                    title = context.getString(R.string.quick_entry),
+                    summary = context.getString(R.string.quick_entry_summary),
+                    leading = { PrefIconBadge(Icons.Filled.Bolt, Color(0xFFFF9800)) },
+                    onClick = {
+                        activity.requestFunctionNavigation(
+                            "quick_entry", context.getString(R.string.quick_entry)
                         )
-                    }
-                }
-                item(key = "shortcut") {
-                    PrefRow(
-                        title = stringResource(R.string.set_module_shortcuts),
-                        leading = { PrefIconBadge(Icons.Filled.AddToHomeScreen, Color(0xFF3F51B5)) },
-                        summary = stringResource(R.string.set_module_shortcuts_summary),
-                        onClick = { showShortcutDialog = true },
-                    )
-                }
-                item(key = "fps") {
-                    PrefRow(
-                        title = stringResource(R.string.fps_title),
-                        leading = { PrefIconBadge(Icons.Filled.Speed, Color(0xFFE91E63)) },
-                        summary = stringResource(R.string.fps_summary),
+                    },
+                )
+                if (SDK >= A13) {
+                    click(
+                        title = context.getString(R.string.tile_list),
+                        summary = context.getString(R.string.tile_list_summary),
+                        leading = { PrefIconBadge(Icons.Filled.GridView, Color(0xFF4CAF50)) },
                         onClick = {
-                            activity.requestFunctionNavigation(
-                                "force_fps", context.getString(R.string.fps_title)
-                            )
+                            context.showToast(context.getString(R.string.tile_list_click_tips))
+                            showTileDialog = true
                         },
                     )
                 }
-                item(
-                    key = "touch_panel",
-                    visible = tileController?.checkTouchMode() == true,
-                ) {
-                    PrefRow(
-                        title = stringResource(R.string.set_touch_sampling_rate_tile_level),
+                click(
+                    title = context.getString(R.string.set_module_shortcuts),
+                    summary = context.getString(R.string.set_module_shortcuts_summary),
+                    leading = { PrefIconBadge(Icons.Filled.AddToHomeScreen, Color(0xFF3F51B5)) },
+                    onClick = { showShortcutDialog = true },
+                )
+                click(
+                    title = context.getString(R.string.fps_title),
+                    summary = context.getString(R.string.fps_summary),
+                    leading = { PrefIconBadge(Icons.Filled.Speed, Color(0xFFE91E63)) },
+                    onClick = {
+                        activity.requestFunctionNavigation(
+                            "force_fps", context.getString(R.string.fps_title)
+                        )
+                    },
+                )
+                if (touchModeNow) {
+                    click(
+                        title = context.getString(R.string.set_touch_sampling_rate_tile_level),
+                        summary = context.getString(R.string.set_touch_sampling_rate_tile_level_summary),
                         leading = { PrefIconBadge(Icons.Filled.TouchApp, Color(0xFF009688)) },
-                        summary = stringResource(R.string.set_touch_sampling_rate_tile_level_summary),
                         onClick = { showTouchDialog = true },
                     )
                 }
-                item(
-                    key = "remote_adb_debug",
-                    visible = adbController != null,
-                ) {
-                    PrefRow(
-                        title = stringResource(R.string.remote_adb_debug_title),
+                if (hasAdbNow) {
+                    click(
+                        title = context.getString(R.string.remote_adb_debug_title),
+                        summary = context.getString(R.string.remote_adb_debug_summary),
                         leading = { PrefIconBadge(Icons.Filled.Terminal, Color(0xFF607D8B)) },
-                        summary = stringResource(R.string.remote_adb_debug_summary),
                         onClick = { showAdbDialog = true },
                     )
                 }
             }
+        }
+        if (uiMode == UiMode.Miuix) {
+            CompositionLocalProvider(LocalScopeTopInset provides padding.calculateTopPadding()) {
+                scopeContent()
+            }
+        } else {
+            scopeContent()
         }
     }
 

@@ -24,6 +24,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Checkbox
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.OutlinedTextField
@@ -41,6 +42,7 @@ import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.painter.BitmapPainter
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.core.graphics.createBitmap
@@ -50,6 +52,7 @@ import com.luckyzyx.luckytool.ui.compose.components.material.SegmentedListItem
 import com.luckyzyx.luckytool.ui.theme.LocalUiMode
 import com.luckyzyx.luckytool.ui.theme.UiMode
 import com.luckyzyx.luckytool.utils.PackageUtils
+import kotlin.math.roundToInt
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import top.yukonga.miuix.kmp.basic.BasicComponent
@@ -76,18 +79,24 @@ enum class AppSortMode(@StringRes val labelRes: Int) {
 
 /** Drawable → Painter（AppInfo.icon 为平台 Drawable，转位图渲染，避免引入图片库） */
 @Composable
-fun rememberAppIconPainter(icon: Drawable?): Painter? = remember(icon) {
-    icon?.let { drawable ->
-        val bitmap = (drawable as? BitmapDrawable)?.bitmap ?: run {
-            val width = drawable.intrinsicWidth.coerceAtLeast(1)
-            val height = drawable.intrinsicHeight.coerceAtLeast(1)
-            val bmp = createBitmap(width, height)
-            val canvas = Canvas(bmp)
-            drawable.setBounds(0, 0, width, height)
-            drawable.draw(canvas)
-            bmp
+fun rememberAppIconPainter(icon: Drawable?): Painter? {
+    val density = LocalDensity.current.density
+    return remember(icon, density) {
+        icon?.let { drawable ->
+            val bitmap = (drawable as? BitmapDrawable)?.bitmap ?: run {
+                // 自适应图标(AdaptiveIconDrawable)的 intrinsicWidth/Height 为 -1，
+                // coerceAtLeast(1) 会生成 1×1 位图导致图标失效；回退到 48dp 尺寸渲染
+                val fallback = (48f * density).roundToInt().coerceAtLeast(1)
+                val width = drawable.intrinsicWidth.takeIf { it > 0 } ?: fallback
+                val height = drawable.intrinsicHeight.takeIf { it > 0 } ?: fallback
+                val bmp = createBitmap(width, height)
+                val canvas = Canvas(bmp)
+                drawable.setBounds(0, 0, width, height)
+                drawable.draw(canvas)
+                bmp
+            }
+            BitmapPainter(bitmap.asImageBitmap())
         }
-        BitmapPainter(bitmap.asImageBitmap())
     }
 }
 
@@ -129,10 +138,12 @@ fun AppPickerDialog(
     onConfirm: (List<AppInfo>) -> Unit,
 ) {
     val context = LocalContext.current
+    var loading by remember { mutableStateOf(true) }
     val apps by produceState<List<AppInfo>>(emptyList()) {
         value = withContext(Dispatchers.IO) {
             PackageUtils(context.packageManager).getInstalledAppInfos(0)
         }
+        loading = false
     }
 
     val state = remember { AppPickerUiState(showSystemApps, enabledList) }
@@ -164,6 +175,7 @@ fun AppPickerDialog(
             multiMode = multiMode,
             state = state,
             filtered = filtered,
+            loading = loading,
             onDismiss = onDismiss,
             onSelect = onSelect,
             onConfirmSelected = onConfirmSelected,
@@ -174,6 +186,7 @@ fun AppPickerDialog(
             multiMode = multiMode,
             state = state,
             filtered = filtered,
+            loading = loading,
             onDismiss = onDismiss,
             onSelect = onSelect,
             onConfirmSelected = onConfirmSelected,
@@ -188,6 +201,7 @@ private fun MaterialAppPickerDialog(
     multiMode: Boolean,
     state: AppPickerUiState,
     filtered: List<AppInfo>,
+    loading: Boolean,
     onDismiss: () -> Unit,
     onSelect: (AppInfo) -> Unit,
     onConfirmSelected: () -> Unit,
@@ -202,6 +216,7 @@ private fun MaterialAppPickerDialog(
                     onValueChange = { state.query = it },
                     placeholder = { Text(stringResource(R.string.appinfo_search_hint)) },
                     singleLine = true,
+                    enabled = !loading,
                     modifier = Modifier.fillMaxWidth(),
                 )
                 Row(
@@ -215,11 +230,13 @@ private fun MaterialAppPickerDialog(
                         selected = state.includeSystem,
                         onClick = { state.includeSystem = !state.includeSystem },
                         label = { Text(stringResource(R.string.appinfo_system_app)) },
+                        enabled = !loading,
                     )
                     FilterChip(
                         selected = state.reverse,
                         onClick = { state.reverse = !state.reverse },
                         label = { Text("倒序") },
+                        enabled = !loading,
                     )
                 }
                 Row(
@@ -233,24 +250,37 @@ private fun MaterialAppPickerDialog(
                             selected = state.sortMode == mode,
                             onClick = { state.sortMode = mode },
                             label = { Text(stringResource(mode.labelRes)) },
+                            enabled = !loading,
                         )
                     }
                 }
                 HorizontalDivider(Modifier.padding(vertical = 4.dp))
-                LazyColumn(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .weight(1f, fill = false)
-                        .heightIn(max = 420.dp),
-                    verticalArrangement = Arrangement.spacedBy(2.dp),
-                ) {
-                    items(filtered, key = { it.packageName }) { app ->
-                        AppRow(
-                            app = app,
-                            multiMode = multiMode,
-                            checked = app.packageName in state.selected,
-                            onSelect = { onSelect(app) },
-                        )
+                if (loading) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .weight(1f, fill = false)
+                            .heightIn(min = 240.dp, max = 420.dp),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        CircularProgressIndicator()
+                    }
+                } else {
+                    LazyColumn(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .weight(1f, fill = false)
+                            .heightIn(max = 420.dp),
+                        verticalArrangement = Arrangement.spacedBy(2.dp),
+                    ) {
+                        items(filtered, key = { it.packageName }) { app ->
+                            AppRow(
+                                app = app,
+                                multiMode = multiMode,
+                                checked = app.packageName in state.selected,
+                                onSelect = { onSelect(app) },
+                            )
+                        }
                     }
                 }
             }
@@ -258,16 +288,16 @@ private fun MaterialAppPickerDialog(
         confirmButton = {
             if (multiMode) {
                 TextButton(
-                    enabled = state.selected.isNotEmpty(),
+                    enabled = !loading && state.selected.isNotEmpty(),
                     onClick = onConfirmSelected,
                 ) { Text(stringResource(android.R.string.ok)) }
             } else {
-                TextButton(onClick = onDismiss) { Text(stringResource(android.R.string.cancel)) }
+                TextButton(enabled = !loading, onClick = onDismiss) { Text(stringResource(android.R.string.cancel)) }
             }
         },
         dismissButton = {
             if (multiMode) {
-                TextButton(onClick = onDismiss) { Text(stringResource(android.R.string.cancel)) }
+                TextButton(enabled = !loading, onClick = onDismiss) { Text(stringResource(android.R.string.cancel)) }
             }
         },
     )
@@ -285,6 +315,7 @@ private fun MiuixAppPickerDialog(
     multiMode: Boolean,
     state: AppPickerUiState,
     filtered: List<AppInfo>,
+    loading: Boolean,
     onDismiss: () -> Unit,
     onSelect: (AppInfo) -> Unit,
     onConfirmSelected: () -> Unit,
@@ -306,6 +337,7 @@ private fun MiuixAppPickerDialog(
                 label = stringResource(R.string.appinfo_search_hint),
                 useLabelAsPlaceholder = true,
                 singleLine = true,
+                enabled = !loading,
             )
             Row(
                 modifier = Modifier
@@ -318,11 +350,13 @@ private fun MiuixAppPickerDialog(
                     selected = state.includeSystem,
                     onClick = { state.includeSystem = !state.includeSystem },
                     label = stringResource(R.string.appinfo_system_app),
+                    enabled = !loading,
                 )
                 MiuixToggleChip(
                     selected = state.reverse,
                     onClick = { state.reverse = !state.reverse },
                     label = "倒序",
+                    enabled = !loading,
                 )
             }
             Row(
@@ -337,6 +371,7 @@ private fun MiuixAppPickerDialog(
                         selected = state.sortMode == mode,
                         onClick = { state.sortMode = mode },
                         label = stringResource(mode.labelRes),
+                        enabled = !loading,
                     )
                 }
             }
@@ -347,17 +382,28 @@ private fun MiuixAppPickerDialog(
                     .padding(top = 8.dp)
                     .weight(1f, fill = false),
             ) {
-                LazyColumn(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalArrangement = Arrangement.spacedBy(2.dp),
-                ) {
-                    items(filtered, key = { it.packageName }) { app ->
-                        MiuixAppRow(
-                            app = app,
-                            multiMode = multiMode,
-                            checked = app.packageName in state.selected,
-                            onSelect = { onSelect(app) },
-                        )
+                if (loading) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .heightIn(min = 240.dp),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        CircularProgressIndicator()
+                    }
+                } else {
+                    LazyColumn(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalArrangement = Arrangement.spacedBy(2.dp),
+                    ) {
+                        items(filtered, key = { it.packageName }) { app ->
+                            MiuixAppRow(
+                                app = app,
+                                multiMode = multiMode,
+                                checked = app.packageName in state.selected,
+                                onSelect = { onSelect(app) },
+                            )
+                        }
                     }
                 }
             }
@@ -371,13 +417,14 @@ private fun MiuixAppPickerDialog(
                     MiuixTextButton(
                         text = stringResource(android.R.string.cancel),
                         onClick = onDismiss,
+                        enabled = !loading,
                         modifier = Modifier.weight(1f),
                     )
                     Spacer(Modifier.width(20.dp))
                     MiuixTextButton(
                         text = stringResource(android.R.string.ok),
                         onClick = onConfirmSelected,
-                        enabled = state.selected.isNotEmpty(),
+                        enabled = !loading && state.selected.isNotEmpty(),
                         modifier = Modifier.weight(1f),
                         colors = ButtonDefaults.textButtonColorsPrimary(),
                     )
@@ -385,6 +432,7 @@ private fun MiuixAppPickerDialog(
                     MiuixTextButton(
                         text = stringResource(android.R.string.cancel),
                         onClick = onDismiss,
+                        enabled = !loading,
                         modifier = Modifier.weight(1f),
                     )
                 }
@@ -399,9 +447,11 @@ private fun MiuixToggleChip(
     selected: Boolean,
     onClick: () -> Unit,
     label: String,
+    enabled: Boolean = true,
 ) {
     Button(
         onClick = onClick,
+        enabled = enabled,
         minWidth = 0.dp,
         minHeight = 32.dp,
         cornerRadius = 16.dp,
