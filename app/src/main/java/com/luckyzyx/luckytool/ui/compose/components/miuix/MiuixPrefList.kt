@@ -1,7 +1,11 @@
 package com.luckyzyx.luckytool.ui.compose.components.miuix
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -12,8 +16,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.unit.dp
-import top.yukonga.miuix.kmp.basic.SmallTitle
+import androidx.compose.ui.unit.sp
 import top.yukonga.miuix.kmp.basic.Surface
+import top.yukonga.miuix.kmp.basic.Text
 import top.yukonga.miuix.kmp.theme.MiuixTheme
 
 /**
@@ -116,14 +121,19 @@ fun MiuixPrefItem(
  * 水平内距显式取 16dp（`SmallTitleDefaults.InsideMargin` 默认为 28dp）：卡片组在列表级
  * 另有 12dp 内缩（`MiuixPrefDefaults.CardHorizontalInset`），16 + 12 = 28dp，
  * 与卡片行文字左对齐。
+ *
+ * 垂直方向与 material 侧 `titleSmall` 对齐：`subtitle`（14sp Bold）本无显式行高，
+ * 字形贴齐行盒顶部；material 的 `titleSmall` 行高 20sp 且字形在行盒内居中，导致
+ * Miuix 侧文字「偏上」。此处显式 `lineHeight = 20.sp` 使字形同样居中，消除偏移。
  */
 @Composable
 fun MiuixPrefCategoryHeader(title: String, modifier: Modifier = Modifier) {
-    SmallTitle(
+    Text(
         text = title,
-        modifier = modifier,
-        textColor = MiuixTheme.colorScheme.onBackgroundVariant,
-        insideMargin = PaddingValues(16.dp, 8.dp),
+        modifier = modifier.padding(16.dp, 8.dp),
+        color = MiuixTheme.colorScheme.onBackgroundVariant,
+        style = MiuixTheme.textStyles.subtitle,
+        lineHeight = 20.sp,
     )
 }
 
@@ -155,8 +165,10 @@ class MiuixPrefScope internal constructor() {
 /**
  * 卡片组的唯一渲染点：可见条目顺序渲染，首条承载组间距，其余承载组内间距。
  *
- * 隐藏条目（`visible = false`）直接跳过（Miuix 线无弹性显隐过渡，属登记差异）；
- * material 侧由 `SegmentedColumn` 的动画路径自行处理，此处不复制解析逻辑。
+ * 条目不再被「直接跳过」，而是始终留在组合树里用 [AnimatedVisibility] 折叠/展开，
+ * 使 `visible = false → true` 出现时带淡入 + 纵向展开过渡（与 material 侧
+ * `SegmentedColumn` 的弹性显隐对齐），避免 AIDL 服务连上后条目突然弹出。
+ * 分段圆角仍按「可见索引 / 可见总数」计算，隐藏条目不计入。
  */
 @Composable
 internal fun MiuixPreferenceGroup(
@@ -164,22 +176,31 @@ internal fun MiuixPreferenceGroup(
     modifier: Modifier = Modifier,
     title: String = "",
 ) {
-    val visibleEntries = entries.filter { it.visible }
-    if (visibleEntries.isEmpty()) return
+    if (entries.none { it.visible }) return
     Column(modifier = modifier) {
         if (title.isNotEmpty()) {
             MiuixPrefCategoryHeader(title)
         }
-        visibleEntries.forEachIndexed { index, entry ->
-            key(entry.key ?: index) {
-                MiuixPrefItem(
-                    index = index,
-                    count = visibleEntries.size,
-                    modifier = Modifier.padding(
-                        top = if (index == 0) MiuixPrefDefaults.GroupGap else MiuixPrefDefaults.ItemGap,
-                    ),
+        val visibleCount = entries.count { it.visible }
+        var visibleIndex = 0
+        entries.forEachIndexed { rawIndex, entry ->
+            val index = visibleIndex
+            if (entry.visible) visibleIndex++
+            key(entry.key ?: rawIndex) {
+                AnimatedVisibility(
+                    visible = entry.visible,
+                    enter = fadeIn() + expandVertically(),
+                    exit = fadeOut() + shrinkVertically(),
                 ) {
-                    entry.content()
+                    MiuixPrefItem(
+                        index = index,
+                        count = visibleCount,
+                        modifier = Modifier.padding(
+                            top = if (index == 0) MiuixPrefDefaults.GroupGap else MiuixPrefDefaults.ItemGap,
+                        ),
+                    ) {
+                        entry.content()
+                    }
                 }
             }
         }

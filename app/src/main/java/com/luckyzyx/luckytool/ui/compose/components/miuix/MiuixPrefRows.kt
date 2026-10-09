@@ -5,7 +5,6 @@ import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
@@ -15,7 +14,6 @@ import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.unit.dp
 import top.yukonga.miuix.kmp.basic.BasicComponent
 import top.yukonga.miuix.kmp.basic.Icon
-import top.yukonga.miuix.kmp.basic.TextField
 import top.yukonga.miuix.kmp.preference.ArrowPreference
 import top.yukonga.miuix.kmp.preference.CheckboxLocation
 import top.yukonga.miuix.kmp.preference.CheckboxPreference
@@ -139,6 +137,7 @@ fun MiuixArrowItem(
     modifier: Modifier = Modifier,
     summary: String? = null,
     icon: ImageVector? = null,
+    startAction: (@Composable () -> Unit)? = null,
     onClick: (() -> Unit)? = null,
     enabled: Boolean = true,
 ) {
@@ -146,7 +145,7 @@ fun MiuixArrowItem(
         title = title,
         modifier = modifier,
         summary = summary,
-        startAction = iconStartAction(icon, enabled),
+        startAction = startAction ?: iconStartAction(icon, enabled),
         onClick = onClick,
         enabled = enabled,
     )
@@ -169,6 +168,7 @@ fun MiuixDropdownItem(
     modifier: Modifier = Modifier,
     summary: String? = null,
     icon: ImageVector? = null,
+    startAction: (@Composable () -> Unit)? = null,
     enabled: Boolean = true,
     onClick: (() -> Unit)? = null,
 ) {
@@ -179,7 +179,7 @@ fun MiuixDropdownItem(
         title = title,
         modifier = modifier,
         summary = summary,
-        startAction = iconStartAction(icon, enabled),
+        startAction = startAction ?: iconStartAction(icon, enabled),
         enabled = enabled,
         onExpandedChange = { expanded -> if (expanded) onClick?.invoke() },
         onSelectedIndexChange = { index ->
@@ -272,31 +272,4 @@ fun MiuixSliderRow(
     )
 }
 
-/**
- * 文本输入条目。
- *
- * 用库内 `TextField(value: String, onValueChange: (String) -> Unit, ...)` 重载
- * （`basic/TextField.kt:294-317`，仓库内 `ScaleDialog.kt:45-66` 已在用），
- * 以受控方式与调用方状态紧耦合；[label] 映射到库内 `label`。
- */
-@Composable
-fun MiuixTextFieldRow(
-    value: String,
-    onValueChange: (String) -> Unit,
-    modifier: Modifier = Modifier,
-    label: String = "",
-    enabled: Boolean = true,
-    readOnly: Boolean = false,
-    keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
-) {
-    TextField(
-        value = value,
-        onValueChange = onValueChange,
-        modifier = modifier,
-        label = label,
-        enabled = enabled,
-        readOnly = readOnly,
-        keyboardOptions = keyboardOptions,
-        maxLines = 1,
-    )
-}
+

@@ -23,6 +23,13 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AddToHomeScreen
+import androidx.compose.material.icons.filled.Bolt
+import androidx.compose.material.icons.filled.GridView
+import androidx.compose.material.icons.filled.Speed
+import androidx.compose.material.icons.filled.Terminal
+import androidx.compose.material.icons.filled.TouchApp
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -44,6 +51,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.toMutableStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -61,6 +69,7 @@ import com.luckyzyx.luckytool.service.AdbService
 import com.luckyzyx.luckytool.service.TilesService
 import com.luckyzyx.luckytool.ui.activity.MainActivity
 import com.luckyzyx.luckytool.ui.components.AppPickerDialog
+import com.luckyzyx.luckytool.ui.compose.components.PrefIconBadge
 import com.luckyzyx.luckytool.ui.compose.components.PrefRow
 import com.luckyzyx.luckytool.ui.compose.components.prefGroup
 import com.luckyzyx.luckytool.ui.compose.components.material.ExpressiveList
@@ -104,8 +113,10 @@ fun OtherPage(activity: MainActivity) {
     val settings = remember { PrefState.of(context, SettingsPrefs) }
     val otherPrefs = remember { PrefState.of(context, OtherPrefs) }
     val scope = rememberCoroutineScope()
-    var tileController by remember { mutableStateOf<ITileServiceController?>(null) }
-    var adbController by remember { mutableStateOf<IAdbDebugController?>(null) }
+    // 初始值从进程级缓存取：tab 切换销毁本页组合、remember 会重置，若从 null 起步
+    // 每次切回都会重新加载并重放显隐动画；用服务端已缓存的存活控制器做种子即可瞬时还原
+    var tileController by remember { mutableStateOf(TilesService.getCachedController()) }
+    var adbController by remember { mutableStateOf(AdbService.getCachedController()) }
     var showOptimizePicker by remember { mutableStateOf(false) }
     var optimizeScopes by remember { mutableStateOf<ArrayMap<String, CharSequence>?>(null) }
     var showTileDialog by remember { mutableStateOf(false) }
@@ -142,6 +153,7 @@ fun OtherPage(activity: MainActivity) {
                 item(key = "quick_entry") {
                     PrefRow(
                         title = stringResource(R.string.quick_entry),
+                        leading = { PrefIconBadge(Icons.Filled.Bolt, Color(0xFFFF9800)) },
                         summary = stringResource(R.string.quick_entry_summary),
                         onClick = {
                             activity.requestFunctionNavigation(
@@ -155,6 +167,7 @@ fun OtherPage(activity: MainActivity) {
                     item(key = "tile_list") {
                         PrefRow(
                             title = stringResource(R.string.tile_list),
+                            leading = { PrefIconBadge(Icons.Filled.GridView, Color(0xFF4CAF50)) },
                             summary = stringResource(R.string.tile_list_summary),
                             onClick = {
                                 context.showToast(context.getString(R.string.tile_list_click_tips))
@@ -166,6 +179,7 @@ fun OtherPage(activity: MainActivity) {
                 item(key = "shortcut") {
                     PrefRow(
                         title = stringResource(R.string.set_module_shortcuts),
+                        leading = { PrefIconBadge(Icons.Filled.AddToHomeScreen, Color(0xFF3F51B5)) },
                         summary = stringResource(R.string.set_module_shortcuts_summary),
                         onClick = { showShortcutDialog = true },
                     )
@@ -173,6 +187,7 @@ fun OtherPage(activity: MainActivity) {
                 item(key = "fps") {
                     PrefRow(
                         title = stringResource(R.string.fps_title),
+                        leading = { PrefIconBadge(Icons.Filled.Speed, Color(0xFFE91E63)) },
                         summary = stringResource(R.string.fps_summary),
                         onClick = {
                             activity.requestFunctionNavigation(
@@ -181,23 +196,27 @@ fun OtherPage(activity: MainActivity) {
                         },
                     )
                 }
-                if (tileController?.checkTouchMode() == true) {
-                    item(key = "touch_panel") {
-                        PrefRow(
-                            title = stringResource(R.string.set_touch_sampling_rate_tile_level),
-                            summary = stringResource(R.string.set_touch_sampling_rate_tile_level_summary),
-                            onClick = { showTouchDialog = true },
-                        )
-                    }
+                item(
+                    key = "touch_panel",
+                    visible = tileController?.checkTouchMode() == true,
+                ) {
+                    PrefRow(
+                        title = stringResource(R.string.set_touch_sampling_rate_tile_level),
+                        leading = { PrefIconBadge(Icons.Filled.TouchApp, Color(0xFF009688)) },
+                        summary = stringResource(R.string.set_touch_sampling_rate_tile_level_summary),
+                        onClick = { showTouchDialog = true },
+                    )
                 }
-                if (adbController != null) {
-                    item(key = "remote_adb_debug") {
-                        PrefRow(
-                            title = stringResource(R.string.remote_adb_debug_title),
-                            summary = stringResource(R.string.remote_adb_debug_summary),
-                            onClick = { showAdbDialog = true },
-                        )
-                    }
+                item(
+                    key = "remote_adb_debug",
+                    visible = adbController != null,
+                ) {
+                    PrefRow(
+                        title = stringResource(R.string.remote_adb_debug_title),
+                        leading = { PrefIconBadge(Icons.Filled.Terminal, Color(0xFF607D8B)) },
+                        summary = stringResource(R.string.remote_adb_debug_summary),
+                        onClick = { showAdbDialog = true },
+                    )
                 }
             }
         }
@@ -388,7 +407,7 @@ private fun ShortcutDialog(context: Context, onDismiss: () -> Unit) {
                     text = stringResource(android.R.string.ok),
                     onClick = {
                         beans.forEachIndexed { i, bean ->
-                            if (checked[i]) shortcutUtils.setShortcutStatus(beans, bean, true)
+                            shortcutUtils.setShortcutStatus(beans, bean, checked[i])
                         }
                         onDismiss()
                     },
@@ -426,7 +445,7 @@ private fun ShortcutDialog(context: Context, onDismiss: () -> Unit) {
                 TextButton(
                     onClick = {
                         beans.forEachIndexed { i, bean ->
-                            if (checked[i]) shortcutUtils.setShortcutStatus(beans, bean, true)
+                            shortcutUtils.setShortcutStatus(beans, bean, checked[i])
                         }
                         onDismiss()
                     },

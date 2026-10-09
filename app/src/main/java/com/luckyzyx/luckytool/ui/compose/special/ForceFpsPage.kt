@@ -3,6 +3,10 @@ package com.luckyzyx.luckytool.ui.compose.special
 import android.app.Activity
 import android.content.Context
 import android.content.ContextWrapper
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -67,7 +71,8 @@ object ForceFpsPage {
     ) {
         val c = requireNotNull(context) { "ScopeScreen 未注入 Context" }
         custom(key = "force_fps_body") {
-            var controller by remember { mutableStateOf<IRefreshRateController?>(null) }
+            // 进程级缓存做种子：进入子页不重新加载，直接用 RefreshRateService 已缓存的存活控制器
+            var controller by remember { mutableStateOf(RefreshRateService.getCachedController()) }
 
             suspend fun fetchController(): IRefreshRateController? =
                 suspendCancellableCoroutine { cont ->
@@ -111,48 +116,55 @@ object ForceFpsPage {
                     enabled = controller != null && !isUnsupport && fpsCur != -1,
                     onCheckedChange = { v -> state.set(keyFpsAutoStart, v) },
                 )
-                if (isUnsupport) {
-                    if (miuix) {
-                        MiuixText(
-                            text = c.getString(R.string.fps_no_data),
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(vertical = 24.dp),
-                            textAlign = TextAlign.Center,
-                        )
+                // 控制器连上前后在「无数据提示」与「模式单选列表」之间平滑过渡，避免整块突然切换
+                AnimatedContent(
+                    targetState = isUnsupport,
+                    transitionSpec = { fadeIn() togetherWith fadeOut() },
+                    label = "fps_modes",
+                ) { unsupported ->
+                    if (unsupported) {
+                        if (miuix) {
+                            MiuixText(
+                                text = c.getString(R.string.fps_no_data),
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(vertical = 24.dp),
+                                textAlign = TextAlign.Center,
+                            )
+                        } else {
+                            Text(
+                                c.getString(R.string.fps_no_data),
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(vertical = 24.dp),
+                                textAlign = TextAlign.Center,
+                            )
+                        }
                     } else {
-                        Text(
-                            c.getString(R.string.fps_no_data),
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(vertical = 24.dp),
-                            textAlign = TextAlign.Center,
-                        )
-                    }
-                } else {
-                    // 模式单选列表（旧 ListView CHOICE_MODE_SINGLE；id 即 index）
-                    PrefGroup {
-                        modes.forEachIndexed { index, mode ->
-                            item {
-                                val title =
-                                    "${mode.id}   ${mode.width} x ${mode.height}   ${mode.refreshRate}"
-                                val onSelect: () -> Unit = {
-                                    state.set(keyFpsCur, index)
-                                    controller?.setRefreshRateMode(index)
-                                }
-                                if (miuix) {
-                                    // Miuix 线等价件（t11 产出，库内 RadioButtonPreference）
-                                    MiuixRadioItem(
-                                        title = title,
-                                        selected = index == fpsCur,
-                                        onClick = onSelect,
-                                    )
-                                } else {
-                                    SegmentedRadioItem(
-                                        title = title,
-                                        selected = index == fpsCur,
-                                        onClick = onSelect,
-                                    )
+                        // 模式单选列表（旧 ListView CHOICE_MODE_SINGLE；选中/设置均以 mode.id 为准）
+                        PrefGroup {
+                            modes.forEach { mode ->
+                                item {
+                                    val title =
+                                        "${mode.id}   ${mode.width} x ${mode.height}   ${mode.refreshRate}"
+                                    val onSelect: () -> Unit = {
+                                        state.set(keyFpsCur, mode.id)
+                                        controller?.setRefreshRateMode(mode.id)
+                                    }
+                                    if (miuix) {
+                                        // Miuix 线等价件（t11 产出，库内 RadioButtonPreference）
+                                        MiuixRadioItem(
+                                            title = title,
+                                            selected = mode.id == fpsCur,
+                                            onClick = onSelect,
+                                        )
+                                    } else {
+                                        SegmentedRadioItem(
+                                            title = title,
+                                            selected = mode.id == fpsCur,
+                                            onClick = onSelect,
+                                        )
+                                    }
                                 }
                             }
                         }

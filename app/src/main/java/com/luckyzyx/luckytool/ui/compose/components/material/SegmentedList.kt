@@ -21,7 +21,6 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
-import androidx.compose.material3.Checkbox
 import androidx.compose.material3.Icon
 import androidx.compose.material3.ListItemColors
 import androidx.compose.material3.ListItemDefaults
@@ -93,6 +92,12 @@ fun defaultSegmentedColors(
     containerColor = containerColor,
     disabledContainerColor = containerColor,
     supportingContentColor = colorScheme.onSurfaceVariant,
+    // 选中态对齐主题强调色，覆盖 material3 默认的 secondaryContainer（会偏离主题色）
+    selectedContainerColor = colorScheme.primaryContainer,
+    selectedContentColor = colorScheme.onPrimaryContainer,
+    selectedLeadingContentColor = colorScheme.onPrimaryContainer,
+    selectedTrailingContentColor = colorScheme.onPrimaryContainer,
+    selectedSupportingContentColor = colorScheme.onPrimaryContainer,
 )
 
 @Composable
@@ -121,7 +126,7 @@ fun SegmentedColumn(
                 text = title,
                 style = MaterialTheme.typography.titleSmall,
                 color = colorScheme.primary,
-                modifier = Modifier.padding(start = 16.dp, bottom = 8.dp),
+                modifier = Modifier.padding(start = 16.dp, top = 8.dp, bottom = 8.dp),
             )
         }
         Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
@@ -174,7 +179,7 @@ fun SegmentedColumn(
                 text = title,
                 style = MaterialTheme.typography.titleSmall,
                 color = colorScheme.primary,
-                modifier = Modifier.padding(start = 16.dp, bottom = 8.dp),
+                modifier = Modifier.padding(start = 16.dp, top = 8.dp, bottom = 8.dp),
             )
         }
 
@@ -369,6 +374,7 @@ fun SegmentedDropdownItem(
     items: List<String>,
     colors: ListItemColors = defaultSegmentedColors(),
     enabled: Boolean = true,
+    leading: (@Composable () -> Unit)? = null,
     onClick: (() -> Unit)? = null,
     selectedIndex: Int,
     onItemSelected: (Int) -> Unit,
@@ -395,7 +401,7 @@ fun SegmentedDropdownItem(
             } else null,
             enabled = enabled,
             colors = colors,
-            leadingContent = icon?.let { { Icon(it, title) } },
+            leadingContent = leading ?: icon?.let { { Icon(it, title) } },
             headlineContent = { Text(text = title) },
             supportingContent = summary?.let { { Text(it) } },
             trailingContent = {
@@ -424,6 +430,12 @@ fun SegmentedDropdownItem(
                         expanded = false
                     },
                     shapes = MenuDefaults.itemShape(index = index, count = items.size),
+                    // 选中态对齐主题强调色，覆盖 material3 默认的 tertiaryContainer（粉色调）
+                    colors = MenuDefaults.selectableItemColors(
+                        selectedTextColor = colorScheme.onPrimaryContainer,
+                        selectedContainerColor = colorScheme.primaryContainer,
+                        selectedLeadingIconColor = colorScheme.onPrimaryContainer,
+                    ),
                     selectedLeadingIcon = {
                         Icon(
                             Icons.Filled.Check,
@@ -464,43 +476,6 @@ fun SegmentedRadioItem(
                 selected = selected,
                 onClick = null,
                 enabled = enabled
-            )
-        },
-        supportingContent = summary?.let { { Text(it) } }
-    )
-}
-
-/** 多选项条目：点击整行切换，头部为复选框 */
-@Composable
-fun SegmentedCheckboxItem(
-    title: String,
-    summary: String? = null,
-    colors: ListItemColors = defaultSegmentedColors(),
-    checked: Boolean,
-    enabled: Boolean = true,
-    onCheckedChange: (Boolean) -> Unit,
-) {
-    val haptic = LocalHapticFeedback.current
-    val interactionSource = remember { MutableInteractionSource() }
-
-    SegmentedListItem(
-        checked = checked,
-        onCheckedChange = {
-            haptic.performHapticFeedback(HapticFeedbackType.VirtualKey)
-            onCheckedChange(it)
-        },
-        shapes = LocalListItemShapes.current ?: ListItemDefaults.segmentedShapes(0, 1),
-        enabled = enabled,
-        colors = colors,
-        interactionSource = interactionSource,
-        content = { Text(title) },
-        leadingContent = {
-            Checkbox(
-                checked = checked,
-                enabled = enabled,
-                onCheckedChange = null,
-                interactionSource = interactionSource,
-                modifier = Modifier.size(24.dp)
             )
         },
         supportingContent = summary?.let { { Text(it) } }

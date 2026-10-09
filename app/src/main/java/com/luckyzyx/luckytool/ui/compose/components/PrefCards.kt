@@ -1,13 +1,21 @@
 package com.luckyzyx.luckytool.ui.compose.components
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyListScope
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
 import com.luckyzyx.luckytool.ui.compose.components.material.SegmentedItem
 import com.luckyzyx.luckytool.ui.compose.components.material.SegmentedListItem
@@ -115,6 +123,30 @@ fun PrefRow(
     }
 }
 
+/** 左侧彩色徽标图标：固定色圆角底 + 白色矢量图标（功能树分类页 / 其他页 / 设置页通用） */
+@Composable
+fun PrefIconBadge(
+    icon: ImageVector,
+    color: Color,
+    modifier: Modifier = Modifier,
+    contentDescription: String? = null,
+) {
+    Box(
+        modifier = modifier
+            .size(40.dp)
+            .clip(RoundedCornerShape(10.dp))
+            .background(color),
+        contentAlignment = Alignment.Center,
+    ) {
+        Icon(
+            imageVector = icon,
+            contentDescription = contentDescription,
+            tint = Color.White,
+            modifier = Modifier.size(22.dp),
+        )
+    }
+}
+
 /** 分段卡片组内的开关条目：整行点击切换，尾部为 Expressive 开关 */
 @Composable
 fun PrefSwitchRow(
@@ -156,6 +188,7 @@ fun PrefValueRow(
     modifier: Modifier = Modifier,
     summary: String? = null,
     enabled: Boolean = true,
+    leading: (@Composable () -> Unit)? = null,
     onClick: () -> Unit,
 ) {
     PrefRow(
@@ -164,6 +197,7 @@ fun PrefValueRow(
         summary = summary,
         onClick = onClick,
         enabled = enabled,
+        leading = leading,
         trailing = if (LocalUiMode.current == UiMode.Miuix) {
             {
                 MiuixText(
@@ -304,7 +338,7 @@ fun PrefCategoryHeader(title: String, modifier: Modifier = Modifier) {
     } else {
         Text(
             text = title,
-            modifier = modifier.padding(top = 12.dp, bottom = 4.dp),
+            modifier = modifier.padding(start = 16.dp).padding(vertical = 8.dp),
             style = MaterialTheme.typography.titleSmall,
             color = MaterialTheme.colorScheme.primary,
         )

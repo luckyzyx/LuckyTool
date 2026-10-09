@@ -46,6 +46,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.toRoute
 import com.luckyzyx.luckytool.R
 import com.luckyzyx.luckytool.ui.activity.MainActivity
 import com.luckyzyx.luckytool.ui.compose.components.EdgeSwipeDismiss
@@ -117,6 +118,8 @@ fun MainShell(activity: MainActivity) {
     val onHomeTab = currentDestination?.hasRoute<HomeRoute>() == true
     // 主题页为全屏子页：隐藏底部导航，避免与页内 ExpressiveScaffold 顶栏叠加
     val onThemePage = currentDestination?.hasRoute<ThemeRoute>() == true
+    // 跨 tab 直达的作用域页为全屏页：同样隐藏底栏，返回时回到来源 tab，不再切到 Function tab
+    val onScopePage = currentDestination?.hasRoute<ScopeRoute>() == true
 
     val uiMode = LocalUiMode.current
     val isMiuix = uiMode == UiMode.Miuix
@@ -125,8 +128,8 @@ fun MainShell(activity: MainActivity) {
     val enableFloatingBottomBarBlur = LocalEnableFloatingBottomBarBlur.current
     val enableBadge = LocalEnableNavigationBadge.current
 
-    val showBar = !onThemePage
-    // 悬浮底栏：Miuix 外观线 + 开关开启（主题页自身不显示底栏）
+    val showBar = !onThemePage && !onScopePage
+    // 悬浮底栏：Miuix 外观线 + 开关开启（主题页/全屏作用域页自身不显示底栏）
     val floatingBar = isMiuix && showBar && enableFloatingBottomBar
 
     // 回传当前 tab 状态（MainActivity.onResume 显示恢复 / checkOs 判断）
@@ -136,13 +139,13 @@ fun MainShell(activity: MainActivity) {
     // Function tab 由子树处理返回键：关闭 Compose 侧自动返回，避免双处理
     LaunchedEffect(onFunctionTab) { navController.enableOnBackPressed(!onFunctionTab) }
 
-    // 跨 tab 跳转请求（Compose 页面 → Function 子树作用域页）：只切 tab，FunctionPage 消费执行
-    // 注意：这里不 popUpTo 来源 tab，而是把 Function 压到当前栈顶，保留来源 tab（Other/Setting）
-    // 在返回栈中，这样从作用域页返回时直接回到来源 tab，而不是先落到功能树再落到 Home。
+    // 跨 tab 跳转请求（OtherPage/SettingPage → 作用域页）：直接压入全屏作用域页（隐藏底栏），
+    // 不切到 Function tab，因此底栏不会从来源 tab（Other/Setting）跳到「功能」；返回时 popBackStack 直接回到来源 tab。
     LaunchedEffect(Unit) {
         activity.functionNavRequests.collect { request ->
             if (request != null) {
-                navController.navigate(FunctionRoute) {
+                activity.functionNavRequests.value = null
+                navController.navigate(ScopeRoute(request.pageKey, request.title ?: "")) {
                     launchSingleTop = true
                 }
             }
@@ -316,6 +319,21 @@ fun MainShell(activity: MainActivity) {
                             onDismiss = { navController.popBackStack() },
                         ) {
                             ThemeScreen(onBack = { navController.popBackStack() })
+                        }
+                    }
+                    // 跨 tab 直达的全屏作用域页：复用 FunctionPage 的 ScopePageHost，返回键/侧滑返回均回到来源 tab
+                    composable<ScopeRoute> { entry ->
+                        val route = entry.toRoute<ScopeRoute>()
+                        EdgeSwipeDismiss(
+                            enabled = LocalEnableSwipeDismiss.current,
+                            onDismiss = { navController.popBackStack() },
+                        ) {
+                            ScopePageHost(
+                                activity = activity,
+                                route = route,
+                                onBack = { navController.popBackStack() },
+                                onNavigate = { key, title -> navController.navigate(ScopeRoute(key, title ?: "", "", -1)) },
+                            )
                         }
                     }
                 }

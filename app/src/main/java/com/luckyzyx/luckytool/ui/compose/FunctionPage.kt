@@ -1,7 +1,10 @@
 package com.luckyzyx.luckytool.ui.compose
 
 import android.content.Context
+import android.graphics.drawable.Drawable
 import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.calculateEndPadding
@@ -10,11 +13,20 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowRight
+import androidx.compose.material.icons.filled.Android
+import androidx.compose.material.icons.filled.Apps
+import androidx.compose.material.icons.filled.BrightnessMedium
+import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.filled.MoreHoriz
+import androidx.compose.material.icons.filled.SignalCellularAlt
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -26,7 +38,6 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberTopAppBarState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
@@ -35,6 +46,9 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLayoutDirection
@@ -56,10 +70,12 @@ import com.luckyzyx.luckytool.ui.components.preference.PrefIndexItem
 import com.luckyzyx.luckytool.ui.components.preference.ScrollTarget
 import com.luckyzyx.luckytool.ui.compose.components.EdgeSwipeDismiss
 import com.luckyzyx.luckytool.ui.compose.components.PrefGroup
+import com.luckyzyx.luckytool.ui.compose.components.PrefIconBadge
 import com.luckyzyx.luckytool.ui.compose.components.PrefRow
 import com.luckyzyx.luckytool.ui.compose.components.material.ExpressiveList
 import com.luckyzyx.luckytool.ui.compose.components.material.ExpressivePageScaffold
 import com.luckyzyx.luckytool.ui.compose.components.material.SegmentedTextField
+import com.luckyzyx.luckytool.ui.components.rememberAppIconPainter
 import com.luckyzyx.luckytool.ui.compose.scopes.ScopePageContent
 import com.luckyzyx.luckytool.ui.compose.scopes.ScopePageRegistry
 import com.luckyzyx.luckytool.ui.compose.scopes.ScopePageSpec
@@ -107,28 +123,13 @@ fun FunctionPage(activity: MainActivity, onShellBack: () -> Unit) {
     val navController = rememberNavController()
     val backStackEntry by navController.currentBackStackEntryAsState()
     val atTree = backStackEntry?.destination?.hasRoute<FunctionTreeRoute>() == true
-    // 内部栈是否还有上一页可退：功能树根与跨 tab 直达的作用域页均为内部栈根（无上一页）。
-    // 用它替代原来的 atRoot 判断，是因为跨 tab 直达会把功能树弹出内部栈，作用域页成为根。
+    // 内部栈是否还有上一页可退：功能树根是内部栈根（无上一页），作用域页/搜索页有上一页可退。
+    // 跨 tab 直达不再走本子树（改由 MainShell 压入全屏作用域页），此处只服务功能树 → 作用域页的常规流程。
     val canPopInternal = navController.previousBackStackEntry != null
 
     var showVersionInfo by remember { mutableStateOf(false) }
 
-    // 跨 tab 跳转请求（OtherPage/SettingPage → 作用域页）：MainShell 负责切 tab，这里消费执行
-    LaunchedEffect(Unit) {
-        activity.functionNavRequests.collect { request ->
-            if (request != null) {
-                activity.functionNavRequests.value = null
-                // 跨 tab 直达作用域页：把功能树（内部栈根）一并弹出，让作用域页成为内部栈根，
-                // 返回键据此直接交还 shell（回到来源 tab），而不是先退回功能树。
-                navController.navigate(ScopeRoute(request.pageKey, request.title ?: "", "", -1)) {
-                    popUpTo<FunctionTreeRoute> { inclusive = true }
-                    launchSingleTop = true
-                }
-            }
-        }
-    }
-
-    // 返回键：有内部上一页则退内部栈，否则交还 shell（功能树根 → 上一 tab/退出；跨 tab 直达 → 来源 tab）
+    // 返回键：有内部上一页则退内部栈，否则交还 shell（功能树根 → 上一 tab/退出）
     BackHandler {
         if (canPopInternal) navController.popBackStack() else onShellBack()
     }
@@ -193,7 +194,61 @@ private fun pageTitle(context: Context, spec: ScopePageSpec): String {
     return AppUtils(context).getAppLabel(pack).toString()
 }
 
-private data class TreeRow(val pageKey: String, val title: String, val summary: String?)
+private data class TreeRow(
+    val pageKey: String,
+    val title: String,
+    val summary: String?,
+    val icon: Drawable? = null,
+)
+
+/** 分类页彩色徽标配色：固定色（不随深浅色模式变化，与应用图标一致）+ 白色矢量图标 */
+private data class CategoryBadge(val icon: ImageVector, val color: Color)
+
+private val categoryBadges: Map<String, CategoryBadge> = mapOf(
+    "android_related" to CategoryBadge(Icons.Filled.Android, Color(0xFF3DDC84)),
+    "statusbar" to CategoryBadge(Icons.Filled.SignalCellularAlt, Color(0xFF4285F4)),
+    "launcher" to CategoryBadge(Icons.Filled.Home, Color(0xFFFF9800)),
+    "aod" to CategoryBadge(Icons.Filled.BrightnessMedium, Color(0xFF9C27B0)),
+    "lock_screen" to CategoryBadge(Icons.Filled.Lock, Color(0xFF00BCD4)),
+    "application" to CategoryBadge(Icons.Filled.Apps, Color(0xFF3F51B5)),
+    "miscellaneous" to CategoryBadge(Icons.Filled.MoreHoriz, Color(0xFF607D8B)),
+)
+
+/** 功能树条目左侧图标：分类页用彩色圆角徽标 + 白色矢量图标，应用页用 App 图标（圆角裁剪），无图标回退通用应用图标 */
+@Composable
+private fun TreeRowLeading(pageKey: String, title: String, appIcon: Drawable?) {
+    val badgeShape = RoundedCornerShape(10.dp)
+    val badge = categoryBadges[pageKey]
+    if (badge != null) {
+        PrefIconBadge(badge.icon, badge.color, contentDescription = title)
+        return
+    }
+    val painter = rememberAppIconPainter(appIcon)
+    if (painter != null) {
+        Image(
+            painter = painter,
+            contentDescription = title,
+            modifier = Modifier
+                .size(40.dp)
+                .clip(badgeShape),
+        )
+    } else {
+        Box(
+            modifier = Modifier
+                .size(40.dp)
+                .clip(badgeShape)
+                .background(MaterialTheme.colorScheme.surfaceVariant),
+            contentAlignment = Alignment.Center,
+        ) {
+            Icon(
+                imageVector = Icons.Filled.Apps,
+                contentDescription = title,
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.size(22.dp),
+            )
+        }
+    }
+}
 
 /** 功能树：49 页固定顺序（ScopePageRegistry.treeOrder），spec 手动不可见、单 App 作用域未安装或空索引页隐藏 */
 @OptIn(ExperimentalMaterial3Api::class)
@@ -214,7 +269,8 @@ private fun FunctionTreeScreen(
                 val index = ScopePageRegistry.buildIndex(context, spec)
                 if (index.isEmpty()) return@mapNotNull null
                 val summary = index.mapNotNull { it.title }.take(3).joinToString(" · ").ifEmpty { null }
-                TreeRow(key, pageTitle(context, spec), summary)
+                val icon = if (key in categoryBadges) null else AppUtils(context).getAppIcon(spec.packName)
+                TreeRow(key, pageTitle(context, spec), summary, icon)
             }
         }
     }
@@ -259,6 +315,7 @@ private fun FunctionTreeScreen(
                             PrefRow(
                                 title = row.title,
                                 summary = row.summary,
+                                leading = { TreeRowLeading(row.pageKey, row.title, row.icon) },
                                 trailing = {
                                     Icon(
                                         Icons.AutoMirrored.Rounded.KeyboardArrowRight,
@@ -416,10 +473,10 @@ private fun FunctionSearchScreen(onBack: () -> Unit, onOpen: (ScopeRoute) -> Uni
     }
 }
 
-/** 作用域页宿主：类型安全 ScopeRoute → 任意已注册 ScopePageSpec */
+/** 作用域页宿主：类型安全 ScopeRoute → 任意已注册 ScopePageSpec（MainShell 跨 tab 全屏直达也复用） */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun ScopePageHost(
+internal fun ScopePageHost(
     activity: MainActivity,
     route: ScopeRoute,
     onBack: () -> Unit,

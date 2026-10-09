@@ -1,5 +1,9 @@
 package com.luckyzyx.luckytool.ui.compose.pages
 
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
@@ -94,7 +98,8 @@ fun HomePage(activity: MainActivity) {
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior(rememberTopAppBarState())
 
     var moduleActive by remember { mutableStateOf(XposedServiceBridge.isModuleActive) }
-    var systemInfo by remember { mutableStateOf<String?>(null) }
+    // 用缓存做种子：切回主页时避免 systemInfo 从 null 起步（闪现「加载中」再淡入）
+    var systemInfo by remember { mutableStateOf(DeviceInfoCache.info) }
     var updateInfo by remember { mutableStateOf<String?>(null) }
     var updateClick by remember { mutableStateOf<(() -> Unit)?>(null) }
     var statusCardClick by remember { mutableStateOf<(() -> Unit)?>(null) }
@@ -143,11 +148,19 @@ fun HomePage(activity: MainActivity) {
     LifecycleEventEffect(Lifecycle.Event.ON_RESUME) {
         refreshModuleStatus()
         GlobalFuncService.get(activity) { controller ->
-            val info = context.getDeviceInfo(controller)
-            if (!info.isNullOrBlank()) {
-                systemInfo = info
-                checkDexOptimize(controller)
+            val ota = controller?.otaVersion
+            // 缓存命中（OTA 版本未变化）：直接复用，避免每次进入主页都重新拉取设备信息
+            val cachedInfo = DeviceInfoCache.get(ota)
+            if (cachedInfo != null) {
+                systemInfo = cachedInfo
+            } else {
+                val info = context.getDeviceInfo(controller)
+                if (!info.isNullOrBlank()) {
+                    DeviceInfoCache.put(ota, info)
+                    systemInfo = info
+                }
             }
+            checkDexOptimize(controller)
         }
     }
 
@@ -261,13 +274,20 @@ fun HomePage(activity: MainActivity) {
                     }
                 }
                 item(key = "system_info_card") {
-                    PrefRow(
-                        title = systemInfo ?: stringResource(R.string.loading),
-                        onLongClick = {
-                            context.copyStr(DeviceUtils.getOTACOnfigs())
-                            context.showToast("Copy Device OTA Data Success!")
-                        },
-                    )
+                    // 设备信息就绪后做淡入过渡，避免「加载中」→ 完整信息之间突兀跳变
+                    AnimatedContent(
+                        targetState = systemInfo,
+                        transitionSpec = { fadeIn() togetherWith fadeOut() },
+                        label = "system_info",
+                    ) { info ->
+                        PrefRow(
+                            title = info ?: stringResource(R.string.loading),
+                            onLongClick = {
+                                context.copyStr(DeviceUtils.getOTACOnfigs())
+                                context.showToast("Copy Device OTA Data Success!")
+                            },
+                        )
+                    }
                 }
                 item(key = "donate_card") {
                     PrefRow(
@@ -535,6 +555,24 @@ private fun MiuixAboutDialog(
                 colors = ButtonDefaults.textButtonColorsPrimary(),
             )
         }
+    }
+}
+
+/**
+ * 主页系统信息缓存：以 OTA 版本为键，OTA 未变化时复用上一次拼好的设备信息，
+ * 避免每次进入主页都重新走一遍 AIDL 调用 + 字符串拼接。
+ */
+private object DeviceInfoCache {
+    @Volatile
+    var info: String? = null
+    @Volatile
+    var ota: String? = null
+
+    fun get(otaVersion: String?): String? = info.takeIf { ota == otaVersion }
+
+    fun put(otaVersion: String?, value: String) {
+        ota = otaVersion
+        info = value
     }
 }
 

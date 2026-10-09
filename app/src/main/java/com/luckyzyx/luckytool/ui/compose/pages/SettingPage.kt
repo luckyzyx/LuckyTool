@@ -15,6 +15,15 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Backup
+import androidx.compose.material.icons.filled.DeleteSweep
+import androidx.compose.material.icons.filled.Feedback
+import androidx.compose.material.icons.filled.Palette
+import androidx.compose.material.icons.filled.Restore
+import androidx.compose.material.icons.filled.Style
+import androidx.compose.material.icons.filled.Translate
+import androidx.compose.material.icons.filled.VolunteerActivism
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Text
@@ -27,6 +36,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -35,6 +45,7 @@ import com.luckyzyx.luckytool.R
 import com.luckyzyx.luckytool.ui.activity.MainActivity
 import com.luckyzyx.luckytool.ui.compose.components.PrefCategoryHeader
 import com.luckyzyx.luckytool.ui.compose.components.PrefGroup
+import com.luckyzyx.luckytool.ui.compose.components.PrefIconBadge
 import com.luckyzyx.luckytool.ui.compose.components.PrefRow
 import com.luckyzyx.luckytool.ui.compose.components.PrefSwitchRow
 import com.luckyzyx.luckytool.ui.compose.components.PrefValueRow
@@ -166,6 +177,7 @@ fun SettingPage(activity: MainActivity, onOpenTheme: () -> Unit = {}) {
                             // Miuix 线：OverlayDropdownPreference（弹层挂根部 Miuix Scaffold popup host）
                             MiuixDropdownItem(
                                 title = stringResource(R.string.settings_ui_mode),
+                                startAction = { PrefIconBadge(Icons.Filled.Style, Color(0xFF9C27B0)) },
                                 summary = stringResource(R.string.settings_ui_mode_summary),
                                 items = items,
                                 selectedIndex = selectedIndex,
@@ -174,6 +186,7 @@ fun SettingPage(activity: MainActivity, onOpenTheme: () -> Unit = {}) {
                         } else {
                             SegmentedDropdownItem(
                                 title = stringResource(R.string.settings_ui_mode),
+                                leading = { PrefIconBadge(Icons.Filled.Style, Color(0xFF9C27B0)) },
                                 summary = stringResource(R.string.settings_ui_mode_summary),
                                 items = items,
                                 selectedIndex = selectedIndex,
@@ -189,12 +202,14 @@ fun SettingPage(activity: MainActivity, onOpenTheme: () -> Unit = {}) {
                         if (LocalUiMode.current == UiMode.Miuix) {
                             MiuixArrowItem(
                                 title = stringResource(R.string.theme_palette),
+                                startAction = { PrefIconBadge(Icons.Filled.Palette, Color(0xFF673AB7)) },
                                 summary = stringResource(R.string.theme_palette_summary),
                                 onClick = onOpenTheme,
                             )
                         } else {
                             PrefValueRow(
                                 title = stringResource(R.string.theme_palette),
+                                leading = { PrefIconBadge(Icons.Filled.Palette, Color(0xFF673AB7)) },
                                 value = paletteStyle,
                                 summary = stringResource(R.string.theme_palette_summary),
                                 onClick = onOpenTheme,
@@ -293,6 +308,7 @@ fun SettingPage(activity: MainActivity, onOpenTheme: () -> Unit = {}) {
                     item {
                         PrefRow(
                             title = stringResource(R.string.backup_data),
+                            leading = { PrefIconBadge(Icons.Filled.Backup, Color(0xFF4285F4)) },
                             onClick = {
                                 FileUtils.checkDownloadDir(context, "LuckyTool").apply {
                                     if (isFile) delete()
@@ -311,6 +327,7 @@ fun SettingPage(activity: MainActivity, onOpenTheme: () -> Unit = {}) {
                     item {
                         PrefRow(
                             title = stringResource(R.string.restore_data),
+                            leading = { PrefIconBadge(Icons.Filled.Restore, Color(0xFF34A853)) },
                             onClick = {
                                 FileUtils.checkDownloadDir(context, "LuckyTool").apply {
                                     if (isFile) delete()
@@ -323,6 +340,7 @@ fun SettingPage(activity: MainActivity, onOpenTheme: () -> Unit = {}) {
                     item {
                         PrefRow(
                             title = stringResource(R.string.clear_all_data),
+                            leading = { PrefIconBadge(Icons.Filled.DeleteSweep, Color(0xFFEA4335)) },
                             summary = stringResource(R.string.clear_all_data_summary),
                             onClick = { showClearDialog = true },
                         )
@@ -339,6 +357,7 @@ fun SettingPage(activity: MainActivity, onOpenTheme: () -> Unit = {}) {
                     item {
                         PrefRow(
                             title = stringResource(R.string.donate),
+                            leading = { PrefIconBadge(Icons.Filled.VolunteerActivism, Color(0xFFE91E63)) },
                             summary = stringResource(R.string.donate_summary),
                             onClick = { showDonateList = true },
                         )
@@ -346,6 +365,7 @@ fun SettingPage(activity: MainActivity, onOpenTheme: () -> Unit = {}) {
                     item {
                         PrefRow(
                             title = stringResource(R.string.feedback_download),
+                            leading = { PrefIconBadge(Icons.Filled.Feedback, Color(0xFF00ACC1)) },
                             summary = stringResource(R.string.feedback_download_summary),
                             onClick = { showFeedbackDialog = true },
                         )
@@ -353,6 +373,7 @@ fun SettingPage(activity: MainActivity, onOpenTheme: () -> Unit = {}) {
                     item {
                         PrefRow(
                             title = stringResource(R.string.participate_translation),
+                            leading = { PrefIconBadge(Icons.Filled.Translate, Color(0xFF00897B)) },
                             summary = stringResource(R.string.participate_translation_summary),
                             onClick = {
                                 context.openUrl("https://github.com/luckyzyx/LuckyTool-Localization")
