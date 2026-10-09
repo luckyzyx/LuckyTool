@@ -6,6 +6,7 @@ import android.app.Activity
 import android.os.Build
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.ColorScheme
+import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialExpressiveTheme
 import androidx.compose.material3.MotionScheme
 import androidx.compose.runtime.Composable
@@ -100,8 +101,15 @@ fun MaterialLuckyTheme(
         MaterialExpressiveTheme(
             colorScheme = animatedColorScheme,
             motionScheme = MotionScheme.expressive(),
-            content = content,
-        )
+        ) {
+            // 与 Miuix 线同理：material3 只有在 Surface / Scaffold / TopAppBar / Button 这些组件里
+            // 才下发 LocalContentColor，未被它们包裹的内容（自绘弹层、对话框、顶栏 actions 等）
+            // 会退回 material3 默认的黑，深色模式下不可见。这里在主题根部兜底一份 onBackground。
+            CompositionLocalProvider(
+                LocalContentColor provides animatedColorScheme.onBackground,
+                content = content,
+            )
+        }
     }
 }
 

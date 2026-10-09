@@ -1,6 +1,7 @@
 package com.luckyzyx.luckytool.ui.theme
 
 import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.material3.LocalContentColor as MaterialLocalContentColor
 import androidx.compose.material3.MaterialExpressiveTheme
 import androidx.compose.material3.MotionScheme
 import androidx.compose.material3.dynamicDarkColorScheme
@@ -12,7 +13,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import com.materialkolor.dynamiccolor.ColorSpec
 import top.yukonga.miuix.kmp.theme.ColorSchemeMode
-import top.yukonga.miuix.kmp.theme.LocalContentColor
+import top.yukonga.miuix.kmp.theme.LocalContentColor as MiuixLocalContentColor
 import top.yukonga.miuix.kmp.theme.MiuixTheme
 import top.yukonga.miuix.kmp.theme.ThemeColorSpec
 import top.yukonga.miuix.kmp.theme.ThemePaletteStyle
@@ -95,7 +96,7 @@ fun MiuixLuckyTheme(
         controller = controller,
         content = {
             CompositionLocalProvider(
-                LocalContentColor provides MiuixTheme.colorScheme.onBackground,
+                MiuixLocalContentColor provides MiuixTheme.colorScheme.onBackground,
             ) {
                 MaterialExpressiveTheme(
                     colorScheme = rememberLuckyColorScheme(
@@ -106,8 +107,18 @@ fun MiuixLuckyTheme(
                         specVersion = appSettings.colorSpec,
                     ).animateAsState(),
                     motionScheme = MotionScheme.expressive(),
-                    content = content,
-                )
+                ) {
+                    // material3 的 MaterialTheme / MaterialExpressiveTheme 并不下发 LocalContentColor，
+                    // 只有 Surface / Scaffold / TopAppBar / Button 这类组件才会下发。Miuix 外观线里
+                    // material3 组件挂在 miuix 容器下（miuix 只下发自己那份同名 CompositionLocal），
+                    // 取不到就退回 material3 默认的黑 —— 深色模式（深底 + 黑图标）下顶栏 actions
+                    // 这类「菜单图标」会整片看不见。这里按 Miuix 的 onBackground 显式补一份，
+                    // 与同一容器内的 miuix 组件观感一致（两套色板同源，取值也基本一致）。
+                    CompositionLocalProvider(
+                        MaterialLocalContentColor provides MiuixTheme.colorScheme.onBackground,
+                        content = content,
+                    )
+                }
             }
         },
     )
