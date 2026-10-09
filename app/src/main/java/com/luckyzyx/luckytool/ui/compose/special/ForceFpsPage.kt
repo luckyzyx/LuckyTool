@@ -1,8 +1,5 @@
 package com.luckyzyx.luckytool.ui.compose.special
 
-import android.app.Activity
-import android.content.Context
-import android.content.ContextWrapper
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -11,13 +8,17 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.Text
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LifecycleEventEffect
 import com.luckyzyx.luckytool.IRefreshRateController
 import com.luckyzyx.luckytool.R
 import com.luckyzyx.luckytool.data.DisplayMode
@@ -32,27 +33,52 @@ import com.luckyzyx.luckytool.ui.theme.UiMode
 import com.luckyzyx.luckytool.utils.GlobalKeyValue.keyFpsAutoStart
 import com.luckyzyx.luckytool.utils.GlobalKeyValue.keyFpsCur
 import com.luckyzyx.luckytool.utils.SettingsPrefs
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeoutOrNull
 import top.yukonga.miuix.kmp.basic.Button as MiuixButton
 import top.yukonga.miuix.kmp.basic.Text as MiuixText
 
-/** 沿 ContextWrapper 链向上找 Activity（ComposeView 的 LocalContext 可能是包装 Context） */
-private tailrec fun Context.findActivity(): Activity? = when (this) {
-    is Activity -> this
-    is ContextWrapper -> baseContext.findActivity()
-    else -> null
-}
-
 /**
- * ForceFps 页（旧 ui.fragment.extension.ForceFpsFragment 的 Compose 等价物）。
- * 刷新率控制器状态在 RootService 控制器而非 prefs，故整页用 custom() 手工构建
- * （不用 DSL switch/slider）。下拉刷新重新拉取 controller 并重算全部状态。
+ * 强制刷新率页（旧 ui.fragment.extension.ForceFpsFragment 的 Compose 等价物）。
+ *
+ * 控制器状态在 RootService 控制器而非 prefs，故整页用 custom() 手工构建
+ * （不用 DSL switch/slider）。
+ *
+ * ## 状态模型
+ * - [IRefreshRateController] 是唯一的「数据源」；`supportModes` / `refreshRateDisplay`
+ *   都是**同步** root IPC，因此每次 load 只读一次落到 Compose 状态，不在组合期重复读；
+ * - 持久化只属于本页：`keyFpsCur`（模式 id，同时被 AutoStartControllerService 拼进
+ *   `service call SurfaceFlinger 1035 i32 <id>`）、`keyFpsAutoStart`；
+ * - 进程级控制器缓存做种子，让「本来已绑定」的常见路径瞬时还原内容。
+ *
+ * ## 加载时机（三处触发，同一个幂等 load()）
+ * 1. 进入页面：`LaunchedEffect(Unit)`；
+ * 2. 回到前台：`LifecycleEventEffect(ON_RESUME)` —— 系统刷新率显示开关可能已被快捷开关改过，
+ *    且 RootService 冷启动 daemon 未就绪时首次 bind 回调未必触发（与 OtherPage 双触发同理）；
+ * 3. 下拉刷新：`spec.onRefresh` → [reloader]。
+ *
+ * ## 失败不摧毁已加载状态
+ * `RefreshRateService.get()` 在 bind 失败时**不会**回调（`onDisconnected` 不 result），
+ * 所以这里用 [BIND_TIMEOUT_MS] 兜底；拉取失败时保留仍存活的旧控制器（超时后才连上的 bind
+ * 也能被 `getCachedController()` 捞回来），只有「拉不到且旧的已死」才真正清空。
+ *
+ * ## Context 要求
+ * 共享层注入的是 applicationContext（ScopePageRegistry）。RootService 绑定只用一个 Context
+ * 构造 Intent，libsu 内部自取 application 做 bindService，**不需要 Activity**：
+ * 不要再沿 ContextWrapper 向上找 Activity，否则 findActivity() 恒为 null，
+ * 每次拉取都直接返回 null，页面永远「无数据」。
  *
  * 线分派：行呈现（`PrefGroup` / `PrefSwitchRow`）由共享层按 [LocalUiMode] 自行分派，
  * 页面只分派自己写死的 material 件 —— 文字（`MiuixText`）、重置按钮（miuix `Button`）、
- * 模式单选项（t11 的 `MiuixRadioItem`，material 线仍为 `MaterialRadioItem`）。
+ * 模式单选项（`MiuixRadioItem`，material 线仍为 `MaterialRadioItem`）。
  */
 object ForceFpsPage {
+
+    /** bind 回调可能永不触发，超时兜底避免页面卡在加载中 */
+    private const val BIND_TIMEOUT_MS = 5_000L
 
     /** 由内容组合时注册的加载器驱动 onRefresh */
     private var reloader: (suspend () -> Unit)? = null
@@ -67,31 +93,50 @@ object ForceFpsPage {
     ) {
         val c = requireNotNull(context) { "ScopeScreen 未注入 Context" }
         custom(key = "force_fps_body", bare = true) {
-            // 进程级缓存做种子：进入子页不重新加载，直接用 RefreshRateService 已缓存的存活控制器
+            // 进程级缓存做种子：进入子页不重新绑定，直接用 RefreshRateService 已缓存的存活控制器
             var controller by remember { mutableStateOf(RefreshRateService.getCachedController()) }
+            // 每次 load 读一次的 root IPC 快照（不在组合期反复读）
+            var modes by remember { mutableStateOf(emptyList<DisplayMode>()) }
+            var displayRefreshRate by remember { mutableStateOf(false) }
+            var loading by remember { mutableStateOf(true) }
 
             suspend fun fetchController(): IRefreshRateController? =
-                suspendCancellableCoroutine { cont ->
-                    val activity = c.findActivity()
-                    if (activity == null) cont.resume(null) { _, _, _ -> }
-                    else RefreshRateService.get(activity) {
-                        cont.resume(it) { _, _, _ -> }
+                withTimeoutOrNull(BIND_TIMEOUT_MS) {
+                    suspendCancellableCoroutine { cont ->
+                        RefreshRateService.get(c) { cont.resume(it) { _, _, _ -> } }
                     }
                 }
 
-            suspend fun reload() {
-                controller = fetchController()
+            suspend fun load() {
+                loading = true
+                // 拉不到就退回「仍存活的缓存控制器」；两者都没有才清空，避免把已加载的页面打回无数据
+                val live = fetchController() ?: RefreshRateService.getCachedController()
+                if (live != null) {
+                    val snapshot = withContext(Dispatchers.IO) {
+                        @Suppress("UNCHECKED_CAST")
+                        val list =
+                            (live.supportModes ?: ArrayList<DisplayMode>()) as ArrayList<DisplayMode>
+                        list to live.refreshRateDisplay
+                    }
+                    modes = snapshot.first
+                    displayRefreshRate = snapshot.second
+                } else {
+                    modes = emptyList()
+                }
+                controller = live
+                loading = false
             }
-            reloader = ::reload
+
+            // onRefresh 在组合之外调用加载器：用 SideEffect 注册，保证注册的是本次成功组合的实例
+            SideEffect { reloader = ::load }
             DisposableEffect(Unit) {
                 onDispose { reloader = null }
             }
-            LaunchedEffect(Unit) { reload() }
+            LaunchedEffect(Unit) { load() }
+            // LifecycleEventEffect 的回调不是 suspend：经 rememberCoroutineScope 起协程
+            val scope = rememberCoroutineScope()
+            LifecycleEventEffect(Lifecycle.Event.ON_RESUME) { scope.launch { load() } }
 
-            // AIDL 声明为裸 List（无泛型），与旧代码一致地强转为 ArrayList<DisplayMode>
-            @Suppress("UNCHECKED_CAST")
-            val modes =
-                (controller?.supportModes ?: ArrayList<DisplayMode>()) as ArrayList<DisplayMode>
             val isUnsupport = modes.isEmpty()
             val fpsCur = state.getInt(keyFpsCur, -1)
             val fpsAutostart = state.getBoolean(keyFpsAutoStart, false)
@@ -114,18 +159,20 @@ object ForceFpsPage {
                             onCheckedChange = { v -> state.set(keyFpsAutoStart, v) },
                         )
                     }
-                    // 模式单选列表（旧 ListView CHOICE_MODE_SINGLE；选中/设置均以 mode.id 为准）
+                    // 模式单选列表（旧 ListView CHOICE_MODE_SINGLE；选中/设置均以 mode.id 为准，
+                    // 与 RefreshRateService.setRefreshRateMode(modeId) 及 keyFpsCur 的持久化语义一致）
                     if (!isUnsupport) {
                         modes.forEach { mode ->
                             item {
                                 val title =
                                     "${mode.id}   ${mode.width} x ${mode.height}   ${mode.refreshRate}"
                                 val onSelect: () -> Unit = {
-                                    state.set(keyFpsCur, mode.id)
+                                    // 先落系统再落 prefs：IPC 抛错时不留「已持久化但未生效」的脏状态
                                     controller?.setRefreshRateMode(mode.id)
+                                    state.set(keyFpsCur, mode.id)
                                 }
                                 if (miuix) {
-                                    // Miuix 线等价件（t11 产出，库内 RadioButtonPreference）
+                                    // Miuix 线等价件（库内 RadioButtonPreference）
                                     MiuixRadioItem(
                                         title = title,
                                         selected = mode.id == fpsCur,
@@ -144,17 +191,26 @@ object ForceFpsPage {
                     item {
                         PrefSwitchRow(
                             title = c.getString(R.string.display_refresh_rate),
-                            checked = controller?.refreshRateDisplay == true,
+                            checked = displayRefreshRate,
                             enabled = controller != null,
-                            onCheckedChange = { v -> controller?.refreshRateDisplay = v },
+                            onCheckedChange = { v ->
+                                controller?.refreshRateDisplay = v
+                                displayRefreshRate = v
+                            },
                         )
                     }
                 }
-                // 控制器未返回模式列表时：无数据提示
-                if (isUnsupport) {
+                // 加载中：无控制器且仍在拉取；否则无数据提示
+                val hint = when {
+                    !isUnsupport -> null
+                    controller == null && loading -> R.string.loading
+                    else -> R.string.fps_no_data
+                }
+                if (hint != null) {
+                    val text = c.getString(hint)
                     if (miuix) {
                         MiuixText(
-                            text = c.getString(R.string.fps_no_data),
+                            text = text,
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .padding(vertical = 24.dp),
@@ -162,7 +218,7 @@ object ForceFpsPage {
                         )
                     } else {
                         Text(
-                            c.getString(R.string.fps_no_data),
+                            text,
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .padding(vertical = 24.dp),
@@ -174,8 +230,8 @@ object ForceFpsPage {
                 if (miuix) {
                     MiuixButton(
                         onClick = {
-                            state.set(keyFpsCur, -1)
                             controller?.resetRefreshRateMode()
+                            state.set(keyFpsCur, -1)
                         },
                         enabled = controller != null,
                         modifier = Modifier.fillMaxWidth(),
@@ -183,8 +239,8 @@ object ForceFpsPage {
                 } else {
                     Button(
                         onClick = {
-                            state.set(keyFpsCur, -1)
                             controller?.resetRefreshRateMode()
+                            state.set(keyFpsCur, -1)
                         },
                         enabled = controller != null,
                         modifier = Modifier.fillMaxWidth(),
