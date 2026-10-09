@@ -2,6 +2,11 @@
 <resources>
     <color name="transparent">#00000000</color>
 
+    <!--启动闪屏：窗口背景（系统 splash / 首帧前）与 Compose 闪屏层同色，消除白屏闪烁-->
+    <color name="splash_background">#FFFBFE</color>
+    <!--启动闪屏：应用名文字色-->
+    <color name="splash_foreground">#1C1B1F</color>
+
     <color name="md_theme_light_onErrorContainer">#410E0B</color>
     <color name="md_theme_light_onError">#FFFFFF</color>
     <color name="md_theme_light_errorContainer">#F9DEDC</color>

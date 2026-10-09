@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--系统 splash 的占位图标：1dp 全透明矩形。
+    仅为满足 windowSplashScreenAnimatedIcon 需要「有固有尺寸的 drawable」，
+    实际不绘制任何内容（详见 values-v31/themes.xml 注释）。-->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+       android:shape="rectangle">
+    <solid android:color="@android:color/transparent" />
+    <size
+            android:width="1dp"
+            android:height="1dp" />
+</shape>

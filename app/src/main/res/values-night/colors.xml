@@ -1,0 +1,7 @@
+
+<resources>
+    <!--启动闪屏：深色下的窗口背景与 Compose 闪屏层背景（与 values/colors.xml 成对）-->
+    <color name="splash_background">#1C1B1F</color>
+    <!--启动闪屏：应用名文字色-->
+    <color name="splash_foreground">#E6E1E5</color>
+</resources>

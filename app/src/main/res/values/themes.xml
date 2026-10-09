@@ -10,4 +10,11 @@
         <item name="android:windowExitAnimation">@android:anim/fade_out</item>
     </style>
 
+    <!--启动闪屏主题：仅挂在 MainActivity 上（values-v31 覆盖为系统 splash 版本）。
+        首帧渲染前窗口显示纯色背景，与 Compose 闪屏层同色，因此没有白屏闪烁；
+        Logo 入场动画由 Compose 侧 LuckySplashHost 绘制。-->
+    <style name="Theme.Luckyzyx.Splash" parent="Theme.Luckyzyx.NoActionBar">
+        <item name="android:windowBackground">@color/splash_background</item>
+    </style>
+
 </resources>

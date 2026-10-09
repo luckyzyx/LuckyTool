@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!--Android 12+ 的系统 splash（本应用 minSdk 30，故仅 v31 生效）：
+        背景色与 Compose 闪屏层一致，衔接处只见「纯色 → Logo 入场」。
+        本应用启动图标是满幅插画，系统 splash 会把图标裁成 240dp 圆形导致画面被切，
+        因此这里用 1dp 全透明占位图标（等同不显示图标），图标动画统一交给 Compose 侧绘制。-->
+    <style name="Theme.Luckyzyx.Splash" parent="Theme.Luckyzyx.NoActionBar">
+        <item name="android:windowBackground">@color/splash_background</item>
+        <item name="android:windowSplashScreenBackground">@color/splash_background</item>
+        <item name="android:windowSplashScreenAnimatedIcon">@drawable/ic_splash_blank</item>
+    </style>
+</resources>

@@ -26,6 +26,7 @@ import com.luckyzyx.luckytool.service.TilesService
 import com.luckyzyx.luckytool.service.UserService
 import com.luckyzyx.luckytool.ui.application.ActivityLifecycleManager
 import com.luckyzyx.luckytool.ui.compose.FunctionRequest
+import com.luckyzyx.luckytool.ui.compose.LuckySplashHost
 import com.luckyzyx.luckytool.ui.compose.MainShell
 import com.luckyzyx.luckytool.ui.service.XposedServiceBridge
 import com.luckyzyx.luckytool.ui.theme.LuckyAppTheme
@@ -88,7 +89,10 @@ open class MainActivity : AppCompatActivity() {
 
         setContent {
             LuckyAppTheme {
-                MainShell(this)
+                // 启动闪屏覆盖在主界面之上：主界面同时组合，闪屏淡出后立即可用
+                LuckySplashHost {
+                    MainShell(this)
+                }
             }
         }
     }
