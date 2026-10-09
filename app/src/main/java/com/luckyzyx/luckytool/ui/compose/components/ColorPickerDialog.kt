@@ -18,14 +18,17 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -42,6 +45,9 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardCapitalization
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.core.graphics.toColorInt
@@ -51,8 +57,9 @@ import com.luckyzyx.luckytool.ui.theme.UiMode
 import top.yukonga.miuix.kmp.basic.ButtonDefaults
 import top.yukonga.miuix.kmp.overlay.OverlayDialog
 import top.yukonga.miuix.kmp.theme.MiuixTheme
-import top.yukonga.miuix.kmp.basic.Text as MiuixText
 import top.yukonga.miuix.kmp.basic.TextButton as MiuixTextButton
+import top.yukonga.miuix.kmp.basic.TextField as MiuixTextField
+import top.yukonga.miuix.kmp.basic.TextFieldDefaults as MiuixTextFieldDefaults
 import kotlin.math.roundToInt
 
 /** SV 面板宽高比，保持与旧实现一致的 360:288 */
@@ -70,19 +77,46 @@ private val HueColors = listOf(
 private val CheckerLight = Color(0xFFCCCCCC)
 private val CheckerDark = Color(0xFFAAAAAA)
 
-/** 颜色选择器内部状态（ARGB / 色相），两条外观线共用 */
+/**
+ * 十六进制输入框的占位提示。
+ *
+ * 刻意用字面量而非字符串资源：`select_color` / `current_color` 之外新增资源要补齐 13 个语言目录，
+ * 而十六进制格式本身与语言无关。
+ */
+private const val HEX_HINT = "#AARRGGBB"
+
+/** 十六进制输入用软键盘：纯 ASCII、无自动纠错、完成后收起键盘 */
+private val HexKeyboardOptions = KeyboardOptions(
+    keyboardType = KeyboardType.Ascii,
+    capitalization = KeyboardCapitalization.Characters,
+    imeAction = ImeAction.Done,
+)
+
+/** 颜色选择器内部状态（ARGB / 色相 / 十六进制输入文本），两条外观线共用 */
 private class ColorPickerUiState(initialColor: Int) {
     var colorInt by mutableIntStateOf(initialColor)
+        private set
+
+    /** 输入框文本：用户输入期间保持原始输入，取色时同步为规范的 `#AARRGGBB` */
+    var hexText by mutableStateOf(formatHex(initialColor))
+        private set
+
     var hue by mutableFloatStateOf(hsvOf(initialColor)[0])
+        private set
 
     val rgb: Int get() = colorInt and 0xFFFFFF
 
     /** 透明度（0f..1f），供透明度条定位 */
     val alphaFraction: Float get() = ((colorInt ushr 24) and 0xFF) / 255f
 
+    /** 输入文本能否解析为颜色；false 时两条线各用原生方式显示错误态 */
+    val isHexValid: Boolean get() = parseHex(hexText) != null
+
     fun colorFromHsv(h: Float, s: Float, v: Float) {
-        colorInt = (alpha() shl 24) or
-            (android.graphics.Color.HSVToColor(floatArrayOf(h, s, v)) and 0xFFFFFF)
+        setColor(
+            (alpha() shl 24) or
+                (android.graphics.Color.HSVToColor(floatArrayOf(h, s, v)) and 0xFFFFFF)
+        )
     }
 
     fun applyHue(h: Float) {
@@ -93,7 +127,25 @@ private class ColorPickerUiState(initialColor: Int) {
 
     fun applyAlpha(fraction: Float) {
         val a = (fraction * 255f).roundToInt().coerceIn(0, 255)
-        colorInt = (a shl 24) or rgb
+        setColor((a shl 24) or rgb)
+    }
+
+    /**
+     * 十六进制输入：文本始终跟随用户原始输入（只过滤非法字符），
+     * 解析成功才更新颜色与色相 —— 失败时保留文本以便继续输入，并进入错误态。
+     */
+    fun onHexInput(raw: String) {
+        hexText = filterHexInput(raw)
+        parseHex(hexText)?.let { color ->
+            colorInt = color
+            hue = hsvOf(color)[0]
+        }
+    }
+
+    /** 取色统一入口：颜色与输入框文本一起更新，避免拖动后文本框仍是旧值 */
+    private fun setColor(color: Int) {
+        colorInt = color
+        hexText = formatHex(color)
     }
 
     private fun alpha(): Int = (colorInt ushr 24) and 0xFF
@@ -106,7 +158,7 @@ private fun hsvOf(color: Int): FloatArray =
 /**
  * Compose 颜色选择器对话框。
  *
- * 面板结构：SV 面板（x=饱和度，y=明度，hue 固定）+ 色相条 + 透明度条 + 预览色块/十六进制文本。
+ * 面板结构：SV 面板（x=饱和度，y=明度，hue 固定）+ 色相条 + 透明度条 + 预览色块 + 十六进制输入框。
  * 回调 onColorSelected(colorInt, hexString)，十六进制格式为 `#AARRGGBB`。
  *
  * 外观按 [LocalUiMode] 分派：Miuix 线走 Miuix 弹层，Material 线走 M3 AlertDialog；
@@ -207,7 +259,7 @@ private fun MiuixColorPickerDialog(
 
 /**
  * 选择器主体（标题与按钮之外的全部内容），两条外观线共用，保证两线布局完全一致：
- * SV 面板 → 色相条 → 透明度条 → 预览色块 + 十六进制文本。
+ * SV 面板 → 色相条 → 透明度条 → 预览色块 + 十六进制输入框。
  */
 @Composable
 private fun ColorPickerBody(state: ColorPickerUiState) {
@@ -264,20 +316,63 @@ private fun ColorPickerBody(state: ColorPickerUiState) {
                 modifier = Modifier.size(44.dp),
             )
             Spacer(Modifier.width(14.dp))
-            if (isMiuix) {
-                MiuixText(
-                    text = formatHex(state.colorInt),
-                    color = MiuixTheme.colorScheme.onBackground,
-                    fontSize = MiuixTheme.textStyles.title4.fontSize,
-                )
-            } else {
-                Text(
-                    text = formatHex(state.colorInt),
-                    style = MaterialTheme.typography.titleMedium,
-                    fontFamily = FontFamily.Monospace,
-                )
-            }
+            HexField(
+                state = state,
+                isMiuix = isMiuix,
+                modifier = Modifier.weight(1f),
+            )
         }
+    }
+}
+
+/**
+ * 十六进制输入框：接受 `#RRGGBB` / `#AARRGGBB`（`#` 可省略，6 位按不透明处理），
+ * 输入合法即刻同步颜色，非法时两条线各用原生方式提示（M3 `isError` / Miuix 错误色）。
+ *
+ * 沿用 `AppListUi.AppSearchField` 的双线惯例：Miuix 线用 `MiuixTextField` 的 label 当占位符，
+ * Material 线用 `OutlinedTextField` 的 placeholder。
+ */
+@Composable
+private fun HexField(
+    state: ColorPickerUiState,
+    isMiuix: Boolean,
+    modifier: Modifier = Modifier,
+) {
+    if (isMiuix) {
+        MiuixTextField(
+            value = state.hexText,
+            onValueChange = state::onHexInput,
+            label = HEX_HINT,
+            useLabelAsPlaceholder = true,
+            singleLine = true,
+            cornerRadius = 14.dp,
+            colors = if (state.isHexValid) {
+                MiuixTextFieldDefaults.textFieldColors()
+            } else {
+                MiuixTextFieldDefaults.textFieldColors(
+                    backgroundColor = MiuixTheme.colorScheme.errorContainer,
+                    labelColor = MiuixTheme.colorScheme.onErrorContainer,
+                    borderColor = MiuixTheme.colorScheme.error,
+                )
+            },
+            textStyle = MiuixTheme.textStyles.main.copy(fontFamily = FontFamily.Monospace),
+            keyboardOptions = HexKeyboardOptions,
+            modifier = modifier,
+        )
+    } else {
+        val hexTextStyle =
+            MaterialTheme.typography.titleMedium.copy(fontFamily = FontFamily.Monospace)
+
+        OutlinedTextField(
+            value = state.hexText,
+            onValueChange = state::onHexInput,
+            singleLine = true,
+            isError = !state.isHexValid,
+            placeholder = { Text(HEX_HINT, style = hexTextStyle) },
+            textStyle = hexTextStyle,
+            keyboardOptions = HexKeyboardOptions,
+            modifier = modifier,
+        )
     }
 }
 
@@ -442,3 +537,38 @@ private fun alphaGradientColors(rgb: Int): List<Color> {
 }
 
 private fun formatHex(color: Int): String = String.format("#%08X", color)
+
+/**
+ * 解析 `#RRGGBB` / `#AARRGGBB`（`#` 可省略），6 位按不透明补 `FF`；无法解析时返回 null。
+ *
+ * `internal` 仅为单元测试可见（`ColorPickerHexTest`），组件内按文件私有使用。
+ */
+internal fun parseHex(text: String): Int? {
+    val body = text.trim().removePrefix("#")
+    if (body.length != 6 && body.length != 8) return null
+    if (!body.all(::isHexDigit)) return null
+    val value = body.toLongOrNull(16) ?: return null
+    return if (body.length == 6) (0xFF shl 24) or value.toInt() else value.toInt()
+}
+
+/**
+ * 输入过滤：保留开头的 `#` 与全部十六进制数字，并截断到 `#AARRGGBB`
+ * （无 `#` 时上限 8 位），避免用户在错误长度上停留却看不出原因。
+ *
+ * `internal` 仅为单元测试可见（`ColorPickerHexTest`），组件内按文件私有使用。
+ */
+internal fun filterHexInput(raw: String): String {
+    val builder = StringBuilder()
+    raw.forEach { char ->
+        if (isHexDigit(char)) {
+            builder.append(char)
+        } else if (char == '#' && builder.isEmpty()) {
+            builder.append(char)
+        }
+    }
+    val limit = if (builder.startsWith("#")) 9 else 8
+    return builder.toString().take(limit)
+}
+
+private fun isHexDigit(char: Char): Boolean =
+    char in '0'..'9' || char in 'a'..'f' || char in 'A'..'F'
