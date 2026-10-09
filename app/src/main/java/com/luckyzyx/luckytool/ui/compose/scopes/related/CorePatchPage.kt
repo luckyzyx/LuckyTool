@@ -16,6 +16,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.luckyzyx.luckytool.R
 import com.luckyzyx.luckytool.ui.compose.components.PrefCard
+import com.luckyzyx.luckytool.ui.compose.components.PrefRowInset
 import com.luckyzyx.luckytool.ui.compose.components.PrefSwitchRow
 import com.luckyzyx.luckytool.ui.compose.scopes.ScopePageSpec
 import com.luckyzyx.luckytool.ui.theme.LocalUiMode
@@ -84,7 +85,7 @@ object CorePatchPage {
                 state.set("use_previous_signatures", newValue)
                 if (newValue) showWarning = true
             }
-            Box(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
+            PrefRowInset {
                 PrefSwitchRow(
                     title = c.getString(R.string.use_previous_signatures),
                     summary = c.getString(R.string.use_previous_signatures_summary),

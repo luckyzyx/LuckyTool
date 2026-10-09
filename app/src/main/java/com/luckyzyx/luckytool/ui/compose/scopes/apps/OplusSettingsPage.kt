@@ -17,6 +17,7 @@ import com.luckyzyx.luckytool.R
 import com.luckyzyx.luckytool.contract.CropImageContract
 import com.luckyzyx.luckytool.data.CropImageContractOptions
 import com.luckyzyx.luckytool.ui.compose.components.PrefRow
+import com.luckyzyx.luckytool.ui.compose.components.PrefRowInset
 import com.luckyzyx.luckytool.ui.compose.scopes.ScopePageSpec
 import com.luckyzyx.luckytool.utils.A13
 import com.luckyzyx.luckytool.utils.A14
@@ -277,7 +278,7 @@ object OplusSettingsPage {
                                 LogUtils.e("CropImage", it.first, it.second.error.toString(), true)
                             }
                         }
-                        Box(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
+                        PrefRowInset {
                             PrefRow(
                                 title = processorTitle,
                                 summary = processorSummary,
@@ -364,7 +365,7 @@ object OplusSettingsPage {
                                 LogUtils.e("CropImage", it.first, it.second.error.toString(), true)
                             }
                         }
-                        Box(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
+                        PrefRowInset {
                             PrefRow(
                                 title = otaTitle,
                                 summary = otaSummary,

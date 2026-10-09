@@ -24,6 +24,7 @@ import androidx.compose.ui.unit.dp
 import com.luckyzyx.luckytool.R
 import com.luckyzyx.luckytool.service.UserService
 import com.luckyzyx.luckytool.ui.compose.components.PrefRow
+import com.luckyzyx.luckytool.ui.compose.components.PrefRowInset
 import com.luckyzyx.luckytool.ui.compose.components.miuix.MiuixRadioItem
 import com.luckyzyx.luckytool.ui.compose.scopes.ScopePageSpec
 import com.luckyzyx.luckytool.ui.theme.LocalUiMode
@@ -81,7 +82,7 @@ object OplusSecuritypPermissionPage {
             custom(key = "remove_always_allow_app_start_list", title = removeListTitle) {
                 var userDialogData by remember { mutableStateOf<UserDialogData?>(null) }
                 var curUserId by remember { mutableStateOf(arrayListOf<Int>()) }
-                Box(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
+                PrefRowInset {
                     PrefRow(
                         title = removeListTitle,
                         onClick = {

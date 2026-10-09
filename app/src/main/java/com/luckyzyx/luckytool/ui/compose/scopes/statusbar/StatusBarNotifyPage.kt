@@ -13,6 +13,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.luckyzyx.luckytool.R
 import com.luckyzyx.luckytool.ui.compose.components.AppPickerDialog
 import com.luckyzyx.luckytool.ui.compose.components.PrefRow
+import com.luckyzyx.luckytool.ui.compose.components.PrefRowInset
 import com.luckyzyx.luckytool.ui.compose.scopes.ScopePageSpec
 import com.luckyzyx.luckytool.utils.ModulePrefs
 import com.luckyzyx.luckytool.utils.arraySummaryLine
@@ -69,7 +70,7 @@ object StatusBarNotifyPage {
                     val blacklist by state.stringSetFlow("set_small_window_reply_blacklist_list")
                         .collectAsStateWithLifecycle()
                     var showPicker by remember { mutableStateOf(false) }
-                    Box(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
+                    PrefRowInset {
                         PrefRow(
                             title = c.getString(R.string.set_small_window_reply_blacklist),
                             summary = arraySummaryLine(

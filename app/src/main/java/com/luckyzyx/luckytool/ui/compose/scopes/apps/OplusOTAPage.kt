@@ -11,6 +11,7 @@ import com.drake.net.utils.scopeLife
 import com.drake.net.utils.withDefault
 import com.luckyzyx.luckytool.R
 import com.luckyzyx.luckytool.ui.compose.components.PrefRow
+import com.luckyzyx.luckytool.ui.compose.components.PrefRowInset
 import com.luckyzyx.luckytool.ui.compose.scopes.ScopePageSpec
 import com.luckyzyx.luckytool.utils.CommandUtils
 import com.luckyzyx.luckytool.utils.ModulePrefs
@@ -56,7 +57,7 @@ object OplusOTAPage {
                     ",", false,
                 ),
             )
-            Box(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
+            PrefRowInset {
                 PrefRow(
                     title = verifyTitle,
                     summary = verifySummary,
@@ -70,7 +71,7 @@ object OplusOTAPage {
             summary = c.getString(R.string.unlock_local_upgrade_summary),
         ) {
             val lifecycleOwner = LocalLifecycleOwner.current
-            Box(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
+            PrefRowInset {
                 PrefRow(
                     title = c.getString(R.string.unlock_local_upgrade),
                     summary = c.getString(R.string.unlock_local_upgrade_summary),

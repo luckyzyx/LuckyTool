@@ -14,6 +14,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.luckyzyx.luckytool.R
 import com.luckyzyx.luckytool.ui.compose.components.AppPickerDialog
 import com.luckyzyx.luckytool.ui.compose.components.PrefRow
+import com.luckyzyx.luckytool.ui.compose.components.PrefRowInset
 import com.luckyzyx.luckytool.ui.compose.scopes.ScopePageSpec
 import com.luckyzyx.luckytool.utils.A14
 import com.luckyzyx.luckytool.utils.AppUtils
@@ -56,7 +57,7 @@ object OplusGamesPage {
             )
         ) {
             custom(title = c.getString(R.string.game_assistant_page)) {
-                Box(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
+                PrefRowInset {
                     PrefRow(
                         title = c.getString(R.string.game_assistant_page),
                         summary = "(${appUtils.getAppLabel("com.oplus.games")})",
@@ -78,7 +79,7 @@ object OplusGamesPage {
             )
         ) {
             custom(title = c.getString(R.string.game_space_page)) {
-                Box(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
+                PrefRowInset {
                     PrefRow(
                         title = c.getString(R.string.game_space_page),
                         summary = "(${appUtils.getAppLabel("com.nearme.gamecenter")})",
@@ -131,7 +132,7 @@ object OplusGamesPage {
         if (state.getBoolean("enable_developer_page")) {
             if (c.checkPackName("com.oplus.games")) {
                 custom(title = c.getString(R.string.game_assistant_develop_page)) {
-                    Box(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
+                    PrefRowInset {
                         PrefRow(
                             title = c.getString(R.string.game_assistant_develop_page),
                             summary = "(${appUtils.getAppLabel("com.oplus.games")})",
@@ -153,7 +154,7 @@ object OplusGamesPage {
             val saved by state.stringSetFlow("custom_media_player_support_list")
                 .collectAsStateWithLifecycle()
             var show by remember { mutableStateOf(false) }
-            Box(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
+            PrefRowInset {
                 PrefRow(
                     title = c.getString(R.string.custom_media_player_support),
                     summary = saved.toString(),
@@ -184,7 +185,7 @@ object OplusGamesPage {
                 .stringSetFlow("custom_barrage_notification_whitelist_list")
                 .collectAsStateWithLifecycle()
             var show by remember { mutableStateOf(false) }
-            Box(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
+            PrefRowInset {
                 PrefRow(
                     title = c.getString(R.string.custom_barrage_notification_whitelist),
                     summary = saved.toString(),

@@ -21,6 +21,7 @@ import com.luckyzyx.luckytool.R
 import com.luckyzyx.luckytool.contract.CropImageContract
 import com.luckyzyx.luckytool.data.CropImageContractOptions
 import com.luckyzyx.luckytool.ui.compose.components.PrefRow
+import com.luckyzyx.luckytool.ui.compose.components.PrefRowInset
 import com.luckyzyx.luckytool.ui.compose.scopes.ScopePageSpec
 import com.luckyzyx.luckytool.utils.FileUtils
 import com.luckyzyx.luckytool.utils.LogUtils
@@ -85,7 +86,7 @@ object FingerPrintRelatedPage {
                 val bitmap = remember(path) {
                     if (path.isBlank()) null else BitmapFactory.decodeFile(path)
                 }
-                Box(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
+                PrefRowInset {
                     PrefRow(
                         title = pathTitle,
                         summary = pathSummary,

@@ -17,6 +17,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.luckyzyx.luckytool.R
 import com.luckyzyx.luckytool.ui.compose.components.AppPickerDialog
 import com.luckyzyx.luckytool.ui.compose.components.PrefRow
+import com.luckyzyx.luckytool.ui.compose.components.PrefRowInset
 import com.luckyzyx.luckytool.ui.compose.scopes.ScopePageSpec
 import com.luckyzyx.luckytool.utils.A13
 import com.luckyzyx.luckytool.utils.FileUtils
@@ -72,7 +73,7 @@ object OplusGesturePage {
                     .stringSetFlow("custom_aon_gesture_scroll_page_whitelist_list")
                     .collectAsStateWithLifecycle()
                 var show by remember { mutableStateOf(false) }
-                Box(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
+                PrefRowInset {
                     PrefRow(
                         title = c.getString(R.string.custom_aon_gesture_scroll_page_whitelist),
                         summary = arraySummaryLine(
@@ -147,7 +148,7 @@ object OplusGesturePage {
                     }
                     restart?.invoke()
                 }
-                Box(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
+                PrefRowInset {
                     PrefRow(
                         title = c.getString(R.string.replace_side_slider_icon_on_left),
                         summary = path.ifBlank { "Null" },
@@ -173,7 +174,7 @@ object OplusGesturePage {
                     }
                     restart?.invoke()
                 }
-                Box(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
+                PrefRowInset {
                     PrefRow(
                         title = c.getString(R.string.replace_side_slider_icon_on_right),
                         summary = path.ifBlank { "Null" },

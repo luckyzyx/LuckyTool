@@ -2,6 +2,9 @@ package com.luckyzyx.luckytool.ui.compose.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxScope
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -163,6 +166,25 @@ fun PrefSwitchRow(
             )
         }
     }
+}
+
+/**
+ * `custom()` 逃生舱里行内容的标准水平内缩包装，与 DSL 的 switch()/list()/click() 等分派一致：
+ * material 线套 16dp 内缩（material 列表无水平 contentPadding，行需自带）；
+ * Miuix 线不套（MiuixListItem/MiuixSwitchItem 自带 insideMargin(16dp) + 列表级 12dp 已对齐，
+ * 再叠一层会右移 16dp，与 switch/list/slider 形成割裂感）。
+ */
+@Composable
+fun PrefRowInset(
+    modifier: Modifier = Modifier,
+    content: @Composable BoxScope.() -> Unit,
+) {
+    Box(
+        modifier = modifier
+            .fillMaxWidth()
+            .then(if (LocalUiMode.current == UiMode.Miuix) Modifier else Modifier.padding(horizontal = 16.dp)),
+        content = content,
+    )
 }
 
 /**

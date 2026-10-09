@@ -13,6 +13,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.luckyzyx.luckytool.R
 import com.luckyzyx.luckytool.ui.compose.components.PrefRow
+import com.luckyzyx.luckytool.ui.compose.components.PrefRowInset
 import com.luckyzyx.luckytool.ui.compose.scopes.ScopePageSpec
 import com.luckyzyx.luckytool.utils.A13
 import com.luckyzyx.luckytool.utils.FileUtils
@@ -115,7 +116,7 @@ object AodRelatedPage {
                             }
                             restart?.invoke()
                         }
-                        Box(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
+                        PrefRowInset {
                             PrefRow(
                                 title = fileTitle,
                                 summary = path.ifBlank { "Null" },
