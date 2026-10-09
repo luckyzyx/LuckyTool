@@ -2,8 +2,14 @@ package com.luckyzyx.luckytool.ui.compose
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.WindowInsetsSides
+import androidx.compose.foundation.layout.displayCutout
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.systemBars
+import androidx.compose.foundation.layout.union
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.Assignment
 import androidx.compose.material.icons.rounded.Dashboard
@@ -18,6 +24,7 @@ import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.ScaffoldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -354,12 +361,24 @@ fun MainShell(activity: MainActivity) {
         top.yukonga.miuix.kmp.basic.Scaffold(
             containerColor = containerColor,
             bottomBar = rootBottomBar,
+            // 顶部 inset 由各页自己的顶栏（miuix TopAppBar 的 windowInsetsPadding）处理，
+            // 根部脚手架不再下推内容，消除「状态栏高度 × 2」的顶部多余空白。
+            // 底部/水平 inset 保留默认：底栏（含悬浮胶囊模式）与横屏仍需根部提供。
+            contentWindowInsets = WindowInsets.systemBars.union(WindowInsets.displayCutout).only(
+                WindowInsetsSides.Bottom + WindowInsetsSides.Horizontal
+            ),
             content = movableShellContent,
         )
     } else {
         Scaffold(
             containerColor = containerColor,
             bottomBar = rootBottomBar,
+            // 顶部 inset 由各页自己的顶栏（LargeFlexibleTopAppBar 的 windowInsets）处理，
+            // 根部脚手架不再下推内容，消除「状态栏高度 × 2」的顶部多余空白。
+            // 底部/水平 inset 保留默认：底栏与横屏仍需根部提供。
+            contentWindowInsets = ScaffoldDefaults.contentWindowInsets.only(
+                WindowInsetsSides.Bottom + WindowInsetsSides.Horizontal
+            ),
             content = movableShellContent,
         )
     }
