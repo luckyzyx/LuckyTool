@@ -1,11 +1,8 @@
 package com.luckyzyx.luckytool.ui.compose.scopes.related
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -16,6 +13,7 @@ import androidx.compose.ui.unit.dp
 import androidx.core.graphics.toColorInt
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.luckyzyx.luckytool.R
+import com.luckyzyx.luckytool.ui.compose.components.ColorDot
 import com.luckyzyx.luckytool.ui.compose.components.ColorPickerDialog
 import com.luckyzyx.luckytool.ui.compose.components.PrefRow
 import com.luckyzyx.luckytool.ui.compose.components.PrefRowInset
@@ -137,10 +135,9 @@ object SoundRelatedPage {
                         title = c.getString(R.string.custom_volume_bar_percent_color),
                         summary = c.getString(R.string.current_color, hex),
                         trailing = {
-                            Box(
-                                modifier = Modifier
-                                    .size(24.dp)
-                                    .background(color, CircleShape)
+                            ColorDot(
+                                color = color,
+                                modifier = Modifier.size(24.dp),
                             )
                         },
                         onClick = { showPicker = true },

@@ -341,11 +341,6 @@ private fun ColorPickerBody(state: ColorPickerUiState) {
             ColorSwatch(
                 colorInt = state.colorInt,
                 shape = RoundedCornerShape(14.dp),
-                borderColor = if (isMiuix) {
-                    MiuixTheme.colorScheme.outline
-                } else {
-                    MaterialTheme.colorScheme.outline
-                },
                 modifier = Modifier.size(44.dp),
             )
             Spacer(Modifier.width(14.dp))
@@ -673,15 +668,23 @@ private fun GradientBar(
     }
 }
 
-/** 预览色块：棋盘格垫底 + 实际颜色叠加 + 1dp 描边 */
+/**
+ * 预览色块：棋盘格垫底 + 实际颜色叠加 + 1dp 描边。
+ *
+ * 描边走 [contrastBorder]（只跟色块自身对比、不跟主题色），否则把主题色选成白色时，
+ * 描边与弹层都是浅色，白色色块会整块糊在弹层上看不见。
+ */
 @Composable
 private fun ColorSwatch(
     colorInt: Int,
     shape: Shape,
-    borderColor: Color,
     modifier: Modifier = Modifier,
 ) {
-    Box(modifier.clip(shape).border(1.dp, borderColor, shape)) {
+    Box(
+        modifier
+            .clip(shape)
+            .border(1.dp, contrastBorder(Color(colorInt)), shape)
+    ) {
         Canvas(Modifier.fillMaxSize()) { drawCheckerboard() }
         Box(
             Modifier
