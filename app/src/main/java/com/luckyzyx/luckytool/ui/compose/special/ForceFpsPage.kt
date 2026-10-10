@@ -71,6 +71,12 @@ import top.yukonga.miuix.kmp.basic.Text as MiuixText
  * 不要再沿 ContextWrapper 向上找 Activity，否则 findActivity() 恒为 null，
  * 每次拉取都直接返回 null，页面永远「无数据」。
  *
+ * ## 布局（自上而下，对齐旧 fragment_fps.xml）
+ * 1. FPS 数据卡：`supportModes` 模式单选列表（displayMode 数据）置顶，独立一张卡片；
+ * 2. 加载中 / 无数据提示：数据卡没有内容时在该位置给出落点（旧 `fps_nodata_view`）；
+ * 3. 设置卡：自启（`keyFpsAutoStart`）+ 显示刷新率合并为一张卡片；
+ * 4. 恢复默认刷新率按钮 + 底部提示文案。
+ *
  * 线分派：行呈现（`PrefGroup` / `PrefSwitchRow`）由共享层按 [LocalUiMode] 自行分派，
  * 页面只分派自己写死的 material 件 —— 文字（`MiuixText`）、重置按钮（miuix `Button`）、
  * 模式单选项（`MiuixRadioItem`，material 线仍为 `MaterialRadioItem`）。
@@ -149,18 +155,10 @@ object ForceFpsPage {
                     .padding(horizontal = 16.dp, vertical = 8.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
-                // 自启动开关 + 模式单选列表 + 显示刷新率开关合并为一张连续卡片
+                // FPS 数据卡：displayMode 模式列表置顶，独立一张卡片
+                // （旧 ListView CHOICE_MODE_SINGLE；选中/设置均以 mode.id 为准，
+                // 与 RefreshRateService.setRefreshRateMode(modeId) 及 keyFpsCur 的持久化语义一致）
                 PrefGroup {
-                    item {
-                        PrefSwitchRow(
-                            title = c.getString(R.string.fps_autostart),
-                            checked = fpsAutostart,
-                            enabled = controller != null && !isUnsupport && fpsCur != -1,
-                            onCheckedChange = { v -> state.set(keyFpsAutoStart, v) },
-                        )
-                    }
-                    // 模式单选列表（旧 ListView CHOICE_MODE_SINGLE；选中/设置均以 mode.id 为准，
-                    // 与 RefreshRateService.setRefreshRateMode(modeId) 及 keyFpsCur 的持久化语义一致）
                     if (!isUnsupport) {
                         modes.forEach { mode ->
                             item {
@@ -188,19 +186,8 @@ object ForceFpsPage {
                             }
                         }
                     }
-                    item {
-                        PrefSwitchRow(
-                            title = c.getString(R.string.display_refresh_rate),
-                            checked = displayRefreshRate,
-                            enabled = controller != null,
-                            onCheckedChange = { v ->
-                                controller?.refreshRateDisplay = v
-                                displayRefreshRate = v
-                            },
-                        )
-                    }
                 }
-                // 加载中：无控制器且仍在拉取；否则无数据提示
+                // 数据卡没有内容时（loading / 控制器未连上 / 无模式）给出落点，位置与旧 fps_nodata_view 一致
                 val hint = when {
                     !isUnsupport -> null
                     controller == null && loading -> R.string.loading
@@ -223,6 +210,28 @@ object ForceFpsPage {
                                 .fillMaxWidth()
                                 .padding(vertical = 24.dp),
                             textAlign = TextAlign.Center,
+                        )
+                    }
+                }
+                // 自启动 + 显示刷新率：设置项合并为一张卡片，位于 FPS 数据卡之下
+                PrefGroup {
+                    item {
+                        PrefSwitchRow(
+                            title = c.getString(R.string.fps_autostart),
+                            checked = fpsAutostart,
+                            enabled = controller != null && !isUnsupport && fpsCur != -1,
+                            onCheckedChange = { v -> state.set(keyFpsAutoStart, v) },
+                        )
+                    }
+                    item {
+                        PrefSwitchRow(
+                            title = c.getString(R.string.display_refresh_rate),
+                            checked = displayRefreshRate,
+                            enabled = controller != null,
+                            onCheckedChange = { v ->
+                                controller?.refreshRateDisplay = v
+                                displayRefreshRate = v
+                            },
                         )
                     }
                 }
