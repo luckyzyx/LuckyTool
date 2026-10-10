@@ -32,6 +32,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.painterResource
@@ -217,7 +218,15 @@ fun HomePage(activity: MainActivity) {
                             .padding(horizontal = if (uiMode == UiMode.Miuix) 0.dp else 16.dp)
                             .clip(MaterialTheme.shapes.large),
                         containerColor = if (moduleActive) {
-                            MaterialTheme.colorScheme.primary
+                            // 深色主题下 colorScheme.primary 是浅色调（淡蓝/淡紫），与白字对比不足、
+                            // 观感「发白」；此时回落 inversePrimary（深色主题下即饱和的品牌主色 tone40），
+                            // 保持与浅色模式一致的实心强调卡观感。
+                            val primary = MaterialTheme.colorScheme.primary
+                            if (primary.luminance() > 0.5f) {
+                                MaterialTheme.colorScheme.inversePrimary
+                            } else {
+                                primary
+                            }
                         } else {
                             Color.Gray
                         },
