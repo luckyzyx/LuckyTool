@@ -22,7 +22,7 @@ object HidePanoramicAodStatusBar : YukiBaseHooker() {
                 before {
                     val context = firstField { type = Context::class }.of(instance).get<Context>()
                         ?: return@before
-                    val aodDataInstance = aodData.asResolver().firstMethod {
+                    val aodDataInstance = aodData.resolve().firstMethod {
                         name = "getInstance"
                         parameters(Context::class)
                     }.invoke(context) ?: return@before

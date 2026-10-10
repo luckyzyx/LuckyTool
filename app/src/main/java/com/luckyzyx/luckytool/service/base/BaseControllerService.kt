@@ -6,7 +6,7 @@ import android.os.Binder
 import android.os.IBinder
 import android.os.IInterface
 import android.os.UserHandle
-import com.highcapable.kavaref.KavaRef.Companion.asResolver
+import com.highcapable.kavaref.KavaRef.Companion.resolve
 import com.luckyzyx.luckytool.utils.LogUtils
 import com.luckyzyx.luckytool.utils.bindRootService
 import org.lsposed.lsparanoid.Obfuscate
@@ -43,7 +43,7 @@ abstract class BaseControllerService<T : IInterface> {
                 controller = getController(iBinder)
 
                 val uid = Binder.getCallingUid()
-                val userid = UserHandle::class.asResolver().firstMethod {
+                val userid = UserHandle::class.resolve().firstMethod {
                     name = "getUserId"
                     parameters(Int::class)
                 }.invoke(Binder.getCallingUid())
