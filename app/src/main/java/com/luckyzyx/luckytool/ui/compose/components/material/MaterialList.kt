@@ -526,11 +526,12 @@ fun MaterialTextField(
     leadingContent: @Composable (() -> Unit)? = null,
     trailingContent: @Composable (() -> Unit)? = null,
     supportingContent: @Composable (() -> Unit)? = null,
-    isError: Boolean = false
+    isError: Boolean = false,
+    // 外部可注入焦点请求器（如搜索页进入即自动聚焦）；缺省内部自持，行为与原来一致
+    focusRequester: FocusRequester = remember { FocusRequester() },
 ) {
     val bringIntoViewRequester = remember { BringIntoViewRequester() }
     val coroutineScope = rememberCoroutineScope()
-    val focusRequester = remember { FocusRequester() }
 
     MaterialListItem(
         modifier = modifier

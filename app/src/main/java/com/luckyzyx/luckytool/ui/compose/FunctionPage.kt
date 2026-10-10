@@ -38,20 +38,24 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.painter.BitmapPainter
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
@@ -382,6 +386,18 @@ private fun FunctionSearchScreen(onBack: () -> Unit, onOpen: (ScopeRoute) -> Uni
     val context = LocalContext.current
     var query by rememberSaveable { mutableStateOf("") }
 
+    // 进入搜索页即聚焦输入框并拉起输入法：打开就能直接打字，不必先点一下搜索框。
+    // 焦点请求只在这里发一次（搜索框被 LazyColumn 回收重建时不会重复抢焦点/弹输入法）。
+    val searchFocusRequester = remember { FocusRequester() }
+    val keyboardController = LocalSoftwareKeyboardController.current
+    LaunchedEffect(Unit) {
+        // 等首帧布局完成（focus 节点挂载）后再请求焦点：节点未挂载时 requestFocus 会抛未初始化
+        withFrameNanos { }
+        searchFocusRequester.requestFocus()
+        // 个别 ROM 上 requestFocus 不会自动弹出输入法，这里显式再请求一次
+        keyboardController?.show()
+    }
+
     val entries by produceState(initialValue = emptyList<SearchEntry>(), key1 = Unit) {
         value = try {
             withContext(Dispatchers.IO) {
@@ -439,6 +455,7 @@ private fun FunctionSearchScreen(onBack: () -> Unit, onOpen: (ScopeRoute) -> Uni
                         placeholder = { Text(stringResource(R.string.menu_search)) },
                         singleLine = true,
                         keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
+                        focusRequester = searchFocusRequester,
                         leadingContent = {
                             Icon(
                                 painterResource(R.drawable.ic_baseline_search_24),
