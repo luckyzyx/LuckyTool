@@ -64,12 +64,24 @@ import top.yukonga.miuix.kmp.basic.TextButton as MiuixTextButton
 import top.yukonga.miuix.kmp.basic.TextField as MiuixTextField
 import top.yukonga.miuix.kmp.basic.TextFieldDefaults as MiuixTextFieldDefaults
 import kotlin.math.roundToInt
+import kotlin.math.sqrt
 
 /** SV 面板宽高比，保持与旧实现一致的 360:288 */
 private const val SV_ASPECT_RATIO = 360f / 288f
 
 /** 色相条 / 透明度条高度（胶囊） */
 private val BarHeight = 28.dp
+
+/** SV 面板圆角：面板裁切与指示圈避让共用同一值，否则圆角会把指示圈咬掉一块 */
+private val PanelCornerRadius = 16.dp
+
+/**
+ * 指示圈与容器边缘之间保留的可见间隙（含发丝线）。
+ *
+ * 目的是让容器边缘的圆角「包住」圆环，而不是被圆环压住：滑块两端靠圆环比轨道细出来的
+ * 2dp 自然成立，SV 面板四角则要靠这个值在圆角矩形内缩之外再多让一点。
+ */
+private val IndicatorEdgeClearance = 2.dp
 
 /** 色相条的彩虹渐变（首尾同为红色，保证 0°/360° 连续） */
 private val HueColors = listOf(
@@ -392,7 +404,7 @@ private fun SvPickers(state: ColorPickerUiState, modifier: Modifier = Modifier) 
             modifier = Modifier
                 .fillMaxWidth()
                 .aspectRatio(SV_ASPECT_RATIO)
-                .clip(RoundedCornerShape(16.dp)),
+                .clip(RoundedCornerShape(PanelCornerRadius)),
         )
 
         Spacer(Modifier.height(16.dp))
@@ -593,19 +605,27 @@ private fun SvPanel(
         drawRect(brush = Brush.horizontalGradient(listOf(Color.White, pureHue)))
         drawRect(brush = Brush.verticalGradient(listOf(Color.Transparent, Color.Black)))
 
-        // 指示圈：圆心收缩到半径以内，避免贴边时被裁掉一半
+        // 指示圈：把圆心夹进「面板内缩圆环外缘 + 一点可见间隙」的圆角矩形里，
+        // 既不让圆环被平边裁掉，也不让面板的 16dp 圆角咬掉圆环的一角。
         val radius = 9.dp.toPx()
-        val cx = (hsv[1] * size.width).coerceIn(radius, (size.width - radius).coerceAtLeast(radius))
-        val cy = ((1f - hsv[2]) * size.height)
-            .coerceIn(radius, (size.height - radius).coerceAtLeast(radius))
-        drawIndicator(center = Offset(cx, cy), radius = radius, stroke = 3.dp.toPx())
+        val stroke = 3.dp.toPx()
+        val center = clampCenterToRoundedRect(
+            center = Offset(hsv[1] * size.width, (1f - hsv[2]) * size.height),
+            width = size.width,
+            height = size.height,
+            cornerRadius = PanelCornerRadius.toPx(),
+            margin = radius + stroke / 2f + IndicatorEdgeClearance.toPx(),
+        )
+        drawIndicator(center = center, radius = radius, stroke = stroke)
     }
 }
 
 /**
  * 渐变条：胶囊底 + 圆环滑块，用于色相与透明度；[checkerboard] 为真时先铺透明棋盘格。
  *
- * 渐变两端按滑块半径内缩（与 Miuix ColorSlider 一致），使滑块圆心处取到的颜色即为当前值。
+ * 渐变与滑块行程两端按轨道圆角半径（= 高度 / 2）内缩，与 Miuix ColorSlider 的 halfSliderHeight 对齐：
+ * 滑块圆心处取到的颜色即为当前值，且滑块最多只贴到轨道平直段的末端，
+ * 因此左右两端时轨道圆角始终包在圆环外侧，不会被圆环遮掉。
  */
 @Composable
 private fun GradientBar(
@@ -624,9 +644,12 @@ private fun GradientBar(
                     onFractionChange((position.x / w).coerceIn(0f, 1f))
                 }
         ) {
-            val radius = (size.height - 8.dp.toPx()) / 2f
-            val startX = radius
-            val endX = (size.width - radius).coerceAtLeast(startX + 1f)
+            // 轨道胶囊的圆角半径；圆环的行程两端按它内缩（对齐 Miuix ColorSlider 的 halfSliderHeight），
+            // 让圆环始终落在轨道平直段内：左右两端时轨道圆角仍包在圆环外侧，而不是被圆环盖掉。
+            val trackRadius = size.height / 2f
+            val thumbRadius = (size.height - 8.dp.toPx()) / 2f
+            val startX = trackRadius
+            val endX = (size.width - trackRadius).coerceAtLeast(startX + 1f)
 
             if (checkerboard) drawCheckerboard()
             drawRect(
@@ -641,7 +664,11 @@ private fun GradientBar(
             drawRect(color = Color.Black.copy(alpha = 0.10f), style = Stroke(1.dp.toPx()))
 
             val cx = startX + fraction.coerceIn(0f, 1f) * (endX - startX)
-            drawIndicator(center = Offset(cx, size.height / 2f), radius = radius, stroke = 3.dp.toPx())
+            drawIndicator(
+                center = Offset(cx, size.height / 2f),
+                radius = thumbRadius,
+                stroke = 3.dp.toPx(),
+            )
         }
     }
 }
@@ -701,6 +728,53 @@ private fun DrawScope.drawIndicator(center: Offset, radius: Float, stroke: Float
         center = center,
         style = Stroke(width = stroke),
     )
+}
+
+/**
+ * 把一个圆心夹进「圆角矩形向内收缩 margin」后的区域内：平边按 margin 内缩，四角按
+ * (cornerRadius - margin) 的圆弧修正。这样以该点为圆心、margin 为外缘半径的圆一定落在
+ * 圆角矩形里 —— 用于 SV 面板的指示圈，避免圆环贴边被裁、贴角被圆角咬掉一块。
+ */
+private fun clampCenterToRoundedRect(
+    center: Offset,
+    width: Float,
+    height: Float,
+    cornerRadius: Float,
+    margin: Float,
+): Offset {
+    val left = margin
+    val top = margin
+    val right = width - margin
+    val bottom = height - margin
+    var x = center.x.coerceIn(left, right)
+    var y = center.y.coerceIn(top, bottom)
+
+    // 内缩后四角的圆弧半径；四角圆弧与面板圆角同心
+    val radius = cornerRadius - margin
+    if (radius <= 0f) return Offset(x, y)
+
+    // 每个角需要修正的「被削掉」象限：按该角在矩形中的方位判断
+    val midX = width / 2f
+    val midY = height / 2f
+    val corners = arrayOf(
+        left + radius to top + radius,
+        right - radius to top + radius,
+        left + radius to bottom - radius,
+        right - radius to bottom - radius,
+    )
+    for ((qx, qy) in corners) {
+        val inCutX = if (qx < midX) x < qx else x > qx
+        val inCutY = if (qy < midY) y < qy else y > qy
+        if (!inCutX || !inCutY) continue
+        val dx = x - qx
+        val dy = y - qy
+        val distance = sqrt(dx * dx + dy * dy)
+        if (distance > radius) {
+            x = qx + dx / distance * radius
+            y = qy + dy / distance * radius
+        }
+    }
+    return Offset(x, y)
 }
 
 /** 透明棋盘格底（自实现，避免 Material 线耦合 Miuix）；溢出部分由父级 clip 负责裁掉 */
