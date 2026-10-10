@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -50,6 +51,7 @@ import com.luckyzyx.luckytool.ui.compose.components.LocalScopeTopInset
 import com.luckyzyx.luckytool.ui.compose.components.ScopeScreen
 import com.luckyzyx.luckytool.ui.compose.components.material.MaterialPageScaffold
 import com.luckyzyx.luckytool.ui.compose.components.material.MaterialTonalCard
+import com.luckyzyx.luckytool.ui.compose.components.miuix.MiuixPrefDefaults
 import com.luckyzyx.luckytool.ui.service.XposedServiceBridge
 import com.luckyzyx.luckytool.ui.shell.ShellBadgeState
 import com.luckyzyx.luckytool.ui.theme.LocalUiMode
@@ -215,6 +217,16 @@ fun HomePage(activity: MainActivity) {
                     MaterialTonalCard(
                         modifier = Modifier
                             .fillMaxWidth()
+                            // Miuix 线：bare 条目在渲染缝里被统一 offset(-CardHorizontalInset)，供裸分类标题
+                            //（自带 16dp 内距）抵消列表级 12dp 内缩；状态卡是应跟随卡片 12dp 内缩的卡片，
+                            // 故用等量正向 offset 回正，左右各 12dp 与其余卡片对齐（否则左侧直接贴屏边）。
+                            .offset(
+                                x = if (uiMode == UiMode.Miuix) {
+                                    MiuixPrefDefaults.CardHorizontalInset
+                                } else {
+                                    0.dp
+                                },
+                            )
                             .padding(horizontal = if (uiMode == UiMode.Miuix) 0.dp else 16.dp)
                             .clip(MaterialTheme.shapes.large),
                         containerColor = if (moduleActive) {
