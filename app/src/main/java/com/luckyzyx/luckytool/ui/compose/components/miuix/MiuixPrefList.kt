@@ -15,6 +15,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.luckyzyx.luckytool.ui.compose.components.PrefCardEntries
@@ -124,16 +125,18 @@ fun MiuixPrefItem(
 /**
  * Miuix 设置卡片组的分类标题。
  *
- * 水平内距显式取 16dp（`SmallTitleDefaults.InsideMargin` 默认为 28dp）：卡片组在列表级
- * 另有 12dp 内缩（`MiuixPrefDefaults.CardHorizontalInset`），16 + 12 = 28dp，
- * 与卡片行文字左对齐。
+ * 分类标题是「裸渲染」元素（不套卡片），字体与水平位置与 material 侧 `titleSmall` 保持一致，
+ * 消除 miuix/material 两条外观线之间分类标题的观感差异：
+ * - 字重：`subtitle`（14sp Bold）降为 `FontWeight.Medium`，对齐 material `titleSmall`（14sp Medium）。
+ * - 水平位置：标题自身内距 16dp；列表级对「卡片」的 12dp 内缩（`MiuixPrefDefaults.CardHorizontalInset`）
+ *   由 PrefScope 渲染缝用 `offset(-12dp)` 抵消，使裸标题贴齐屏边 16dp，不再跟随卡片行缩进到 28dp。
  *
- * 垂直方向与 material 侧 `titleSmall` 对齐：`subtitle`（14sp Bold）本无显式行高，
- * 字形贴齐行盒顶部；material 的 `titleSmall` 行高 20sp 且字形在行盒内居中，导致
- * Miuix 侧文字「偏上」。此处显式 `lineHeight = 20.sp` 使字形同样居中，消除偏移。
+ * 垂直方向与 material 侧 `titleSmall` 对齐：`subtitle` 本无显式行高，字形贴齐行盒顶部；
+ * material 的 `titleSmall` 行高 20sp 且字形在行盒内居中，此处显式 `lineHeight = 20.sp`
+ * 使字形同样居中，消除偏移。
  *
- * [summary] 对应旧 PreferenceCategory 的 summary：紧随标题之下以 `footnote1` 渲染，
- * 与标题同属一个分类头，不再是单独悬挂的文字条目。
+ * [summary] 对应旧 PreferenceCategory 的 summary：紧随标题之下渲染，字号对齐 material 侧
+ * `bodySmall`（12sp），与标题同属一个分类头，不再是单独悬挂的文字条目。
  */
 @Composable
 fun MiuixPrefCategoryHeader(title: String, summary: String? = null, modifier: Modifier = Modifier) {
@@ -142,7 +145,7 @@ fun MiuixPrefCategoryHeader(title: String, summary: String? = null, modifier: Mo
             text = title,
             modifier = Modifier.padding(16.dp, 8.dp),
             color = MiuixTheme.colorScheme.onBackgroundVariant,
-            style = MiuixTheme.textStyles.subtitle,
+            style = MiuixTheme.textStyles.subtitle.copy(fontWeight = FontWeight.Medium),
             lineHeight = 20.sp,
         )
         if (summary != null) {
@@ -150,7 +153,7 @@ fun MiuixPrefCategoryHeader(title: String, summary: String? = null, modifier: Mo
                 text = summary,
                 modifier = Modifier.padding(start = 16.dp, end = 16.dp, bottom = 8.dp),
                 color = MiuixTheme.colorScheme.onBackgroundVariant,
-                style = MiuixTheme.textStyles.footnote1,
+                style = MiuixTheme.textStyles.footnote1.copy(fontSize = 12.sp),
             )
         }
     }

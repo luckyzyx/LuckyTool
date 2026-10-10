@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyItemScope
@@ -832,7 +833,14 @@ fun ScopeScreen(
                         } else {
                             if (entry.slot == 0) 0.dp else 8.dp
                         }
-                        Box(modifier = Modifier.padding(top = topGap)) {
+                        // Miuix 线：分类标题是裸元素（不套卡片），故不应跟随卡片的 12dp 列表级内缩；
+                        // 用 offset 抵消该内缩，使标题贴齐屏边 16dp，与 material 线一致。
+                        val bareModifier = if (LocalUiMode.current == UiMode.Miuix) {
+                            Modifier.offset(x = -MiuixPrefDefaults.CardHorizontalInset)
+                        } else {
+                            Modifier
+                        }
+                        Box(modifier = Modifier.padding(top = topGap).then(bareModifier)) {
                             entry.render(entry.slot)
                         }
                     } else if (LocalUiMode.current == UiMode.Miuix) {
