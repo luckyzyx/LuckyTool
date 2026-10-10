@@ -109,6 +109,7 @@ import kotlin.time.Duration.Companion.milliseconds
  * @param pageKey        页面注册键（nav_container.xml 中 page_key 参数值）
  * @param prefsName      SharedPreferences 文件名（ModulePrefs 等）
  * @param packName       宿主包名（sendPrefsValue 通知目标）
+ * @param displayPackName 功能树标题/图标来源包名（默认 = packName；通知目标与显示 App 不同时单独指定）
  * @param scopes         Xposed 作用域包名列表（重启作用域对话框用）
  * @param restartEnabled 是否显示"重启作用域"菜单
  * @param isVisible      页面级可见性（旧 loadRootPreference 根条目 isVisible 平移）：false 时功能树、搜索与子页入口均不出现此页
@@ -126,6 +127,12 @@ class ScopePageSpec(
     val pageKey: String,
     val prefsName: String,
     val packName: String,
+    /**
+     * 功能树标题/图标来源包名（默认 = [packName]）。
+     * 仅当「通知目标」与「显示 App」不同时单独指定，例如手势体感页通知目标是 systemui、
+     * 但功能树应显示 com.oplus.gesture 的名称与图标。
+     */
+    val displayPackName: String? = null,
     val scopes: Array<String>,
     val restartEnabled: Boolean,
     /**

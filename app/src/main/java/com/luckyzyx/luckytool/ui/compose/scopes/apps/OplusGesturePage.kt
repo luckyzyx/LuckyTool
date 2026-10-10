@@ -39,6 +39,7 @@ object OplusGesturePage {
         pageKey = "oplus_gesture",
         prefsName = ModulePrefs,
         packName = "com.android.systemui",
+        displayPackName = "com.oplus.gesture",
         scopes = arrayOf("com.android.systemui", "com.oplus.gesture"),
         restartEnabled = true,
         isVisible = { checkPackName("com.oplus.gesture") },

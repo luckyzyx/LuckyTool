@@ -203,7 +203,7 @@ fun FunctionPage(activity: MainActivity, onShellBack: () -> Unit) {
 /** 页标题：对齐旧功能树 root 标题（apps/others = App 标签；related/statusbar = 覆盖表） */
 private fun pageTitle(context: Context, spec: ScopePageSpec): String {
     ScopePageRegistry.treeTitleRes[spec.pageKey]?.let { return context.getString(it) }
-    val pack = if (spec.pageKey == "android_related") "android" else spec.packName
+    val pack = spec.displayPackName ?: if (spec.pageKey == "android_related") "android" else spec.packName
     return AppUtils(context).getAppLabel(pack).toString()
 }
 
@@ -293,7 +293,7 @@ private fun FunctionTreeScreen(
                     val index = ScopePageRegistry.buildIndex(context, spec)
                     if (index.isEmpty()) return@mapNotNull null
                     val summary = index.mapNotNull { it.title }.take(3).joinToString(" · ").ifEmpty { null }
-                    val packName = if (key in categoryBadges) null else spec.packName
+                    val packName = if (key in categoryBadges) null else (spec.displayPackName ?: spec.packName)
                     TreeRow(key, pageTitle(context, spec), summary, packName)
                 }
             }
