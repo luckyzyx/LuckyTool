@@ -4,7 +4,7 @@
  * 不能直接用库内 top.yukonga.miuix.kmp.basic.SmallTopAppBar：它把标题水平居中
  * （SmallTopAppBarLayout 里 baseX = (maxWidth - titleWidth) / 2），与「标题一律左对齐」不符。
  * 这里按库内同一套尺寸令牌自行布局：高度 52dp（CollapsedHeight）、返回键起始 16dp、
- * 动作键结束 16dp，标题字号 title3 / Medium，并保留相同的 window inset 处理。
+ * 动作键结束 16dp，标题字号 TopBarTitleSize / Medium，并保留相同的 window inset 处理。
  */
 package com.luckyzyx.luckytool.ui.compose.components.miuix
 
@@ -79,7 +79,7 @@ fun MiuixCompactTopBar(
                 .weight(1f)
                 .padding(start = TitleStartPadding),
             color = titleColor,
-            fontSize = MiuixTheme.textStyles.title3.fontSize,
+            fontSize = DesignTokens.TopBarTitleSize,
             fontWeight = FontWeight.Medium,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,

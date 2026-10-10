@@ -1,7 +1,9 @@
 package com.luckyzyx.luckytool.ui.theme
 
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 
 /**
  * 共享设计令牌（design tokens）：Material 与 Miuix 两条组件线共用的尺寸常量单一来源。
@@ -47,4 +49,7 @@ object DesignTokens {
 
     /** 顶栏标题与返回键之间的间距。 */
     val TopBarTitleStartPadding: Dp = 16.dp
+
+    /** 顶栏标题字号：Material 与 Miuix 两条外观线共用的统一标题字号。 */
+    val TopBarTitleSize: TextUnit = 24.sp
 }

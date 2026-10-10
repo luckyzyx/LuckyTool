@@ -30,6 +30,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
@@ -37,6 +38,7 @@ import com.luckyzyx.luckytool.ui.compose.components.miuix.MiuixBlurredBar
 import com.luckyzyx.luckytool.ui.compose.components.miuix.MiuixCompactTopBar
 import com.luckyzyx.luckytool.ui.compose.components.miuix.rememberMiuixBlurBackdrop
 import com.luckyzyx.luckytool.ui.shell.LocalEnableBlur
+import com.luckyzyx.luckytool.ui.theme.DesignTokens
 import com.luckyzyx.luckytool.ui.theme.LocalUiMode
 import com.luckyzyx.luckytool.ui.theme.UiMode
 // Miuix 线骨架用的库件（与 KernelSU SettingsMiuix.kt / 本仓库 ThemeScreenMiuix.kt 同一批）
@@ -130,10 +132,17 @@ fun MaterialPageScaffold(
         modifier = modifier,
         topBar = {
             TopAppBar(
+                expandedHeight = DesignTokens.TopBarHeight,
                 navigationIcon = {
                     if (onBack != null) MaterialTopBarBackButton(onClick = onBack)
                 },
-                title = { Text(title) },
+                title = {
+                    Text(
+                        title,
+                        fontSize = DesignTokens.TopBarTitleSize,
+                        fontWeight = FontWeight.Medium,
+                    )
+                },
                 actions = actions,
                 colors = materialTopAppBarColors(),
                 windowInsets = WindowInsets.safeDrawing.only(
