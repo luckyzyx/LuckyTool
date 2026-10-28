@@ -589,6 +589,8 @@
     <string name="display_module_calculates_battery_health_data_tips">算出された最大容量</string>
     <string name="enable_stop_charging_at_80">80%での充電停止を有効化</string>
     <string name="show_phone_usage_screen_time">Show the last screen usage time</string>
+    <string name="remove_auto_enter_super_power_save">強制的な超省電力モードへの移行を無効化</string>
+    <string name="remove_auto_enter_super_power_save_summary">バッテリー残量が2%未満のときに超省電力モードへ自動移行しないようにします</string>
     <string name="remove_battery_temperature_control">バッテリー温度制御を削除</string>
     <string name="remove_battery_temperature_control_summary">高温によりカメラ、ライト、ホットスポット、ビデオ拡張エンジンなど各種機能が使用できなくなる制限を無効化します</string>
     <string name="BatteryOptimization">バッテリーの最適化</string>

@@ -589,6 +589,8 @@
     <string name="display_module_calculates_battery_health_data_tips">Capacità Massima Calcolata</string>
     <string name="enable_stop_charging_at_80">Abilita l\'interruzione della ricarica all\'80%</string>
     <string name="show_phone_usage_screen_time">Mostra l\'ultimo tempo di utilizzo dello schermo</string>
+    <string name="remove_auto_enter_super_power_save">Rimuovi l\'ingresso forzato in modalità super risparmio</string>
+    <string name="remove_auto_enter_super_power_save_summary">Impedisci l\'ingresso automatico in modalità super risparmio con batteria inferiore al 2%</string>
     <string name="remove_battery_temperature_control">Rimuovi controllo temperatura</string>
     <string name="remove_battery_temperature_control_summary">Rimuovi la limitazione che varie funzioni non possono essere utilizzate, Per esempio: fotocamera, torcia, hotspot, motore di visualizzazione dello schermo, ecc.</string>
     <string name="BatteryOptimization">Ottimizzazione batteria</string>

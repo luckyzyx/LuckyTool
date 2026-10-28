@@ -689,6 +689,8 @@
     <string name="display_module_calculates_battery_health_data_tips">Hesaplanan Maksimum Kapasite</string>
     <string name="enable_stop_charging_at_80">%%80\'de şarjı durdurmayı etkinleştir</string>
     <string name="show_phone_usage_screen_time">Telefonda son kullanıldığı zamanı göster</string>
+    <string name="remove_auto_enter_super_power_save">Süper güç tasarrufuna zorunlu otomatik geçişi kaldır</string>
+    <string name="remove_auto_enter_super_power_save_summary">Pil %2\'nin altındayken süper güç tasarrufuna otomatik geçişi engelle</string>
     <string name="remove_battery_temperature_control">Pil sıcaklık kontrolü sınırını kaldır</string>
     <string name="remove_battery_temperature_control_summary">Kamera, el feneri, erişim noktası (hotspot), ekran okuma motoru vb. çeşitli işlevlerin kullanılamamasına neden olan kısıtlamaları kaldırır.</string>
     

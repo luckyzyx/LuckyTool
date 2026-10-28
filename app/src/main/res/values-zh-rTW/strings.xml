@@ -803,6 +803,8 @@
     <string name="display_module_calculates_battery_health_data_tips">計算容量</string>
     <string name="enable_stop_charging_at_80">啟用充電至 80% 停止充電</string>
     <string name="show_phone_usage_screen_time">顯示上次螢幕使用時間</string>
+    <string name="remove_auto_enter_super_power_save">移除強制進入超級省電模式</string>
+    <string name="remove_auto_enter_super_power_save_summary">屏蔽在電量低於2%時自動進入超級省電模式</string>
     <string name="remove_battery_temperature_control">移除電池溫度控制</string>
     <string name="remove_battery_temperature_control_summary">移除部分功能無法使用的限制，例如：相機、手電筒、熱點、畫面顯示引擎等</string>
 

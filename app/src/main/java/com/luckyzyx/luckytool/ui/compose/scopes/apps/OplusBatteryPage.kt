@@ -5,6 +5,7 @@ import com.luckyzyx.luckytool.ui.compose.scopes.ScopePageSpec
 import com.luckyzyx.luckytool.utils.A13
 import com.luckyzyx.luckytool.utils.ModulePrefs
 import com.luckyzyx.luckytool.utils.SDK
+import com.luckyzyx.luckytool.utils.sendPrefsValue
 
 /**
  * 电池页（旧 ui.fragment.scopes.apps.OplusBattery 的 Compose 等价物）。
@@ -52,6 +53,16 @@ object OplusBatteryPage {
                 summary = c.getString(R.string.open_screen_power_save_summary),
             )
         }
+        switch(
+            key = "remove_auto_enter_super_power_save",
+            title = c.getString(R.string.remove_auto_enter_super_power_save),
+            summary = c.getString(R.string.remove_auto_enter_super_power_save_summary),
+            onChange = {
+                c.sendPrefsValue(
+                    "com.android.systemui", "remove_auto_enter_super_power_save", it
+                )
+            },
+        )
         switch(
             key = "remove_battery_temperature_control",
             title = c.getString(R.string.remove_battery_temperature_control),

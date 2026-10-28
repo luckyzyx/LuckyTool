@@ -591,6 +591,8 @@
     <string name="display_module_calculates_battery_health_data_tips">-вычисляемая максимальная ёмкость</string>
     <string name="enable_stop_charging_at_80">Включить остановку зарядки при 80%</string>
     <string name="show_phone_usage_screen_time">Показать время последнего использования экрана</string>
+    <string name="remove_auto_enter_super_power_save">Отключить принудительный вход в режим суперэнергосбережения</string>
+    <string name="remove_auto_enter_super_power_save_summary">Запретить автоматический вход в режим суперэнергосбережения при заряде ниже 2%</string>
     <string name="remove_battery_temperature_control">Убрать управление температурой батареи</string>
     <string name="remove_battery_temperature_control_summary">Удалить ограничение, которое ограничивает некоторые функции например: камеру, фонарик, точку доступа, механизм отображения экрана и т.д. при перегреве</string>
     <string name="BatteryOptimization">Оптимизация батареи</string>

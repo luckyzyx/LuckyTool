@@ -721,6 +721,8 @@
     <string name="display_module_calculates_battery_health_data_tips">计算容量</string>
     <string name="enable_stop_charging_at_80">启用充电至 80% 停止充电</string>
     <string name="show_phone_usage_screen_time">显示上次屏幕使用时间</string>
+    <string name="remove_auto_enter_super_power_save">移除强制进入超级省电模式</string>
+    <string name="remove_auto_enter_super_power_save_summary">屏蔽在电量低于2%时自动进入超级省电模式</string>
     <string name="remove_battery_temperature_control">移除电池温度控制</string>
     <string name="remove_battery_temperature_control_summary">移除部分功能无法使用的限制，例如：相机、手电筒、热点、画面显示引擎等</string>
     <string name="BatteryOptimization">电池优化</string>

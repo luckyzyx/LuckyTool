@@ -592,6 +592,8 @@
     <string name="display_module_calculates_battery_health_data_tips">Năng lực tính toán</string>
     <string name="enable_stop_charging_at_80">Cho phép dừng khi sạc tới 80%</string>
     <string name="show_phone_usage_screen_time">Hiện thời gian sử dụng màn hình cuối cùng</string>
+    <string name="remove_auto_enter_super_power_save">Tắt tự động vào chế độ siêu tiết kiệm pin</string>
+    <string name="remove_auto_enter_super_power_save_summary">Ngăn tự động vào chế độ siêu tiết kiệm pin khi pin dưới 2%</string>
     <string name="remove_battery_temperature_control">Loại bỏ kiểm soát nhiệt độ pin</string>
     <string name="remove_battery_temperature_control_summary">Loại bỏ các hạn chế ngăn cản việc sử dụng một số chức năng, chẳng hạn như máy ảnh, đèn pin, điểm phát sóng, công cụ hiển thị màn hình, v.v.</string>
     <string name="BatteryOptimization">Tối ưu hóa pin</string>
