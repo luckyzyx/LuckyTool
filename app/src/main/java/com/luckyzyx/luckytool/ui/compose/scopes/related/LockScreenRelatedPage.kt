@@ -168,6 +168,18 @@ object LockScreenRelatedPage {
             key = "remove_top_lock_screen_icon",
             title = c.getString(R.string.remove_top_lock_screen_icon),
         )
+        if (osCode >= 37) {
+            switch(
+                key = "lock_screen_credential_shortcut",
+                title = c.getString(R.string.lock_screen_credential_shortcut),
+                summary = arraySummaryLine(
+                    c.getString(R.string.lock_screen_credential_shortcut_summary),
+                    c.getString(R.string.need_restart_scope),
+                ),
+                default = false,
+                notify = true,
+            )
+        }
         if (osCode < 37) {
             switch(
                 key = "remove_lock_screen_bottom_left_button",

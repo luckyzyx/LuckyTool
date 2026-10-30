@@ -445,6 +445,8 @@
     
     <string name="LockScreenButton">Kilit Ekranı Düğmeleri (Buton)</string>
     <string name="remove_top_lock_screen_icon">Üst kilit ekranı simgelerini kaldır</string>
+    <string name="lock_screen_credential_shortcut">Şifreyle kilidi açma kısayolu</string>
+    <string name="lock_screen_credential_shortcut_summary">Kameranın karşısındaki kısayolu kaydırarak desen, PIN veya şifre ekranını açın. Parmak iziyle kilit açma kullanılabilirken normal yukarı kaydırma artık bu ekranı açmaz. O konumdaki kısayolun yerini alır.</string>
     <string name="remove_lock_screen_bottom_left_button">Kilit ekranı sol alt düğmesini kaldır</string>
     <string name="lock_screen_bottom_left_button_replace_with_flashlight">Kilit ekranının sol alt köşesindeki düğmeyi el feneri ile değiştir</string>
     <string name="lock_screen_switch_flashlight_auto_close_screen">El fenerini açmak/kapatmak ekranı otomatik olarak kapatır</string>
