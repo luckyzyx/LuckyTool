@@ -5,6 +5,9 @@ import com.highcapable.yukihookapi.annotation.xposed.YukiHookLibXposedEntry
 import com.highcapable.yukihookapi.hook.factory.configure
 import com.highcapable.yukihookapi.hook.factory.encase
 import com.highcapable.yukihookapi.hook.xposed.YukiHookXposedModule
+import com.highcapable.yukihookapi.hook.xposed.bridge.event.registerFrameworkEvents
+import com.highcapable.yukihookapi.hook.xposed.bridge.event.v101.onModuleLoaded
+import com.highcapable.yukihookapi.hook.xposed.bridge.event.v102.onHotReloading
 import com.luckyzyx.luckytool.hook.hookers.HookAlarmClock
 import com.luckyzyx.luckytool.hook.hookers.HookAndroid
 import com.luckyzyx.luckytool.hook.hookers.HookAudioEffectCenter
@@ -62,6 +65,7 @@ import com.luckyzyx.luckytool.hook.scopes.otherapp.HookADM
 import com.luckyzyx.luckytool.hook.scopes.otherapp.HookAlphaBackupPro
 import com.luckyzyx.luckytool.hook.scopes.otherapp.HookFakeGpsJoyStick
 import com.luckyzyx.luckytool.hook.scopes.otherapp.HookKsWeb
+import com.luckyzyx.luckytool.hook.scopes.systemui.LockScreenCredentialShortcut
 import org.lsposed.lsparanoid.Obfuscate
 import java.io.File
 
@@ -150,6 +154,15 @@ class MainHook : YukiHookXposedModule {
             logging {
                 tag = MainHook.TAG
             }
+        }
+        registerFrameworkEvents {
+            onModuleLoaded { param ->
+                if (param.processName == "com.android.systemui") {
+                    LockScreenCredentialShortcut.framework = this
+                }
+            }
+            // 宿主按钮持有模块 drawable 和回调，必须随 SystemUI 重启一起释放。
+            onHotReloading { !LockScreenCredentialShortcut.hasNativeHooks }
         }
     }
 

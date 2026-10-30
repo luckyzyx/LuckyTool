@@ -387,6 +387,8 @@
     <string name="statusbar_carriers_use_user_typeface">StatusBar Carriers use user fonts</string>
     <string name="LockScreenButton">Lock Screen Button</string>
     <string name="remove_top_lock_screen_icon">Remove top lock screen icons</string>
+    <string name="lock_screen_credential_shortcut">Comandă rapidă pentru deblocare cu parola</string>
+    <string name="lock_screen_credential_shortcut_summary">Glisați comanda rapidă aflată vizavi de cameră pentru a deschide ecranul cu modelul, codul PIN sau parola. O simplă glisare în sus nu mai deschide acest ecran când deblocarea cu amprentă este disponibilă. Înlocuiește comanda rapidă din acea poziție.</string>
     <string name="remove_lock_screen_bottom_left_button">Remove lockscreen bottom left button</string>
     <string name="lock_screen_bottom_left_button_replace_with_flashlight">The button in the lower left corner of the lock screen is replaced with a flashlight</string>
     <string name="lock_screen_switch_flashlight_auto_close_screen">Switch the flashlight to automatically turn off the screen</string>

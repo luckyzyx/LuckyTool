@@ -385,6 +385,8 @@
     <string name="statusbar_carriers_use_user_typeface">ステータスバーのキャリア表示にユーザーフォントを使用します</string>
     <string name="LockScreenButton">ロック画面ボタン</string>
     <string name="remove_top_lock_screen_icon">ロック画面上のアイコンを削除</string>
+    <string name="lock_screen_credential_shortcut">パスワード解除へのショートカット</string>
+    <string name="lock_screen_credential_shortcut_summary">カメラの反対側のショートカットをスワイプして、パターン、PIN、またはパスワードの画面を開きます。指紋認証が利用可能な間、通常の上スワイプでは開かなくなります。その位置のショートカットを置き換えます。</string>
     <string name="remove_lock_screen_bottom_left_button">ロック画面の左下のボタンを削除</string>
     <string name="lock_screen_bottom_left_button_replace_with_flashlight">ロック画面の左下隅のボタンをライトに置き換える</string>
     <string name="lock_screen_switch_flashlight_auto_close_screen">ライトを切り替えたとき画面を自動的に消灯する</string>
