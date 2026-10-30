@@ -1056,4 +1056,5 @@
     <string name="custom_notification_side_spacing_vertical">自定义通知两侧间距(竖屏)</string>
     <string name="select_color">Wybierz kolor</string>
     <string name="current_color">Aktualny kolor: %1$s</string>
+    <string name="remove_app_start_intercept_whitelist">Usuń listę wyjątków blokowania uruchamiania aplikacji</string>
 </resources>

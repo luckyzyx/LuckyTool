@@ -1150,6 +1150,7 @@
 
     <!--OplusSecuritypPermission-->
     <string name="disable_malicious_app_intercept">禁用惡意風險應用攔截</string>
+    <string name="remove_app_start_intercept_whitelist">移除跳轉應用攔截白名單</string>
     <string name="app_start_dialog_use_old_version">使用舊版跳轉應用對話方塊</string>
     <string name="enable_always_allow_app_start_dialog">啟用始終允許啟動應用對話方塊</string>
     <string name="remove_always_allow_app_start_list">移除始終允許啟動應用列表</string>

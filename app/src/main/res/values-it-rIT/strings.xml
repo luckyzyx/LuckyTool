@@ -1052,4 +1052,5 @@
     <string name="no_error_message">Nessun messaggio di errore</string>
     <string name="select_color">Seleziona colore</string>
     <string name="current_color">Colore attuale: %1$s</string>
+    <string name="remove_app_start_intercept_whitelist">Rimuovi la whitelist di esclusione dal blocco avvio app</string>
 </resources>

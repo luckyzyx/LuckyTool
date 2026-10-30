@@ -1052,4 +1052,5 @@
     <string name="no_error_message">エラーメッセージなし</string>
     <string name="select_color">色を選択</string>
     <string name="current_color">現在の色: %1$s</string>
+    <string name="remove_app_start_intercept_whitelist">アプリ起動制限の許可リストを削除</string>
 </resources>

@@ -1166,6 +1166,7 @@
     
     <!--OplusSecuritypPermission-->
     <string name="disable_malicious_app_intercept">Disable malicious application intercept</string>
+    <string name="remove_app_start_intercept_whitelist">Remove app start intercept whitelist</string>
     <string name="app_start_dialog_use_old_version">Use the old version of the app start dialog</string>
     <string name="enable_always_allow_app_start_dialog">Enable always allow app start dialog</string>
     <string name="remove_always_allow_app_start_list">Remove the list of apps that are always allowed to be launched</string>

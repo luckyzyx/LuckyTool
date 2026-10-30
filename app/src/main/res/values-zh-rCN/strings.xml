@@ -1012,6 +1012,7 @@
     <string name="remove_oshare_close_countdown">移除互传关闭倒计时</string>
     <string name="remove_storage_permission_exception_dialog">移除存储权限异常提示对话框</string>
     <string name="disable_malicious_app_intercept">禁用恶意风险应用拦截</string>
+    <string name="remove_app_start_intercept_whitelist">移除跳转应用拦截白名单</string>
     <string name="app_start_dialog_use_old_version">使用旧版跳转应用对话框</string>
     <string name="enable_always_allow_app_start_dialog">启用始终允许启动应用对话框</string>
     <string name="remove_always_allow_app_start_list">移除始终允许启动应用列表</string>

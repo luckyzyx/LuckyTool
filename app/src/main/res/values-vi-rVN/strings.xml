@@ -1055,4 +1055,5 @@
     <string name="no_error_message">Thông báo lỗi</string>
     <string name="select_color">Chọn màu</string>
     <string name="current_color">Màu hiện tại: %1$s</string>
+    <string name="remove_app_start_intercept_whitelist">Xóa danh sách ngoại lệ chặn khởi chạy ứng dụng</string>
 </resources>

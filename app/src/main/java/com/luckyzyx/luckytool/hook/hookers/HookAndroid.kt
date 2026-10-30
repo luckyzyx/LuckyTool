@@ -31,6 +31,7 @@ import com.luckyzyx.luckytool.hook.scopes.android.MediaVolumeLevel
 import com.luckyzyx.luckytool.hook.scopes.android.MultiAppConfig
 import com.luckyzyx.luckytool.hook.scopes.android.RemoveAccessDeviceLogDialog
 import com.luckyzyx.luckytool.hook.scopes.android.RemoveAlwaysAllowAppStartList
+import com.luckyzyx.luckytool.hook.scopes.android.RemoveAppStartInterceptWhitelist
 import com.luckyzyx.luckytool.hook.scopes.android.RemoveAppUninstallButtonBlackList
 import com.luckyzyx.luckytool.hook.scopes.android.RemovePasswordTimeoutVerification
 import com.luckyzyx.luckytool.hook.scopes.android.RemoveStatusBarTopNotification
@@ -154,6 +155,7 @@ object HookAndroid : YukiBaseHooker() {
         loadHooker(HookIPackageManager())
 
         loadHooker(RemoveAlwaysAllowAppStartList)
+        loadHooker(RemoveAppStartInterceptWhitelist)
 
         //禁用风险应用拦截
         if (preferences(ModulePrefs).getBoolean("disable_malicious_app_intercept", false)) {

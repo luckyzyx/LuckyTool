@@ -48,6 +48,13 @@ object OplusSecuritypPermissionPage {
             )
         }
         switch(
+            key = "remove_app_start_intercept_whitelist",
+            title = c.getString(R.string.remove_app_start_intercept_whitelist),
+            onChange = {
+                c.sendPrefsValue("android", "remove_app_start_intercept_whitelist", it)
+            },
+        )
+        switch(
             key = "app_start_dialog_use_old_version",
             title = c.getString(R.string.app_start_dialog_use_old_version),
         )

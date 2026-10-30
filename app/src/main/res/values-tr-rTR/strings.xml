@@ -1036,6 +1036,7 @@
     <string name="remove_storage_permission_exception_dialog">Google Android 13/14 sürümüyle gelen klasörlerin gizliliği Depolama (Storage) izni uzantısı iletişim kutusunu (hata uyarısını) kaldır</string>
     
     <!--OplusSecuritypPermission-->
+    <string name="remove_app_start_intercept_whitelist">Uygulama başlatma engelleme izin listesini kaldır</string>
     <string name="app_start_dialog_use_old_version">Uygulama başlatma paneli izin kontrolündeeski sürümü kullanın</string>
     <string name="enable_always_allow_app_start_dialog">İzin kutularında her zaman (Otomatik olarak sürekli) uygulamayı başlatmaya izin verme (Her zaman izin ver) seçeneğini etkinleştir</string>
     <string name="remove_always_allow_app_start_list">Her zaman başlatılmasına izin verilen uygulamalar listesini kaldır</string>
