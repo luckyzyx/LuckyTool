@@ -372,11 +372,6 @@ object StatusBarBatteryInfoNotify : YukiBaseHooker() {
             R.id.battery_notify_tv, TypedValue.COMPLEX_UNIT_SP, fontSize.toFloat()
         )
         val notify = Notification(context = context, channel = channel) {
-            //不能传 context 创建图标：IconCompat.createWithResource(context, id) 构造时会调用
-            //Resources.getResourceName(id) 解析资源名，依赖 SystemUI 进程内的模块资源注入，
-            //且 0x7f 段 ID 与 SystemUI 自身资源表易撞车；解析失败直接抛
-            //IllegalArgumentException("Icon resource cannot be found")，notify 根本不会执行。
-            //传 null Resources 只记录包名+ID、不做任何解析，加载时任何进程都经已安装模块 APK 获取
             smallIcon(
                 IconCompat.createWithResource(
                     module.resources, BuildConfig.APPLICATION_ID, batteryIcon
