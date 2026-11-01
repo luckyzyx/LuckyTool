@@ -27,8 +27,8 @@ import top.yukonga.miuix.kmp.basic.Text as MiuixText
 import top.yukonga.miuix.kmp.basic.TextButton as MiuixTextButton
 
 /**
- * CorePatch 页（旧 ui.fragment.scopes.related.CorePatch 的 Compose 等价物）。
- * 配置键名与默认值对齐上游 org.lsposed.corepatch。
+ * CorePatch 页：核心破解各开关的列表。
+ * 配置键名与默认值需与 org.lsposed.corepatch.Config 的常量保持一致。
  */
 object CorePatchPage {
 

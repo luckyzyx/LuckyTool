@@ -32,7 +32,9 @@ import com.luckyzyx.luckytool.utils.sendPrefsKey
 import com.luckyzyx.luckytool.utils.sendPrefsValue
 
 /**
- * 应用相关页（旧 ui.fragment.scopes.related.ApplicationRelated 的 Compose 等价物）。
+ * 应用相关页：应用启动、多开、安装路由、其他限制与应用详情等跨应用开关；作用域覆盖
+ * com.oplus.battery、com.android.settings、com.android.packageinstaller 等，
+ * 写值后经 sendPrefsValue 按项通知对应进程。
  */
 object ApplicationRelatedPage {
 
@@ -286,7 +288,7 @@ object ApplicationRelatedPage {
                 title = c.getString(R.string.enable_custom_app_language),
             )
         }
-        //《自动释放应用空间》默认关闭（旧代码 setDefaultValue(true) → 用 booleanFlow default=true 自定义项）
+        //《自动释放应用空间》默认关闭：disable_app_archiving 的默认值是 true，普通 switch 表达不了，故用 booleanFlow(default = true) 的自定义项
         if (getOSVersionCode >= 36) {
             val archivingKey = "disable_app_archiving"
             custom(

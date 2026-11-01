@@ -13,20 +13,20 @@ import java.util.function.BiConsumer
 import java.util.function.BiPredicate
 
 /**
- * 由上游 io.github.lsposed.disableflagsecure.DisableFlagSecure（libxposed 链式 Hook API）迁移为 YukiHook 经典钩子。
+ * 禁用 FLAG_SECURE，让带安全标记的窗口也能被截图 / 录屏（YukiHook 经典钩子）。
  *
- * - [HookDisableFlagSecure]：system_server 侧，对应原 onSystemServerStarting 入口
- * - [HookDisableFlagSecureApp]：应用侧（systemui / appplatform / screenshot 等），对应原 onPackageReady 入口
+ * - [HookDisableFlagSecure]：system_server 侧，进程启动时安装
+ * - [HookDisableFlagSecureApp]：应用侧（systemui / appplatform / screenshot 等），只在首个 Application 上安装
  *
- * 开关语义与上游保持一致：上游 isEnabled() 返回 !disable_flag_secure 并据此早退，
- * 因此只有 ModulePrefs.disable_flag_secure 为 true（界面开关“禁用FLAG_SECURE”已打开）时才安装钩子，否则直接退出。
+ * 开关语义是取反的：只有 ModulePrefs.disable_flag_secure 为 true（界面开关“禁用FLAG_SECURE”已打开）
+ * 时才安装钩子，否则直接退出。
  */
 @SuppressLint("PrivateApi", "BlockedPrivateApi")
 @Obfuscate
 object HookDisableFlagSecure : YukiBaseHooker() {
 
     override fun onHook() {
-        //LuckyTool：上游 isEnabled() = !disable_flag_secure，为 true 时早退，故此处仅在开关打开时继续
+        //LuckyTool：开关语义取反——disable_flag_secure 为 false 时直接退出，故此处仅在开关打开时继续
         if (!preferences(ModulePrefs).getBoolean("disable_flag_secure", false)) return
 
         try {
@@ -332,7 +332,7 @@ object HookDisableFlagSecure : YukiBaseHooker() {
         method.hook {
             //经典 before 钩子无法可靠跳过 void 方法的原始调用，改用 intercept
             intercept {
-                //与上游一致：不注册屏幕录制回调（方法无返回值时该返回值会被忽略）
+                //不注册屏幕录制回调（方法无返回值时该返回值会被忽略）
                 false
             }
         }
@@ -396,7 +396,7 @@ object HookDisableFlagSecureApp : YukiBaseHooker() {
     private const val MIUI_SCREENSHOT = "com.miui.screenshot"
 
     override fun onHook() {
-        //LuckyTool：上游 isEnabled() = !disable_flag_secure，为 true 时早退，故此处仅在开关打开时继续
+        //LuckyTool：开关语义取反——disable_flag_secure 为 false 时直接退出，故此处仅在开关打开时继续
         if (!preferences(ModulePrefs).getBoolean("disable_flag_secure", false)) return
         if (!isFirstApplication) return
 
@@ -404,7 +404,7 @@ object HookDisableFlagSecureApp : YukiBaseHooker() {
     }
 
     private fun hookPackage() {
-        //注意：上游 Java 的 switch 各 case 之间没有 break（顺序贯穿），下面按等价分组还原
+        //注意：各 case 之间没有 break，同一个包会顺序贯穿多组，下面用多个集合表达这种等价分组
         val screenshotHardwareBufferPackages =
             setOf(OPLUS_SCREENSHOT, FLYME_SYSTEMUIEX, OPLUS_APPPLATFORM)
         val screenCapturePackages =

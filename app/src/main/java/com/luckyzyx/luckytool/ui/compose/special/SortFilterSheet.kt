@@ -28,11 +28,11 @@ import com.luckyzyx.luckytool.ui.theme.UiMode
 import top.yukonga.miuix.kmp.overlay.OverlayBottomSheet
 
 /**
- * 排序/筛选底部弹层（旧 SortFilterBottomSheetDialog 的 Compose 等价物）。
+ * 排序/筛选底部弹层。
  *
- * 由 HideAppIntentPage 迁出为共享件：DarkModePage / HideAppIntentPage / MultiAppPage / ZoomWindowPage 复用，
- * 入口签名与四个调用点保持完全不变，主题差异在唯一的 `when (LocalUiMode.current)` 缝上分派：
- * - Material 线 → [SortFilterSheetMaterial]（原实现逐字搬运）；
+ * DarkModePage / HideAppIntentPage / MultiAppPage / ZoomWindowPage 共用这一份入口：
+ * 四个调用点传同一组参数，主题差异只在唯一的 `when (LocalUiMode.current)` 缝上分派：
+ * - Material 线 → [SortFilterSheetMaterial]（material3 `ModalBottomSheet` + `FilterChip`）；
  * - Miuix 线 → [SortFilterSheetMiuix]（同包 SortFilterSheetMiuix.kt，根部 host 的 OverlayBottomSheet）。
  */
 @Composable
@@ -68,8 +68,8 @@ internal fun SortFilterSheet(
     }
 }
 
-/** Material 线：原 SortFilterSheet 实现逐字搬运（仅函数名与可见性调整）。 */
-@Suppress("DEPRECATION") // HideAppIntentPage material 代码逐字搬运，上游 API 迁移前已弃用
+/** Material 线：material3 `ModalBottomSheet` + `FilterChip` 的排序/筛选弹层，承载内容与 [SortFilterSheetMiuix] 相同，只是控件换成 material3 原语。 */
+@Suppress("DEPRECATION") // rememberModalBottomSheetState() 自 material3 1.5 起弃用（改用 rememberBottomSheetState + 显式 enabledValues）；Material 线沿用旧重载，以免改动半展开状态的既有组合
 @OptIn(ExperimentalLayoutApi::class, ExperimentalMaterial3Api::class)
 @Composable
 internal fun SortFilterSheetMaterial(

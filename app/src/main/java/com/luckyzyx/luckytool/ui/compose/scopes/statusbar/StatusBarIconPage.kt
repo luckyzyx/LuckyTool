@@ -8,9 +8,10 @@ import com.luckyzyx.luckytool.utils.SDK
 import com.luckyzyx.luckytool.utils.getOSVersionCode
 
 /**
- * 状态栏图标页（旧 ui.fragment.scopes.statusbar.StatusBarIcon 的 Compose 等价物）。
- * 逐项对齐：键、默认值、条件可见性（osCode = getOSVersionCode、SDK = Android API）、
- * notify（sendPrefsValue("com.android.systemui")）。
+ * 状态栏图标页：Wi-Fi、移动数据、蓝牙与其他状态栏图标的显示开关，以及图标排序子页入口
+ * （写入 com.android.systemui）。
+ * 每项都显式声明键、默认值与条件可见性（osCode = getOSVersionCode 判 OS 版本、
+ * SDK = Android API 级别）；标了 notify 的项写值后经 sendPrefsValue("com.android.systemui") 通知宿主。
  */
 object StatusBarIconPage {
 
@@ -95,7 +96,7 @@ object StatusBarIconPage {
             title = c.getString(R.string.remove_system_prompt_icon),
             summary = c.getString(R.string.remove_system_prompt_icon_summary),
         )
-        // 旧代码连续两次 isVisible，最后一次生效：osCode in 30..33
+        // 仅 osCode in 30..33 的系统版本提供该图标背景透明度调节
         if (osCode in 30..33) {
             slider(
                 key = "custom_fluid_cloud_icon_background_transparency",

@@ -108,7 +108,7 @@ data class ScrollTarget(val key: String, val position: Int)
 
 /**
  * 单个偏好项的搜索索引条目（Function 页全局搜索由 [PrefScopeBuilder.snapshotIndex] 收集，
- * 与旧 PrefsItem 语义对齐：key/title/summary 参与过滤，pageTarget 非空则命中即导航）。
+ * key/title/summary 参与过滤，pageTarget 非空则命中即导航）。
  */
 data class PrefIndexItem(
     val key: String,
@@ -125,7 +125,7 @@ data class PrefIndexItem(
  * [segIndex]/[segCount] 用于把相邻条目合并成同一张分组卡片（首条上端 16dp 外圆角、尾条下端 16dp 外圆角、
  * 组内条目不设内圆角与间距，见 [com.luckyzyx.luckytool.ui.theme.DesignTokens]）；
  * [groupable] = false 的条目独占一张卡片（分类标题，以及 [PrefScopeBuilder.custom] 显式声明 standalone 的逃生舱）。
- * [bare] = true 的条目（仅分类标题）完全裸渲染，不套任何卡片容器，对齐旧 PreferenceCategory 观感。
+ * [bare] = true 的条目（仅分类标题）完全裸渲染，不套任何卡片容器。
  * [groupBreak] 只分隔卡片组，保留零高度槽位以维持索引位置。
  */
 internal class PrefEntry(
@@ -186,7 +186,7 @@ private fun MiuixScopeCard(
 }
 
 /**
- * 偏好页声明式 DSL —— 旧 BaseScopePreferenceFeagment 程序化 PreferenceScreen 的 Compose 等价物。
+ * 偏好页声明式 DSL：用普通 lambda 声明分类、开关、列表、滑条、输入与页面入口。
  *
  * 用法：
  * ```
@@ -200,11 +200,11 @@ private fun MiuixScopeCard(
  * }
  * ```
  *
- * 构建 lambda 是普通（非 Composable）函数：每次重组重跑（等价旧 View 方案“重进页面刷新”，
+ * 构建 lambda 是普通（非 Composable）函数：每次重组重跑（相当于“重进页面刷新”，
  * 但自动触发），因此条件判断用 PrefState 同步 getter 即天然响应式。搜索索引同样来自构建结果：
  * Function 页可不在 UI 中渲染，直接用同一 lambda 收集 [PrefIndexItem]。
  *
- * 写值语义对齐旧代码：`state.set(key, value)` 先落 SharedPreferences（host 进程 hook 经
+ * 写值语义：`state.set(key, value)` 先落 SharedPreferences（host 进程 hook 经
  * remote prefs 同源可见），再经 [sendValue] 触发 `Context.sendPrefsValue(packName, key, value)`。
  */
 class PrefScopeBuilder internal constructor(
@@ -320,8 +320,8 @@ class PrefScopeBuilder internal constructor(
     ) { }
 
     /**
-     * 分类标题（对应旧 addCategory / categoryPreference）：不套卡片，裸渲染在分组卡片之上。
-     * [summary] 对应旧 PreferenceCategory 的 summary：与标题同组渲染（标题在上、说明在下），
+     * 分类标题：不套卡片，裸渲染在分组卡片之上。
+     * [summary] 与标题同组渲染（标题在上、说明在下），
      * 不再作为独立的文字组件悬在分类之下。
      */
     fun category(title: String, summary: String? = null) =
@@ -674,9 +674,9 @@ class PrefScopeBuilder internal constructor(
     }
 
     /**
-     * 页面入口（对应旧 addFragmentPreference：跳转其他作用域页；同时登记搜索索引）。
+     * 页面入口（跳转其他作用域页；同时登记搜索索引）。
      * 目标页不可达（spec.isVisible false / 单 App 作用域未安装 / 目标页无可见条目）时不发射入口，
-     * 对齐旧父页入口行 isVisible 条件与「选项=0 → 入口消失」规则（判断集中在 [ScopePageRegistry.isPageReachable]）。
+     * 入口可见性沿用「选项=0 → 入口消失」规则（判断集中在 [ScopePageRegistry.isPageReachable]）。
      */
     fun page(
         title: String,
@@ -806,7 +806,7 @@ class PrefScopeBuilder internal constructor(
 /**
  * 作用域偏好页主体（无 Scaffold，标题栏由页面宿主提供）。
  *
- * 与旧 BaseScopePreferenceFeagment 行为对齐：
+ * 行为约定：
  * - [sendValue] 对应 `Context.sendPrefsValue(packName, key, value)`（dataChannel 通知宿主）
  * - [scrollTarget] 对应搜索跳转（scrollKey/scrollPosition）：滚动到槽位 + 高亮闪烁
  * - [onNavigate] 对应页面入口跳转（page DSL 项）
@@ -894,7 +894,7 @@ fun ScopeScreen(
                     // 淡出/淡入按 key 认身份，所以这类行必须同时传稳定的 itemKey（默认槽位 key 会漂移）。
                     val animModifier = if (entry.animate) Modifier.animateItem() else Modifier
                     if (entry.bare) {
-                        // 分类标题：不套卡片，对齐旧 PreferenceCategory 的观感（标题裸渲染在分组卡片之上）。
+                        // 分类标题：不套卡片，裸渲染在分组卡片之上。
                         // 顶部间距沿用原卡片路径的取值，纵向节奏与改动前一致。
                         val topGap = if (LocalUiMode.current == UiMode.Miuix) {
                             miuixTopGap(entry.slot, entry.segIndex)

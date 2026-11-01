@@ -5,8 +5,9 @@ import com.luckyzyx.luckytool.ui.compose.scopes.ScopePageSpec
 import com.luckyzyx.luckytool.utils.ModulePrefs
 
 /**
- * 状态栏网速页（旧 ui.fragment.scopes.statusbar.StatusBarNetWorkSpeed 的 Compose 等价物）。
- * 逐项对齐：键、默认值、条件可见性、notify（sendPrefsValue）。
+ * 状态栏网速页：网速刷新间隔、布局与字号/上下间距取值（写入 com.android.systemui）。
+ * 每项都显式声明键与默认值；标了 notify 的项写值后经
+ * sendPrefsValue("com.android.systemui") 通知宿主。
  */
 object StatusBarNetWorkSpeedPage {
 

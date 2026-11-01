@@ -30,9 +30,9 @@ import com.luckyzyx.luckytool.utils.putString
 import com.luckyzyx.luckytool.utils.showToast
 
 /**
- * 指纹相关页（旧 ui.fragment.scopes.related.FingerPrintRelated 的 Compose 等价物）。
- * 点击"替换指纹图标路径"项 → CropImageContract 裁剪选图（与旧实现同源），成功后
- * putString 写入路径 + restart。
+ * 指纹相关页：指纹图标模式、替换图标开关与自定义图标路径（写入 com.android.systemui）。
+ * 点击"替换指纹图标路径"项 → CropImageContract 裁剪选图，成功后提示路径并 putString 写入；
+ * 该页提供「重启作用域」菜单（restartEnabled = true）让新图标生效。
  */
 object FingerPrintRelatedPage {
 

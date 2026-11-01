@@ -5,7 +5,7 @@ import com.luckyzyx.luckytool.ui.compose.scopes.ScopePageSpec
 import com.luckyzyx.luckytool.utils.ModulePrefs
 
 /**
- * 旧 ui.fragment.scopes.apps.OplusThemeStore 的 Compose 等价物（机械翻译 loadPreferences）。
+ * 主题商店页：解锁 VIP 的开关。
  */
 object OplusThemeStorePage {
 

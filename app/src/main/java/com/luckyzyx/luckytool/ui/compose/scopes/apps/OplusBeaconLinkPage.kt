@@ -7,7 +7,8 @@ import com.luckyzyx.luckytool.utils.checkPackName
 import com.luckyzyx.luckytool.utils.getOSVersionCode
 
 /**
- * 一碰互联页（旧 ui.fragment.scopes.apps.OplusBeaconLink 的 Compose 等价物）。
+ * 一碰互联页：解除一碰互联时长限制的开关。
+ * 仅在 osCode >= 33 且装有 com.oplus.beaconlink 时出现（见 spec.isVisible），开关本身也在同一条件下渲染。
  */
 object OplusBeaconLinkPage {
 

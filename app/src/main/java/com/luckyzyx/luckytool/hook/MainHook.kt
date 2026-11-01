@@ -171,9 +171,9 @@ class MainHook : YukiHookXposedModule {
 
         //系统框架
         loadSystem(HookAndroid)
-        //核心破解（上游 CorePatch）
+        //核心破解
         loadSystem(HookCorePatch)
-        //禁用安全标记（上游 DisableFlagSecure，system_server 侧）
+        //禁用安全标记（system_server 侧）
         loadSystem(HookDisableFlagSecure)
 
         //系统界面

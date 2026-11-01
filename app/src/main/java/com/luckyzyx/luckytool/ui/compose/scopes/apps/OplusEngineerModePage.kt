@@ -5,7 +5,7 @@ import com.luckyzyx.luckytool.ui.compose.scopes.ScopePageSpec
 import com.luckyzyx.luckytool.utils.ModulePrefs
 
 /**
- * 工程模式页（旧 ui.fragment.scopes.apps.OplusEngineerMode 的 Compose 等价物）。
+ * 工程模式页：解锁隐藏选项的开关。
  */
 object OplusEngineerModePage {
 

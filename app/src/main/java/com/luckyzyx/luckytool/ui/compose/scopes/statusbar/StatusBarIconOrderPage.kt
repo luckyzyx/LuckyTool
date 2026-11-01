@@ -29,7 +29,7 @@ object StatusBarIconOrderPage {
         // 开关
         category(c.getString(R.string.statusbar_icon_order_category_switch))
         // 总开关：hooker 只在开启时装载（onHook 里判断），因此关→开、开→关都需要重载宿主作用域才生效。
-        // 该装载状态在 com.android.systemui 进程里，重建本 Activity（旧代码的 restart?.invoke()）影响不到它，
+        // 该装载状态在 com.android.systemui 进程里，重建本 Activity 影响不到它，
         // 必须用顶栏的「重启作用域」按钮（RestartMenuUtils.RestartScopeDialog），故只在 summary 里提示。
         switch(
             key = STATUS_BAR_ICON_ORDER_ENABLED_KEY,

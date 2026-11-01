@@ -5,7 +5,7 @@ import com.luckyzyx.luckytool.ui.compose.scopes.ScopePageSpec
 import com.luckyzyx.luckytool.utils.ModulePrefs
 
 /**
- * 闹钟页（旧 ui.fragment.scopes.apps.OplusAlarmClock 的 Compose 等价物）。
+ * 闹钟页：时钟样式模式的取值（三档 0/1/2，默认 0）。
  */
 object OplusAlarmClockPage {
 

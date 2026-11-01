@@ -5,7 +5,7 @@ import com.luckyzyx.luckytool.ui.compose.scopes.ScopePageSpec
 import com.luckyzyx.luckytool.utils.ModulePrefs
 
 /**
- * 旧 ui.fragment.scopes.apps.OplusPictorial 的 Compose 等价物（机械翻译 loadPreferences）。
+ * 画报页：去掉图片与视频保存水印的开关。
  */
 object OplusPictorialPage {
 

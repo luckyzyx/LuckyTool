@@ -135,7 +135,7 @@ fun MiuixPrefItem(
  * material 的 `titleSmall` 行高 20sp 且字形在行盒内居中，此处显式 `lineHeight = 20.sp`
  * 使字形同样居中，消除偏移。
  *
- * [summary] 对应旧 PreferenceCategory 的 summary：紧随标题之下渲染，字号对齐 material 侧
+ * [summary] 分类说明：紧随标题之下渲染，字号对齐 material 侧
  * `bodySmall`（12sp），与标题同属一个分类头，不再是单独悬挂的文字条目。
  */
 @Composable

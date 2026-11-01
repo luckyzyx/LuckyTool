@@ -5,7 +5,7 @@ import com.luckyzyx.luckytool.ui.compose.scopes.ScopePageSpec
 import com.luckyzyx.luckytool.utils.ModulePrefs
 
 /**
- * 小布空间（Claw）页（旧 ui.fragment.scopes.others.Claw 的 Compose 等价物）。
+ * 小布空间（Claw）页：root 检测的屏蔽开关（写入 com.oplus.claw）。
  */
 object ClawPage {
 

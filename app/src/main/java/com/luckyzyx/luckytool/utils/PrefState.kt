@@ -10,7 +10,7 @@ import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.CopyOnWriteArrayList
 
 /**
- * SharedPreferences 的响应式读取层（Compose 迁移的存储桥）。
+ * SharedPreferences 的响应式读取层：把 SP 存储桥接成 StateFlow，供 Compose 侧读取与回流。
  *
  * 存储层保持 SP 不变：hook 在宿主进程（SystemUI 等）通过 XSharedPreferences / remote prefs
  * 跨进程读取同一份数据，不能迁 DataStore（protobuf 宿主进程读不了）。
@@ -185,7 +185,7 @@ class PrefState private constructor(
     companion object {
         private val cache = ConcurrentHashMap<String, PrefState>()
 
-        /** 按 prefs 文件名缓存实例（进程生命周期）；测试/迁移过渡可显式 [invalidate] */
+        /** 按 prefs 文件名缓存实例（进程生命周期）；测试或需强制重建时可显式 [invalidate] */
         fun of(context: Context, prefsName: String): PrefState =
             cache.getOrPut(prefsName) { PrefState { context.appPrefs(prefsName) } }
 

@@ -87,17 +87,17 @@ private const val CONFIG_PACKAGE_LIST = GlobalKeyValue.memcConfigPackageList
 private const val CONFIG_ACTIVITY_LIST = GlobalKeyValue.memcConfigActivityList
 
 /**
- * P4 特殊页：Memc 帧插入配置（旧 MemcConfigFragment 1:1 迁移）。
+ * P4 特殊页：Memc 帧插入配置。
  * 双 Tab（Packages/Activitys）+ 搜索 + 下拉刷新 + Import Xml / Reset。
  *
- * 原「三文件制」已合并为单文件：状态/写值逻辑唯一一份 [MemcConfigState]，
+ * 单文件承载：状态与写值逻辑只有一份 [MemcConfigState]，
  * 渲染差异集中在 [MemcConfigContent] 的 `if (miuix)` 分派上——Import Xml / Reset 通过
- * [ScopePageAction] 交回顶栏溢出菜单（旧 Fragment 即 `SHOW_AS_ACTION_NEVER`），
+ * [ScopePageAction] 进顶栏溢出菜单（不设 `showAsAction`，只出现在溢出菜单里、不占页面空间），
  * 双面板与四个弹层按线分派。
  */
 object MemcConfigPage {
 
-    /** 顶栏溢出菜单动作 key（对应旧 Fragment `onCreateMenu` 的菜单项）。 */
+    /** 顶栏溢出菜单动作 key，页面在 `actionHandler` 里据此分派。 */
     const val ACTION_IMPORT_XML = "import_xml"
     const val ACTION_RESET = "reset"
 
@@ -111,7 +111,7 @@ object MemcConfigPage {
         selfRendered = true,
         onRefresh = { memcRefresh?.invoke() },
         fullContent = { _ -> MemcConfigContent() },
-        // 旧版这两项都在 Toolbar 溢出菜单里（无图标、SHOW_AS_ACTION_NEVER），保持一致
+        // 这两项都不设图标、不显示为顶栏按钮，只出现在溢出菜单里
         topActions = listOf(
             ScopePageAction(ACTION_IMPORT_XML, R.string.menu_import_xml),
             ScopePageAction(ACTION_RESET, R.string.reset),
@@ -261,7 +261,7 @@ internal class MemcConfigState(private val context: Context) {
 }
 
 /**
- * 页面渲染体：状态/加载逻辑唯一一份（两线旧实现逐字一致），渲染差异集中在此。
+ * 页面渲染体：状态/加载逻辑唯一一份，两条渲染线共用，渲染差异集中在此。
  *
  * LazyItemScope 扩展：[ScopePageSpec.fullContent] 挂在 LazyColumn 的 item 内，item 的高度约束无界，
  * 根容器必须用 `fillParentMaxHeight()` 取列表视口高度，否则整列高度为 0（子项 weight 分不到空间）→ 白屏。

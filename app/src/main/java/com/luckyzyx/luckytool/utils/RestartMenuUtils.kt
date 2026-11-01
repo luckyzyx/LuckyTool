@@ -344,7 +344,7 @@ object RestartMenuUtils {
             targets.filter {
                 scopes.contains(it.processName.substringBefore(":"))
             }.forEach { target ->
-                // skippedIfUpToDate = false：与迁移前 hotReloadModule 一致，不做「代码已是最新」的跳过
+                // skippedIfUpToDate = false：不做「代码已是最新」的跳过，无论目标进程的 jar 是否变化都重新加载
                 reload.request(target, skippedIfUpToDate = false) { result ->
                     LogUtils.d(
                         "restartHooker",

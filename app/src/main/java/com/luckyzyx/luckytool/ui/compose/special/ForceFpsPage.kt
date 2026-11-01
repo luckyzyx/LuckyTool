@@ -45,7 +45,7 @@ import top.yukonga.miuix.kmp.basic.Button as MiuixButton
 import top.yukonga.miuix.kmp.basic.Text as MiuixText
 
 /**
- * 强制刷新率页（旧 ui.fragment.extension.ForceFpsFragment 的 Compose 等价物）。
+ * 强制刷新率页：列出 SurfaceFlinger 支持的模式，设置当前刷新率、显示刷新率开关与开机自启。
  *
  * 控制器状态在 RootService 控制器而非 prefs，故整页用 custom() 手工构建
  * （不用 DSL switch/slider）。
@@ -53,8 +53,8 @@ import top.yukonga.miuix.kmp.basic.Text as MiuixText
  * ## 状态模型
  * - [IRefreshRateController] 是唯一的「数据源」；`supportModes` / `refreshRateDisplay`
  *   都是**同步** root IPC，因此每次 load 只读一次落到 Compose 状态，不在组合期重复读；
- * - 持久化只属于本页：`keyFpsCur`（模式位置，即列表 index —— 旧 fpsIds.add(index) 存的
- *   就是 index，同时被 AutoStartControllerService 拼进 `service call SurfaceFlinger 1035 i32 <index>`）、
+ * - 持久化只属于本页：`keyFpsCur`（模式位置，即列表 index，同时被 AutoStartControllerService
+ *   拼进 `service call SurfaceFlinger 1035 i32 <index>`）、
  *   `keyFpsAutoStart`；
  * - 进程级控制器缓存做种子，让「本来已绑定」的常见路径瞬时还原内容。
  *
@@ -75,9 +75,9 @@ import top.yukonga.miuix.kmp.basic.Text as MiuixText
  * 不要再沿 ContextWrapper 向上找 Activity，否则 findActivity() 恒为 null，
  * 每次拉取都直接返回 null，页面永远「无数据」。
  *
- * ## 布局（自上而下，对齐旧 fragment_fps.xml）
+ * ## 布局（自上而下）
  * 1. FPS 数据卡：`supportModes` 模式单选列表（displayMode 数据）置顶，独立一张卡片；
- * 2. 加载中 / 无数据提示：数据卡没有内容时在该位置给出落点（旧 `fps_nodata_view`）；
+ * 2. 加载中 / 无数据提示：数据卡没有内容时在该位置给出落点；
  * 3. 设置卡：自启（`keyFpsAutoStart`）+ 显示刷新率合并为一张卡片；
  * 4. 恢复默认刷新率按钮 + 底部提示文案。
  *
@@ -170,9 +170,8 @@ object ForceFpsPage {
                 verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 // FPS 数据卡：displayMode 模式列表置顶，独立一张卡片
-                // （旧 ListView CHOICE_MODE_SINGLE：单选以列表位置 index 为准 —— 旧 fpsIds.add(index)、
-                //  setItemChecked(indexOf(fpsCur))、点击存 index；mode.id 仅用于展示文本，
-                //  选中/设置/持久化都用 index，保证恰一项选中且与 keyFpsCur 自启语义一致）
+                // 单选以列表位置 index 为准：点击与选中态比的都是 index，mode.id 仅用于展示文本，
+                // 选中/设置/持久化都用 index，保证恰一项选中且与 keyFpsCur 自启语义一致
                 PrefGroup {
                     if (!isUnsupport) {
                         modes.forEachIndexed { index, mode ->
@@ -202,7 +201,7 @@ object ForceFpsPage {
                         }
                     }
                 }
-                // 数据卡没有内容时（loading / 控制器未连上 / 无模式）给出落点，位置与旧 fps_nodata_view 一致
+                // 数据卡没有内容时（loading / 控制器未连上 / 无模式）在该位置给出落点
                 val hint = when {
                     !isUnsupport -> null
                     controller == null && loading -> R.string.loading
@@ -250,7 +249,7 @@ object ForceFpsPage {
                         )
                     }
                 }
-                // fpsRecover（旧 resetRefreshRate：持久化 -1 + 重置模式；开关可用性随 fpsCur==-1 自动失效）
+                // fpsRecover：持久化 -1 + 重置模式；开关可用性随 fpsCur==-1 自动失效
                 if (miuix) {
                     MiuixButton(
                         onClick = {

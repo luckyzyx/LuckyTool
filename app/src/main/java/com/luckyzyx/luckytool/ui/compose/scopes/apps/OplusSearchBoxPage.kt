@@ -5,7 +5,7 @@ import com.luckyzyx.luckytool.ui.compose.scopes.ScopePageSpec
 import com.luckyzyx.luckytool.utils.ModulePrefs
 
 /**
- * 旧 ui.fragment.scopes.apps.OplusSearchBox 的 Compose 等价物（机械翻译 loadPreferences）。
+ * 搜索框页：去掉推荐卡片与未安装应用建议、默认选中本地搜索页签的开关。
  */
 object OplusSearchBoxPage {
 

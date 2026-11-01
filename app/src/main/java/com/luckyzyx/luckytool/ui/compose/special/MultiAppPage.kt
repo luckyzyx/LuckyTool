@@ -46,14 +46,14 @@ import top.yukonga.miuix.kmp.utils.overScrollVertical
 import top.yukonga.miuix.kmp.utils.scrollEndHaptic
 
 /**
- * P4 特殊页：应用分身自定义列表（旧 MultiAppFragment 1:1 迁移）。
+ * P4 特殊页：应用分身自定义列表。
  *
- * 单文件双线：状态与数据加载逻辑唯一一份，只在渲染缝按 [LocalUiMode] 分派
- * （搜索框 [AppSearchField]、LazyColumn 骨架、条目容器、应用行 [AppToggleRow]），
- * 与 prefCard 同一分派哲学，去掉旧 Material/Miuix 两份变体。
+ * 单文件双线：状态与数据加载逻辑只有一份，只在渲染缝按 [LocalUiMode] 分派
+ * （搜索框 [AppSearchField]、LazyColumn 骨架、条目容器、应用行 [AppToggleRow]）。
+ * 与 prefCard 同一分派哲学：分派只发生在渲染体里，不为 Material / Miuix 各维护一份页面逻辑。
  *
- * 「打开应用分身」是旧 Toolbar 菜单项（`SHOW_AS_ACTION_IF_ROOM`），放回页面顶栏
- * （[ScopePageAction]），不再平铺成页面里的卡片。
+ * 「打开应用分身」是对整页数据的一次性动作，故声明为 [ScopePageAction] 并设
+ * `showAsAction = true`，由页面宿主渲染进顶栏图标位，不占页面正文的卡片。
  */
 object MultiAppPage {
 

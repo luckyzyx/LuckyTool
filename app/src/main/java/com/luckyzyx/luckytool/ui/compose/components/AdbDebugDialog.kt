@@ -77,9 +77,8 @@ private enum class AdbDebugError {
 /**
  * 远程 ADB 调试对话框的状态机。
  *
- * 迁移前 Material / Miuix 两条线各写了一遍同样的状态机（约 80 行重复），
- * 且 `runCatching` 吞掉异常后照样把开关置成开启、把错误提示写进连接命令同一个变量。
- * 现在状态只有一份：失败只置 [error]，不动 [enabled]，用户重试即重跑。
+ * 两条渲染线共用这一份状态：`runCatching` 只用来判定成败，
+ * 失败只置 [error]、不动 [enabled]，用户重试即重跑；错误提示与连接命令分开存放，互不覆盖。
  *
  * @param adb 服务端控制器（AIDL）
  * @param otherPrefs 记录上次端口的 prefs 槽
@@ -179,9 +178,8 @@ private class AdbDebugDialogState(
 /**
  * 远程 ADB 调试对话框（Material / Miuix 双线）。
  *
- * 迁移前它是 [com.luckyzyx.luckytool.ui.compose.pages.OtherPage] 里的私有实现，
- * 两条线各自持有一份状态，错误提示与连接命令共用一个文本槽。
- * 现在壳分两条、状态与正文合一：
+ * 只有一份状态：状态机与正文合一，两个壳（Miuix / material3）渲染同一个 [AdbDebugDialogState]，
+ * 因此错误提示与连接命令不会互相覆盖。
  * Miuix 线走 `overlay.OverlayDialog`（由根部 Miuix Scaffold 的 popup host 承载，须组合在 MainShell 内），
  * Material 线走 material3 `AlertDialog`。
  *

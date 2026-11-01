@@ -6,7 +6,8 @@ import com.luckyzyx.luckytool.utils.ModulePrefs
 import com.luckyzyx.luckytool.utils.checkPackName
 
 /**
- * DirectUI 页（旧 ui.fragment.scopes.apps.OplusDirectUI 的 Compose 等价物）。
+ * DirectUI 页：去掉触摸操作里的应用推荐卡片。
+ * 仅在 com.coloros.directui 与 com.coloros.colordirectservice 都装有时出现（见 spec.isVisible）。
  */
 object OplusDirectUIPage {
 

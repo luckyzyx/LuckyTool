@@ -9,8 +9,8 @@ import com.luckyzyx.luckytool.utils.getOSVersionCode
 import com.luckyzyx.luckytool.utils.isZh
 
 /**
- * 旧 ui.fragment.scopes.apps.OplusSoundRecorder 的 Compose 等价物（机械翻译 loadPreferences）。
- * 两个开关均有 isEnabled=checkPackName(...) 条件，按规则译为 enabled 参数。
+ * 录音机页：第三方通话录音与 VoIP 录音白名单的开关。
+ * 两个开关都按 checkPackName(...) 结果置 enabled，缺包时置灰。
  */
 object OplusSoundRecorderPage {
 

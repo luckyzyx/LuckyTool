@@ -35,10 +35,11 @@ import com.luckyzyx.luckytool.utils.checkPackName
 import com.luckyzyx.luckytool.utils.getOSVersionCode
 
 /**
- * 相机页（旧 ui.fragment.scopes.apps.OplusCamera 的 Compose 等价物）。
- * 逐项对齐：键、默认值、条件可见性（osCode 沿用 getOSVersionCode、SDK 用 Android 版本）、
- * 滤镜多选对话框与自定义水印。旧 loadRootPreference 根条目
- * isVisible = checkPackName(oneplus 或 oplus 相机) 平移为 spec.isVisible。旧 open 菜单（openApp）不在 Compose 页呈现。
+ * 相机页：相机调试项、水印、滤镜与其它成像开关。
+ * 每项都显式声明键、默认值与条件可见性（osCode = getOSVersionCode 判 OS 版本、
+ * SDK = Android API 级别）；水印与滤镜含自定义取值与多选对话框。
+ * 整页仅在装有 com.oplus.camera 或 com.oneplus.camera 时出现（见 spec.isVisible）。
+ * open 菜单（openApp 跳转）不在本页呈现。
  */
 object OplusCameraPage {
 
@@ -60,7 +61,7 @@ object OplusCameraPage {
                 summary = c.getString(R.string.enable_camera_debug_ui_option_summary).trimIndent(),
             )
         }
-        // 默认打开相册的应用选择（旧 AppInfoSelectDialog 单选 → Compose AppPickerDialog）
+        // 默认打开相册的应用选择（单选一个应用 → AppPickerDialog）
         if (getOSVersionCode >= 26) {
             custom(
                 key = "custom_camera_open_gallery_by_default",
@@ -306,7 +307,7 @@ object OplusCameraPage {
         val onSaved: (Set<String>) -> Unit = {},
     )
 
-    /** 旧多选滤镜对话框的 Compose 等价物（勾选集 → state.set + onSaved） */
+    /** 滤镜多选对话框：勾选集写回 state.set 并回调 onSaved */
     @Composable
     private fun CameraFilterDialog(
         c: Context,

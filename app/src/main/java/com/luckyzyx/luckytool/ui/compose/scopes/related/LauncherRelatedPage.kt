@@ -12,8 +12,10 @@ import com.luckyzyx.luckytool.utils.sendPrefsValue
 import com.topjohnwu.superuser.ShellUtils
 
 /**
- * 桌面相关页（旧 ui.fragment.scopes.related.LauncherRelated 的 Compose 等价物）。
- * 逐项对齐：键、默认值、条件可见性、notify（sendPrefsValue）。
+ * 桌面相关页：launcher 的小组件、应用图标、角标、文件夹、多窗口与抽屉布局等开关，
+ * 写入 com.android.launcher / com.oppo.launcher，仅在装的是 com.android.launcher 时可见。
+ * 每项都显式声明键、默认值与条件可见性（osCode = getOSVersionCode 判 OS 版本），
+ * 部分项写值后经 sendPrefsValue("system") 通知宿主。
  */
 object LauncherRelatedPage {
 

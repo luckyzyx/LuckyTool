@@ -97,7 +97,7 @@ import top.yukonga.miuix.kmp.basic.Text as MiuixText
 import top.yukonga.miuix.kmp.basic.TextButton as MiuixTextButton
 
 /**
- * 设置页（旧 SettingsFragment 的 Compose 等价实现）。
+ * 设置页。
  * 主题 / 其他 / 备份恢复 / 关于四组设置，含备份恢复 JSON 逻辑与生物识别门控。
  */
 @OptIn(ExperimentalMaterial3Api::class)
@@ -125,7 +125,7 @@ fun SettingPage(activity: MainActivity, onOpenTheme: () -> Unit = {}) {
         if (uri != null) {
             val entryData = FileUtils.readFromUri(activity, uri)
             val json = JSONObject(base64Decode(entryData))
-            // 旧 checkRestoreData 只在跨版本时提示；现在总是先弹对话框展示落点与当前状态
+            // 总是先弹对话框展示落点与当前状态，跨版本提示改在对话框里按数据版本比较决定
             pendingRestoreJson = json
         }
     }
@@ -231,7 +231,7 @@ fun SettingPage(activity: MainActivity, onOpenTheme: () -> Unit = {}) {
                         leading = { PrefIcon(Icons.Rounded.Fingerprint) },
                         beforeApply = { enable, apply ->
                             if (enable) {
-                                // 旧行为：验证通过才真正写入
+                                // 验证通过才真正写入（取消或失败则不写）
                                 BiometricUtils.showBiometricPrompt(
                                     activity,
                                     onSucceed = { apply(true) })
@@ -521,7 +521,7 @@ fun SettingPage(activity: MainActivity, onOpenTheme: () -> Unit = {}) {
 
     pendingRestoreJson?.let { json ->
         val osCode = json.optInt("osCode")
-        // 旧 checkRestoreData 只在跨版本时提示，这里只用来决定要不要显示跨版本提示行
+        // 只用来决定要不要显示跨版本提示行：备份数据版本与当前系统版本不一致才提示
         val crossVersion = osCode > 0 && osCode != getOSVersionCode
         val versionLines = buildList {
             if (osCode > 0) {
@@ -735,7 +735,7 @@ private fun writeRestoreData(context: Context, json: JSONObject) {
     json.keys().forEach { prefsName ->
         val prefsDatas = json.prefsData(prefsName) ?: return@forEach
         if (prefsDatas.length() <= 0) return@forEach
-        // 旧备份没有 target：退回当前落点，与迁移前的行为一致
+        // 旧备份没记 target：退回当前落点（[prefsTarget] 解析），保证这些键仍写到该去的那份 prefs
         val target = json.recordedTarget(prefsName) ?: context.prefsTarget(prefsName)
         val prefs = context.prefsForTarget(prefsName, target)
         if (prefs == null) {

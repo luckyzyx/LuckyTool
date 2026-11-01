@@ -20,7 +20,7 @@ import top.yukonga.miuix.kmp.overlay.OverlayDialog
 /**
  * 启动阻塞门对话框的规格：Xposed 未激活 / 无 root / 系统不支持
  *
- * @param title 标题；Xposed 未激活时与迁移前一致，不显示标题
+ * @param title 标题；为 null 时不显示标题（Xposed 未激活的场景只显示正文）
  * @param message 正文
  * @param neutralLabel 中性按钮文案；非空时显示，点击只关闭对话框（系统不支持时提供的「忽略」）
  */
@@ -33,20 +33,20 @@ data class GateDialogSpec(
 /**
  * 启动阻塞门对话框（不可取消）：Material / Miuix 双线实现
  *
- * 迁移前这三处是 [com.luckyzyx.luckytool.ui.activity.MainActivity] 里唯一的 View 层
- * `androidx.appcompat.app.AlertDialog` —— P5「Compose 化 + 删 Material View 依赖」时
- * 它们是 Activity 生命周期里的阻塞门、没被搬进 Compose，才留在 View 层，
- * 用着 AppCompat 默认的 alertDialogTheme，与应用其余对话框完全脱节。
+ * 用于应用起不来时把原因讲清楚：Xposed 未激活 / 无 root / 系统不支持。
+ * 它是 Activity 生命周期里的阻塞门，由 [com.luckyzyx.luckytool.ui.compose.MainShell]
+ * 直接组合，不挂在任何页面上。
  *
- * 现在改为与应用其余对话框一致的 `UiMode` 双线：
+ * 呈现与应用其余对话框保持一致，因此同样按 `UiMode` 双线：
  * Miuix 线走 `overlay.OverlayDialog`，它由根部 Miuix Scaffold 的 popup host 承载，
- * 因此必须组合在 [com.luckyzyx.luckytool.ui.compose.MainShell] 内；
+ * 所以必须组合在 [com.luckyzyx.luckytool.ui.compose.MainShell] 内；
  * Material 线走 material3 `AlertDialog`。
  *
- * 关闭语义对齐迁移前的 `setCancelable(false)`：返回键与点击外部都不关闭
- * （Material 线靠 [DialogProperties]，Miuix 线的 `onDismissRequest` 传空实现）。
- * 迁移前的 `setOnDismissListener { exitModule() }` 只可能在「由确定按钮触发 dismiss」时生效，
- * 而确定按钮已经 `exitProcess(0)`，因此这里不再保留。
+ * 不可取消：返回键与点击外部都不关闭
+ * （Material 线靠 [DialogProperties] 的 `dismissOnBackPress` / `dismissOnClickOutside`，
+ * Miuix 线的 `onDismissRequest` 传空实现），只能通过按钮离开。
+ * 也没有单独的 dismiss 回调：确定按钮由调用方直接 `exitProcess(0)`，
+ * 中性按钮只需把门对话框置空，都不需要再上报一次"已关闭"。
  *
  * @param onConfirm 确定按钮：由调用方决定是否退出进程
  * @param onNeutral 中性按钮：只关闭对话框

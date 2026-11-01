@@ -88,7 +88,7 @@ import top.yukonga.miuix.kmp.basic.Text as MiuixText
 import top.yukonga.miuix.kmp.basic.TextButton as MiuixTextButton
 import top.yukonga.miuix.kmp.basic.TextField as MiuixTextField
 
-/** AppInfo 排序模式（与旧 AppInfoSelectDialog 的 sortMode 对齐） */
+/** AppInfo 排序模式：名称 / 包名 / 大小 / 安装时间 / 最近更新 / 目标 SDK 六个排序维度 */
 enum class AppSortMode(@StringRes val labelRes: Int) {
     Name(R.string.appinfo_app_name),
     Package(R.string.appinfo_package_name),
@@ -154,9 +154,9 @@ private class AppPickerUiState(
 }
 
 /**
- * 应用选择对话框 —— 旧 AppInfoSelectDialog 的 Compose 等价物。
+ * 应用选择对话框：可搜索、可排序的已安装应用列表选择器。
  *
- * 行为对齐旧实现：加载 `PackageUtils(context.packageManager).getInstalledAppInfos(0)`，
+ * 行为：加载 `PackageUtils(context.packageManager).getInstalledAppInfos(0)`，
  * 排除 overlay 应用，默认隐藏系统应用；搜索匹配名称/包名；6 种排序 + 倒序；
  * 多选模式底部确认返回，单选模式点击即返回；已选应用预勾选并置顶显示。
  *

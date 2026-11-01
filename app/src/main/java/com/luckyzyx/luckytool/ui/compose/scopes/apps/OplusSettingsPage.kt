@@ -32,8 +32,8 @@ import com.luckyzyx.luckytool.utils.sendPrefsValue
 import com.luckyzyx.luckytool.utils.showToast
 
 /**
- * 旧 ui.fragment.scopes.apps.OplusSettings 的 Compose 等价物（机械翻译 loadPreferences）。
- * 旧「连接与共享」category 与 force_display_multi_screen_connect、enable_vip_mode 均 isVisible=false 从未展示，按规则丢弃；
+ * 设置页：系统设置各分类的开关与取值（状态栏、锁屏、显示、声音、应用、安全、关于本机、其它）。
+ * 「连接与共享」category 与 force_display_multi_screen_connect、enable_vip_mode 均 isVisible=false 从不展示，本页不含这些条目；
  * 「权限与隐私」category 依赖 SDK >= 666 永假，等价空组。
  */
 object OplusSettingsPage {

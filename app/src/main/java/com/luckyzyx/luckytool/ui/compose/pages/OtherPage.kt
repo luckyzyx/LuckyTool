@@ -68,8 +68,9 @@ import top.yukonga.miuix.kmp.icon.MiuixIcons
 import top.yukonga.miuix.kmp.icon.extended.Pin
 
 /**
- * 其他页（旧 OtherFragment 的 Compose 等价实现）。
- * 卡片顺序、可见性条件、对话框行为与旧实现逐项对齐。
+ * 其他页：磁贴控制器、远程 ADB、快捷方式、触摸采样率、快捷入口与 DEX 优化等工具入口。
+ * 卡片顺序固定；每张卡能否操作取决于控制器是否连上（tileController / adbController），
+ * 交互结果用对话框呈现（showTileDialog / showAdbDialog / showShortcutDialog / showTouchDialog）。
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -252,7 +253,7 @@ fun OtherPage(activity: MainActivity, isCurrentPage: Boolean = true) {
     }
 }
 
-/** 模块内置磁贴列表：请求添加到控制中心（旧 initQuickTile） */
+/** 模块内置磁贴列表：枚举带 BIND_QUICK_SETTINGS_TILE 权限的服务，选中项请求添加到控制中心 */
 @SuppressLint("NewApi")
 @Composable
 private fun TileListDialog(context: Context, onDismiss: () -> Unit) {
@@ -310,7 +311,7 @@ private fun TileListDialog(context: Context, onDismiss: () -> Unit) {
     )
 }
 
-/** 模块快捷方式：多选启用 + Pin 到桌面（旧 shortcut 卡点击） */
+/** 模块快捷方式：多选启用 + Pin 到桌面 */
 @Composable
 private fun ShortcutDialog(context: Context, onDismiss: () -> Unit) {
     val shortcutUtils = remember { ShortcutUtils(context) }
@@ -361,7 +362,7 @@ private fun ShortcutDialog(context: Context, onDismiss: () -> Unit) {
     )
 }
 
-/** 触摸采样率档位（旧 initTouchPanelView） */
+/** 触摸采样率档位：120~720 单选，确认后写 prefs 并同步给磁贴 */
 @Composable
 private fun TouchSamplingRateDialog(
     settings: PrefState,

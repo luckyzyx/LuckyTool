@@ -94,19 +94,19 @@ import top.yukonga.miuix.kmp.basic.TextButton as MiuixTextButton
 import top.yukonga.miuix.kmp.basic.TextField as MiuixTextField
 
 /**
- * P4 特殊页：隐藏应用 Intent（旧 HideAppIntentFragment 1:1 迁移）。
+ * P4 特殊页：隐藏应用 Intent。
  * 使用 ScopeScreen 的 fullContent 全屏自定义渲染 + onRefresh 下拉刷新。
  *
- * 原「三文件制」已合并为单文件：状态/加载/写值逻辑唯一一份，渲染差异集中在
+ * 单文件承载：状态/加载/写值逻辑只有一份，渲染差异集中在
  * [HideAppIntentContent] 的 `if (miuix)` 分派上——开关独占一张卡（[PrefGroup] 内
  * [PrefSwitchRow]）、搜索框复用 [AppSearchField]、
  * 应用行 [IntentAppRow] 与多选对话框 [IntentInfoSelectDialog] 按线分派。
- * 批量操作（旧 Fragment 的 Toolbar 溢出菜单）通过 [ScopePageAction] 交回顶栏溢出菜单，
- * 不再平铺成页面上的选项行。
+ * 批量操作（按 Intent 类型分别全选、清空全部）声明为 [ScopePageAction] 进顶栏溢出菜单：
+ * 它们作用于整份数据而非某一项，放进正文选项行会与单个开关混排。
  */
 object HideAppIntentPage {
 
-    /** 顶栏溢出菜单动作 key（对应旧 Fragment `onCreateMenu` 的菜单项）。 */
+    /** 顶栏溢出菜单动作 key，页面在 `actionHandler` 里据此分派整页批量操作。 */
     const val ACTION_SELECT_SHARE = "select_all_share_intent"
     const val ACTION_SELECT_TEXT = "select_all_text_intent"
     const val ACTION_SELECT_OPEN = "select_all_open_intent"
@@ -123,7 +123,7 @@ object HideAppIntentPage {
         selfRendered = true,
         onRefresh = { hideAppIntentRefresh?.invoke() },
         fullContent = { _ -> HideAppIntentContent() },
-        // 旧版这 5 项都在 Toolbar 溢出菜单里（无图标、不 SHOW_AS_ACTION），保持一致
+        // 这 5 项都不设图标、不显示为顶栏按钮，只出现在溢出菜单里
         topActions = listOf(
             ScopePageAction(ACTION_SELECT_SHARE, R.string.select_all_share_intent),
             ScopePageAction(ACTION_SELECT_TEXT, R.string.select_all_text_intent),
@@ -162,7 +162,7 @@ internal fun intentTypeLabel(type: IntentType): String = stringResource(
 )
 
 /**
- * 页面渲染体：状态/加载逻辑唯一一份（两线旧实现逐字一致），渲染差异集中在此：
+ * 页面渲染体：状态/加载逻辑唯一一份，两条渲染线共用，渲染差异集中在此：
  * 顶部开关独占一张卡（[PrefGroup] 内 [PrefSwitchRow]，批量操作已移回顶栏溢出菜单）、
  * 搜索框 [AppSearchField]，
  * 列表容器与行、清空对话框、多选对话框、排序过滤弹层均按 `if (miuix)` 分派。
@@ -463,7 +463,7 @@ internal fun LazyItemScope.HideAppIntentContent() {
                 onSortClick = { showSortSheet = true },
             )
         }
-        // 复刻旧布局 SwipeRefreshLayout.paddingVertical = 12dp 的搜索框↔列表间距
+        // 搜索框↔列表的间距：两者是同一 Column 的兄弟节点，不显式留白会直接贴在一起
         Spacer(Modifier.height(AppListContentGap))
         if (miuix) {
             LazyColumn(
@@ -699,7 +699,7 @@ internal fun LazyItemScope.HideAppIntentContent() {
 
 /**
  * 应用行：图标 + 应用名 + 包名 + 四组类型计数按钮。
- * 与 material/miuix 两线旧实现行为等价：每组类型 (share/text/open/browser) 各自回调
+ * 两条渲染线行为一致：每组类型 (share/text/open/browser) 各自回调
  * `(packName, 全部条目, 已启用条目, 类型组)`；容器分派在调用点（`MiuixPrefItem`/`MaterialItem`），
  * 行内 ListItem 与计数按钮在此按线分派。
  */
@@ -850,8 +850,8 @@ private fun RowScope.IntentCountChip(
  * 多选 Intent 对话框：已启用项置顶预选、按 label/activity 过滤、全选/清空，
  * confirm 回传 ArrayList(selected)（对话框内临时态，取消不落盘）。
  *
- * 行渲染、全选/计数行与按钮行统一交给 MultiChoiceDialog；两条渲染线合并后
- * 旧 Material 线行首的 32dp 应用图标不再单独渲染，信息由 title/summary 承担。
+ * 行渲染、全选/计数行与按钮行统一交给 MultiChoiceDialog；两条渲染线共用同一套行布局，
+ * 行首不再单独渲染 32dp 应用图标，信息由 title/summary 承担。
  */
 @Composable
 internal fun IntentInfoSelectDialog(
@@ -863,7 +863,7 @@ internal fun IntentInfoSelectDialog(
     val context = LocalContext.current
     val pm = context.packageManager
     var query by remember(data) { mutableStateOf("") }
-    // 已启用项置顶；过滤只在它上面收缩，所以已启用项之间的相对顺序与旧实现一致
+    // 已启用项置顶；过滤只在它上面收缩，所以已启用项之间的相对顺序保持不变
     val ordered = remember(data) {
         ArrayList<AppIntentInfo>().apply {
             addAll(data.appInfos.filter { it !in data.enabled })

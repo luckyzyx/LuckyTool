@@ -7,7 +7,7 @@ import com.luckyzyx.luckytool.utils.ModulePrefs
 import com.luckyzyx.luckytool.utils.SDK
 
 /**
- * 电池页（旧 ui.fragment.scopes.apps.OplusBattery 的 Compose 等价物）。
+ * 电池页：电池健康度、充电与耗电优化相关的开关与取值。
  */
 object OplusBatteryPage {
 

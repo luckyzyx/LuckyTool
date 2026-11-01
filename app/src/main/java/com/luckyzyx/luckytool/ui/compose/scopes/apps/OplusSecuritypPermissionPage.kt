@@ -17,7 +17,7 @@ import com.luckyzyx.luckytool.utils.sendPrefsValue
 import com.luckyzyx.luckytool.utils.showToast
 
 /**
- * 旧 ui.fragment.scopes.apps.OplusSecuritypPermission 的 Compose 等价物（机械翻译 loadPreferences）。
+ * 安全权限页：恶意应用拦截、应用启动弹窗与权限限制开关，以及按用户编辑的启动白名单。
  * enable_always_allow_app_start_dialog 受 app_start_dialog_use_old_version 依赖；
  * remove_always_allow_app_start_list 为用户多选对话框 custom 条目。
  */
@@ -104,7 +104,7 @@ object OplusSecuritypPermissionPage {
                         selectedKey = AllUsersKey,
                         onDismiss = { userDialogData = null },
                         onConfirm = { key ->
-                            // 与原实现一致：All 写回全部 userId，单行写回只含该 userId 的列表
+                            // All 写回全部 userId，单行写回只含该 userId 的列表
                             val userIds = if (key == AllUsersKey) ArrayList(data.allUserIds)
                             else arrayListOf(key.toInt())
                             c.sendPrefsValue("android", "remove_always_allow_app_start_list", userIds)

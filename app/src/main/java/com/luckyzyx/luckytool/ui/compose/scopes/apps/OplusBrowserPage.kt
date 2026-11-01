@@ -16,7 +16,8 @@ import com.luckyzyx.luckytool.utils.checkPackName
 import com.luckyzyx.luckytool.utils.showToast
 
 /**
- * 浏览器页（旧 ui.fragment.scopes.apps.OplusBrowser 的 Compose 等价物）。
+ * 浏览器页：广告、窗口数量限制与搜索栏推广的开关，以及简洁模式入口。
+ * 简洁模式入口只在装有 com.heytap.browser 时出现，点击跳浏览器自身的首页设置页。
  */
 object OplusBrowserPage {
 

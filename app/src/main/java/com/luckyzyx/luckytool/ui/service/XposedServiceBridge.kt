@@ -22,7 +22,7 @@ import kotlin.time.Duration.Companion.milliseconds
  *   XposedServiceHelper 只有一个静态监听槽，且已由 YukiHook 在 ModuleApplication.onCreate()
  *   里占住，谁后注册谁覆盖、被覆盖的一侧拿不到 service，所以这里不能再注册监听
  * - 回调给的是 available 布尔（= 框架 service 已绑定，库注释明确不校验 scope），
- *   激活态因此仍按「service 可用 **且** scope 非空」判定，与迁移前语义一致
+ *   激活态因此仍按「service 可用 **且** scope 非空」判定（scope 非空才是真的生效）
  * - [preferences] 在 service 可用时返回 remote prefs（宿主进程 YukiHookPreferences 的同一数据源），
  *   不可用时返回 null，由调用方回落本地 prefs
  *
@@ -103,11 +103,9 @@ object XposedServiceBridge {
  * 读走 [YukiHookPreferences] 的类型化读取，写走它的 Editor（本身就是 SharedPreferences.Editor），
  * 并在 commit/apply 之后通知注册在本实例上的监听器。
  *
- * 通知语义对齐迁移前的 libxposed RemotePreferences：那边也是同一实例内通知
- * （RemotePreferences.java:183-207 的 doUpdate 在 :235/:243 被 commit/apply 调用），
- * 且 getRemotePreferences 按名字缓存实例（XposedService.java:380 的 computeIfAbsent），
- * 所以「同一份 prefs 的不同调用点共享监听器」这一行为必须保留。
- * 远端来源不会推送外部变更，因此只有经本实例写入才会有通知。
+ * 通知范围只在本实例内：远端不会推送外部变更，因此只有经本实例写入才会有通知；
+ * 实例由 [XposedServiceBridge.preferences] 按名字缓存，所以「同一份 prefs 的不同调用点共享
+ * 监听器」这一行为必须保留。
  */
 private class RemotePreferences(private val prefs: YukiHookPreferences) : SharedPreferences {
 
@@ -205,7 +203,7 @@ private class RemotePreferences(private val prefs: YukiHookPreferences) : Shared
 
         override fun commit(): Boolean {
             val committed = delegate.commit()
-            // 与 libxposed 一致：先按改动通知，再向框架提交（那边同样在 doCommit 之前就通知）
+            // 顺序固定：先向框架提交（上一行的 delegate.commit()），再按改动通知本实例的监听器
             notifyChanged(cleared, changedKeys)
             return committed
         }

@@ -10,8 +10,9 @@ import com.luckyzyx.luckytool.utils.getOSVersionCode
 import com.luckyzyx.luckytool.utils.isZh
 
 /**
- * 相册页（旧 ui.fragment.scopes.apps.OplusGallery 的 Compose 等价物）。
- * 旧 open 菜单（openApp）不在 Compose 页呈现。
+ * 相册页：水印、滤镜、图库显示与编辑器的开关与取值。
+ * 仅在 osCode >= 27 且装有 com.coloros.gallery3d 时出现（见 spec.isVisible）。
+ * open 菜单（openApp 跳转）不在本页呈现。
  */
 object OplusGalleryPage {
 

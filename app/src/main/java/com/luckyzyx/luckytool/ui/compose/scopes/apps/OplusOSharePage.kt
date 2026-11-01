@@ -5,7 +5,7 @@ import com.luckyzyx.luckytool.ui.compose.scopes.ScopePageSpec
 import com.luckyzyx.luckytool.utils.ModulePrefs
 
 /**
- * 旧 ui.fragment.scopes.apps.OplusOShare 的 Compose 等价物（机械翻译 loadPreferences）。
+ * OShare 页：去掉互传关闭倒计时的开关。
  */
 object OplusOSharePage {
 

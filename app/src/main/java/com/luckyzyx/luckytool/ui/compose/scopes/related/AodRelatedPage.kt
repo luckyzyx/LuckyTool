@@ -16,14 +16,15 @@ import com.luckyzyx.luckytool.utils.checkPackName
 import com.luckyzyx.luckytool.utils.getOSVersionCode
 
 /**
- * 息屏显示页（旧 ui.fragment.scopes.related.AodRelated 的 Compose 等价物）。
- * 逐项对齐：键、默认值、条件可见性（osCode = getOSVersionCode、SDK = Android API）。
- * 旧 loadRootPreference 的 isVisible = SDK >= A13 && checkPackName("com.oplus.aod")
- * 平移为 spec.isVisible（本页 DSL 无条件渲染）。
- * set_random_text_display_mode 的构建期 when("1"→选文件点击项;"2"→EditText) 迁移为
- * builder 内 when(state.getString(...))（每次 revision 重组重跑，等价）。条件条目与摘要
- * 全在构建 lambda 里同步读取，而写入都走 state.set（revision 前进 → 重组重跑），因此旧代码
- * 「写值后 restart() 重建整页」的刷新回调已删除，无需 recreate。
+ * 息屏显示页：AOD 相关开关与列表取值。
+ * 每项都显式声明键、默认值与条件可见性（osCode = getOSVersionCode 判 OS 版本、
+ * SDK = Android API 级别）。
+ * 整页仅在 SDK >= A13 且装有 com.oplus.aod 时出现（见 spec.isVisible），本页 DSL 本身无条件渲染。
+ * set_random_text_display_mode 选到 "1" 时追加一条选文件项（custom + GetContent，结果写入
+ * custom_random_text_file），选到 "2" 时追加一条 EditText 项（custom_random_text_api）。
+ * 这层 when 在 builder lambda 里按 state.getString(...) 读当前值、每次重组都重跑，
+ * 所以条件条目与摘要会跟着写入即时刷新；写入一律走 state.set（revision 前进 → 重组），
+ * 不需要在写值后重建整页。
  */
 object AodRelatedPage {
 

@@ -23,7 +23,7 @@ import org.lsposed.corepatch.hook.VerifyingSessionHook
 import org.lsposed.lsparanoid.Obfuscate
 
 /**
- * 上游 CorePatch 的装载入口。
+ * 核心破解（安装校验绕过）的装载入口。
  *
  * 由 MainHook 在 system_server 进程 loadSystem，各子 hook 自行按配置开关决定是否生效。
  */

@@ -17,8 +17,9 @@ import com.luckyzyx.luckytool.utils.getOSVersionCode
 import com.luckyzyx.luckytool.utils.sendPrefsValue
 
 /**
- * 状态栏通知页（旧 ui.fragment.scopes.statusbar.StatusBarNotify 的 Compose 等价物）。
- * 逐项对齐：键、默认值、条件可见性、notify（sendPrefsValue，目标包含 android）。
+ * 状态栏通知页：状态栏通知展示样式与通知移除子页入口，写入 com.android.systemui 等四个作用域。
+ * 每项都显式声明键、默认值与条件可见性（osCode = getOSVersionCode 判 OS 版本）；
+ * 两个开关的目标进程与页面不同，写值后经 sendPrefsValue("system", ...) 通知宿主。
  */
 object StatusBarNotifyPage {
 

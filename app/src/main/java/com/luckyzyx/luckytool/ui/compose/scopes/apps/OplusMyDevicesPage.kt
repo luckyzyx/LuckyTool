@@ -7,8 +7,9 @@ import com.luckyzyx.luckytool.utils.ModulePrefs
 import com.luckyzyx.luckytool.utils.arraySummaryLine
 
 /**
- * 旧 ui.fragment.scopes.apps.OplusMyDevices 的 Compose 等价物（机械翻译 loadPreferences）。
- * 键、默认值、可见性与旧页逐项一致。
+ * 我的设备页：强制开启飞牛云 NAS 选项的开关。
+ * 摘要逐条列出 com.heytap.mydevices、com.heytap.accessory、com.android.systemui、com.coloros.gallery3d
+ * 四个包的应用名与其 support_fn_nas 元数据值。
  */
 object OplusMyDevicesPage {
 

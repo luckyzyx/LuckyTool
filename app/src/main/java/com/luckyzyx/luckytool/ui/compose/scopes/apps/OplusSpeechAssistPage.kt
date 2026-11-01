@@ -6,7 +6,7 @@ import com.luckyzyx.luckytool.utils.ModulePrefs
 import com.luckyzyx.luckytool.utils.getOSVersionCode
 
 /**
- * 旧 ui.fragment.scopes.apps.OplusSpeechAssist 的 Compose 等价物（机械翻译 loadPreferences）。
+ * 语音助手页：强制开启 AI 语音助手通话的开关，只有 osCode >= 30 才渲染。
  */
 object OplusSpeechAssistPage {
 

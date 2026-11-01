@@ -10,7 +10,8 @@ import com.luckyzyx.luckytool.utils.checkPackName
 import com.luckyzyx.luckytool.utils.getOSVersionCode
 
 /**
- * 旧 ui.fragment.scopes.apps.OplusSmartSidebar 的 Compose 等价物（机械翻译 loadPreferences）。
+ * 智能侧边栏页：浮窗自动隐藏、中转站、最近文件、后台运行与应用数量上限的开关。
+ * 整页要求 SDK >= Android 12 且装有 com.coloros.smartsidebar（见 spec.isVisible）。
  */
 object OplusSmartSidebarPage {
 

@@ -27,8 +27,9 @@ import com.luckyzyx.luckytool.utils.getOSVersionCode
 import com.topjohnwu.superuser.ShellUtils
 
 /**
- * 游戏中心页（旧 ui.fragment.scopes.apps.OplusGames 的 Compose 等价物）。
- * 旧 open 菜单（fastCmd 启动 GameBoxCoverActivity）不在 Compose 页呈现。
+ * 游戏中心页：布局、工具、游戏助手与游戏空间各页的开关与应用/白名单列表。
+ * 整页仅在装有 com.oplus.games 时出现（见 spec.isVisible）。
+ * open 菜单（fastCmd 启动 GameBoxCoverActivity）不在本页呈现。
  */
 object OplusGamesPage {
 

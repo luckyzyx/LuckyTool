@@ -6,7 +6,8 @@ import com.luckyzyx.luckytool.utils.ModulePrefs
 import com.luckyzyx.luckytool.utils.getOSVersionCode
 
 /**
- * 旧 ui.fragment.scopes.apps.OplusPermissionController 的 Compose 等价物（机械翻译 loadPreferences）。
+ * 权限管理页：解锁默认桌面数量上限、去掉存储权限例外对话框的开关。
+ * 后一项只在 osCode < 37 时渲染。
  */
 object OplusPermissionControllerPage {
 

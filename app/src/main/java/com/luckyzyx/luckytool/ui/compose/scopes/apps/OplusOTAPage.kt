@@ -21,8 +21,8 @@ import com.luckyzyx.luckytool.utils.getOSVersionCode
 import com.topjohnwu.superuser.ShellUtils
 
 /**
- * 旧 ui.fragment.scopes.apps.OplusOTA 的 Compose 等价物（机械翻译 loadPreferences）。
- * 旧 restore_ota_update_verity 条目 isVisible=false 从未展示，按规则丢弃。
+ * OTA 页：系统更新提示、本地升级与校验相关的开关，以及当前 OTA 校验结果的展示。
+ * restore_ota_update_verity 条目 isVisible=false 从不展示，本页不含该条目。
  */
 object OplusOTAPage {
 
@@ -44,7 +44,7 @@ object OplusOTAPage {
             title = c.getString(R.string.remove_ota_auto_download_dialog),
         )
         category("OTA")
-        // 纯信息型（旧 Preference 无点击）：展示当前 OTA 校验结果
+        // 纯信息型（不可点击）：展示当前 OTA 校验结果
         // shell 调用只在渲染期执行：headless 索引构建不得执行任何 IO
         val verifyTitle = c.getString(R.string.get_ota_verify_result)
         custom(key = "get_ota_verify_result", title = verifyTitle) {
