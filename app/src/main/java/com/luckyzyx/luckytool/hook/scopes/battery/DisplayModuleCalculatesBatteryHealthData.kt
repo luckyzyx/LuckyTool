@@ -9,7 +9,6 @@ import com.highcapable.kavaref.KavaRef.Companion.resolve
 import com.highcapable.yukihookapi.extension.kavaref.hook
 import com.highcapable.yukihookapi.extension.kavaref.toClass
 import com.highcapable.yukihookapi.hook.entity.YukiBaseHooker
-import com.highcapable.yukihookapi.hook.factory.injectModuleResources
 import com.luckyzyx.luckytool.R
 import com.luckyzyx.luckytool.utils.DeviceUtils.calcLocalHealth
 import com.luckyzyx.luckytool.utils.ModulePrefs
@@ -32,7 +31,6 @@ object DisplayModuleCalculatesBatteryHealthData : YukiBaseHooker() {
                 after {
                     val view = firstArg().get<View>() ?: return@after
                     val context = view.context
-                    context.injectModuleResources()
                     val contentView = view.findViewById<TextView>(
                         view.resources.getIdentifier(
                             "max_capacity_content",
@@ -47,7 +45,7 @@ object DisplayModuleCalculatesBatteryHealthData : YukiBaseHooker() {
                     if (showCalcData) {
                         val health = context.calcLocalHealth(true)
                         val tips = safeOf(" Calc") {
-                            context.getString(R.string.display_module_calculates_battery_health_data_tips)
+                            module.resources.getString(R.string.display_module_calculates_battery_health_data_tips)
                         }
                         contentView.apply {
                             layoutParams?.width = ViewGroup.LayoutParams.WRAP_CONTENT

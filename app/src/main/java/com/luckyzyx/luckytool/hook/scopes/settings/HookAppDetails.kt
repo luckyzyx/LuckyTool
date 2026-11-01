@@ -12,7 +12,6 @@ import com.highcapable.kavaref.KavaRef.Companion.resolve
 import com.highcapable.yukihookapi.extension.kavaref.hook
 import com.highcapable.yukihookapi.extension.kavaref.toClass
 import com.highcapable.yukihookapi.hook.entity.YukiBaseHooker
-import com.highcapable.yukihookapi.hook.factory.injectModuleResources
 import com.highcapable.yukihookapi.hook.log.YLog
 import com.luckyzyx.luckytool.R
 import com.luckyzyx.luckytool.utils.AppUtils
@@ -69,7 +68,6 @@ object HookAppDetails : YukiBaseHooker() {
                         val appInfo = packageInfo.applicationInfo
 
                         val context = mRootView.context
-                        context.injectModuleResources()
 
                         val appSize = mRootView.findViewById<TextView>(
                             context.resources.getIdentifier(
@@ -101,7 +99,7 @@ object HookAppDetails : YukiBaseHooker() {
 
                         if (isFirstInstallTime) {
                             val firstInstallTimeStr = safeOf("First Install Time") {
-                                context.getString(R.string.first_install_time)
+                                module.resources.getString(R.string.first_install_time)
                             }
                             val firstInstallTime =
                                 formatDate("yyyy/MM/dd HH:mm:ss", packageInfo.firstInstallTime)
@@ -109,7 +107,7 @@ object HookAppDetails : YukiBaseHooker() {
                         }
                         if (isLastUpdateTime) {
                             val lastUpdateTimeStr = safeOf("Last Update Time") {
-                                context.getString(R.string.last_update_time)
+                                module.resources.getString(R.string.last_update_time)
                             }
                             val lastUpdateTime =
                                 formatDate("yyyy/MM/dd HH:mm:ss", packageInfo.lastUpdateTime)
@@ -118,7 +116,7 @@ object HookAppDetails : YukiBaseHooker() {
 
                         if (isInstallSource) {
                             val installSourceStr = safeOf("Install Source") {
-                                context.getString(R.string.install_source)
+                                module.resources.getString(R.string.install_source)
                             }
                             val sourceInfo =
                                 PackageUtils(context.packageManager).getInstallSourceInfo(packName)
@@ -161,9 +159,8 @@ object HookAppDetails : YukiBaseHooker() {
                                 .get<PackageInfo>() ?: return@after
 
                             if (quickMarket) {
-                                context.injectModuleResources()
                                 val openMarketLabel = safeOf("Open Market") {
-                                    context.getString(R.string.open_market)
+                                    module.resources.getString(R.string.open_market)
                                 }
                                 menu.add(0, 900, 0, openMarketLabel)
                                     .setShowAsAction(MenuItem.SHOW_AS_ACTION_NEVER)

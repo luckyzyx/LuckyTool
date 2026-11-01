@@ -4,6 +4,7 @@ import android.annotation.SuppressLint
 import android.content.Context
 import android.content.pm.PackageInfo
 import android.content.res.Configuration
+import android.content.res.Resources
 import android.graphics.Color
 import android.graphics.Typeface
 import android.graphics.drawable.Drawable
@@ -12,19 +13,18 @@ import android.text.format.Formatter
 import android.util.TypedValue
 import android.view.Gravity
 import android.view.View
-import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
-import com.highcapable.betterandroid.ui.extension.view.child
 import com.highcapable.betterandroid.ui.extension.view.textColor
-import com.highcapable.yukihookapi.hook.factory.injectModuleResources
 import com.luckyzyx.luckytool.R
 import org.lsposed.lsparanoid.Obfuscate
 import java.io.File
 
+@SuppressLint("ViewConstructor")
 @Obfuscate
-internal class ApkDetailsView(context: Context) : LinearLayout(context) {
+internal class ApkDetailsView(context: Context, private val moduleResources: Resources) :
+    LinearLayout(context) {
     private val dark =
         resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK == Configuration.UI_MODE_NIGHT_YES
     private val primary =
@@ -37,7 +37,6 @@ internal class ApkDetailsView(context: Context) : LinearLayout(context) {
     init {
         orientation = VERTICAL
         setPadding(0, dp(24), 0, dp(8))
-        context.injectModuleResources()
     }
 
     fun bind(
@@ -49,18 +48,18 @@ internal class ApkDetailsView(context: Context) : LinearLayout(context) {
         current: PackageInfo?
     ) {
         removeAllViews()
-        val unknown = context.getString(R.string.apk_details_unknown)
+        val unknown = moduleResources.getString(R.string.apk_details_unknown)
         val newVersion = versionName.ifBlank { unknown }
         val newCode = incoming?.longVersionCode?.toString() ?: versionCode.ifBlank { unknown }
 
         val versions = card()
-        versions.addView(text(context.getString(R.string.apk_details_versions), 16f, primary, true))
+        versions.addView(text(moduleResources.getString(R.string.apk_details_versions), 16f, primary, true))
         val comparison =
             LinearLayout(context).apply { orientation = HORIZONTAL; isBaselineAligned = false }
         comparison.addView(
             versionColumn(
-                context.getString(R.string.apk_details_installed),
-                if (current == null) context.getString(R.string.apk_details_not_installed) else current.versionName
+                moduleResources.getString(R.string.apk_details_installed),
+                if (current == null) moduleResources.getString(R.string.apk_details_not_installed) else current.versionName
                     ?: unknown,
                 current?.longVersionCode?.toString()
             ), LayoutParams(0, LayoutParams.WRAP_CONTENT, 1f)
@@ -69,7 +68,7 @@ internal class ApkDetailsView(context: Context) : LinearLayout(context) {
             comparison.addView(View(context), LayoutParams(dp(30), 1))
             comparison.addView(
                 versionColumn(
-                    context.getString(R.string.apk_details_incoming), newVersion, newCode
+                    moduleResources.getString(R.string.apk_details_incoming), newVersion, newCode
                 ), LayoutParams(0, LayoutParams.WRAP_CONTENT, 1f)
             )
         }
@@ -83,7 +82,7 @@ internal class ApkDetailsView(context: Context) : LinearLayout(context) {
             val info = card()
             info.addView(
                 text(
-                    context.getString(R.string.apk_details_information), 16f, primary, true
+                    moduleResources.getString(R.string.apk_details_information), 16f, primary, true
                 )
             )
             info.addView(
@@ -166,7 +165,7 @@ internal class ApkDetailsView(context: Context) : LinearLayout(context) {
                 ).apply { topMargin = dp(8) })
             code?.let {
                 addView(
-                    text(context.getString(R.string.apk_details_version_code, it), 12f, secondary),
+                    text(moduleResources.getString(R.string.apk_details_version_code, it), 12f, secondary),
                     LayoutParams(
                         LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT
                     ).apply { topMargin = dp(4) })
@@ -180,7 +179,7 @@ internal class ApkDetailsView(context: Context) : LinearLayout(context) {
         minimumHeight = dp(48)
         setPadding(0, dp(10), 0, dp(10))
         addView(
-            text(context.getString(label), 14f, secondary),
+            text(moduleResources.getString(label), 14f, secondary),
             LayoutParams(0, LayoutParams.WRAP_CONTENT, 1f)
         )
         addView(
@@ -212,52 +211,4 @@ internal class ApkDetailsView(context: Context) : LinearLayout(context) {
     }
 
     private fun dp(value: Int) = (value * resources.displayMetrics.density + 0.5f).toInt()
-
-    companion object {
-        private const val TAG = "LuckyTool.ApkDetails"
-
-        fun show(header: ViewGroup, pkg: String, version: String, code: String, path: String) {
-            val incoming = runCatching {
-                header.context.packageManager.getPackageArchiveInfo(
-                    path, 0
-                )
-            }.getOrNull()
-            val current =
-                runCatching { header.context.packageManager.getPackageInfo(pkg, 0) }.getOrNull()
-            val existing = header.findViewWithTag<View>(TAG)
-            if (existing != null && existing !is ApkDetailsView) header.removeView(existing)
-            val panel =
-                (existing as? ApkDetailsView) ?: ApkDetailsView(header.context).also { panel ->
-                    panel.tag = TAG
-                    header.addView(
-                        panel,
-                        ViewGroup.LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT)
-                    )
-                    // Host ConstraintLayout measures the native header. Place the extra content below it
-                    // and remeasure when width/font scale changes, without depending on obfuscated fields.
-                    header.addOnLayoutChangeListener { _, _, _, _, _, _, _, _, _ ->
-                        resize(
-                            header, panel
-                        )
-                    }
-                }
-            panel.bind(pkg, version, code, path, incoming, current)
-            header.post { resize(header, panel) }
-        }
-
-        private fun resize(header: ViewGroup, panel: ApkDetailsView) {
-            if (header.width <= 0) return
-            val bottom = (0 until header.childCount).map { header.child(it) }
-                .filter { it !== panel && it.visibility != GONE }.maxOfOrNull { it.bottom } ?: 0
-            val width = (header.width - header.paddingLeft - header.paddingRight).coerceAtLeast(0)
-            panel.measure(
-                MeasureSpec.makeMeasureSpec(width, MeasureSpec.EXACTLY),
-                MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED)
-            )
-            panel.translationY = (bottom - panel.top).toFloat()
-            val height = bottom + panel.measuredHeight + header.paddingBottom
-            if (header.layoutParams.height != height) header.layoutParams =
-                header.layoutParams.apply { this.height = height }
-        }
-    }
 }
