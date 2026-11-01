@@ -4,7 +4,11 @@ import android.annotation.SuppressLint
 import android.content.Context
 import android.content.pm.PackageInfo
 import android.view.Gravity
+import android.view.View
+import android.view.ViewGroup
+import android.widget.FrameLayout
 import android.widget.LinearLayout
+import android.widget.ScrollView
 import androidx.collection.ArrayMap
 import androidx.collection.arrayMapOf
 import com.highcapable.betterandroid.ui.extension.view.child
@@ -129,7 +133,7 @@ class ShowMoreApkPackageInformation(val dexKitBridge: DexKitBridge) : YukiBaseHo
                     // every other action, but use LinearLayout's normal measurement here instead
                     // of its ConstraintLayout integration. The incoming/current comparison only
                     // makes sense on install, so pass incoming as null otherwise.
-                    val tag = "LuckyTool.ClassicApkDetails"
+                    val tag = TAG_PANEL
                     val panel = apkInfoView.findViewWithTag(tag) ?: ApkDetailsView(context, module.resources).also {
                         it.tag = tag
                         apkInfoView.addView(
@@ -141,16 +145,12 @@ class ShowMoreApkPackageInformation(val dexKitBridge: DexKitBridge) : YukiBaseHo
                     }
                     for (i in 0 until apkInfoView.childCount) {
                         val child = apkInfoView.child(i)
-                        child.visibility =
-                            if (child === panel) android.view.View.VISIBLE else android.view.View.GONE
+                        child.visibility = if (child === panel) View.VISIBLE else View.GONE
                     }
                     apkInfoView.orientation = LinearLayout.VERTICAL
                     apkInfoView.gravity = Gravity.TOP or Gravity.START
                     val padding = (16 * context.resources.displayMetrics.density).toInt()
                     apkInfoView.setPadding(padding, padding, padding, padding)
-                    apkInfoView.layoutParams = apkInfoView.layoutParams.apply {
-                        height = LinearLayout.LayoutParams.WRAP_CONTENT
-                    }
                     panel.bind(
                         packName,
                         versionName,
@@ -167,12 +167,68 @@ class ShowMoreApkPackageInformation(val dexKitBridge: DexKitBridge) : YukiBaseHo
                         if (isInstall) versionName else curVersionName ?: versionName,
                         getApkSizeFormat(context, curPackInfo, apkSize, isUninstall)
                     )
+                    // 卡片高度随包名等长文本换行变高，宿主容器自己不滚动，超出一屏后安装按钮
+                    // 会被挤出可见区域；这里给面板补上滚动能力，按钮仍按自身高度测量。
+                    ensureScrollable(apkInfoView)
 
                     cacheApkInfoMap.clear()
                     cacheSourceInfoMap.clear()
                 }
             }
         }
+    }
+
+    /**
+     * 让面板在宿主容器里能滚动。
+     *
+     * 宿主把 ApkInfoView 放在不可滚动的容器里，卡片一高就把下方的安装按钮挤出屏幕；
+     * 这里在 ApkInfoView 外补一层 [ScrollView]，并沿用宿主原本的布局参数占位，
+     * 使滚动区域只吃掉内容区的高度，按钮仍按自身高度测量。
+     * 宿主自己已经提供滚动容器时不再套第二层，避免嵌套滚动抢手势。
+     */
+    private fun ensureScrollable(apkInfoView: LinearLayout) {
+        val hostParams = apkInfoView.layoutParams ?: return
+        if (apkInfoView.hasScrollableAncestor()) {
+            hostParams.height = LinearLayout.LayoutParams.WRAP_CONTENT
+            apkInfoView.layoutParams = hostParams
+            return
+        }
+        val parent = apkInfoView.parent as? ViewGroup ?: return
+        val index = parent.indexOfChild(apkInfoView)
+        if (index < 0) return
+        val scrollView = ScrollView(apkInfoView.context).apply {
+            isVerticalScrollBarEnabled = false
+            overScrollMode = View.OVER_SCROLL_IF_CONTENT_SCROLLS
+        }
+        parent.removeViewAt(index)
+        scrollView.addView(
+            apkInfoView,
+            FrameLayout.LayoutParams(
+                FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.WRAP_CONTENT
+            )
+        )
+        parent.addView(scrollView, index)
+        // 纵向 LinearLayout 里原本 wrap_content 的内容区改成占满剩余空间，
+        // 其余容器（ConstraintLayout 等）直接沿用宿主参数，约束关系保持不变。
+        scrollView.layoutParams = if (hostParams is LinearLayout.LayoutParams && parent is LinearLayout
+            && parent.orientation == LinearLayout.VERTICAL && hostParams.weight == 0f
+            && hostParams.height == LinearLayout.LayoutParams.WRAP_CONTENT
+        ) LinearLayout.LayoutParams(hostParams).apply { height = 0; weight = 1f } else hostParams
+    }
+
+    private companion object {
+        const val TAG_PANEL = "LuckyTool.ClassicApkDetails"
+    }
+
+    // 宿主可能用自己的 ScrollView/NestedScrollView 子类，按类名匹配即可，
+    // 命中就说明滚动已经不缺，再多套一层只会抢走手势。
+    private fun View.hasScrollableAncestor(): Boolean {
+        var current = parent
+        while (current is View) {
+            if (current.javaClass.name.contains("ScrollView")) return true
+            current = current.parent
+        }
+        return false
     }
 
     private fun getApkSizeFormat(

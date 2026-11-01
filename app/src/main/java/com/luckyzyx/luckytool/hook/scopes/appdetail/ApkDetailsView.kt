@@ -173,6 +173,7 @@ internal class ApkDetailsView(context: Context, private val moduleResources: Res
             setPadding(0, 0, 0, dp(8))
         }
 
+    // 标签只占自身文字宽度，剩下的宽度全部留给值，包名这类长文本才不会一半就换行
     private fun row(label: Int, value: String) = LinearLayout(context).apply {
         orientation = HORIZONTAL
         gravity = Gravity.CENTER_VERTICAL
@@ -180,11 +181,11 @@ internal class ApkDetailsView(context: Context, private val moduleResources: Res
         setPadding(0, dp(10), 0, dp(10))
         addView(
             text(moduleResources.getString(label), 14f, secondary),
-            LayoutParams(0, LayoutParams.WRAP_CONTENT, 1f)
+            LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT)
         )
         addView(
             text(value, 15f, primary).apply { gravity = Gravity.END },
-            LayoutParams(0, LayoutParams.WRAP_CONTENT, 1f)
+            LayoutParams(0, LayoutParams.WRAP_CONTENT, 1f).apply { marginStart = dp(12) }
         )
     }
 
