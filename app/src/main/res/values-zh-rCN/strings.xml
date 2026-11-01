@@ -1436,4 +1436,44 @@
     <string name="settings_enable_glass_summary">启用悬浮底栏的液态玻璃效果</string>
     <string name="allow_third_party_installer">允许第三方安装器</string>
     <string name="allow_third_party_installer_summary">按系统默认选择打开 APK，允许记住第三方安装器</string>
+    <!--流体云卡片重定向（OplusMetisPage）-->
+    <string name="metis_category_redirect">流体云重定向</string>
+    <string name="metis_redirect_enabled">启用卡片点击重定向</string>
+    <string name="metis_redirect_enabled_summary">点击流体云卡片时，改为打开下方选定的目标浏览器，而不是卡片自带的跳转目标</string>
+    <string name="metis_target_browser">目标浏览器</string>
+    <string name="metis_target_browser_summary">当前：%s</string>
+    <string name="metis_rule_protocol">heytapbrowser:// 协议卡</string>
+    <string name="metis_rule_protocol_summary">链接为 heytapbrowser:// 协议的卡片参与重定向</string>
+    <string name="metis_rule_text_search">文本搜索卡</string>
+    <string name="metis_rule_text_search_summary">文本搜索卡片（textType 29）参与重定向</string>
+    <string name="metis_rule_heytap_http">浏览器 http(s) 卡片</string>
+    <string name="metis_rule_heytap_http_summary">目标为 com.heytap.browser 且链接是合法 http(s) 的卡片参与重定向</string>
+    <string name="metis_rule_browser_card">其他浏览器 http(s) 卡片（实验性）</string>
+    <string name="metis_rule_browser_card_summary">目标为其他浏览器且链接是合法 http(s) 的卡片参与重定向。实验性：需要自身应用处理链接的卡片可能受影响</string>
+    <string name="metis_category_package_swap">应用替换</string>
+    <string name="metis_package_swap_enabled">启用应用替换</string>
+    <string name="metis_package_swap_enabled_summary">卡片指向源应用时，改为打开替换表里的目标应用</string>
+    <string name="metis_package_swap_rules">替换规则</string>
+    <string name="metis_package_swap_rules_empty">还没有规则</string>
+    <string name="metis_package_swap_add_rule">添加规则</string>
+    <string name="metis_package_swap_delete_rule">删除规则</string>
+    <string name="metis_package_swap_pick_source">选择源应用</string>
+    <string name="metis_package_swap_pick_target">选择目标应用</string>
+    <string name="metis_package_swap_rule_title">%1$s → %2$s</string>
+    <string name="metis_package_swap_rule_summary">把 %1$s 映射到 %2$s</string>
+    <string name="metis_package_swap_same_app">源应用与目标应用不能相同</string>
+    <string name="metis_store_redirect_enabled">接住商店引导卡</string>
+    <string name="metis_store_redirect_enabled_summary">源应用已卸载、点卡片会去商店时，改为直接打开替换表里的目标应用；需要先在上面配好规则</string>
+    <string name="metis_category_card_text">卡片文案</string>
+    <string name="metis_card_text_enabled">启用卡片文案自定义</string>
+    <string name="metis_card_text_enabled_summary">关闭后完全保留流体云原文案，点击仍按上面的规则打开目标应用</string>
+    <string name="metis_card_title">标题模板</string>
+    <string name="metis_card_subtitle">副标题模板</string>
+    <string name="metis_card_button">按钮模板</string>
+    <string name="metis_card_capsule">胶囊模板</string>
+    <string name="metis_card_template_summary">留空保持原文案；{app} 会替换为目标应用名</string>
+    <string name="metis_card_template_empty">留空保持原文案</string>
+    <string name="metis_category_debug">诊断</string>
+    <string name="metis_debug_log">诊断日志</string>
+    <string name="metis_debug_log_summary">输出 hook 诊断信息，到 LSPosed 管理器查看，tag = Metis</string>
 </resources>

@@ -45,6 +45,7 @@ import com.luckyzyx.luckytool.ui.compose.scopes.apps.OplusLinkerPage
 import com.luckyzyx.luckytool.ui.compose.scopes.apps.OplusMMSPage
 import com.luckyzyx.luckytool.ui.compose.scopes.apps.OplusMarketPage
 import com.luckyzyx.luckytool.ui.compose.scopes.apps.OplusMcsPage
+import com.luckyzyx.luckytool.ui.compose.scopes.apps.OplusMetisPage
 import com.luckyzyx.luckytool.ui.compose.scopes.apps.OplusMyDevicesPage
 import com.luckyzyx.luckytool.ui.compose.scopes.apps.OplusNfcPage
 import com.luckyzyx.luckytool.ui.compose.scopes.apps.OplusOSharePage
@@ -618,6 +619,7 @@ object ScopePageRegistry {
         register(OplusMarketPage.spec)
         register(OplusMMSPage.spec)
         register(OplusMcsPage.spec)
+        register(OplusMetisPage.spec)
         register(OplusMyDevicesPage.spec)
         register(OplusNfcPage.spec)
         register(OplusOSharePage.spec)
