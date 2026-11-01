@@ -7,6 +7,7 @@ import com.highcapable.kavaref.KavaRef.Companion.resolve
 import com.highcapable.yukihookapi.extension.kavaref.hook
 import com.highcapable.yukihookapi.extension.kavaref.toClass
 import com.highcapable.yukihookapi.hook.entity.YukiBaseHooker
+import com.highcapable.yukihookapi.hook.log.YLog
 import com.luckyzyx.luckytool.utils.startMirageWindow
 import org.lsposed.lsparanoid.Obfuscate
 
@@ -43,7 +44,8 @@ object RunFloatingWindowTasksInForeground : YukiBaseHooker() {
                             .get<Int>() ?: return@before
                         if (uid > 0) baseIntent.putExtra("TASKINFO_UID", uid)
 
-                        startMirageWindow(baseIntent)
+                        val displayId = startMirageWindow(baseIntent)
+                        YLog.info("MirageHangUp -> systemui hang up uid=$uid displayId=$displayId")
                         result = null
                     }
                 }
@@ -54,7 +56,9 @@ object RunFloatingWindowTasksInForeground : YukiBaseHooker() {
         "com.oplus.zoom.ui.floathandle.FloatHandleController".toClass().resolve().apply {
             firstMethod { name = "onTaskMovedToFront" }.hook {
                 before {
-                    if (flag == 5) result = null
+                    if (flag != 5) return@before
+                    YLog.info("MirageHangUp -> systemui block onTaskMovedToFront")
+                    result = null
                 }
             }
         }

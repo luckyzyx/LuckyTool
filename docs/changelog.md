@@ -50,6 +50,7 @@ in [TG Channel’s associated groups](https://t.me/LuckyTool)**
 - 功能页「XX相关」分类行改用彩色徽标
 - 设置页备份 / 恢复记录数据落点
 - 设置页备份 / 恢复选择器预设 Download/LuckyTool
+- 重构浮窗贴边后台保活，恢复 C15+ 支持（C14 走系统界面侧）
 
 #### 修复
 

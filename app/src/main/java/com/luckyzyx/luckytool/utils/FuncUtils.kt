@@ -47,9 +47,8 @@ import com.luckyzyx.luckytool.BuildConfig
 import com.luckyzyx.luckytool.IGlobalFuncController
 import com.luckyzyx.luckytool.R
 import com.luckyzyx.luckytool.data.DisplayMode
+import com.luckyzyx.luckytool.hook.utils.MirageHangUpUtils
 import com.luckyzyx.luckytool.ui.activity.MainActivity
-import com.oplus.miragewindow.OplusMirageOptions
-import com.oplus.miragewindow.OplusMirageWindowManager
 import com.topjohnwu.superuser.Shell
 import com.topjohnwu.superuser.ShellUtils
 import com.topjohnwu.superuser.ipc.RootService
@@ -296,8 +295,8 @@ fun getProp(key: String, def: String): String =
 /**
  * 发送广播以关闭折叠面板
  *
- * 旧实现在 sendBroadcast 失败时退回 startActivityAndCollapse(Intent)：该重载自 targetSdk 34 起
- * 必定抛异常，而 sendBroadcast 在无接收者时并不会抛异常，退回路径实际不可达，故移除。
+ * 不退回 startActivityAndCollapse(Intent)：该重载自 targetSdk 34 起必定抛异常，
+ * 而 sendBroadcast 在无接收者时并不会抛异常，退回路径本来不可达。
  * @receiver TileService
  */
 fun TileService.closeCollapse() {
@@ -700,7 +699,7 @@ fun logcatToFile(file: File): Boolean {
 }
 
 /**
- * 旧 dataChannel 推送的等价物：键值写入 ModulePrefs（与宿主侧 Channel.wait 同一数据源）。
+ * 把键值写入 ModulePrefs，与宿主侧 Channel.wait 读的是同一份数据。
  * @param packName 原 dataChannel 目标包，现仅作兼容保留（不再按包路由）
  */
 fun Context.sendPrefsValue(packName: String, key: String, newValue: Any) {
@@ -715,7 +714,7 @@ fun Context.sendPrefsValue(packName: String, key: String, newValue: Any) {
 }
 
 /**
- * 旧 dataChannel put(key)（无值推送）没有 remote prefs 对应物；
+ * 只有 key、没有值的 dataChannel put(key) 在 remote prefs 侧没有对应操作；
  * 键值本身由调用方的 putXxx(ModulePrefs, ...) 已写入，本函数保留为兼容空操作。
  */
 fun Context.sendPrefsKey(packName: String, key: String) {
@@ -782,12 +781,7 @@ fun getManifestEndVersion(string: String?): String {
  * 启动后台运行
  * @param intent Intent
  */
-fun startMirageWindow(intent: Intent?): Int {
-    val makeBasic = OplusMirageOptions.makeBackgroundStreamModeOptions()
-    return OplusMirageWindowManager.getInstance().startMirageWindowMode(
-        intent, makeBasic.toBundle()
-    )
-}
+fun startMirageWindow(intent: Intent?): Int = MirageHangUpUtils.startMirageWindow(intent)
 
 fun createTextDrawable(context: Context, text: String): Drawable {
     // 创建一个 Paint 对象来设置文本的样式

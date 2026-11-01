@@ -51,6 +51,7 @@ Entries for versions before `1.3.5_beta` are currently only available in the
 - Colored badges for the "XX-related" category rows on the function page
 - Settings backup/restore records where each storage lives
 - Settings backup/restore pickers default to Download/LuckyTool
+- Reworked keep-alive for docked floating windows, restored on ColorOS 15+ (ColorOS 14 uses the SystemUI path)
 
 #### Fixed
 

@@ -8,7 +8,8 @@ import com.luckyzyx.luckytool.utils.SDK
 import com.luckyzyx.luckytool.utils.getOSVersionCode
 
 /**
- * 悬浮窗/对话框页（旧 ui.fragment.scopes.related.DialogRelated 的 Compose 等价物）。
+ * 悬浮窗/对话框页：重复悬浮窗、低电量、USB 连接、无障碍等系统对话框的屏蔽开关
+ * （写入 com.android.systemui 与 com.oplus.exsystemservice，部分条目按 getOSVersionCode 门控）。
  */
 object DialogRelatedPage {
 
@@ -43,7 +44,8 @@ object DialogRelatedPage {
                 title = c.getString(R.string.remove_access_device_log_dialog),
             )
         }
-        if (getOSVersionCode in 27..33) {
+        //27..34 走 SystemUI 侧的 zoom 状态机；35+ 走 system_server 侧的后台保活（挂起即上虚拟屏）
+        if (getOSVersionCode >= 27) {
             switch(
                 key = "run_floating_window_tasks_in_foreground",
                 title = c.getString(R.string.run_floating_window_tasks_in_foreground),
