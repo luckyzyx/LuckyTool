@@ -84,6 +84,27 @@ object MirageHangUpState {
     fun takeDisplay(taskId: Int): Int =
         if (taskId < 0) 0 else mirageDisplays.remove(taskId) ?: 0
 
+    /** 宿主释放虚拟屏后清掉挂在它上面的任务状态，返回清掉的任务数 */
+    fun onDisplayReleased(displayId: Int): Int {
+        if (displayId <= 0) return 0
+        val tasks = mirageDisplays.filterValues { it == displayId }.keys.toList()
+        tasks.forEach { mirageDisplays.remove(it) }
+        if (hangUpTaskId.get() in tasks) {
+            hangUpTaskId.set(-1)
+            keepFloatUntil = 0L
+        }
+        return tasks.size
+    }
+
+    /** 宿主把虚拟屏上的任务全部搬回主屏后挂起态已结束，返回清掉的任务数 */
+    fun onStacksMovedBack(): Int {
+        val count = mirageDisplays.size
+        mirageDisplays.clear()
+        hangUpTaskId.set(-1)
+        keepFloatUntil = 0L
+        return count
+    }
+
     /** 悬浮球保留窗口内命中挂起任务，true 表示需要压住这次删除 */
     fun shouldKeepFloat(args: List<Any?>?): Boolean {
         if (SystemClock.uptimeMillis() > keepFloatUntil) return false

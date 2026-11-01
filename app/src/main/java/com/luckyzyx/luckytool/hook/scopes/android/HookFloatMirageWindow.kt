@@ -222,6 +222,8 @@ object HangUpKeepAlive : YukiBaseHooker() {
         "com.android.server.wm.OplusMirageWindowManagerService"
     private const val FLOAT_HANDLE_CONTROLLER = "com.android.server.wm.FloatHandleController"
     private const val ZOOM_STATE_MANAGER = "com.android.server.wm.OplusZoomStateManager"
+    private const val MIRAGE_DISPLAY_MANAGER = "com.android.server.display.OplusMirageDisplayManagerService"
+    private const val MIRAGE_KEEP_ALIVE_POLICY = "com.android.server.wm.OplusMirageKeepAlivePolicy"
     private const val APP_GLOBALS = "android.app.AppGlobals"
 
     //zoom 状态机里「进入贴边态」的两个迁移值：ZOOM_TO_MINI / SUPER_MINI_TO_MINI
@@ -240,6 +242,51 @@ object HangUpKeepAlive : YukiBaseHooker() {
             .onFailure { YLog.error("$TAG -> hook release on restore failed", it, TAG) }
         runCatching { hookZoomState() }
             .onFailure { YLog.error("$TAG -> hook zoom state failed", it, TAG) }
+        runCatching { hookSelfHeal() }
+            .onFailure { YLog.error("$TAG -> hook self heal failed", it, TAG) }
+    }
+
+    //自愈：宿主释放虚拟屏或把任务搬回主屏后挂起态已经结束，清掉残留状态，
+    //否则同一个任务再次贴边会被 displayId 判定成「已在挂起中」而永远跳过
+    private fun hookSelfHeal() {
+        MIRAGE_DISPLAY_MANAGER.toClass().resolve().apply {
+            firstMethodOrNull { name = "releaseVirtualDisplayDevice";parameterCount = 1 }?.intercept {
+                val result = proceed()
+                runCatching {
+                    val displayId = firstArg() as? Int ?: return@runCatching
+                    val cleared = MirageHangUpState.onDisplayReleased(displayId)
+                    if (cleared > 0) YLog.info("$TAG -> display $displayId released, cleared $cleared task(s)")
+                }.onFailure { YLog.error("$TAG -> clear released display failed", it, TAG) }
+                result
+            }
+            YLog.info("$TAG -> hooked display release")
+        }
+        MIRAGE_WINDOW_MANAGER_SERVICE.toClass().resolve().apply {
+            firstMethodOrNull { name = "moveStacksToDefaultDisplay" }?.intercept {
+                val result = proceed()
+                runCatching {
+                    val cleared = MirageHangUpState.onStacksMovedBack()
+                    if (cleared > 0) YLog.info("$TAG -> stacks moved back, cleared $cleared task(s)")
+                }.onFailure { YLog.error("$TAG -> clear moved back stacks failed", it, TAG) }
+                result
+            }
+        }
+        MIRAGE_KEEP_ALIVE_POLICY.toClass().resolve().apply {
+            firstMethodOrNull { name = "onStartFromPrimaryScreenRecents" }?.intercept {
+                val result = proceed()
+                runCatching { onRestoreFromPrimary(args) }
+                    .onFailure { YLog.error("$TAG -> handle restore from primary failed", it, TAG) }
+                result
+            }
+        }
+    }
+
+    //主屏入口（最近任务）把挂起中的任务拉回来时，挂起态结束，顺手释放它的虚拟屏
+    private fun onRestoreFromPrimary(args: List<Any?>) {
+        val taskId = MirageHangUpState.taskIdFromArgs(args)
+        if (taskId < 0 || !MirageHangUpState.isHangUp(taskId)) return
+        YLog.info("$TAG -> restore task $taskId from primary screen")
+        MirageHangUpUtils.releaseMirage(hostClassLoader, MirageHangUpState.clearHangUp(taskId))
     }
 
     //挂起入口：贴边最小化时宿主调用 startMinimize
