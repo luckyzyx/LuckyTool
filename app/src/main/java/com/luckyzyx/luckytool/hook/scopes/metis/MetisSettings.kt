@@ -19,7 +19,6 @@ object MetisSettings {
     const val KEY_RULE_TEXT_SEARCH = "metis_rule_text_search"
     const val KEY_RULE_HEYTAP_HTTP = "metis_rule_heytap_http"
     const val KEY_RULE_BROWSER_CARD = "metis_rule_browser_card"
-    const val KEY_DEBUG_LOG = "metis_debug_log"
 
     /** 卡片点击重定向总开关（装载开关） */
     fun redirectEnabled(param: PackageParam): Boolean =
@@ -41,8 +40,4 @@ object MetisSettings {
     /** 实验性：目标是其他浏览器时也改写，默认关，避免把用户自己配好的浏览器又绕一圈 */
     fun ruleBrowserCard(param: PackageParam): Boolean =
         param.preferences(ModulePrefs).getBoolean(KEY_RULE_BROWSER_CARD, false)
-
-    /** 诊断日志开关；关闭时只留异常与缺类日志 */
-    fun debugLog(param: PackageParam): Boolean =
-        param.preferences(ModulePrefs).getBoolean(KEY_DEBUG_LOG, false)
 }

@@ -27,19 +27,13 @@ object MetisEngine {
         val url: String? = null
     )
 
-    /**
-     * 改写卡片 bean（主路径）。
-     * 返回命中的规则名，未命中返回 null。bean 为 null 或结构不符时安静返回 null。
-     */
-    fun rewriteBean(param: PackageParam, bean: Any?, from: String): String? {
-        val card = ReflectedTextIntent.of(bean) ?: return null
+    /** 改写卡片 bean（主路径）。bean 为 null 或结构不符时安静返回，不把异常抛给宿主 */
+    fun rewriteBean(param: PackageParam, bean: Any?) {
+        val card = ReflectedTextIntent.of(bean) ?: return
         val intent = card.intent() as? Intent
-        val sourcePackage = card.packageName()
-        val decision = decide(param, sourcePackage, intent?.dataString, card.textType()) ?: return null
+        val decision = decide(param, card.packageName(), intent?.dataString, card.textType()) ?: return
         card.setPackageName(decision.targetPackage)
         apply(intent, decision)
-        logDecision(param, from, decision, sourcePackage)
-        return decision.rule
     }
 
     /**
@@ -47,18 +41,16 @@ object MetisEngine {
      * 部分机型卡片根本不走 bean 那条路，只能在 startActivity 之前改 Intent；
      * 源包名取 getPackage()，显式组件情况下回落 component 的包名。
      */
-    fun rewriteIntent(param: PackageParam, intent: Intent?, from: String): String? {
-        val target = intent ?: return null
+    fun rewriteIntent(param: PackageParam, intent: Intent?) {
+        val target = intent ?: return
         val sourcePackage = target.getPackage() ?: target.component?.packageName
-        val decision = decide(param, sourcePackage, target.dataString, null) ?: return null
+        val decision = decide(param, sourcePackage, target.dataString, null) ?: return
         apply(target, decision)
-        logDecision(param, from, decision, sourcePackage)
-        return decision.rule
     }
 
     /**
      * 纯判定：给定卡片目标包名、data 与 textType，返回该怎么改；不该改返回 null。
-     * 供 hook 之外的调用方（诊断、单测）直接使用。
+     * 不碰任何 Intent，改什么由调用方自己落到 bean 或 Intent 上。
      */
     fun decide(param: PackageParam, packageName: String?, data: String?, textType: Int?): Decision? {
         val source = packageName?.trim().orEmpty()
@@ -117,15 +109,5 @@ object MetisEngine {
         target.component = null
         target.selector = null
         target.setPackage(decision.targetPackage)
-    }
-
-    private fun logDecision(param: PackageParam, from: String, decision: Decision, source: String?) {
-        val text = buildString {
-            append("rule=").append(decision.rule)
-            append(" target=").append(decision.targetPackage)
-            if (!source.isNullOrEmpty()) append(" source=").append(source)
-            decision.url?.let { append(" url=").append(it) }
-        }
-        MetisLog.debug(param, from, text)
     }
 }

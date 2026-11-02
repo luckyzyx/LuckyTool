@@ -13,11 +13,10 @@ import org.lsposed.lsparanoid.Obfuscate
 /**
  * 卡片点击重定向的 hook 层。
  *
- * 四个入口互为备份，某个类在当前机型 / 版本不存在就跳过并记日志，绝不让进程崩：
+ * 三个入口互为备份，某个类在当前机型 / 版本不存在就跳过并记日志，绝不让进程崩：
  * - TextIntent.invoke(Context)：主路径，改 bean 字段后照样放行原调用；
  * - SchemeData / WebData.parseIntent(Context)：包名被硬编码成 com.heytap.browser 的产生点，
  *   先取返回值再改，卡片上显示的图标与名字才会跟着变对；
- * - ZoomOpenHandler.startByZoom(...)：只记诊断日志，用于确认卡片实际走的是哪条路；
  * - ContextImpl.startActivity(...)：兜底，部分机型卡片根本不走前两条，只能在真正启动前改 Intent。
  *
  * 所有入口都必须原样放行原实现（proceed()），这里只负责把「打开哪个 App」换掉。
@@ -28,7 +27,6 @@ object MetisTextIntentHook : YukiBaseHooker() {
     private const val TEXT_INTENT = "com.oplus.textintent.distribution.bean.TextIntent"
     private const val SCHEME_DATA = "com.oplus.textintent.distribution.bean.SchemeData"
     private const val WEB_DATA = "com.oplus.textintent.distribution.bean.WebData"
-    private const val ZOOM_OPEN_HANDLER = "com.oplus.textintent.common.utils.ZoomOpenHandler"
     private const val CONTEXT_IMPL = "android.app.ContextImpl"
 
     override fun onHook() {
@@ -37,7 +35,6 @@ object MetisTextIntentHook : YukiBaseHooker() {
         hookTextIntent(param)
         hookParseIntent(param, SCHEME_DATA, "SchemeData.parseIntent")
         hookParseIntent(param, WEB_DATA, "WebData.parseIntent")
-        hookZoomOpenHandler(param)
         hookContextImpl(param)
     }
 
@@ -51,7 +48,7 @@ object MetisTextIntentHook : YukiBaseHooker() {
                 }.intercept {
                     val bean = instanceOrNull<Any>()
                     proceed().also {
-                        if (bean != null) MetisEngine.rewriteBean(param, bean, "TextIntent.invoke")
+                        if (bean != null) MetisEngine.rewriteBean(param, bean)
                     }
                 }
             }
@@ -70,33 +67,14 @@ object MetisTextIntentHook : YukiBaseHooker() {
                     parameters(Context::class)
                 }.intercept {
                     val bean = proceed()
-                    MetisEngine.rewriteBean(param, bean, from)
+                    MetisEngine.rewriteBean(param, bean)
                     bean
                 }
             }
         }.onFailure { MetisLog.warn(from, "hook 安装失败: $it") }
     }
 
-    /** C 诊断入口：只记录卡片实际交给谁，用于确认跳转路径 */
-    private fun hookZoomOpenHandler(param: PackageParam) {
-        runCatching {
-            ZOOM_OPEN_HANDLER.toClass().resolve().apply {
-                firstMethod {
-                    name = "startByZoom"
-                    parameters(Context::class, Intent::class, Bundle::class, String::class)
-                }.intercept {
-                    val intent = arg(1) as? Intent
-                    MetisLog.debug(
-                        param, "ZoomOpenHandler.startByZoom",
-                        "pkg=${intent?.getPackage()} component=${intent?.component?.flattenToShortString()} data=${intent?.dataString}"
-                    )
-                    proceed()
-                }
-            }
-        }.onFailure { MetisLog.warn("ZoomOpenHandler.startByZoom", "hook 安装失败: $it") }
-    }
-
-    /** D 兜底入口：两个重载都要挂，少了任意一个都会有一半点击漏改 */
+    /** C 兜底入口：两个重载都要挂，少了任意一个都会有一半点击漏改 */
     private fun hookContextImpl(param: PackageParam) {
         runCatching {
             CONTEXT_IMPL.toClass().resolve().apply {
@@ -104,14 +82,14 @@ object MetisTextIntentHook : YukiBaseHooker() {
                     name = "startActivity"
                     parameters(Intent::class)
                 }.intercept {
-                    MetisEngine.rewriteIntent(param, arg(0) as? Intent, "ContextImpl.startActivity")
+                    MetisEngine.rewriteIntent(param, arg(0) as? Intent)
                     proceed()
                 }
                 firstMethod {
                     name = "startActivity"
                     parameters(Intent::class, Bundle::class)
                 }.intercept {
-                    MetisEngine.rewriteIntent(param, arg(0) as? Intent, "ContextImpl.startActivity+Bundle")
+                    MetisEngine.rewriteIntent(param, arg(0) as? Intent)
                     proceed()
                 }
             }

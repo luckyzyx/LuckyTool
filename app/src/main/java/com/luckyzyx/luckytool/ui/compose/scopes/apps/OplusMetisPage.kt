@@ -18,10 +18,9 @@ private const val KEY_RULE_PROTOCOL = "metis_rule_protocol"
 private const val KEY_RULE_TEXT_SEARCH = "metis_rule_text_search"
 private const val KEY_RULE_HEYTAP_HTTP = "metis_rule_heytap_http"
 private const val KEY_RULE_BROWSER_CARD = "metis_rule_browser_card"
-private const val KEY_DEBUG_LOG = "metis_debug_log"
 
 /**
- * 流体云页：卡片点击重定向与诊断开关。
+ * 流体云页：卡片点击重定向。
  * 页面只负责写 prefs，真正的重定向由 metis 进程里的 hook 读取这批键执行；
  * 整页仅在装有 com.oplus.metis 时出现（见 spec.isVisible）。
  */
@@ -82,15 +81,6 @@ object OplusMetisPage {
             title = c.getString(R.string.metis_rule_browser_card),
             summary = c.getString(R.string.metis_rule_browser_card_summary),
             default = false,
-            notify = true,
-        )
-
-        // 诊断
-        category(c.getString(R.string.metis_category_debug))
-        switch(
-            key = KEY_DEBUG_LOG,
-            title = c.getString(R.string.metis_debug_log),
-            summary = c.getString(R.string.metis_debug_log_summary),
             notify = true,
         )
     }

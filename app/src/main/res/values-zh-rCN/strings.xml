@@ -1450,7 +1450,4 @@
     <string name="metis_rule_heytap_http_summary">目标为 com.heytap.browser 且链接是合法 http(s) 的卡片参与重定向</string>
     <string name="metis_rule_browser_card">其他浏览器 http(s) 卡片（实验性）</string>
     <string name="metis_rule_browser_card_summary">目标为其他浏览器且链接是合法 http(s) 的卡片参与重定向。实验性：需要自身应用处理链接的卡片可能受影响</string>
-    <string name="metis_category_debug">诊断</string>
-    <string name="metis_debug_log">诊断日志</string>
-    <string name="metis_debug_log_summary">输出 hook 诊断信息，到 LSPosed 管理器查看，tag = Metis</string>
 </resources>

@@ -1635,7 +1635,4 @@
     <string name="metis_rule_heytap_http_summary">Redirect cards that point to com.heytap.browser with a valid http(s) link</string>
     <string name="metis_rule_browser_card">Other browser http(s) cards (experimental)</string>
     <string name="metis_rule_browser_card_summary">Redirect cards that point to another browser with a valid http(s) link. Experimental: cards that need their own app to handle the link may break</string>
-    <string name="metis_category_debug">Diagnostics</string>
-    <string name="metis_debug_log">Diagnostics log</string>
-    <string name="metis_debug_log_summary">Write hook diagnostics; view them in the LSPosed manager, tag = Metis</string>
 </resources>
