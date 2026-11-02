@@ -53,7 +53,7 @@ class AlarmClockWidget(val dexKitBridge: DexKitBridge) : YukiBaseHooker() {
             findMethod {
                 matcher { usingStrings(OplusTextClock) }
             }.apply {
-                checkDataList("AlarmClockRedOne", onlyOne = false, isDebug = true)
+                checkDataList("AlarmClockRedOne", onlyOne = false)
             }.mapNotNull { data ->
                 if (data.paramTypeNames.isNotEmpty() || data.returnTypeName != "boolean") null
                 else RedOneGate(data.className, data.methodName)
