@@ -444,7 +444,7 @@ object ScopePageRegistry {
         }
     }
 
-    /** 功能树页面顺序（功能树按此固定排序，共 50 页） */
+    /** 功能树页面顺序（功能树按此固定排序，共 51 页） */
     val treeOrder: List<String> = listOf(
         "android_related",
         "statusbar",
@@ -476,6 +476,7 @@ object ScopePageRegistry {
         "oplus_weather",
         "oplus_calendar",
         "oplus_smart_sidebar",
+        "oplus_metis",
         "oplus_phone_manager",
         "oplus_health",
         "oplus_sound_recorder",
