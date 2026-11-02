@@ -13,7 +13,7 @@ in [TG Channel’s associated groups](https://t.me/LuckyTool)**
 - 自定义系统消息地区预设
 - 禁用恶意风险应用拦截 C16.1
 - 禁用无障碍警告对话框 C16.1
-- 移除控制中心运营商 C16.1(400)
+- 移除控制中心运营商 C16.1 (400)
 - 移除控制中心设置按钮 C16.1
 - 解锁 GpsJoyStick Pro
 - 禁用音频焦点
@@ -38,7 +38,7 @@ in [TG Channel’s associated groups](https://t.me/LuckyTool)**
 - 自定义 OTA 卡片视频 C17
 - 自定义 OTA 卡片背景行 / 视频行缩略图预览，长按清除
 - 自定义旋转屏幕按钮大小 (@RealmeOS)
-- 流体云卡片重定向（可指定目标浏览器）
+- 流体云卡片重定向
 
 #### 优化
 
@@ -50,12 +50,11 @@ in [TG Channel’s associated groups](https://t.me/LuckyTool)**
 - 功能页数据随应用启动预加载
 - 功能页「XX相关」分类行改用彩色徽标
 - 设置页备份 / 恢复记录数据落点
-- 设置页备份 / 恢复选择器预设 Download/LuckyTool
-- 重构浮窗贴边后台保活，恢复 C15+ 支持（C14 走系统界面侧）
+- 重构浮窗贴边后台运行
 
 #### 修复
 
-- 修复「移除小布 Next Root 检测」不生效，适配小布 Next 17.0.75
+- 修复「移除小布 Next Root 检测」v17.0.75
 - 修复「移除应用分身徽标」不生效，适配 C17
 - 修复桌面图标下沉导致的桌面崩溃 C16
 - 修复锁屏无线充电瓦数显示 C17
@@ -72,17 +71,14 @@ in [TG Channel’s associated groups](https://t.me/LuckyTool)**
 - 修复数据备份 / 恢复对集合与旧版字符串格式的处理
 - 修复状态栏网速「使用用户字体」在默认布局下不生效
 - 修复捐赠数据加载（改用 jsDelivr 镜像）
-- 修复浮窗贴边后台保活的挂起状态残留导致同一任务无法再次挂起
-- 修复浮窗贴边后台保活搬运任务过早、被贴边转场收回导致应用暂停
-- 修复浮窗贴边恢复小窗时虚拟屏释放过早导致小窗消失
 
 #### 适配
 
 - 启用 WiFi 详情显示网关 C16.1
 - WiFi 地址信息显示网关 C17
 - 自定义指纹图标替换 C16.1
-- 禁用自动切换到上个任务 v16.6.17(8a73764)
-- 移除手机管家白名单倒计时 v17.3.10(c24156e)
+- 禁用自动切换到上个任务 v16.6.17 (8a73764)
+- 移除手机管家白名单倒计时 v17.3.10 (c24156e)
 - 移除个人热点耗电通知 C17
 - 强制启用最近任务内存显示 C17
 - 移除桌面小组件添加请求白名单 C17
@@ -103,8 +99,8 @@ in [TG Channel’s associated groups](https://t.me/LuckyTool)**
 - 启用 Opex 本地安装 C17
 - 启用侧边栏后台挂机 C17
 - 移除电池限制插件 C17
-- 移除保存与重命名文件字数限制 v17.9.16(064a5da)
-- 移除乐划锁屏图片保存水印 v40.10.15.2(4e15fb0)
+- 移除保存与重命名文件字数限制 v17.9.16 (064a5da)
+- 移除乐划锁屏图片保存水印 v40.10.15.2 (4e15fb0)
 
 #### 移除
 
@@ -120,23 +116,23 @@ in [TG Channel’s associated groups](https://t.me/LuckyTool)**
 - [添加] 禁用截图包名MD5加密
 - [添加] 移除开始录制或投射对话框
 - [添加] 强制显示Toast提示图标
-- [适配] 自定义OTA更新卡片背景 v16.0.0(ec38064)
+- [适配] 自定义OTA更新卡片背景 v16.0.0 (ec38064)
 - [添加] 禁用音量条粗细效果 C14+
 - [更改] 同步上游核心破解v4.9
 - [更改] 同步上游DisableFlagSecure v5.0.1
 - [添加] 解锁工程模式部分隐藏选项
 - [添加] 启用音量条百分比显示
 - [添加] 启用控制中心进度条百分比显示
-- [适配] 锁屏充电组件瓦数显示 v16.00.12(160012)
+- [适配] 锁屏充电组件瓦数显示 v16.00.12 (160012)
 - [添加] 自定义音量条百分比颜色
 - [添加] 自定义控制中心进度条百分比颜色
-- [适配] 隐藏OTA卡片顶层文本 v16.0.0(ec38064)
+- [适配] 隐藏OTA卡片顶层文本 v16.0.0 (ec38064)
 - [适配] ColorOS V16.1.0, V17.0.0 版本名称显示
-- [适配] 移除桌面图标徽标 v16.6.5(37c6638)
-- [适配] 软件商店启动页广告 v26.1.2_CN(60d4105)
-- [适配] 移除电池限制插件 v1.2.8(aeabc11)
-- [适配] 智能侧边栏后台挂机 v16.12.2(3fd0d0c)
-- [适配] 显示Apk更多安装信息 v16.0.3(a6eac93)
+- [适配] 移除桌面图标徽标 v16.6.5 (37c6638)
+- [适配] 软件商店启动页广告 v26.1.2_CN (60d4105)
+- [适配] 移除电池限制插件 v1.2.8 (aeabc11)
+- [适配] 智能侧边栏后台挂机 v16.12.2 (3fd0d0c)
+- [适配] 显示Apk更多安装信息 v16.0.3 (a6eac93)
 - [适配] 应用分身最大数量限制 C16.1
 - [修复] 桌面卡片名称崩溃问题
 - [适配] 移除免打扰模式通知 C16.1
@@ -149,23 +145,23 @@ in [TG Channel’s associated groups](https://t.me/LuckyTool)**
 - [Add] Disable MD5 encryption of screenshot package name
 - [Add] Remove start recording or casting dialog
 - [Add] Forced display of Toast prompt icon
-- [Fix] Customize OTA update card background v16.0.0(ec38064)
+- [Fix] Customize OTA update card background v16.0.0 (ec38064)
 - [Add] Disable volume bar thickness effect C14+
 - [Change] Sync upstream core crack v4.9
 - [Change] Sync upstream DisableFlagSecure v5.0.1
 - [Add] Unlock some hidden options in engineering mode
 - [Add] Enable volume bar percentage display
 - [Add] Enable control center progress bar percentage display
-- [Fix] Lock screen charging component wattage display v16.00.12(160012)
+- [Fix] Lock screen charging component wattage display v16.00.12 (160012)
 - [Add] Custom volume bar percentage color
 - [Add] Customize control center progress bar percentage color
-- [Fix] Hide OTA card top text v16.0.0(ec38064)
+- [Fix] Hide OTA card top text v16.0.0 (ec38064)
 - [Fix] ColorOS V16.1.0, V17.0.0 version name display
-- [Fix] Remove desktop icon logo v16.6.5(37c6638)
-- [Fix] Software store startup page advertisement v26.1.2_CN(60d4105)
-- [Fix] Remove battery limit plug-in v1.2.8(aeabc11)
+- [Fix] Remove desktop icon logo v16.6.5 (37c6638)
+- [Fix] Software store startup page advertisement v26.1.2_CN (60d4105)
+- [Fix] Remove battery limit plug-in v1.2.8 (aeabc11)
 - [Fix] Smart sidebar background hangup v16.12.2 (3fd0d0c)
-- [Fix] Show more installation information of Apk v16.0.3(a6eac93)
+- [Fix] Show more installation information of Apk v16.0.3 (a6eac93)
 - [Fix] Limit on the maximum number of application clones C16.1
 - [Fix] Desktop card name crash issue
 - [Fix] Remove Do Not Disturb mode notification C16.1
@@ -189,10 +185,10 @@ in [TG Channel’s associated groups](https://t.me/LuckyTool)**
 - [添加] 移除压缩文件字数限制 C16
 - [添加] 移除重命名文件字数限制 C16
 - [更改] 同步上游核心破解v4.8
-- [适配] 自定义锁屏时钟红一显示 v16.00.01(ac0a4b5)
+- [适配] 自定义锁屏时钟红一显示 v16.00.01 (ac0a4b5)
 - [添加] 强制启用晕动舒缓显示 C16
 - [修复] 自定义图片裁剪后崩溃
-- [适配] 移除电池温度控制 v1.2.8(d7509ad)
+- [适配] 移除电池温度控制 v1.2.8 (d7509ad)
 - [适配] 移除锁屏时钟组件 C16
 - [适配] 移除移动数据箭头与类型 C16
 - [Change] Remove the built-in TG group link in the module
@@ -210,10 +206,10 @@ in [TG Channel’s associated groups](https://t.me/LuckyTool)**
 - [Add] Remove word limit for compressed files C16
 - [Add] Remove character limit for renamed files C16
 - [Change] Sync upstream core crack v4.8
-- [Fix] Customize lock screen clock red display v16.00.01(ac0a4b5)
+- [Fix] Customize lock screen clock red display v16.00.01 (ac0a4b5)
 - [Add] Forced enable motion sickness relief display C16
 - [Fix] Crash after custom picture cropping
-- [Fix] Remove battery temperature control v1.2.8(d7509ad)
+- [Fix] Remove battery temperature control v1.2.8 (d7509ad)
 - [Fix] Remove lock screen clock component C16
 - [Fix] Remove mobile data arrow and type C16
 
@@ -226,14 +222,14 @@ in [TG Channel’s associated groups](https://t.me/LuckyTool)**
 - [添加] 移除OTA安装完成通知
 - [添加] 移除OTA自动下载对话框
 - [更改] 更新并迁移底层HookAPI
-- [适配] 软件商店更新页面信息流 v12.9.0beta2(e182e2f)
+- [适配] 软件商店更新页面信息流 v12.9.0beta2 (e182e2f)
 - [优化] 优化Su与OS检测
 - [修复] 文件夹图标预览行列数
 - [更改] 桌面App名称双行显示功能位置与逻辑 C12+
 - [添加] 移除文件夹名称输入限制 C12+
 - [优化] 优化模块权限请求逻辑
 - [添加] 禁用音乐流体云黑名单 C15.0.1+
-- [适配] 自定义音量条背景透明度 v15.99.13(159913) C15.0.1+
+- [适配] 自定义音量条背景透明度 v15.99.13 (159913) C15.0.1+
 - [添加] 移除返回手势确认限制 C15.0.1+
 - [适配] 自动解锁受限制的应用权限 C15+
 - [添加] 启用模块生物识别解锁校验
@@ -245,7 +241,7 @@ in [TG Channel’s associated groups](https://t.me/LuckyTool)**
 - [适配] 自定义App意图列表 C12
 - [添加] 移除互传关闭倒计时
 - [添加] 移除存储权限异常对话框
-- [优化] App意图数据存储逻辑(建议重新配置意图数据)
+- [优化] App意图数据存储逻辑 (建议重新配置意图数据)
 - [添加] 移除桌面卡片名称 C13+
 - [添加] 移除短信底部输入框菜单 (感谢[myflavor](https://github.com/myflavor))
 - [添加] 移除短信卡片底部营销按钮 (感谢[myflavor](https://github.com/myflavor))
@@ -294,14 +290,14 @@ in [TG Channel’s associated groups](https://t.me/LuckyTool)**
 - [Add] Removed OTA installation completion notification
 - [Add] Removed OTA auto-download dialog
 - [Change] Updated and migrated underlying Hook API
-- [Fix] Updated app store feed information stream v12.9.0beta2(e182e2f)
+- [Fix] Updated app store feed information stream v12.9.0beta2 (e182e2f)
 - [Optimize] Improved Su and OS detection
 - [Fixed] Folder icon preview row/column count
 - [Change] Position and logic for dual-line app name display on desktop C12+
 - [Add] Removed folder name input restriction C12+
 - [Optimize] Improved module permission request logic
 - [Add] Disabled Music Fluid Cloud blacklist C15.0.1+
-- [Fix] Custom volume bar background transparency v15.99.13(159913) C15.0.1+
+- [Fix] Custom volume bar background transparency v15.99.13 (159913) C15.0.1+
 - [Add] Removed return gesture confirmation restriction C15.0.1+
 - [Fix] Automatically unlock restricted app permissions C15+
 - [Add] Enabled module biometric unlock verification
@@ -363,7 +359,7 @@ in [TG Channel’s associated groups](https://t.me/LuckyTool)**
 - [适配] 控制中心响铃状态切换磁贴 C15.0.1
 - [适配] 状态栏移动数据图标箭头与类型 C15.0.1
 - [更改] 状态栏隐私图标圆点Hook位置
-- [适配] 天气跳转页面底部信息流广告 v15.16.16(f6d7e14)
+- [适配] 天气跳转页面底部信息流广告 v15.16.16 (f6d7e14)
 - [适配] 移除手电筒开启通知 C15.0.1
 - [添加] 移除Docker最大数量限制
 - [适配] 通知中心清理全部通知按钮 C15.0.1
@@ -377,7 +373,7 @@ in [TG Channel’s associated groups](https://t.me/LuckyTool)**
 - [添加] 电池-显示上次屏幕使用时长
 - [适配] 移除锁屏时钟组件 C15.0.1
 - [适配] 移除锁屏顶部解锁图标 C15.0.1
-- [添加] 移除全局搜索未安装的应用推荐 v11.42.3.20(19da793)
+- [添加] 移除全局搜索未安装的应用推荐 v11.42.3.20 (19da793)
 - [更改] 强制启用息屏音乐限制为A13 A14
 - [适配] 锁屏充电动画瓦数显示 C15.0.1
 - [添加] 启用全局通知横幅简洁模式 C12+
@@ -387,14 +383,13 @@ in [TG Channel’s associated groups](https://t.me/LuckyTool)**
 - [修复] 自定义抽屉布局列数显示 C15+ [感谢 Oxygen-Customizer]
 - [添加] 重新添加屏幕永不息屏选项
 - [添加] 强制启用降低白点值 C15.0.1
-- [适配] 电池温控控制器 v1.2.6(bd45a58)
+- [适配] 电池温控控制器 v1.2.6 (bd45a58)
 - [Fix] Introduction to string display of core cracking functions
 - [Fix] Try to fix system crashes caused by some devices not supporting RGB palettes
 - [Fix] Control Center ring status switch tile C15.0.1
 - [Fix] Status bar move data icon arrows and type C15.0.1
 - [Change] Status Bar Privacy Icon Dot Hook Location
-- [Fix] Information flow advertisement at the bottom of the weather jump page v15.16.16 (
-  f6d7e14)
+- [Fix] Information flow advertisement at the bottom of the weather jump page v15.16.16 (f6d7e14)
 - [Fix] Remove flashlight turn on notification C15.0.1
 - [Add] Remove the maximum number limit for Docker
 - [Fix] Notification Center Cleans All Notification Buttons C15.0.1
@@ -440,13 +435,13 @@ in [TG Channel’s associated groups](https://t.me/LuckyTool)**
 - [更改] 更换状态栏隐私绿点提示 Hook 点
 - [修复] 修复模块主页 OS 系统版本显示问题
 - [优化] 优化模块本地权限请求逻辑
-- [适配] 适配软件商店更新页面底部应用推荐 v12.6.0beta1(7befd97)
+- [适配] 适配软件商店更新页面底部应用推荐 v12.6.0beta1 (7befd97)
 - [更改] 浮窗贴边功能不再支持 C15+
 - [适配] 经典控制中心磁贴两侧对齐 C15.0.1
 - [适配] 音量对话框背景透明度 C15.0.1
 - [适配] 状态栏通知中心两侧对齐 C15.0.1
 - [适配] USB 连接对话框调用逻辑 C15.0.1
-- [更改] 更改功能名称(应用分身创建总数限制)
+- [更改] 更改功能名称 (应用分身创建总数限制)
 - [适配] 关机菜单 SOS 紧急按钮 C15.0.1
 - [适配] 关机菜单手动锁定按钮 C15.0.1
 - [适配] 经典控制中心横屏亮度条显示位置
@@ -455,7 +450,7 @@ in [TG Channel’s associated groups](https://t.me/LuckyTool)**
 - [适配] 控制中心日期显示农历 C15.0.1
 - [适配] 状态栏网速 1 秒刷新率 C15.0.1
 - [适配] 状态栏双行网速与计算逻辑 C15.0.1
-- [适配] 游戏助手媒体播放器与弹幕通知 v10.8.4(a11f7ba)
+- [适配] 游戏助手媒体播放器与弹幕通知 v10.8.4 (a11f7ba)
 - [Fix] Remove the function item for the module setting partition duplication
 - [Change] Add a restart prompt for some notification removal
 - [Fix] Fixed the problem of failure of the WIFI display gateway function switch
@@ -499,7 +494,7 @@ in [TG Channel’s associated groups](https://t.me/LuckyTool)**
 - [修复] 部分因适配 RUI6 导致的实例获取问题
 - [添加] 自定义处理器介绍页面参数
 - [更改] 重新添加响铃状态切换磁贴
-- [适配] 全局搜索应用推荐卡片 v11.38.3.20(3e27c21)
+- [适配] 全局搜索应用推荐卡片 v11.38.3.20 (3e27c21)
 - [修复] 个人热点设备名称更改异常
 - [更改] 精简新版游戏助手无用功能 v10.0.0+
 - [添加] 快速添加内置磁贴到控制中心 C13+
@@ -508,7 +503,7 @@ in [TG Channel’s associated groups](https://t.me/LuckyTool)**
 - [更改] 同步上游 DisableSecureFlag
 - [添加] 启用 WiFi 详情显示网关 C12+
 - [优化] 桌面文件夹预览背景隐藏问题
-- [适配] 桌面小组件添加请求 v15.4.13(d2cffca)
+- [适配] 桌面小组件添加请求 v15.4.13 (d2cffca)
 - [添加] 检测系统更新后提示优化 Dex
 - [添加] 启用 NFC 延时关闭
 - [添加] 启用应用停止时保留通知 C12+
@@ -564,7 +559,7 @@ in [TG Channel’s associated groups](https://t.me/LuckyTool)**
 - [修复] 应用安装页面安装包大小显示异常
 - [添加] 应用详情显示 App 安装来源
 - [更改] 移除 AppCenter 崩溃统计 SDK
-- [适配] 桌面时钟组件红一 v15.6.8(40e2505)
+- [适配] 桌面时钟组件红一 v15.6.8 (40e2505)
 - [适配] 分离模式控制中心磁贴长按跳转页面
 - [适配] 状态栏网速布局与刷新速度 RUI6
 - [适配] 状态栏隐藏 SIM 无服务图标 RUI6
@@ -636,7 +631,7 @@ in [TG Channel’s associated groups](https://t.me/LuckyTool)**
 - [添加] 禁用高音量警告通知 C12+
 - [添加] 移除无网畅聊时间限制 C14.1+
 - [添加] 隐藏 OTA 卡片顶层文字 C13+
-- [适配] 移除最近任务列表清除按钮 v15.6.3(241a057)
+- [适配] 移除最近任务列表清除按钮 v15.6.3 (241a057)
 - [修复] 音量对话框背景模糊失效 C13
 - [添加] 仅优化此页作用域 Dex
 - [修复] 飞行模式信号图标显示异常 C15+
@@ -715,15 +710,15 @@ in [TG Channel’s associated groups](https://t.me/LuckyTool)**
 - [添加] 移除相机滤镜机型限制
 - [添加] 相机添加更多滤镜
 - [适配] 移除最近任务列表底部图标 C14+
-- [适配] 自定义相机默认启动相册 v5.020.123(24-10-30 16:58)
-- [适配] 相机自定义机型水印 v5.104.53(24-11-21 21:50)
+- [适配] 自定义相机默认启动相册 v5.020.123 (24-10-30 16:58)
+- [适配] 相机自定义机型水印 v5.104.53 (24-11-21 21:50)
 - [添加] 启用多浮窗支持 C14.1+
 - [更改] 合并相机与相册部分配置项
 - [添加] 自定义多浮窗显示上限 C14.1+
-- [适配] 相册替换 OnePlus 机型水印 v15.16.4(9f018b6)
+- [适配] 相册替换 OnePlus 机型水印 v15.16.4 (9f018b6)
 - [添加] 替换充电技术绘制样式 C15+
 - [添加] 移除通知清理按钮 C12+
-- [适配] 移除全局搜索应用推荐卡片 v11.34.3(dc2371d)
+- [适配] 移除全局搜索应用推荐卡片 v11.34.3 (dc2371d)
 - [添加] 强制启用 32 位 App 支持
 - [添加] 移除相机闪光灯使用限制 C13+
 - [Fix] Abnormal display of the floating window of the clone app C14+
@@ -920,23 +915,23 @@ in [TG Channel’s associated groups](https://t.me/LuckyTool)**
 - [添加] 自定义高斯模糊效果等级
 - [添加] 自定义状态栏滑动条透明度 C13+
 - [添加] 启用息屏随机文本 C13+
-- [适配] 浏览器下载对话框底部应用推荐 v40.8.29.1(782d303)
+- [适配] 浏览器下载对话框底部应用推荐 v40.8.29.1 (782d303)
 - [添加] 设置控制中心音量条模式 C14.0.1
-- [适配] 自定义相机机型水印 v4.020.13(24-04-19 22:23)
+- [适配] 自定义相机机型水印 v4.020.13 (24-04-19 22:23)
 - [添加] 设置息屏字体模式 C13+
 - [添加] 启用 15 日天气展开列表
 - [优化] 磁贴跳转时关闭控制中心逻辑
-- [适配] 相册 AIGC 消除限制 v14.41.31(8ab3102)
+- [适配] 相册 AIGC 消除限制 v14.41.31 (8ab3102)
 - [添加] 移除应用分身黑名单 C14.0.1
 - [添加] 移除浏览器窗口数量限制
 - [优化] 禁用 OTG 自动关闭 C14+
 - [添加] 启用相机 DebugUI 选项 C14+
-- [适配] 天气跳转页面底部信息流 v14.16.2(18506cc)
+- [适配] 天气跳转页面底部信息流 v14.16.2 (18506cc)
 - [优化] 移除个人热点耗电通知 Hook 方案
 - [添加] 息屏随机文本本地模式 C13+
 - [添加] 同步上游核心破解-禁用安装包验证代理
 - [更改] 同步上游 DisableFlagSecure-完善更多截屏场景
-- [添加] 扩展通话录音白名单(企业微信,TIM,飞书,抖音) C14.0.1+
+- [添加] 扩展通话录音白名单 (企业微信,TIM,飞书,抖音) C14.0.1+
 - [修复] 三阶段响铃模式磁贴 C14.1
 - [修复] 进程管理,内容推荐页面显示 C14.1
 - [优化] 截屏隐私限制 Hook 方案 C14.1
@@ -947,10 +942,10 @@ in [TG Channel’s associated groups](https://t.me/LuckyTool)**
 - [添加] 启用护眼模式纸质纹理支持 C14.1
 - [添加] 启用马里亚纳 NPU 介绍页面 C13.1+
 - [添加] 启用哈苏影像介绍页面 C13.1+
-- [适配] 软件商店更新下载页面底部信息流 v11.16.0beta2(96d034a)
+- [适配] 软件商店更新下载页面底部信息流 v11.16.0beta2 (96d034a)
 - [添加] 启用游戏助手 AI 游戏辅助 v9.13.X
-- [适配] 自定义相机机型水印 v4.022.224(24-06-19 22:32)
-- [适配] 相机哈苏水印样式 v4.022.224(24-06-19 22:32)
+- [适配] 自定义相机机型水印 v4.022.224 (24-06-19 22:32)
+- [适配] 相机哈苏水印样式 v4.022.224 (24-06-19 22:32)
 - [添加] 启用相机夜景 30 倍变焦 C13.1+
 - [添加] 启用视频拍摄轮盘变焦 C13.1+
 - [添加] 设置 App 图标更新圆点显示模式 C14.1+
@@ -961,14 +956,14 @@ in [TG Channel’s associated groups](https://t.me/LuckyTool)**
 - [Add] Customizable Gaussian Blur effect level
 - [Add] Customize status bar slider transparency C13+
 - [Add] Enable random text on screen C13+
-- [Fix] Application recommendation v40.8.29.1(782d303) at the bottom of the browser download dialog
+- [Fix] Application recommendation v40.8.29.1 (782d303) at the bottom of the browser download dialog
   box
 - [Add] Set control center volume bar mode C14.0.1
-- [Fix] Customized camera model watermark v4.020.13(24-04-19 22:23)
+- [Fix] Customized camera model watermark v4.020.13 (24-04-19 22:23)
 - [Add] Set screen font mode C13+
 - [Add] Enable 15th weather expanded list
 - [Optimize] Close the control center logic when tile jumps
-- [Fix] Album AIGC elimination restriction v14.41.31(8ab3102)
+- [Fix] Album AIGC elimination restriction v14.41.31 (8ab3102)
 - [Add] Remove app clone blacklist C14.0.1
 - [Add] Remove browser window limit
 - [Optimize] Disable OTG automatic shutdown C14+
@@ -989,11 +984,11 @@ in [TG Channel’s associated groups](https://t.me/LuckyTool)**
 - [Add] Enable eye protection mode paper texture support C14.1
 - [Add] Enable Mariana NPU introduction page C13.1+
 - [Add] Enable Hasselblad image introduction page C13.1+
-- [Fix] Information flow at the bottom of the software store update download page v11.16.0beta2(
-  96d034a)
+- [Fix] Information flow at the bottom of the software store update download page v11.16.0beta2
+  (96d034a)
 - [Add] Enable game assistant AI game assistance v9.13.X
-- [Fix] Customized camera model watermark v4.022.224(24-06-19 22:32)
-- [Fix] Camera Hasselblad watermark style v4.022.224(24-06-19 22:32)
+- [Fix] Customized camera model watermark v4.022.224 (24-06-19 22:32)
+- [Fix] Camera Hasselblad watermark style v4.022.224 (24-06-19 22:32)
 - [Add] Enable camera night scene 30x zoom C13.1+
 - [Add] Enable Video Capture Roulette Zoom C13.1+
 - [Add] Set App icon update dot display mode C14.1+
@@ -1019,10 +1014,10 @@ in [TG Channel’s associated groups](https://t.me/LuckyTool)**
 - [修复] 尝试修复部分机型图片选择器崩溃问题
 - [适配] 软件商店更新下载页面底部应用推荐 v11.10.0beta2
 - [更改] 扩展状态栏时钟最大字体大小
-- [适配] 移除截屏隐私限制 v14.6.2(115456)
+- [适配] 移除截屏隐私限制 v14.6.2 (115456)
 - [添加] 应用详情显示首次安装时间
 - [添加] 应用详情显示 Target SDK
-- [适配] 移除 AIGC 消除限制 v14.37.6(d77e6a7)
+- [适配] 移除 AIGC 消除限制 v14.37.6 (d77e6a7)
 - [修复] 音量条背景透明度 Hook 异常
 - [移除] 移除无意义的堆叠任务布局
 - [修复] 回滚照片选择器代码逻辑
@@ -1046,10 +1041,10 @@ in [TG Channel’s associated groups](https://t.me/LuckyTool)**
 - [Fix] Application recommendation v11.10.0beta2 at the bottom of the software store update
   download page
 - [Change] Extended status bar clock maximum font size
-- [Fix] Remove screenshot privacy restrictions v14.6.2(115456)
+- [Fix] Remove screenshot privacy restrictions v14.6.2 (115456)
 - [Add] App details show first installation time
 - [Add] App details display Target SDK
-- [Fix] Remove AIGC elimination restrictions v14.37.6(d77e6a7)
+- [Fix] Remove AIGC elimination restrictions v14.37.6 (d77e6a7)
 - [Fix] Volume bar background transparency Hook abnormality
 - [Removed] Removed meaningless stacked task layout
 - [Fix] Rollback photo picker code logic
@@ -1104,7 +1099,7 @@ in [TG Channel’s associated groups](https://t.me/LuckyTool)**
 - [移除] 移除强制刷新率方案一
 - [添加] 触控采样率磁贴档位切换
 - [更改] 设置息屏通知图标样式键值与字符串
-- [适配] 相机自定义水印字数限制 v4.004.162(23-12-05 12:28)
+- [适配] 相机自定义水印字数限制 v4.004.162 (23-12-05 12:28)
 - [添加] 移除相册 AIGC 消除限制
 - [更改] CorePatch 功能移至应用安装分区
 - [添加] 设置 LTPO 刷新率模式
@@ -1146,7 +1141,7 @@ in [TG Channel’s associated groups](https://t.me/LuckyTool)**
 - [添加] QQ 聊天群组跳转方式
 - [优化] 控制中心与时钟农历计算逻辑
 - [添加] 强制启用侧边栏浮标自动隐藏 C12
-- [适配] 桌面时钟组件红一 v14.51.0(04ff761)
+- [适配] 桌面时钟组件红一 v14.51.0 (04ff761)
 - [修复] 部分机型电池通知电压、电流数值异常
 - [添加] 移除相册自定义水印字数限制
 - [优化] 作用域版本信息缓存结构
@@ -1159,12 +1154,12 @@ in [TG Channel’s associated groups](https://t.me/LuckyTool)**
 - [添加] 自定义未启用磁贴背景透明度 C13.1+
 - [添加] 捐赠列表数据排序选项
 - [添加] 强制显示响铃状态切换磁贴 C12+
-- [修复] 软件商店更新页面信息流 Hook 异常 v11.8.0(89838fc)
-- [适配] 浏览器下载页面底部信息流 v40.8.25.1(c2a4a8f)
+- [修复] 软件商店更新页面信息流 Hook 异常 v11.8.0 (89838fc)
+- [适配] 浏览器下载页面底部信息流 v40.8.25.1 (c2a4a8f)
 - [优化] 提取 OTA 信息添加 Verity 字段
 - [添加] 同步文件夹图标列数到预览 C12+
 - [添加] 桌面抽屉模式布局列数 C12+
-- [适配] 天气跳转浏览器与页面信息流 v14.5.2(12c5c49)
+- [适配] 天气跳转浏览器与页面信息流 v14.5.2 (12c5c49)
 - [添加] 启用相册新春水印 C13.2+
 - [适配] 息屏通知图标样式 C14
 - [添加] 启用视频动态插帧 C13+
@@ -1192,11 +1187,11 @@ in [TG Channel’s associated groups](https://t.me/LuckyTool)**
 - [Add] Donation list data sorting options
 - [Add] Force display of ring status toggle tile C12+
 - [Fix] Software store update page information flow Hook exception v11.8.0 (89838fc)
-- [Fix] Information flow at the bottom of the browser download page v40.8.25.1(c2a4a8f)
+- [Fix] Information flow at the bottom of the browser download page v40.8.25.1 (c2a4a8f)
 - [Optimize] Extract OTA information and add Verity field
 - [Add] Sync folder icon column number to preview C12+
 - [Add] Desktop drawer mode layout column number C12+
-- [Fix] Weather jump browser and page information flow v14.5.2(12c5c49)
+- [Fix] Weather jump browser and page information flow v14.5.2 (12c5c49)
 - [Add] Enable Chinese New Year watermark in photo album C13.2+
 - [Fix] Screen notification icon style C14
 - [Add] Enable video dynamic frame insertion C13+
@@ -1215,7 +1210,7 @@ in [TG Channel’s associated groups](https://t.me/LuckyTool)**
 - [优化] 优化快捷入口跳转方法逻辑
 - [优化] 优化状态栏电池通知数据缓存以减少耗电
 - [修复] 强制刷新率自启失效问题
-- [优化] TileService 命名格式(需重新添加磁贴)
+- [优化] TileService 命名格式 (需重新添加磁贴)
 - [优化] 状态栏电池通知无线充电技术显示
 - [优化] 锁屏充电组件无线充电技术显示
 - [修复] 部分机型状态栏通知背景透明度异常
@@ -1261,7 +1256,7 @@ in [TG Channel’s associated groups](https://t.me/LuckyTool)**
 - [添加] 状态栏时钟使用粗体字体样式
 - [修复] 状态栏支付保护图标 Hook 异常
 - [适配] 游戏助手移除游戏中心 Tab 页面
-- [添加] 自动检测移除后门加密程序(PS)
+- [添加] 自动检测移除后门加密程序 (PS)
 - [更改] 回滚状态栏电池通知的温度与电流数值异常处理
 - [添加] 状态栏电池使用粗体字体样式
 - [适配] 软件商店我的页面应用推荐 v11.6.0
@@ -1306,7 +1301,7 @@ in [TG Channel’s associated groups](https://t.me/LuckyTool)**
 - [添加] 状态栏网速使用粗体字体样式
 - [添加] 自定义特殊磁贴横屏间隙
 - [适配] 小布建议外卖服务通知对齐
-- [添加] 设置应用分身支持模式(全应用列表)
+- [添加] 设置应用分身支持模式 (全应用列表)
 - [添加] 提取 OTA 信息显示机型名称
 - [添加] 电源菜单显示手动锁定按钮 C14
 - [更改] 同步上游 DisableFlagSecure
@@ -1530,7 +1525,7 @@ in [TG Channel’s associated groups](https://t.me/LuckyTool)**
 - [添加] 移除小布识屏应用推荐卡片
 - [添加] 移除全局搜索应用推荐卡片
 - [更改] A14 核心破解使用 A13 配置
-- [适配] 全局搜索 v11.8.9(4dc2874)
+- [适配] 全局搜索 v11.8.9 (4dc2874)
 - [适配] 磁贴编辑页面布局行数 C14
 - [适配] 移除 USB 连接对话框 C14
 - [适配] 锁屏与控制中心时钟红一 C14
@@ -1538,21 +1533,21 @@ in [TG Channel’s associated groups](https://t.me/LuckyTool)**
 - [适配] 状态栏电池信息通知数据异常 C14
 - [修复] 状态栏磁贴异常卡顿
 - [修复] 状态栏媒体播放器 Hook 异常 C14
-- [适配] 浏览器下载页面应用推荐 v40.8.18.9(e788b75)
+- [适配] 浏览器下载页面应用推荐 v40.8.18.9 (e788b75)
 - [修复] 设备参数分享页面 Hook 异常 C14
 - [修复] 隔空手势 Hook 异常 C14
 - [适配] 移除解锁页面底部 SOS 按钮 C14
 - [适配] 锁屏充电动画瓦数显示 C14
 - [适配] 状态栏移动数据与蓝牙图标 C14
 - [修复] 媒体播放器导致部分功能异常 C13.0
-- [适配] 浏览器下载对话框应用推荐 v40.8.20.1(4e1a076)
+- [适配] 浏览器下载对话框应用推荐 v40.8.20.1 (4e1a076)
 - [更改] 媒体播放器功能迁移至状态栏磁贴分区
 - [添加] 自动扩展横屏磁贴行数
 - [Fix] ADB remote debugging display exception
 - [Add] Remove Xiaobu screen recognition application recommendation card
 - [Add] Remove global search app recommendation card
 - [Change] A14 core patch uses A13 configuration
-- [Fix] Global search v11.8.9(4dc2874)
+- [Fix] Global search v11.8.9 (4dc2874)
 - [Fix] Number of rows in tile editing page layout C14
 - [Fix] Remove USB connection dialog box C14
 - [Fix] Lock screen and control center clock red one C14
@@ -1560,14 +1555,14 @@ in [TG Channel’s associated groups](https://t.me/LuckyTool)**
 - [Fix] Abnormal battery information notification data in status bar C14
 - [Fix] The status bar tile is stuck abnormally
 - [Fix] Status bar media player Hook exception C14
-- [Fix] Recommended applications on the browser download page v40.8.18.9(e788b75)
+- [Fix] Recommended applications on the browser download page v40.8.18.9 (e788b75)
 - [Fix] Hook exception on device parameter sharing page C14
 - [Fix] Air gesture Hook exception C14
 - [Fix] Remove the SOS button at the bottom of the unlock page C14
 - [Fix] Lock screen charging animation wattage display C14
 - [Fix] Status bar mobile data and Bluetooth icon C14
 - [Fix] Media player causing some functional abnormalities C13.0
-- [Fix] Browser download dialog application recommendation v40.8.20.1(4e1a076)
+- [Fix] Browser download dialog application recommendation v40.8.20.1 (4e1a076)
 - [Change] Media player function moved to status bar tile partition
 - [Add] Automatically expand the number of horizontal tile rows
 
@@ -1579,37 +1574,37 @@ in [TG Channel’s associated groups](https://t.me/LuckyTool)**
 - [添加] 相册启用姜文滤镜
 - [修复] 相机自定义机型水印 v4.110.62
 - [添加] 无媒体播放时隐藏媒体播放器
-- [适配] 支付保护对话框 v13.6.0(ce42387)
-- [适配] 云服务移动网络限制 v6.0.64(812b4f6)
+- [适配] 支付保护对话框 v13.6.0 (ce42387)
+- [适配] 云服务移动网络限制 v6.0.64 (812b4f6)
 - [优化] ADB 无线调试迁移 Aidl 服务
 - [移除] 移除点击状态栏返回顶部白名单
 - [添加] 设置点击状态栏返回顶部的模式
 - [优化] 禁用电池温控与模拟温度
 - [添加] Google 服务磁贴
 - [更改] 浏览器简洁模式快捷入口迁移至功能区
-- [添加] 添加更多浏览器优化功能()
+- [添加] 添加更多浏览器优化功能 ()
 - [Add] Remove high performance mode notification
 - [Remove] Resolution characters for refresh rate scheme 1
 - [Optimize] Information verification code floating window Dex rules
 - [Add] Enable Jiang Wen filter in photo album
 - [Fix] Camera custom model watermark v4.110.62
 - [Add] Hide media player when no media is playing
-- [Fix] Payment protection dialog v13.6.0(ce42387)
-- [Fix] Cloud service mobile network restrictions v6.0.64(812b4f6)
+- [Fix] Payment protection dialog v13.6.0 (ce42387)
+- [Fix] Cloud service mobile network restrictions v6.0.64 (812b4f6)
 - [Optimize] ADB wireless debugging migration Aidl service
 - [Remove] Remove click status bar to return to the top whitelist
 - [Add] Set the mode of clicking the status bar to return to the top
 - [Optimize] Disable battery temperature control and simulated temperature
 - [Add] Google Services Tile
 - [Change] The browser simple mode shortcut entry is moved to the xposed page
-- [Add] Add more browser optimization features()
+- [Add] Add more browser optimization features ()
 
 ### 1.0.18_fix
 
-- [适配] 设置 Feature v13.0.5(9dfae6f)
+- [适配] 设置 Feature v13.0.5 (9dfae6f)
 - [移除] Dexkit 搜索对话框
 - [优化] 混淆方法迁移至 Dexkit
-- [Fix] Set Feature v13.0.5(9dfae6f)
+- [Fix] Set Feature v13.0.5 (9dfae6f)
 - [Remove] Dexkit search dialog
 - [Optimize] Migrate obfuscation method to Dexkit
 
@@ -1633,7 +1628,7 @@ in [TG Channel’s associated groups](https://t.me/LuckyTool)**
 - [优化] 截屏适配版本判断 C14
 - [添加] 相册水印编辑
 - [恢复] 状态栏图标垂直居中
-- [适配] 相册 v14.3.1(dc2aad2)
+- [适配] 相册 v14.3.1 (dc2aad2)
 - [优化] Dexkit 搜索逻辑
 - [Fix] Fixed master filter Hook exception
 - [Change] Change camera watermark character limit scheme
@@ -1653,16 +1648,16 @@ in [TG Channel’s associated groups](https://t.me/LuckyTool)**
 - [Optimize] Screenshot adaptation version judgment C14
 - [Add] Album watermark editing
 - [Restore] Status bar icon vertically centered
-- [Fix] Photo Album v14.3.1(dc2aad2)
+- [Fix] Photo Album v14.3.1 (dc2aad2)
 - [Optimize] Dexkit search logic
 
 ### 1.0.17
 
-- [适配] 设置 FeatureUtils v12.1.2(af160a4)
+- [适配] 设置 FeatureUtils v12.1.2 (af160a4)
 - [修复] 音量条显示位置 Hook 异常
 - [更改] 桌面时钟组件红一适配方案
 - [更改] 相机十亿色影像功能提示
-- [适配] 乐划锁屏 v40.9.19.1(b57fd84)
+- [适配] 乐划锁屏 v40.9.19.1 (b57fd84)
 - [添加] 自定义相机机型水印
 - [修复] 部分机型哈苏通用水印样式异常
 - [添加] 设置—强制开启进程管理
@@ -1674,13 +1669,13 @@ in [TG Channel’s associated groups](https://t.me/LuckyTool)**
 - [添加] 相机—启用大师滤镜
 - [添加] 相机—启用姜文滤镜
 - [修复] 部分时钟 Hook 异常
-- [适配] 相机—水印字数限制 v3.415.47(fb5193d)
+- [适配] 相机—水印字数限制 v3.415.47 (fb5193d)
 - [添加] 移除游戏助手温度检测
-- [Fix] Settings FeatureUtils v12.1.2(af160a4)
+- [Fix] Settings FeatureUtils v12.1.2 (af160a4)
 - [Fix] The volume bar display position Hook is abnormal
 - [Change] Desktop clock component red one adaptation solution
 - [Change] Camera billion color image function prompts
-- [Fix] Lock Screen Pictorial v40.9.19.1(b57fd84)
+- [Fix] Lock Screen Pictorial v40.9.19.1 (b57fd84)
 - [Add] Custom camera model watermark
 - [Fix] Abnormal Hasselblad universal watermark style on some models
 - [Add] Settings—Force process management to be enabled
@@ -1692,17 +1687,17 @@ in [TG Channel’s associated groups](https://t.me/LuckyTool)**
 - [Add] Camera—Enable Master Filter
 - [Add] Camera—Enable Jiang Wen filter
 - [Fix] Some clock Hook exceptions
-- [Fix] Camera—watermark character limit v3.415.47(fb5193d)
+- [Fix] Camera—watermark character limit v3.415.47 (fb5193d)
 - [Add] Remove Game Assistant temperature detection
 
 ### 1.0.16
 
-- [适配] 支付保护-发现病毒对话框 v13.6.0(ce42387)
+- [适配] 支付保护-发现病毒对话框 v13.6.0 (ce42387)
 - [优化] 模块部分页面卡顿问题
-- [更改] 数据键值格式(需重启全部作用域以重新加载)
-- [适配] 应用包安装程序-跳过 Apk 扫描 v13.1.2(263ef6f)
-- [适配] 设置 FeatureUtils v14.0.0(975a2d7)
-- [适配] 设置-暗色模式列表 v14.0.0(975a2d7)
+- [更改] 数据键值格式 (需重启全部作用域以重新加载)
+- [适配] 应用包安装程序-跳过 Apk 扫描 v13.1.2 (263ef6f)
+- [适配] 设置 FeatureUtils v14.0.0 (975a2d7)
+- [适配] 设置-暗色模式列表 v14.0.0 (975a2d7)
 - [适配] 锁屏运营商组件样式 C14
 - [添加] 恢复磁贴编辑页面布局行数
 - [更改] 媒体音量阶数提高至 50
@@ -1710,7 +1705,7 @@ in [TG Channel’s associated groups](https://t.me/LuckyTool)**
 - [添加] 设置音量条显示位置
 - [优化] 非 ColorOS 版本相机 Hook 判定
 - [优化] 调整重启作用域 Kill 命令
-- [适配] 设置 FeatureUtils v14.0.0(29f4f65)
+- [适配] 设置 FeatureUtils v14.0.0 (29f4f65)
 - [移除] 系统服务-应用运行在系统桌面上警告对话框
 - [移除] 状态栏图标垂直居中
 - [适配] GT 模式通知 C14
@@ -1718,14 +1713,14 @@ in [TG Channel’s associated groups](https://t.me/LuckyTool)**
 - [适配] 强制开启息屏音乐 C14
 - [适配] 禁用复制悬浮窗 C14
 - [适配] 隐藏未使用的标签 Gen2x2 C14
-- [适配] 手势体感-隔空手势 v8.1.0(7c43a38)
-- [适配] 设置 FeatureUtils v12.1.2(af160a4)
-- [Fix] Payment Protection - Virus Found Dialog v13.6.0(ce42387)
+- [适配] 手势体感-隔空手势 v8.1.0 (7c43a38)
+- [适配] 设置 FeatureUtils v12.1.2 (af160a4)
+- [Fix] Payment Protection - Virus Found Dialog v13.6.0 (ce42387)
 - [Optimize] The page freeze problem of some modules
 - [Change] data key-value format (need to restart all scopes to reload)
-- [Fix] App Package Installer - Skip Apk Scanning v13.1.2(263ef6f)
-- [Fix] Settings FeatureUtils v14.0.0(975a2d7)
-- [Fix] Settings-Dark Mode List v14.0.0(975a2d7)
+- [Fix] App Package Installer - Skip Apk Scanning v13.1.2 (263ef6f)
+- [Fix] Settings FeatureUtils v14.0.0 (975a2d7)
+- [Fix] Settings-Dark Mode List v14.0.0 (975a2d7)
 - [Fix] Lock screen operator component style C14
 - [Add] Restore tile edit page layout row count
 - [Change] Media volume scale increased to 50
@@ -1733,7 +1728,7 @@ in [TG Channel’s associated groups](https://t.me/LuckyTool)**
 - [Add] Set volume bar display position
 - [Optimize] Non-ColorOS version camera Hook judgment
 - [Optimize] Adjust the restart scope Kill command
-- [Fix] Settings FeatureUtils v14.0.0(29f4f65)
+- [Fix] Settings FeatureUtils v14.0.0 (29f4f65)
 - [Remove] System Service - Application running on system desktop warning dialog
 - [Remove] Status bar icons are vertically centered
 - [Fix] GT mode notification C14
@@ -1741,67 +1736,67 @@ in [TG Channel’s associated groups](https://t.me/LuckyTool)**
 - [Fix] Forcibly turn on off-screen music C14
 - [Fix] Disable copying of floating windows C14
 - [Fix] Hide unused tags Gen2x2 C14
-- [Fix] Gesture somatosensory-air gesture v8.1.0(7c43a38)
-- [Fix] Settings FeatureUtils v12.1.2(af160a4)
+- [Fix] Gesture somatosensory-air gesture v8.1.0 (7c43a38)
+- [Fix] Settings FeatureUtils v12.1.2 (af160a4)
 
 ### 1.0.15
 
-- [适配] 桌面时钟组件 v14.0.6(3368efe)
-- [适配] 设置 FeatureUtils v13.0.5(5630e9d)
-- [适配] 截屏-v14.0.2(a85f365)
+- [适配] 桌面时钟组件 v14.0.6 (3368efe)
+- [适配] 设置 FeatureUtils v13.0.5 (5630e9d)
+- [适配] 截屏-v14.0.2 (a85f365)
 - [添加] 设置浮窗回复黑名单
 - [优化] 部分对话框空白行判定
 - [更改] 主页捐赠按钮跳转链接
-- [适配] 桌面时钟组件 v14.1.0(775bc1d)
-- [适配] 移除短信验证码弹窗 v14.999.0(a436243)
+- [适配] 桌面时钟组件 v14.1.0 (775bc1d)
+- [适配] 移除短信验证码弹窗 v14.999.0 (a436243)
 - [修复] 同步上游 CorePatch-修复 Apk 签名验证
 - [更改] CorePatch 默认启用安装时使用已安装 APP 的签名
 - [更改] 回滚复制悬浮窗的系统判定
-- [适配] 云服务-移动网络限制 v7.0.4(41daf8f)
-- [适配] 截屏-长截图页数限制 v14.0.2(a85f365)
-- [适配] 截屏-PNG 保存格式 v14.0.2(a85f365)
-- [适配] 信息-验证码悬浮窗 v14.10.0(e751698)
+- [适配] 云服务-移动网络限制 v7.0.4 (41daf8f)
+- [适配] 截屏-长截图页数限制 v14.0.2 (a85f365)
+- [适配] 截屏-PNG 保存格式 v14.0.2 (a85f365)
+- [适配] 信息-验证码悬浮窗 v14.10.0 (e751698)
 - [优化] 系统不支持时的对话框显示逻辑
 - [更改] 模块未激活时的对话框信息
 - [添加] 屏幕色温 RGB 调色板
-- [适配] 设置 FeatureUtils v13.0.5(7f73945)
-- [适配] 桌面时钟组件 v13.12.2(87619ee)
+- [适配] 设置 FeatureUtils v13.0.5 (7f73945)
+- [适配] 桌面时钟组件 v13.12.2 (87619ee)
 - [添加] 自定义设备分享页面参数
 - [适配] 状态栏隐藏未使用的信号标签 C14
-- [适配] 桌面时钟组件 v14.1.2(f67b677)
+- [适配] 桌面时钟组件 v14.1.2 (f67b677)
 - [更改] APP 启动遮罩功能介绍
-- [Fix] Desktop clock component v14.0.6(3368efe)
-- [Fix] Settings FeatureUtils v13.0.5(5630e9d)
-- [Fix] screenshot-v14.0.2(a85f365)
+- [Fix] Desktop clock component v14.0.6 (3368efe)
+- [Fix] Settings FeatureUtils v13.0.5 (5630e9d)
+- [Fix] screenshot-v14.0.2 (a85f365)
 - [Add] Set floating window reply blacklist
 - [Optimize] Determination of blank lines in some dialog boxes
 - [Change] Donate button jump link on home page
-- [Fix] Desktop Clock Component v14.1.0(775bc1d)
-- [Fix] Remove SMS verification code popup v14.999.0(a436243)
+- [Fix] Desktop Clock Component v14.1.0 (775bc1d)
+- [Fix] Remove SMS verification code popup v14.999.0 (a436243)
 - [Fix] Synchronize upstream CorePatch - fix Apk signature verification
 - [Change] CorePatch is enabled by default to use the signature of the installed APP when installing
 - [Change] Rollback the system judgment of duplicating the floating window
-- [Fix] Cloud Service - Mobile Network Limitation v7.0.4(41daf8f)
-- [Fix] Screenshot - long screenshot page limit v14.0.2(a85f365)
-- [Fix] Screenshot-PNG save format v14.0.2(a85f365)
-- [Fix] Information-Verification Code Floating Window v14.10.0(e751698)
+- [Fix] Cloud Service - Mobile Network Limitation v7.0.4 (41daf8f)
+- [Fix] Screenshot - long screenshot page limit v14.0.2 (a85f365)
+- [Fix] Screenshot-PNG save format v14.0.2 (a85f365)
+- [Fix] Information-Verification Code Floating Window v14.10.0 (e751698)
 - [Optimize] The dialog box display logic when the system does not support
 - [Change] Dialog message when module is not active
 - [Add] Screen color temperature RGB palette
-- [Fix] Settings FeatureUtils v13.0.5(7f73945)
-- [Fix] Desktop clock component v13.12.2(87619ee)
+- [Fix] Settings FeatureUtils v13.0.5 (7f73945)
+- [Fix] Desktop clock component v13.12.2 (87619ee)
 - [Add] Custom device sharing page parameters
 - [Fix] Hide unused signal labels in the status bar C14
-- [Fix] Desktop Clock Component v14.1.2(f67b677)
+- [Fix] Desktop Clock Component v14.1.2 (f67b677)
 - [Change] Introduction of APP splash screen function
 
 ### 1.0.14
 
 - [修复] Android14 系统界面黑屏崩溃
-- [适配] 设置 v14.0.0(bf663cc,b89fb9e)
-- [适配] 电池 v1.2.1(9015c8b)
+- [适配] 设置 v14.0.0 (bf663cc,b89fb9e)
+- [适配] 电池 v1.2.1 (9015c8b)
 - [适配] 权限控制器-解锁默认桌面限制 v14.00.001
-- [适配] 桌面-移除更新圆点 v14.0.6(1377ee0)
+- [适配] 桌面-移除更新圆点 v14.0.6 (1377ee0)
 - [更改] 隐藏锁屏底部按钮功能 C14
 - [适配] 锁屏状态栏运营商样式 C14
 - [适配] 锁屏解锁页面底部 SOS 按钮 C14
@@ -1809,10 +1804,10 @@ in [TG Channel’s associated groups](https://t.me/LuckyTool)**
 - [适配] 状态栏时钟组件与网速组件 C14
 - [优化] 截屏隐私限制 Hook 逻辑
 - [Fix] Android14 system interface black screen crash
-- [Fix] set v14.0.0(bf663cc,b89fb9e)
-- [Fix] Battery v1.2.1(9015c8b)
+- [Fix] set v14.0.0 (bf663cc,b89fb9e)
+- [Fix] Battery v1.2.1 (9015c8b)
 - [Fix] Permission Controller - Unlock Default Desktop Restriction v14.00.001
-- [Fix] desktop - remove update dot v14.0.6(1377ee0)
+- [Fix] desktop - remove update dot v14.0.6 (1377ee0)
 - [Change] Hide lock screen bottom button function C14
 - [Fix] Lock screen status bar carrier style C14
 - [Fix] SOS button at the bottom of the lock screen unlock page C14
@@ -1822,14 +1817,14 @@ in [TG Channel’s associated groups](https://t.me/LuckyTool)**
 
 ### 1.0.13
 
-- [适配] 时钟组件红一 v14.0.4(e6df2db)
+- [适配] 时钟组件红一 v14.0.4 (e6df2db)
 - [添加] 移除应用禁止卸载黑名单
 - [修复] 部分系统手势体感入口问题
 - [更改] 暗色模式按钮选项替换 Slider
-- [适配] 时钟组件红一 v14.0.2(18140a4)
+- [适配] 时钟组件红一 v14.0.2 (18140a4)
 - [更改] 移除 dm-verity 校验功能名称
 - [添加] 锁屏左下角按钮替换手电筒
-- [适配] 设置 FeatureUtils v13.0.5(9508ac6)
+- [适配] 设置 FeatureUtils v13.0.5 (9508ac6)
 - [添加] ADM 解锁 Pro v14.0.22
 - [适配] 游戏助手 Feature v8.16.1
 - [适配] (Test) 隐藏未使用信号标签 Gen2x2 C14
@@ -1868,20 +1863,20 @@ in [TG Channel’s associated groups](https://t.me/LuckyTool)**
 - [适配] (Test) 指纹图标 C14
 - [适配] (Test) 充电纹波 C14
 - [适配] (Test) 禁用 OTG 自动关闭 C14
-- [适配] 电池-高耗电通知 v1.2.1(20f0b99)
-- [适配] 电池-自启数量限制 v1.2.1(20f0b99)
-- [适配] 电池-移除高温限制 v1.2.1(20f0b99)
+- [适配] 电池-高耗电通知 v1.2.1 (20f0b99)
+- [适配] 电池-自启数量限制 v1.2.1 (20f0b99)
+- [适配] 电池-移除高温限制 v1.2.1 (20f0b99)
 - [更改] 强制分屏禁止在 ColorOS12 上使用
 - [优化] 允许不受信任的触摸 Hook
 - [修复] 恢复 OTA 更新校验失效
-- [Fix] Clock component Red One v14.0.4(e6df2db)
+- [Fix] Clock component Red One v14.0.4 (e6df2db)
 - [Add] Remove the blacklist of apps that are forbidden to uninstall
 - [Fix] Some system gestures and somatosensory entry problems
 - [Change] Dark mode button option to replace Slider
-- [Fix] Clock component Red One v14.0.2(18140a4)
+- [Fix] Clock component Red One v14.0.2 (18140a4)
 - [Change] Remove dm-verity function name
 - [Add] The button in the lower left corner of the lock screen replaces the flashlight
-- [Fix] Set FeatureUtils v13.0.5(9508ac6)
+- [Fix] Set FeatureUtils v13.0.5 (9508ac6)
 - [Add] ADM Unlock Pro v14.0.22
 - [Fix] Game Assistant Feature v8.16.1
 - [Fix] (Test) hide unused signal label Gen2x2 C14
@@ -1920,8 +1915,8 @@ in [TG Channel’s associated groups](https://t.me/LuckyTool)**
 - [Fix] (Test) Fingerprint icon C14
 - [Fix] (Test) Charging Ripple C14
 - [Fix] (Test) Disable OTG auto-off C14
-- [Fix] Battery - High battery consumption notification v1.2.1(20f0b99)
-- [Fix] Battery - auto-start quantity limit v1.2.1(20f0b99)
+- [Fix] Battery - High battery consumption notification v1.2.1 (20f0b99)
+- [Fix] Battery - auto-start quantity limit v1.2.1 (20f0b99)
 - [Fix] battery - remove high temperature limit v1.2.1 (20f0b99)
 - [Change] Forced split screen disabled on ColorOS12
 - [Optimize] Allow untrusted touch hook
@@ -1933,20 +1928,20 @@ in [TG Channel’s associated groups](https://t.me/LuckyTool)**
 - [优化] 游戏助手快捷跳转 v8.15.0
 - [移除] 游戏助手快捷跳转磁贴
 - [优化] 状态栏电池通知数据异常处理
-- [适配] 电池相关功能 Hook 异常 v1.2.1(3263c9c)
-- [适配] 桌面时钟组件 v14.0.0(14ae6e7)
+- [适配] 电池相关功能 Hook 异常 v1.2.1 (3263c9c)
+- [适配] 桌面时钟组件 v14.0.0 (14ae6e7)
 - [移除] 强制显示通信共享
 - [适配] 云服务移动网络限制 v7.0.2
 - [添加] 设置控制中心搜索按钮模式
-- [适配] 桌面时钟组件 v13.11.3(379d9ec)
-- [适配] 移除自启数量限制 v1.2.1(3263c9c)
-- [适配] 截屏-图片保存格式 v13.10.10(272321d)
-- [适配] 截屏-长截图页数限制 v13.10.10(272321d)
+- [适配] 桌面时钟组件 v13.11.3 (379d9ec)
+- [适配] 移除自启数量限制 v1.2.1 (3263c9c)
+- [适配] 截屏-图片保存格式 v13.10.10 (272321d)
+- [适配] 截屏-长截图页数限制 v13.10.10 (272321d)
 - [添加] 启用音量键控制手电筒手势 C13.1
-- [适配] 相机水印字数限制 v3.431.5(02aac8a)
-- [适配] 截屏 PNG 保存格式 v12.12.24(719aeb8)
+- [适配] 相机水印字数限制 v3.431.5 (02aac8a)
+- [适配] 截屏 PNG 保存格式 v12.12.24 (719aeb8)
 - [优化] 功能页面图标大小与圆角样式
-- [适配] 乐划锁屏移除图片保存水印 v40.9.18.1(c0d0a97)
+- [适配] 乐划锁屏移除图片保存水印 v40.9.18.1 (c0d0a97)
 - [更改] 全面屏手势相关功能迁移至手势体感分区
 - [添加] 强制启用息屏音乐支持
 - [添加] 强制所有应用支持分屏
@@ -1958,20 +1953,20 @@ in [TG Channel’s associated groups](https://t.me/LuckyTool)**
 - [Optimize] Game assistant quick jump v8.15.0
 - [Remove] Game assistant quick jump tile
 - [Optimize] Handling of battery notification data exceptions in the status bar
-- [Fix] Battery related function Hook exception v1.2.1(3263c9c)
-- [Fix] Desktop Clock Component v14.0.0(14ae6e7)
+- [Fix] Battery related function Hook exception v1.2.1 (3263c9c)
+- [Fix] Desktop Clock Component v14.0.0 (14ae6e7)
 - [Remove] Force display of communication shares
 - [Fix] Cloud service mobile network restriction v7.0.2
 - [Add] Set control center search button mode
-- [Fix] Desktop clock component v13.11.3(379d9ec)
-- [Fix] Remove the self-start quantity limit v1.2.1(3263c9c)
-- [Fix] Screenshot - image save format v13.10.10(272321d)
-- [Fix] Screenshot - long screenshot page limit v13.10.10(272321d)
+- [Fix] Desktop clock component v13.11.3 (379d9ec)
+- [Fix] Remove the self-start quantity limit v1.2.1 (3263c9c)
+- [Fix] Screenshot - image save format v13.10.10 (272321d)
+- [Fix] Screenshot - long screenshot page limit v13.10.10 (272321d)
 - [Add] Enable volume keys to control flashlight gesture C13.1
-- [Fix] Camera watermark character limit v3.431.5(02aac8a)
-- [Fix] Screenshot PNG save format v12.12.24(719aeb8)
+- [Fix] Camera watermark character limit v3.431.5 (02aac8a)
+- [Fix] Screenshot PNG save format v12.12.24 (719aeb8)
 - [Optimize] Icon size and rounded corner style of function page
-- [Fix] Leshua lock screen removes image save watermark v40.9.18.1(c0d0a97)
+- [Fix] Leshua lock screen removes image save watermark v40.9.18.1 (c0d0a97)
 - [Change] Full-screen gesture-related functions migrated to the gesture somatosensory partition
 - [Add] Force-enabled screen-off music support
 - [Add] Force all apps to support split screen
@@ -2664,7 +2659,7 @@ in [TG Channel’s associated groups](https://t.me/LuckyTool)**
 - [添加] 移除通知勿扰通知
 - [添加] AppCenter 崩溃分析组件
 - [添加] 状态栏网速单排显示
-- [优化] 状态栏时钟日期(d)格式
+- [优化] 状态栏时钟日期 (d)格式
 - [添加] 状态栏电量使用用户字体
 - [添加] 状态栏网速使用用户字体
 - [添加] 状态栏单行网速移除空格
@@ -2723,7 +2718,7 @@ in [TG Channel’s associated groups](https://t.me/LuckyTool)**
 
 - [更新] 捐赠名单
 - [添加] 时钟文字对齐方式
-- [修复] 时钟日期(D)格式示例
+- [修复] 时钟日期 (D)格式示例
 - [更改] 电池部分功能位置
 - [优化] 时钟字体大小与行高
 - [优化] 状态栏兼容模式逻辑
@@ -2834,7 +2829,7 @@ in [TG Channel’s associated groups](https://t.me/LuckyTool)**
 - [优化] 触控采样率移动至磁贴
 - [添加] 游戏助手磁贴入口
 - [添加] 自定义小窗支持列表
-- [更改] 应用分身数据键名(需重新勾选需要分身的应用后重启)
+- [更改] 应用分身数据键名 (需重新勾选需要分身的应用后重启)
 - [优化] 应用分身,小窗支持动态加载
 - [添加] LOG 日志内容过滤
 - [修复] 应用小窗和分身持续加载问题
@@ -3128,7 +3123,7 @@ in [TG Channel’s associated groups](https://t.me/LuckyTool)**
 - [更改] 部分功能文字描述
 - [修复] AOSP 安装器调用问题
 - [添加] 游戏助手赛事支持模式
-- [修复] 尝试修复 72 小时密码验证(Beta)
+- [修复] 尝试修复 72 小时密码验证 (Beta)
 - [Update] Core Crack Sync Upstream v4.2
 - [Fix] C13 application high power consumption notification
 - [Fix] C13 High Performance Notification
@@ -3171,7 +3166,7 @@ in [TG Channel’s associated groups](https://t.me/LuckyTool)**
 - [添加] 移除状态栏移动数据图标
 - [适配] 游戏助手 v7.14.0/v7.14.1
 - [添加] 极暗页面快捷入口
-- [修复] 尝试修复 72 小时密码验证(Beta)
+- [修复] 尝试修复 72 小时密码验证 (Beta)
 - [添加] 媒体音量阶数
 - [添加] 电池屏幕省电入口和电池健康入口
 - [添加] 浏览器简洁模式快捷入口
@@ -3210,8 +3205,8 @@ in [TG Channel’s associated groups](https://t.me/LuckyTool)**
 - [适配] 游戏助手 EVA 主题
 - [更新] 核心破解同步上游
 - [修复] EVA 主题功能异常
-- [更改] A11(C12)状态栏显秒逻辑
-- [添加] 移除 72 小时密码验证(Beta)
+- [更改] A11 (C12)状态栏显秒逻辑
+- [添加] 移除 72 小时密码验证 (Beta)
 - [添加] 移除最近任务列表清除按钮
 - [移除] 电源菜单相关功能
 - [适配] 移除高性能通知
@@ -3327,9 +3322,9 @@ in [TG Channel’s associated groups](https://t.me/LuckyTool)**
 - [更新] 捐赠名单列表
 - [适配] C13 自启数量限制
 - [适配] C12 应用包安装程序
-- [添加] 添加 LOG 页面(建设中,后面可能会删)
+- [添加] 添加 LOG 页面 (建设中,后面可能会删)
 - [修复] 开启远程 ADB 调试时可以修改端口的问题
-- [添加] 禁止最小宽度(DPI)重启恢复
+- [添加] 禁止最小宽度 (DPI)重启恢复
 - [修复] 获取 Commit 数据异常
 - [Update] List of Donation Lists
 - [Fix] C13 self-starting quantity limit
@@ -3410,7 +3405,7 @@ in [TG Channel’s associated groups](https://t.me/LuckyTool)**
 
 - [添加] 添加显示刷新率磁贴
 - [适配] 游戏助手移除 Root 检测 v7.10.0
-- [更改] 动态显示 XP 功能页面(可能会有卡顿)
+- [更改] 动态显示 XP 功能页面 (可能会有卡顿)
 - [修复] 部分功能不生效问题
 - [适配] 自启数量限制
 - [修复] 获取部分 APP 信息导致的显示异常
@@ -3453,14 +3448,14 @@ in [TG Channel’s associated groups](https://t.me/LuckyTool)**
 
 - [适配] C13 移除自启数量限制
 - [适配] C13 相机移除水印字数限制
-- [移除] 锁屏组件字体颜色(Bad)
-- [移除] 禁用 Apk 签名校验(Bad)
+- [移除] 锁屏组件字体颜色 (Bad)
+- [移除] 禁用 Apk 签名校验 (Bad)
 - [适配] C13 核心破解降级功能
 - [添加] 移除 AlphaBackupPro 许可证检测
 - [修复] 修复因键值缓存导致的部分功能不生效问题
 - [添加] 长按模块快捷方式
 - [修复] 整理优化状态栏时钟相关功能
-- [添加] 移除下拉状态栏日期逗号(ZH)
+- [添加] 移除下拉状态栏日期逗号 (ZH)
 - [适配] C13 状态栏磁贴展开行数
 - [添加] 状态栏磁贴快捷方式
 - [修复] 处理主页闪存信息异常空格
@@ -3517,7 +3512,7 @@ in [TG Channel’s associated groups](https://t.me/LuckyTool)**
 ### v1.7
 
 - [添加] 移除 USB 安装确认
-- [添加] 禁用 APK 签名校验(C12+)
+- [添加] 禁用 APK 签名校验 (C12+)
 - [添加] 显示充电纹波
 - [修复] 快捷入口崩溃
 - [适配] C13 网速刷新率
@@ -3567,7 +3562,7 @@ in [TG Channel’s associated groups](https://t.me/LuckyTool)**
 - [添加] 移除系统截屏延迟
 - [添加] 隐藏模块桌面图标
 - [添加] 设置桌面布局行列数
-- [修复] 概率性崩溃(大概)
+- [修复] 概率性崩溃 (大概)
 - [Remove] Global rounded corners feature
 - [Fix] Game Assistant v7.8.0
 - [Add] Other pages quick access
