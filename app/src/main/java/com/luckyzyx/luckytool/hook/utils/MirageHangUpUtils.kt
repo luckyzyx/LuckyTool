@@ -40,6 +40,7 @@ object MirageHangUpState {
     private val hangUpTaskId = AtomicInteger(-1)
     private val mirageDisplays = ConcurrentHashMap<Int, Int>()
     private val minimizeAt = ConcurrentHashMap<Int, Long>()
+    private val releasedDisplays = ConcurrentHashMap.newKeySet<Int>()
 
     @Volatile
     private var keepFloatUntil = 0L
@@ -83,6 +84,14 @@ object MirageHangUpState {
     /** 只取走 displayId 映射，0 表示无需释放 */
     fun takeDisplay(taskId: Int): Int =
         if (taskId < 0) 0 else mirageDisplays.remove(taskId) ?: 0
+
+    /** 记下宿主已经释放过的虚拟屏，恢复路径据此跳过重复释放 */
+    fun markDisplayReleased(displayId: Int) {
+        if (displayId > 0) releasedDisplays.add(displayId)
+    }
+
+    /** 宿主是否已经释放过这个虚拟屏 */
+    fun wasDisplayReleased(displayId: Int): Boolean = displayId > 0 && releasedDisplays.contains(displayId)
 
     /** 宿主释放虚拟屏后清掉挂在它上面的任务状态，返回清掉的任务数 */
     fun onDisplayReleased(displayId: Int): Int {

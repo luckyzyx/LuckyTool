@@ -235,6 +235,7 @@ object HangUpKeepAlive : YukiBaseHooker() {
     private const val MIRAGE_START_DELAY_MS = 400L
     //搬到虚拟屏的任务仍保持暂停态，稍后再补一次顶层活动恢复
     private const val MIRAGE_RESUME_DELAY_MS = 300L
+    private const val RESTORE_RELEASE_DELAY_MS = 1200L
 
     private val mainHandler by lazy { Handler(Looper.getMainLooper()) }
 
@@ -261,6 +262,7 @@ object HangUpKeepAlive : YukiBaseHooker() {
                 val result = proceed()
                 runCatching {
                     val displayId = firstArg() as? Int ?: return@runCatching
+                    MirageHangUpState.markDisplayReleased(displayId)
                     val cleared = MirageHangUpState.onDisplayReleased(displayId)
                     if (cleared > 0) YLog.info("$TAG -> display $displayId released, cleared $cleared task(s)")
                 }.onFailure { YLog.error("$TAG -> clear released display failed", it, TAG) }
@@ -293,7 +295,7 @@ object HangUpKeepAlive : YukiBaseHooker() {
         val taskId = MirageHangUpState.taskIdFromArgs(args)
         if (taskId < 0 || !MirageHangUpState.isHangUp(taskId)) return
         YLog.info("$TAG -> restore task $taskId from primary screen")
-        MirageHangUpUtils.releaseMirage(hostClassLoader, MirageHangUpState.clearHangUp(taskId))
+        releaseAfterRestore(MirageHangUpState.clearHangUp(taskId))
     }
 
     //挂起入口：贴边最小化时宿主调用 startMinimize
@@ -392,15 +394,17 @@ object HangUpKeepAlive : YukiBaseHooker() {
         }
     }
 
-    //从悬浮球恢复任务时清掉挂起标记并释放虚拟屏
+    //从贴边视图/悬浮球恢复任务时清掉挂起标记，虚拟屏等宿主把任务搬回主屏之后再放
     private fun hookReleaseOnRestore() {
         FLOAT_HANDLE_CONTROLLER.toClass().resolve().apply {
             firstMethodOrNull { name = "startActivityByFloatInfo" }?.intercept {
-                val displayId = MirageHangUpState.clearHangUp(
-                    MirageHangUpState.taskIdFromArgs(args)
-                )
-                MirageHangUpUtils.releaseMirage(hostClassLoader, displayId)
-                proceed()
+                val taskId = MirageHangUpState.taskIdFromArgs(args)
+                val displayId = MirageHangUpState.clearHangUp(taskId)
+                if (taskId >= 0) YLog.info("$TAG -> restore from float info taskId=$taskId displayId=$displayId")
+                //先放行宿主的恢复流程：任务还挂在虚拟屏上时释放它，会把任务连同小窗一起带走
+                val result = proceed()
+                releaseAfterRestore(displayId)
+                result
             }
             firstMethodOrNull { name = "removeFloatHandleInner" }?.intercept {
                 //保留窗口内先压住删除，窗口过了同一入口负责释放虚拟屏
@@ -409,13 +413,25 @@ object HangUpKeepAlive : YukiBaseHooker() {
                     return@intercept null
                 }
                 val result = proceed()
-                MirageHangUpUtils.releaseMirage(
-                    hostClassLoader,
-                    MirageHangUpState.takeDisplay(MirageHangUpState.taskIdFromArgs(args))
-                )
+                val displayId = MirageHangUpState.takeDisplay(MirageHangUpState.taskIdFromArgs(args))
+                if (displayId > 0) YLog.info("$TAG -> float handle inner removed, take displayId=$displayId")
+                releaseAfterRestore(displayId)
                 result
             }
         }
+    }
+
+    //恢复流程可能由宿主自己释放虚拟屏，等它收尾后确认没人释放才由我们兜底，避免重复释放
+    private fun releaseAfterRestore(displayId: Int) {
+        if (displayId <= 0) return
+        mainHandler.postDelayed({
+            if (MirageHangUpState.wasDisplayReleased(displayId)) {
+                YLog.info("$TAG -> display $displayId released by host, skip")
+                return@postDelayed
+            }
+            YLog.info("$TAG -> release leftover mirage displayId=$displayId")
+            MirageHangUpUtils.releaseMirage(hostClassLoader, displayId)
+        }, RESTORE_RELEASE_DELAY_MS)
     }
 
     private fun onTaskMinimized(args: List<Any?>) {
