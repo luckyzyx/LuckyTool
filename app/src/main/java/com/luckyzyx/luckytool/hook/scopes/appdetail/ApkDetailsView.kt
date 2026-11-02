@@ -9,6 +9,7 @@ import android.graphics.Color
 import android.graphics.Typeface
 import android.graphics.drawable.Drawable
 import android.graphics.drawable.GradientDrawable
+import android.text.TextUtils
 import android.text.format.Formatter
 import android.util.TypedValue
 import android.view.Gravity
@@ -125,12 +126,13 @@ internal class ApkDetailsView(context: Context, private val moduleResources: Res
             }, LayoutParams(dp(72), dp(72)))
             addView(LinearLayout(context).apply {
                 orientation = VERTICAL
-                addView(text(name, 22f, primary, true))
+                addView(text(name, 22f, primary, true, TextUtils.TruncateAt.END))
                 addView(
                     text(
                         listOf(version, size).filter { it.isNotBlank() }.joinToString(" · "),
                         13f,
-                        secondary
+                        secondary,
+                        truncateAt = TextUtils.TruncateAt.MIDDLE
                     ), LayoutParams(
                         LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT
                     ).apply { topMargin = dp(6) })
@@ -160,7 +162,7 @@ internal class ApkDetailsView(context: Context, private val moduleResources: Res
             orientation = VERTICAL
             addView(text(label, 13f, secondary))
             addView(
-                text(version, 20f, primary, true), LayoutParams(
+                text(version, 20f, primary, true, TextUtils.TruncateAt.MIDDLE), LayoutParams(
                     LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT
                 ).apply { topMargin = dp(8) })
             code?.let {
@@ -184,20 +186,31 @@ internal class ApkDetailsView(context: Context, private val moduleResources: Res
             LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT)
         )
         addView(
-            text(value, 15f, primary).apply { gravity = Gravity.END },
+            text(value, 15f, primary, truncateAt = TextUtils.TruncateAt.MIDDLE)
+                .apply { gravity = Gravity.END },
             LayoutParams(0, LayoutParams.WRAP_CONTENT, 1f).apply { marginStart = dp(12) }
         )
     }
 
-    private fun text(value: String, size: Float, color: Int, medium: Boolean = false) =
-        TextView(context).apply {
-            text = value
-            textSize = size
-            textColor = color
-            includeFontPadding = false
-            textDirection = TEXT_DIRECTION_FIRST_STRONG
-            if (medium) typeface = Typeface.create("sans-serif-medium", Typeface.NORMAL)
+    // 单行加省略号：包名、版本号这类长度不受控的文本折行会把整张卡片撑高，挤掉宿主底部的按钮
+    private fun text(
+        value: String,
+        size: Float,
+        color: Int,
+        medium: Boolean = false,
+        truncateAt: TextUtils.TruncateAt? = null
+    ) = TextView(context).apply {
+        text = value
+        textSize = size
+        textColor = color
+        includeFontPadding = false
+        textDirection = TEXT_DIRECTION_FIRST_STRONG
+        if (medium) typeface = Typeface.create("sans-serif-medium", Typeface.NORMAL)
+        truncateAt?.let {
+            setSingleLine(true)
+            ellipsize = it
         }
+    }
 
     @SuppressLint("DiscouragedApi")
     private fun themeColor(name: String, fallback: Int): Int {
