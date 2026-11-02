@@ -39,7 +39,6 @@ in [TG Channel’s associated groups](https://t.me/LuckyTool)**
 - 自定义 OTA 卡片背景行 / 视频行缩略图预览，长按清除
 - 自定义旋转屏幕按钮大小 (@RealmeOS)
 - 流体云卡片重定向（可指定目标浏览器）
-- 流体云卡片应用替换（含已卸载应用的商店引导卡）
 
 #### 优化
 

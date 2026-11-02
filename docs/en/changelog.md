@@ -40,7 +40,6 @@ Entries for versions before `1.3.5_beta` are currently only available in the
 - OTA card background/video row thumbnail preview, long press to clear
 - Custom rotate-screen button size (@RealmeOS)
 - Fluid cloud card redirect (with a configurable target browser)
-- Fluid cloud card app substitution (including store guidance cards of uninstalled apps)
 
 #### Optimized
 
