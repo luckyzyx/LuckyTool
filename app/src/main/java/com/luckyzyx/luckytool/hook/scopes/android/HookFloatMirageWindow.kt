@@ -231,6 +231,13 @@ object HangUpKeepAlive : YukiBaseHooker() {
     private const val SUPER_MINI_TO_MINI = 52
     private const val ROOT_TASK_FIELD = "mRootTask"
 
+    //宿主先做完贴边/最小化转场才轮到我们搬运任务，搬早了转场结束会把刚搬走的任务重新收回主屏
+    private const val MIRAGE_START_DELAY_MS = 400L
+    //搬到虚拟屏的任务仍保持暂停态，稍后再补一次顶层活动恢复
+    private const val MIRAGE_RESUME_DELAY_MS = 300L
+
+    private val mainHandler by lazy { Handler(Looper.getMainLooper()) }
+
     override fun onHook() {
         runCatching { hookMinimize() }
             .onFailure { YLog.error("$TAG -> hook minimize failed", it, TAG) }
@@ -447,11 +454,39 @@ object HangUpKeepAlive : YukiBaseHooker() {
         MirageHangUpState.markHangUp(taskId)
         MirageHangUpState.armKeepFloat()
         val lively = MirageHangUpUtils.keepTaskLively(task)
-        val displayId = MirageHangUpUtils.startMirageWindow(baseIntent)
-        MirageHangUpState.attachDisplay(taskId, displayId)
-        YLog.info(
-            "$TAG -> hang up taskId=$taskId userId=$userId displayId=$displayId lively=$lively ($source)"
-        )
+        mainHandler.postDelayed({
+            startMirage(taskId, task, baseIntent, userId, lively, source)
+        }, MIRAGE_START_DELAY_MS)
+    }
+
+    //贴边转场结束后再把任务搬到虚拟屏，转场收尾不会把任务重新收回主屏
+    private fun startMirage(
+        taskId: Int,
+        task: Any?,
+        baseIntent: Intent,
+        userId: Int,
+        lively: Boolean,
+        source: String,
+    ) {
+        runCatching {
+            val displayId = MirageHangUpUtils.startMirageWindow(baseIntent)
+            MirageHangUpState.attachDisplay(taskId, displayId)
+            YLog.info(
+                "$TAG -> hang up taskId=$taskId userId=$userId displayId=$displayId lively=$lively ($source)"
+            )
+            if (displayId <= 0 || task == null) return@runCatching
+            mainHandler.postDelayed({ resumeTask(taskId, task) }, MIRAGE_RESUME_DELAY_MS)
+        }.onFailure { YLog.error("$TAG -> start mirage for task $taskId failed", it, TAG) }
+    }
+
+    //搬到虚拟屏的任务仍是暂停态，补一次顶层活动恢复应用才真正继续运行
+    private fun resumeTask(taskId: Int, task: Any) {
+        runCatching {
+            val resumed = task.asResolver()
+                .firstMethodOrNull { name = "resumeTopActivityUncheckedLocked";emptyParameters() }
+                ?.invoke<Boolean>() ?: false
+            YLog.info("$TAG -> resume taskId=$taskId result=$resumed")
+        }.onFailure { YLog.error("$TAG -> resume task $taskId failed", it, TAG) }
     }
 
     //system_server 里没有现成 Context，经 AppGlobals 取系统 Application 查启动 Intent

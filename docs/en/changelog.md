@@ -74,6 +74,7 @@ Entries for versions before `1.3.5_beta` are currently only available in the
 - Fixed "Use user typeface" doing nothing under the default network speed layout
 - Fixed donate data loading (now uses the jsDelivr mirror)
 - Fixed stale hang-up state in docked floating window keep-alive blocking later hang-ups of the same task
+- Fixed docked floating window keep-alive moving the task before the dock transition finished, which pulled it back and paused the app
 - Fixed three broken com.oplus.games hooks V10.43
 
 #### Adapted

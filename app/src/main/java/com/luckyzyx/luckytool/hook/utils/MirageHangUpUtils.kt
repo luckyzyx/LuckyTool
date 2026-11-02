@@ -230,7 +230,7 @@ object MirageHangUpUtils {
         0
     }
 
-    /** 给任务打保活标记：getWrapper -> getExtImpl -> 逐个试标记，返回是否有任一标记成功 */
+    /** 给任务打保活标记：getWrapper -> getExtImpl -> 逐个试标记（按参数形态适配），返回是否有任一标记成功 */
     fun keepTaskLively(task: Any?, enabled: Boolean = true): Boolean {
         if (task == null) return false
         val ext = runCatching {
@@ -244,20 +244,59 @@ object MirageHangUpUtils {
             YLog.error("${MirageHangUpState.TAG} -> get task ext failed", it, MirageHangUpState.TAG)
             return false
         }
-        var applied = false
+        val applied = ArrayList<String>(LIVELY_FLAGS.size)
         LIVELY_FLAGS.forEach { methodName ->
-            val method = runCatching {
-                ext.asResolver().firstMethodOrNull {
-                    name = methodName;parameterCount = 1
-                }
-            }.getOrNull() ?: return@forEach
-            runCatching { method.invoke<Any?>(enabled) }
-                .onSuccess { applied = true }
-                .onFailure {
-                    YLog.error("${MirageHangUpState.TAG} -> $methodName failed", it, MirageHangUpState.TAG)
-                }
+            if (invokeLivelyFlag(ext, methodName, task, enabled)) applied += methodName
         }
-        return applied
+        if (applied.isNotEmpty()) {
+            YLog.info("${MirageHangUpState.TAG} -> lively " + applied.joinToString("/"))
+        }
+        return applied.isNotEmpty()
+    }
+
+    //同名标记在各单位置上的参数形态不同：boolean 开关、int 标记位、或直接把 Task 传进去，
+    //逐个形态试一次，命中的形态才真正调用
+    private fun invokeLivelyFlag(ext: Any, methodName: String, task: Any, enabled: Boolean): Boolean {
+        val booleanMethod = runCatching {
+            ext.asResolver().firstMethodOrNull {
+                name = methodName;parameterCount = 1
+                parameters { types ->
+                    types[0] == Boolean::class.javaPrimitiveType || types[0] == java.lang.Boolean::class.java
+                }
+            }
+        }.getOrNull()
+        if (booleanMethod != null) {
+            return runCatching { booleanMethod.invoke<Any?>(enabled) }
+                .onFailure {
+                    YLog.error("${MirageHangUpState.TAG} -> $methodName(boolean) failed", it, MirageHangUpState.TAG)
+                }.isSuccess
+        }
+        val intMethod = runCatching {
+            ext.asResolver().firstMethodOrNull {
+                name = methodName;parameterCount = 1
+                parameters { types -> types[0] == Int::class.javaPrimitiveType || types[0] == java.lang.Integer::class.java }
+            }
+        }.getOrNull()
+        if (intMethod != null) {
+            val flag = if (enabled) 1 else 0
+            return runCatching { intMethod.invoke<Any?>(flag) }
+                .onFailure {
+                    YLog.error("${MirageHangUpState.TAG} -> $methodName(int) failed", it, MirageHangUpState.TAG)
+                }.isSuccess
+        }
+        val taskMethod = runCatching {
+            ext.asResolver().firstMethodOrNull {
+                name = methodName;parameterCount = 1
+                parameters { types -> types[0].isInstance(task) }
+            }
+        }.getOrNull()
+        if (taskMethod != null) {
+            return runCatching { taskMethod.invoke<Any?>(task) }
+                .onFailure {
+                    YLog.error("${MirageHangUpState.TAG} -> $methodName(task) failed", it, MirageHangUpState.TAG)
+                }.isSuccess
+        }
+        return false
     }
 
     /** 释放后台串流的虚拟屏 */
