@@ -18,10 +18,10 @@ import com.highcapable.yukihookapi.extension.kavaref.hook
 import com.highcapable.yukihookapi.extension.kavaref.toClass
 import com.highcapable.yukihookapi.hook.entity.YukiBaseHooker
 import com.highcapable.yukihookapi.extension.kavaref.intercept
-import com.highcapable.yukihookapi.hook.log.YLog
 import com.luckyzyx.luckytool.hook.utils.MirageHangUpState
 import com.luckyzyx.luckytool.hook.utils.MirageHangUpUtils
 import com.luckyzyx.luckytool.hook.utils.OplusMirageDisplayManagerUtils
+import com.luckyzyx.luckytool.utils.LogUtils
 import com.luckyzyx.luckytool.utils.ModulePrefs
 import com.luckyzyx.luckytool.utils.getOSVersionCode
 import com.luckyzyx.luckytool.utils.startMirageWindow
@@ -241,17 +241,17 @@ object HangUpKeepAlive : YukiBaseHooker() {
 
     override fun onHook() {
         runCatching { hookMinimize() }
-            .onFailure { YLog.error("$TAG -> hook minimize failed", it, TAG) }
+            .onFailure { LogUtils.e(TAG, "onHook", "hook minimize failed: " + it) }
         runCatching { hookMoveTaskToBack() }
-            .onFailure { YLog.error("$TAG -> hook moveTaskToBack failed", it, TAG) }
+            .onFailure { LogUtils.e(TAG, "onHook", "hook moveTaskToBack failed: " + it) }
         runCatching { hookKeepFloatHandle() }
-            .onFailure { YLog.error("$TAG -> hook keep float handle failed", it, TAG) }
+            .onFailure { LogUtils.e(TAG, "onHook", "hook keep float handle failed: " + it) }
         runCatching { hookReleaseOnRestore() }
-            .onFailure { YLog.error("$TAG -> hook release on restore failed", it, TAG) }
+            .onFailure { LogUtils.e(TAG, "onHook", "hook release on restore failed: " + it) }
         runCatching { hookZoomState() }
-            .onFailure { YLog.error("$TAG -> hook zoom state failed", it, TAG) }
+            .onFailure { LogUtils.e(TAG, "onHook", "hook zoom state failed: " + it) }
         runCatching { hookSelfHeal() }
-            .onFailure { YLog.error("$TAG -> hook self heal failed", it, TAG) }
+            .onFailure { LogUtils.e(TAG, "onHook", "hook self heal failed: " + it) }
     }
 
     //自愈：宿主释放虚拟屏或把任务搬回主屏后挂起态已经结束，清掉残留状态，
@@ -264,19 +264,19 @@ object HangUpKeepAlive : YukiBaseHooker() {
                     val displayId = firstArg() as? Int ?: return@runCatching
                     MirageHangUpState.markDisplayReleased(displayId)
                     val cleared = MirageHangUpState.onDisplayReleased(displayId)
-                    if (cleared > 0) YLog.info("$TAG -> display $displayId released, cleared $cleared task(s)")
-                }.onFailure { YLog.error("$TAG -> clear released display failed", it, TAG) }
+                    if (cleared > 0) LogUtils.d(TAG, "hookSelfHeal", "display $displayId released, cleared $cleared task(s)")
+                }.onFailure { LogUtils.e(TAG, "hookSelfHeal", "clear released display failed: " + it) }
                 result
             }
-            YLog.info("$TAG -> hooked display release")
+            LogUtils.d(TAG, "hookSelfHeal", "hooked display release")
         }
         MIRAGE_WINDOW_MANAGER_SERVICE.toClass().resolve().apply {
             firstMethodOrNull { name = "moveStacksToDefaultDisplay" }?.intercept {
                 val result = proceed()
                 runCatching {
                     val cleared = MirageHangUpState.onStacksMovedBack()
-                    if (cleared > 0) YLog.info("$TAG -> stacks moved back, cleared $cleared task(s)")
-                }.onFailure { YLog.error("$TAG -> clear moved back stacks failed", it, TAG) }
+                    if (cleared > 0) LogUtils.d(TAG, "hookSelfHeal", "stacks moved back, cleared $cleared task(s)")
+                }.onFailure { LogUtils.e(TAG, "hookSelfHeal", "clear moved back stacks failed: " + it) }
                 result
             }
         }
@@ -284,7 +284,7 @@ object HangUpKeepAlive : YukiBaseHooker() {
             firstMethodOrNull { name = "onStartFromPrimaryScreenRecents" }?.intercept {
                 val result = proceed()
                 runCatching { onRestoreFromPrimary(args) }
-                    .onFailure { YLog.error("$TAG -> handle restore from primary failed", it, TAG) }
+                    .onFailure { LogUtils.e(TAG, "hookSelfHeal", "handle restore from primary failed: " + it) }
                 result
             }
         }
@@ -294,7 +294,7 @@ object HangUpKeepAlive : YukiBaseHooker() {
     private fun onRestoreFromPrimary(args: List<Any?>) {
         val taskId = MirageHangUpState.taskIdFromArgs(args)
         if (taskId < 0 || !MirageHangUpState.isHangUp(taskId)) return
-        YLog.info("$TAG -> restore task $taskId from primary screen")
+        LogUtils.d(TAG, "onRestoreFromPrimary", "restore task $taskId from primary screen")
         releaseAfterRestore(MirageHangUpState.clearHangUp(taskId))
     }
 
@@ -305,17 +305,17 @@ object HangUpKeepAlive : YukiBaseHooker() {
             val method = firstMethodOrNull { name = "startMinimize" }
                 ?: firstMethodOrNull { name = "onFloatHandleEnter" }
             if (method == null) {
-                YLog.warn("$TAG -> startMinimize not found")
+                LogUtils.w(TAG, "hookMinimize", "startMinimize not found")
                 return
             }
             method.intercept {
                 //先放行原生挂起流程，成功后再把它接到后台串流上
                 val result = proceed()
                 runCatching { onTaskMinimized(args) }
-                    .onFailure { YLog.error("$TAG -> handle minimize failed", it, TAG) }
+                    .onFailure { LogUtils.e(TAG, "hookMinimize", "handle minimize failed: " + it) }
                 result
             }
-            YLog.info("$TAG -> hooked startMinimize")
+            LogUtils.d(TAG, "hookMinimize", "hooked startMinimize")
         }
     }
 
@@ -330,7 +330,7 @@ object HangUpKeepAlive : YukiBaseHooker() {
                 firstMethodOrNull { name = "enterZoom";parameterCount = 5 },
             )
             if (methods.isEmpty()) {
-                YLog.warn("$TAG -> zoom enter not found")
+                LogUtils.w(TAG, "hookZoomState", "zoom enter not found")
                 return
             }
             methods.forEach { method ->
@@ -338,11 +338,11 @@ object HangUpKeepAlive : YukiBaseHooker() {
                     //先放行原生缩放流程，状态落定后任务才挂在实例上
                     val result = proceed()
                     runCatching { onZoomStateEntered(instance, args) }
-                        .onFailure { YLog.error("$TAG -> handle zoom enter failed", it, TAG) }
+                        .onFailure { LogUtils.e(TAG, "hookZoomState", "handle zoom enter failed: " + it) }
                     result
                 }
             }
-            YLog.info("$TAG -> hooked zoom state " + methods.size)
+            LogUtils.d(TAG, "hookZoomState", "hooked zoom state " + methods.size)
         }
     }
 
@@ -354,10 +354,10 @@ object HangUpKeepAlive : YukiBaseHooker() {
             .firstFieldOrNull { name = ROOT_TASK_FIELD;superclass() }
             ?.get<Any?>()
         if (!MirageHangUpState.isTask(task)) {
-            YLog.info("$TAG -> zoom state=$state without task, skip")
+            LogUtils.d(TAG, "onZoomStateEntered", "zoom state=$state without task, skip")
             return
         }
-        YLog.info("$TAG -> zoom state=$state taskId=" + MirageHangUpState.taskIdOf(task))
+        LogUtils.d(TAG, "onZoomStateEntered", "zoom state=$state taskId=" + MirageHangUpState.taskIdOf(task))
         hangUpTask(task, null, args, "zoom state=$state")
     }
 
@@ -368,9 +368,9 @@ object HangUpKeepAlive : YukiBaseHooker() {
                 if (!MirageHangUpState.isHangUp(MirageHangUpState.taskIdOf(firstArg()))) {
                     return@intercept proceed()
                 }
-                YLog.info(
-                    "$TAG -> block moveTaskToBack taskId=" +
-                            MirageHangUpState.currentTaskId()
+                LogUtils.d(
+                    TAG, "hookMoveTaskToBack",
+                    "block moveTaskToBack taskId=" + MirageHangUpState.currentTaskId()
                 )
                 //置空结果让这次退后台不生效（原方法无返回值）
                 null
@@ -383,7 +383,7 @@ object HangUpKeepAlive : YukiBaseHooker() {
         FLOAT_HANDLE_CONTROLLER.toClass().resolve().apply {
             firstMethodOrNull { name = "removeFloatHandle" }?.intercept {
                 if (!MirageHangUpState.shouldKeepFloat(args)) return@intercept proceed()
-                YLog.info("$TAG -> keep float handle")
+                LogUtils.d(TAG, "hookKeepFloatHandle", "keep float handle")
                 null
             }
             firstMethodOrNull { name = "isNeedRemoveFloat" }?.intercept {
@@ -400,7 +400,7 @@ object HangUpKeepAlive : YukiBaseHooker() {
             firstMethodOrNull { name = "startActivityByFloatInfo" }?.intercept {
                 val taskId = MirageHangUpState.taskIdFromArgs(args)
                 val displayId = MirageHangUpState.clearHangUp(taskId)
-                if (taskId >= 0) YLog.info("$TAG -> restore from float info taskId=$taskId displayId=$displayId")
+                if (taskId >= 0) LogUtils.d(TAG, "hookReleaseOnRestore", "restore from float info taskId=$taskId displayId=$displayId")
                 //先放行宿主的恢复流程：任务还挂在虚拟屏上时释放它，会把任务连同小窗一起带走
                 val result = proceed()
                 releaseAfterRestore(displayId)
@@ -409,12 +409,12 @@ object HangUpKeepAlive : YukiBaseHooker() {
             firstMethodOrNull { name = "removeFloatHandleInner" }?.intercept {
                 //保留窗口内先压住删除，窗口过了同一入口负责释放虚拟屏
                 if (MirageHangUpState.shouldKeepFloat(args)) {
-                    YLog.info("$TAG -> keep float handle inner")
+                    LogUtils.d(TAG, "hookReleaseOnRestore", "keep float handle inner")
                     return@intercept null
                 }
                 val result = proceed()
                 val displayId = MirageHangUpState.takeDisplay(MirageHangUpState.taskIdFromArgs(args))
-                if (displayId > 0) YLog.info("$TAG -> float handle inner removed, take displayId=$displayId")
+                if (displayId > 0) LogUtils.d(TAG, "hookReleaseOnRestore", "float handle inner removed, take displayId=$displayId")
                 releaseAfterRestore(displayId)
                 result
             }
@@ -426,10 +426,10 @@ object HangUpKeepAlive : YukiBaseHooker() {
         if (displayId <= 0) return
         mainHandler.postDelayed({
             if (MirageHangUpState.wasDisplayReleased(displayId)) {
-                YLog.info("$TAG -> display $displayId released by host, skip")
+                LogUtils.d(TAG, "releaseAfterRestore", "display $displayId released by host, skip")
                 return@postDelayed
             }
-            YLog.info("$TAG -> release leftover mirage displayId=$displayId")
+            LogUtils.d(TAG, "releaseAfterRestore", "release leftover mirage displayId=$displayId")
             MirageHangUpUtils.releaseMirage(hostClassLoader, displayId)
         }, RESTORE_RELEASE_DELAY_MS)
     }
@@ -448,11 +448,11 @@ object HangUpKeepAlive : YukiBaseHooker() {
             MirageHangUpState.taskIdOf(info)
         }
         if (taskId < 0) {
-            YLog.error("$TAG -> task id not found, skip hang up ($source)")
+            LogUtils.e(TAG, "hangUpTask", "task id not found, skip hang up ($source)")
             return
         }
         if (MirageHangUpState.displayOf(taskId) > 0) {
-            YLog.info("$TAG -> task $taskId already hanging up")
+            LogUtils.d(TAG, "hangUpTask", "task $taskId already hanging up")
             return
         }
         if (!MirageHangUpState.shouldHandleMinimize(taskId)) return
@@ -462,7 +462,7 @@ object HangUpKeepAlive : YukiBaseHooker() {
             launchIntentOf(MirageHangUpState.pkgNameOf(info))
         }
         if (baseIntent == null) {
-            YLog.error("$TAG -> base intent null, skip hang up taskId=$taskId")
+            LogUtils.e(TAG, "hangUpTask", "base intent null, skip hang up taskId=$taskId")
             return
         }
         val userId = MirageHangUpState.userIdOf(task ?: info, args)
@@ -487,12 +487,13 @@ object HangUpKeepAlive : YukiBaseHooker() {
         runCatching {
             val displayId = MirageHangUpUtils.startMirageWindow(baseIntent)
             MirageHangUpState.attachDisplay(taskId, displayId)
-            YLog.info(
-                "$TAG -> hang up taskId=$taskId userId=$userId displayId=$displayId lively=$lively ($source)"
+            LogUtils.d(
+                TAG, "startMirage",
+                "hang up taskId=$taskId userId=$userId displayId=$displayId lively=$lively ($source)"
             )
             if (displayId <= 0 || task == null) return@runCatching
             mainHandler.postDelayed({ resumeTask(taskId, task) }, MIRAGE_RESUME_DELAY_MS)
-        }.onFailure { YLog.error("$TAG -> start mirage for task $taskId failed", it, TAG) }
+        }.onFailure { LogUtils.e(TAG, "startMirage", "start mirage for task $taskId failed: " + it) }
     }
 
     //搬到虚拟屏的任务仍是暂停态，补一次顶层活动恢复应用才真正继续运行
@@ -501,8 +502,8 @@ object HangUpKeepAlive : YukiBaseHooker() {
             val resumed = task.asResolver()
                 .firstMethodOrNull { name = "resumeTopActivityUncheckedLocked";emptyParameters() }
                 ?.invoke<Boolean>() ?: false
-            YLog.info("$TAG -> resume taskId=$taskId result=$resumed")
-        }.onFailure { YLog.error("$TAG -> resume task $taskId failed", it, TAG) }
+            LogUtils.d(TAG, "resumeTask", "resume taskId=$taskId result=$resumed")
+        }.onFailure { LogUtils.e(TAG, "resumeTask", "resume task $taskId failed: " + it) }
     }
 
     //system_server 里没有现成 Context，经 AppGlobals 取系统 Application 查启动 Intent
@@ -514,7 +515,7 @@ object HangUpKeepAlive : YukiBaseHooker() {
                 ?.invoke<Context>() ?: return@runCatching null
             application.packageManager.getLaunchIntentForPackage(pkgName)
         }.getOrElse {
-            YLog.error("$TAG -> resolve launch intent failed for $pkgName", it, TAG)
+            LogUtils.e(TAG, "launchIntentOf", "resolve launch intent failed for $pkgName: " + it)
             null
         }
     }

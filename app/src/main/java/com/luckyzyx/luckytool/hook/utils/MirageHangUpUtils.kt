@@ -3,7 +3,7 @@ package com.luckyzyx.luckytool.hook.utils
 import android.content.Intent
 import android.os.SystemClock
 import com.highcapable.kavaref.KavaRef.Companion.asResolver
-import com.highcapable.yukihookapi.hook.log.YLog
+import com.luckyzyx.luckytool.utils.LogUtils
 import com.oplus.miragewindow.OplusMirageOptions
 import com.oplus.miragewindow.OplusMirageWindowManager
 import org.lsposed.lsparanoid.Obfuscate
@@ -235,7 +235,7 @@ object MirageHangUpUtils {
         val options = OplusMirageOptions.makeBackgroundStreamModeOptions().toBundle()
         OplusMirageWindowManager.getInstance().startMirageWindowMode(intent, options)
     }.getOrElse {
-        YLog.error("${MirageHangUpState.TAG} -> start mirage window failed", it, MirageHangUpState.TAG)
+        LogUtils.e(MirageHangUpState.TAG, "startMirageWindow", "start mirage window failed: " + it)
         0
     }
 
@@ -250,7 +250,7 @@ object MirageHangUpUtils {
                 .firstMethodOrNull { name = "getExtImpl";emptyParameters() }
                 ?.invoke<Any?>() ?: wrapper
         }.getOrElse {
-            YLog.error("${MirageHangUpState.TAG} -> get task ext failed", it, MirageHangUpState.TAG)
+            LogUtils.e(MirageHangUpState.TAG, "keepTaskLively", "get task ext failed: " + it)
             return false
         }
         val applied = ArrayList<String>(LIVELY_FLAGS.size)
@@ -258,7 +258,7 @@ object MirageHangUpUtils {
             if (invokeLivelyFlag(ext, methodName, task, enabled)) applied += methodName
         }
         if (applied.isNotEmpty()) {
-            YLog.info("${MirageHangUpState.TAG} -> lively " + applied.joinToString("/"))
+            LogUtils.d(MirageHangUpState.TAG, "keepTaskLively", "lively " + applied.joinToString("/"))
         }
         return applied.isNotEmpty()
     }
@@ -270,27 +270,27 @@ object MirageHangUpUtils {
             ext.asResolver().firstMethodOrNull {
                 name = methodName;parameterCount = 1
                 parameters { types ->
-                    types[0] == Boolean::class.javaPrimitiveType || types[0] == java.lang.Boolean::class.java
+                    types[0] == Boolean::class.javaPrimitiveType || types[0] == Boolean::class.javaObjectType
                 }
             }
         }.getOrNull()
         if (booleanMethod != null) {
             return runCatching { booleanMethod.invoke<Any?>(enabled) }
                 .onFailure {
-                    YLog.error("${MirageHangUpState.TAG} -> $methodName(boolean) failed", it, MirageHangUpState.TAG)
+                    LogUtils.e(MirageHangUpState.TAG, "invokeLivelyFlag", "$methodName(boolean) failed: " + it)
                 }.isSuccess
         }
         val intMethod = runCatching {
             ext.asResolver().firstMethodOrNull {
                 name = methodName;parameterCount = 1
-                parameters { types -> types[0] == Int::class.javaPrimitiveType || types[0] == java.lang.Integer::class.java }
+                parameters { types -> types[0] == Int::class.javaPrimitiveType || types[0] == Int::class.javaObjectType }
             }
         }.getOrNull()
         if (intMethod != null) {
             val flag = if (enabled) 1 else 0
             return runCatching { intMethod.invoke<Any?>(flag) }
                 .onFailure {
-                    YLog.error("${MirageHangUpState.TAG} -> $methodName(int) failed", it, MirageHangUpState.TAG)
+                    LogUtils.e(MirageHangUpState.TAG, "invokeLivelyFlag", "$methodName(int) failed: " + it)
                 }.isSuccess
         }
         val taskMethod = runCatching {
@@ -302,7 +302,7 @@ object MirageHangUpUtils {
         if (taskMethod != null) {
             return runCatching { taskMethod.invoke<Any?>(task) }
                 .onFailure {
-                    YLog.error("${MirageHangUpState.TAG} -> $methodName(task) failed", it, MirageHangUpState.TAG)
+                    LogUtils.e(MirageHangUpState.TAG, "invokeLivelyFlag", "$methodName(task) failed: " + it)
                 }.isSuccess
         }
         return false
@@ -315,13 +315,12 @@ object MirageHangUpUtils {
             val manager = OplusMirageDisplayManagerUtils(classLoader)
             val instance = manager.getInstance() ?: return@runCatching false
             manager.releaseVirtualDisplay(instance, displayId)
-            YLog.info("${MirageHangUpState.TAG} -> released mirage displayId=$displayId")
+            LogUtils.d(MirageHangUpState.TAG, "releaseMirage", "released mirage displayId=$displayId")
             true
         }.getOrElse {
-            YLog.error(
-                "${MirageHangUpState.TAG} -> release mirage failed displayId=$displayId",
-                it,
-                MirageHangUpState.TAG
+            LogUtils.e(
+                MirageHangUpState.TAG, "releaseMirage",
+                "release mirage failed displayId=$displayId: " + it
             )
             false
         }
