@@ -1,6 +1,8 @@
 package com.luckyzyx.luckytool.utils
 
 import android.content.Context
+import com.highcapable.kavaref.KavaRef.Companion.resolve
+import com.highcapable.kavaref.extension.toClass
 import com.topjohnwu.superuser.ShellUtils
 import org.lsposed.hiddenapibypass.HiddenApiBypass
 
@@ -56,8 +58,7 @@ object ExtraDimUtils {
 
     /** 写「是否激活」。不加速时框架会套用全零矩阵导致黑屏，因此这里再兜一道门禁。 */
     fun writeActivated(context: Context, activated: Boolean): Boolean {
-        if (activated && !isSupported(context)) return false
-        return writeRaw(KEY_ACTIVATED, if (activated) "1" else "0")
+        return !(activated && !isSupported(context)) && writeRaw(KEY_ACTIVATED, if (activated) "1" else "0")
     }
 
     /** 写强度百分比，越界值先夹到 0..100。 */
@@ -76,14 +77,14 @@ object ExtraDimUtils {
      * 1. `dumpsys color_display` 里 "Reduce bright colors:" 小节自己打印的结论
      *    （"Activated:" = 可用，"Not available" = 不可用）—— 这就是 isAvailable() 的原话，
      *    root 可读，不受隐藏 API 名单影响；
-     * 2. 反射 ColorDisplayManager.isColorTransformAccelerated(context)：该类不在公开 SDK 里，
+     * 2. 解析 ColorDisplayManager.isColorTransformAccelerated(context)：该类不在公开 SDK 里，
      *    要先加隐藏 API 豁免，签名或豁免一变就失败，只能兜底。
      * 两条都拿不到结论时返回 false：宁可禁用，也不给黑屏留窗口。
      *
      * 会执行 shell 命令，只能在 IO 线程调用。
      */
     fun isSupported(context: Context): Boolean =
-        readSupportFromDumpsys() ?: isSupportedByReflection(context) ?: false
+        readSupportFromDumpsys() ?: isSupportedByManager(context) ?: false
 
     /** 解析 dumpsys 的极暗模式小节；true/false 为框架结论，null 表示没解析出来（服务名或文案变了）。 */
     private fun readSupportFromDumpsys(): Boolean? = try {
@@ -101,25 +102,25 @@ object ExtraDimUtils {
                 else -> null
             }
         }
-    } catch (t: Throwable) {
+    } catch (_: Throwable) {
         null
     }
 
-    /** 反射兜底；异常一律返回 null，由 [isSupported] 决定最终降级结果。 */
-    private fun isSupportedByReflection(context: Context): Boolean? = try {
-        // 隐藏 API 名单会拦截反射访问，先给自己加豁免；老 ROM 没有名单，豁免失败也不影响后续反射
+    /** 二路兜底；异常一律返回 null，由 [isSupported] 决定最终降级结果。 */
+    private fun isSupportedByManager(context: Context): Boolean? = try {
+        // 隐藏 API 名单会拦截访问，先给自己加豁免；老 ROM 没有名单，豁免失败也不影响后续调用
         runCatching { HiddenApiBypass.addHiddenApiExemptions("Landroid/hardware/display/ColorDisplayManager;") }
-        val clazz = Class.forName("android.hardware.display.ColorDisplayManager")
-        val method = clazz.getMethod("isColorTransformAccelerated", Context::class.java)
-        method.invoke(null, context.applicationContext) as? Boolean
-    } catch (t: Throwable) {
+        "android.hardware.display.ColorDisplayManager".toClass().resolve()
+            .firstMethod { name = "isColorTransformAccelerated" }
+            .invoke(context.applicationContext) as? Boolean
+    } catch (_: Throwable) {
         null
     }
 
     private fun readRaw(key: String): String? = try {
         // 键不存在时 settings 输出字面量 "null"
         ShellUtils.fastCmd("settings get $SECURE $key").trim().takeIf { it.isNotEmpty() && it != "null" }
-    } catch (t: Throwable) {
+    } catch (_: Throwable) {
         null
     }
 
@@ -127,7 +128,7 @@ object ExtraDimUtils {
         ShellUtils.fastCmd("settings put $SECURE $key $value")
         // commands 成功不代表键真的落下（可能被策略拦），回读一次确认
         readRaw(key) == value
-    } catch (t: Throwable) {
+    } catch (_: Throwable) {
         false
     }
 }
