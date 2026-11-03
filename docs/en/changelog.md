@@ -43,6 +43,7 @@ Entries for versions before `1.3.5_beta` are currently only available in the
 - Fluid cloud card redirect (with a configurable target browser)
 - Show the declared OS version range (minOsdkVersion / maxOsdkVersion) in the package information
 - Very dark mode control page (a replacement when the system page renders empty)
+- Remove forced automatic entry into super power saving mode (@RealmeOS)
 
 #### Optimized
 
