@@ -1281,6 +1281,14 @@
     <string name="HidePageRelated">Hide page related</string>
     <string name="process_manager">Process management</string>
     <string name="very_dark_mode">Very dark mode</string>
+    <string name="extra_dim_enable">Enable very dark mode</string>
+    <string name="extra_dim_enable_summary">Dims the display below the system minimum brightness by applying a color filter</string>
+    <string name="extra_dim_level">Intensity</string>
+    <string name="extra_dim_level_follow_min">No level set yet — the system uses its weakest level until you drag the slider</string>
+    <string name="extra_dim_persist">Keep after reboot</string>
+    <string name="extra_dim_persist_summary">When off, very dark mode turns itself off again after a reboot</string>
+    <string name="extra_dim_unsupported">This device does not accelerate the display color transform, so very dark mode cannot be enabled — doing so would black out the screen.</string>
+    <string name="extra_dim_open_system_page">Open the system page</string>
     <string name="battery_health_page">Battery Health Page</string>
     <string name="battery_optimization">Battery Optimization</string>
     <string name="camera_algo_page">Camera Algorithms Page</string>

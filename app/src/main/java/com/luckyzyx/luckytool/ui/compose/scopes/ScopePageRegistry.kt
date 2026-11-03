@@ -93,6 +93,7 @@ import com.luckyzyx.luckytool.ui.compose.special.AppPermissionPage
 import com.luckyzyx.luckytool.ui.compose.special.BatteryInfoPage
 import com.luckyzyx.luckytool.ui.compose.special.DarkModePage
 import com.luckyzyx.luckytool.ui.compose.special.DonatePage
+import com.luckyzyx.luckytool.ui.compose.special.ExtraDimPage
 import com.luckyzyx.luckytool.ui.compose.special.ExtractOTAPage
 import com.luckyzyx.luckytool.ui.compose.special.ForceFpsPage
 import com.luckyzyx.luckytool.ui.compose.special.HideAppIntentPage
@@ -594,6 +595,8 @@ object ScopePageRegistry {
         "batteryInfoFragment" to "battery_info",
         "donateFragment" to "donate",
         "systemQuickEntry" to "quick_entry",
+        // 极暗模式页没有历史驼峰 target 名：入口行 target 直接用 pageKey，自映射让跳转与搜索索引都能解析
+        "extra_dim" to "extra_dim",
     )
 
     init {
@@ -671,6 +674,7 @@ object ScopePageRegistry {
         register(DonatePage.spec)
         register(ExtractOTAPage.spec)
         register(ForceFpsPage.spec)
+        register(ExtraDimPage.spec)
         register(QuickEntryPage.spec)
         register(DarkModePage.spec)
         register(HideAppIntentPage.spec)

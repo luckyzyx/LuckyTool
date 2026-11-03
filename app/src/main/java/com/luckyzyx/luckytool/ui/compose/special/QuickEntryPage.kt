@@ -51,13 +51,11 @@ object QuickEntryPage {
 
         category(c.getString(R.string.HidePageRelated))
         entry(c.getString(R.string.process_manager)) { IntentUtils(c).jumpRunningApp() }
-        entry(
-            c.getString(R.string.very_dark_mode),
-            visible = c.checkResolveActivity(
-                "com.android.settings",
-                "com.android.settings.Settings\$ReduceBrightColorsSettingsActivity",
-            ),
-        ) { IntentUtils(c).jumpVeryDarkMode() }
+        // 进 LT 自己的极暗模式页：系统极暗页在部分 ROM 上被过滤成空白页，不能用它做入口。
+        // 恒显示 —— LT 的页面在 C16 / C17 都能用。
+        entry(c.getString(R.string.very_dark_mode)) {
+            navigate?.invoke("extra_dim", c.getString(R.string.very_dark_mode))
+        }
         entry(
             c.getString(R.string.open_battery_health),
             visible = c.checkResolveActivity(

@@ -1108,6 +1108,14 @@
     <string name="HidePageRelated">隐藏页面相关</string>
     <string name="process_manager">进程管理</string>
     <string name="very_dark_mode">极暗模式</string>
+    <string name="extra_dim_enable">开启极暗模式</string>
+    <string name="extra_dim_enable_summary">用颜色滤镜把屏幕压到系统最低亮度以下</string>
+    <string name="extra_dim_level">强度</string>
+    <string name="extra_dim_level_follow_min">尚未设置，系统按最弱档生效；拖动滑条后写入</string>
+    <string name="extra_dim_persist">重启后保留</string>
+    <string name="extra_dim_persist_summary">关闭时，重启后极暗模式会自动失效</string>
+    <string name="extra_dim_unsupported">当前设备未加速颜色变换，无法开启极暗模式——强行开启会导致屏幕全黑。</string>
+    <string name="extra_dim_open_system_page">打开系统设置页</string>
     <string name="battery_health_page">电池健康页面</string>
     <string name="battery_optimization">电池优化</string>
     <string name="camera_algo_page">相机算法页面</string>
