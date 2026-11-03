@@ -814,6 +814,8 @@
     
     <string name="BatteryOptimization">Battery Optimization</string>
     <string name="remove_battery_restrict_plugin">Remove battery restrict plugin</string>
+    <string name="keep_google_services_network">Keep Google services on the network</string>
+    <string name="keep_google_services_network_summary">Stop the battery component from setting Play services, Play Store and ConfigUpdater to no networking after a failed Google connectivity check</string>
     <string name="restore_default_battery_optimization_whitelist">Restore default battery optimization whitelist</string>
     <string name="disable_customize_battery_optimization_whiteList">Disable custom battery optimization whitelist</string>
     <string name="disable_customize_battery_optimization_whiteList_summary">If the APP is manually granted the `ignore battery optimization` permission by the user, After enabling this function, the APP will not be automatically added to the battery optimization whitelist</string>
@@ -1623,6 +1625,8 @@
     <string name="settings_enable_glass_summary">Enable liquid glass effect for floating bottom bar.</string>
     <string name="allow_third_party_installer">Allow third-party installers</string>
     <string name="allow_third_party_installer_summary">Use your chosen default app to open APK files and remember the installer selection</string>
+    <string name="remove_installer_force_default">Ignore the system installer default</string>
+    <string name="remove_installer_force_default_summary">Skip the installer roles declared in the system default app list so APK handling falls back to the normal default-app choice</string>
     <!--流体云卡片重定向（OplusMetisPage）-->
     <string name="metis_category_redirect">Fluid cloud redirect</string>
     <string name="metis_redirect_enabled">Enable card redirect</string>

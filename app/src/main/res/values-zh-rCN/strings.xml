@@ -726,6 +726,8 @@
     <string name="remove_battery_temperature_control_summary">移除部分功能无法使用的限制，例如：相机、手电筒、热点、画面显示引擎等</string>
     <string name="BatteryOptimization">电池优化</string>
     <string name="remove_battery_restrict_plugin">移除电池限制插件</string>
+    <string name="keep_google_services_network">阻止 Google 服务被禁网</string>
+    <string name="keep_google_services_network_summary">阻止电池组件在 Google 连通性探测失败后把 Play 服务、Play 商店与 ConfigUpdater 设为禁止联网</string>
     <string name="restore_default_battery_optimization_whitelist">恢复默认电池优化白名单</string>
     <string name="disable_customize_battery_optimization_whiteList">禁用自定义电池优化白名单</string>
     <string name="disable_customize_battery_optimization_whiteList_summary">若APP被用户手动授予`忽略电池优化`权限, 开启此功能后, 该APP将不会自动添加进电池优化白名单</string>

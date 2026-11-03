@@ -63,6 +63,11 @@ object OplusBatteryPage {
             title = c.getString(R.string.remove_battery_restrict_plugin),
         )
         switch(
+            key = "keep_google_services_network",
+            title = c.getString(R.string.keep_google_services_network),
+            summary = c.getString(R.string.keep_google_services_network_summary),
+        )
+        switch(
             key = "restore_default_battery_optimization_whitelist",
             title = c.getString(R.string.restore_default_battery_optimization_whitelist),
         )
