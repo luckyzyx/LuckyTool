@@ -9,7 +9,6 @@ in [TG Channel’s associated groups](https://t.me/LuckyTool)**
 
 #### 新增
 
-- 阻止电池组件切断 Google 服务网络 C16+
 - 强制启用飞牛云 NAS
 - 自定义系统消息地区预设
 - 禁用恶意风险应用拦截 C16.1
@@ -40,8 +39,9 @@ in [TG Channel’s associated groups](https://t.me/LuckyTool)**
 - 自定义 OTA 卡片背景行 / 视频行缩略图预览，长按清除
 - 自定义旋转屏幕按钮大小 (@RealmeOS)
 - 流体云卡片重定向
-- 安装包信息显示 OS 版本区间（minOsdkVersion / maxOsdkVersion）
-- 极暗模式控制页（系统设置页为空白时替代）
+- 安装包信息显示 OSSDK 版本信息
+- 添加极暗模式控制页
+- 阻止电池组件切断 Google 服务网络 C16+
 
 #### 优化
 
