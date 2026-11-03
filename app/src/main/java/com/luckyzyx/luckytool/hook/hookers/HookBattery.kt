@@ -5,6 +5,7 @@ import com.luckyzyx.luckytool.hook.globals.HookGlobalFeatureConfig
 import com.luckyzyx.luckytool.hook.globals.HookGlobalFeatureProvider
 import com.luckyzyx.luckytool.hook.scopes.battery.DisplayModuleCalculatesBatteryHealthData
 import com.luckyzyx.luckytool.hook.scopes.battery.HookBatteryNotify
+import com.luckyzyx.luckytool.hook.scopes.battery.KeepGoogleServicesNetwork
 import com.luckyzyx.luckytool.hook.scopes.battery.LauncherHighTempreatureProtection
 import com.luckyzyx.luckytool.hook.scopes.battery.RemoveBatteryRestrictPlugin
 import com.luckyzyx.luckytool.hook.scopes.battery.RemoveBatteryTemperatureControl
@@ -42,6 +43,11 @@ object HookBattery : YukiBaseHooker() {
             if (preferences(ModulePrefs).getBoolean("remove_battery_restrict_plugin", false)) {
                 loadHooker(RemoveBatteryRestrictPlugin(dexKitBridge))
             }
+        }
+
+        //阻止电池组件在 Google 连通性探测失败后给 Google 服务禁网
+        if (preferences(ModulePrefs).getBoolean("keep_google_services_network", false)) {
+            loadHooker(KeepGoogleServicesNetwork)
         }
 
         //显示模块计算电池健康数据
