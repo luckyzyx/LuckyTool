@@ -118,6 +118,11 @@ object LauncherBackupPage {
         // 操作
         category(c.getString(R.string.launcher_backup_category_actions))
         click(
+            title = c.getString(R.string.launcher_backup_last_auto),
+            summary = lastAutoText(c, snapshots),
+            onClick = { reload() },
+        )
+        click(
             title = c.getString(R.string.launcher_backup_status),
             summary = statusText(c, busy, hint, notice, launcherPackage),
             onClick = { reload() },
@@ -189,7 +194,11 @@ object LauncherBackupPage {
             // 忙碌态与快照列表都不在 prefs 里：由宿主把 flow 写成对象级状态，DSL 行才会重建
             LaunchedEffect(busyFlow) { busyState.value = busyFlow }
             LaunchedEffect(busyHintFlow) { busyHintState.value = busyHintFlow }
-            LaunchedEffect(Unit) { reload() }
+            LaunchedEffect(Unit) {
+                // 宿主退到媒体目录的快照要先搬回正式目录，搬运可能要读几 MB，放 IO 线程
+                LauncherBackupTransfer.adoptHostFallback(c)
+                reload()
+            }
 
             // 恢复必须二次确认：会先自动补拍一份 pre_restore，然后整表覆盖布局
             val target = pendingRestoreState.value
@@ -339,11 +348,25 @@ object LauncherBackupPage {
                 context.getString(R.string.launcher_backup_err_io, failure.detail)
         }
 
-    /** 备份行标题：时间 + 标签（文件名里的时间戳对用户不直观） */
-    private fun snapshotTitle(context: Context, snapshot: LauncherSnapshot): String {
-        val stamp = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.US).format(Date(snapshot.timeMillis))
-        return stamp + " · " + tagLabel(context, snapshot.tag)
+    /**
+     * 上次自动备份时间。
+     *
+     * 只能以落盘文件为准：自动备份的「上次成功/尝试时间」记在桌面进程自己的 prefs（LauncherBackupGate）里，
+     * 那个目录属于桌面的 uid，app 进程读不到。所以这里取最近的 auto 快照；一份都没有就是从未自动备份过
+     * （包含「备份了但全部失败」「快照被淘汰或删除」）。
+     */
+    private fun lastAutoText(context: Context, snapshots: List<LauncherSnapshot>): String {
+        val last = snapshots.firstOrNull { it.tag == LauncherSnapshotTag.AUTO }
+            ?: return context.getString(R.string.launcher_backup_auto_never)
+        return formatStamp(last.timeMillis)
     }
+
+    /** 备份行标题：时间 + 标签（文件名里的时间戳对用户不直观） */
+    private fun snapshotTitle(context: Context, snapshot: LauncherSnapshot): String =
+        formatStamp(snapshot.timeMillis) + " · " + tagLabel(context, snapshot.tag)
+
+    private fun formatStamp(millis: Long): String =
+        SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.US).format(Date(millis))
 
     /** 备份行摘要：文件名与字节数 */
     private fun snapshotSummary(context: Context, snapshot: LauncherSnapshot): String {

@@ -5,8 +5,9 @@ import com.luckyzyx.luckytool.utils.ModulePrefs
 import com.luckyzyx.luckytool.utils.formatDate
 
 /**
- * 状态栏时钟页（旧 ui.fragment.scopes.statusbar.StatusBarClock 的 Compose 等价物）。
- * 逐项对齐：键、默认值、条件可见性、notify（sendPrefsValue）。
+ * 状态栏时钟页：状态栏时钟的显示模式、双行/自定义格式、字号与对齐方式（写入 com.android.systemui）。
+ * 每项都显式声明键、默认值与条件可见性（自定义格式含换行才显示对齐选项）；
+ * 标了 notify 的项写值后经 sendPrefsValue("com.android.systemui") 通知宿主。
  */
 object StatusBarClockPage {
 
@@ -76,7 +77,7 @@ object StatusBarClockPage {
                     // 格式支持换行（`\n` = 双行显示），输入框允许最多三行
                     maxLines = 3,
                 )
-                // 旧逻辑：自定义格式含多行（带换行）才显示对齐选项
+                // 自定义格式含多行（带换行）才显示对齐选项
                 if ((state.getString("statusbar_clock_custom_format", "HH:mm:ss") ?: "HH:mm:ss").split("\n").size >= 2) {
                     list(
                         key = "statusbar_clock_text_alignment",
@@ -157,7 +158,7 @@ object StatusBarClockPage {
         }
     }
 
-    /** 与旧 EditTextPreference.dialogMessage 一致的格式速查表（末尾换行说明为本页补充） */
+    /** 自定义格式输入框的格式速查表（末尾换行说明为本页补充） */
     private val CUSTOM_FORMAT_HELP = """
         yyyy/MM/dd -> ${formatDate("yyyy/MM/dd")}
         y/M/d/E/a -> ${formatDate("y/M/d/E/a")}

@@ -5,7 +5,7 @@ import com.luckyzyx.luckytool.ui.compose.scopes.ScopePageSpec
 import com.luckyzyx.luckytool.utils.ModulePrefs
 
 /**
- * 日历页（旧 ui.fragment.scopes.apps.OplusCalendar 的 Compose 等价物）。
+ * 日历页：去掉节日、黄历、星座页信息流的开关。
  */
 object OplusCalendarPage {
 

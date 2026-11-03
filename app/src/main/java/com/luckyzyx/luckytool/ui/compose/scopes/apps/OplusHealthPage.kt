@@ -5,7 +5,7 @@ import com.luckyzyx.luckytool.ui.compose.scopes.ScopePageSpec
 import com.luckyzyx.luckytool.utils.ModulePrefs
 
 /**
- * 健康页（旧 ui.fragment.scopes.apps.OplusHealth 的 Compose 等价物）。
+ * 健康页：去掉 Root 检测提示对话框的开关。
  */
 object OplusHealthPage {
 

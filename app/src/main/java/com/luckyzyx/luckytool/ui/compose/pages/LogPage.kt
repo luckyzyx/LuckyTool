@@ -13,7 +13,7 @@ import com.luckyzyx.luckytool.R
 import com.luckyzyx.luckytool.ui.compose.components.material.MaterialPageScaffold
 
 /**
- * Logs 页：旧 LoggerFragment 的 fragment_logs.xml 仅一个居中占位文本
+ * Logs 页：仅一个居中占位文本
  * （"重新规划中......"）。日志功能开放前不展示没有实现的操作按钮。
  */
 @Composable
@@ -27,7 +27,7 @@ fun LogPage() {
                 .padding(padding),
             contentAlignment = Alignment.Center,
         ) {
-            Text(text = "重新规划中......", fontSize = 18.sp)
+            Text(text = "页面重新规划中...\nPage is being redesigned...", fontSize = 18.sp)
         }
     }
 }

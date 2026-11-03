@@ -45,6 +45,7 @@ import com.luckyzyx.luckytool.ui.compose.scopes.apps.OplusLinkerPage
 import com.luckyzyx.luckytool.ui.compose.scopes.apps.OplusMMSPage
 import com.luckyzyx.luckytool.ui.compose.scopes.apps.OplusMarketPage
 import com.luckyzyx.luckytool.ui.compose.scopes.apps.OplusMcsPage
+import com.luckyzyx.luckytool.ui.compose.scopes.apps.OplusMetisPage
 import com.luckyzyx.luckytool.ui.compose.scopes.apps.OplusMyDevicesPage
 import com.luckyzyx.luckytool.ui.compose.scopes.apps.OplusNfcPage
 import com.luckyzyx.luckytool.ui.compose.scopes.apps.OplusOSharePage
@@ -109,15 +110,16 @@ import kotlinx.coroutines.launch
 import kotlin.time.Duration.Companion.milliseconds
 
 /**
- * 页面顶栏动作——旧 Toolbar 菜单项（`onCreateMenu` 里的 `menu.add(...)`）在 Compose 侧的等价声明。
+ * 页面顶栏动作：页面自己声明的菜单项，由 [ScopePageSpec.topActions] 声明、页面宿主渲染。
  *
- * 迁移时这些动作曾被平铺成页面里的偏好卡片/选项行，视觉上与"页面选项"混淆；
- * 现在按旧版位置放回页面顶栏（由 [ScopePageSpec.topActions] 声明、页面宿主渲染）。
+ * 这些动作是对整页数据的一次性操作（打开系统设置、按 Intent 类型全选、清空、导入…），
+ * 放在顶栏而不平铺成页面里的偏好卡片/选项行：混在正文里会与"页面选项"的视觉层级分不清，
+ * 让人看不出哪个是设置项、哪个是动作。
  *
  * @param key           动作标识，页面在 [ScopePageSpec.actionHandler] 里据此分派
  * @param labelRes      动作标题（溢出菜单文本 / 图标按钮的 contentDescription）
  * @param icon          图标资源；0 = 无图标，只能进溢出菜单
- * @param showAsAction  旧 `SHOW_AS_ACTION_IF_ROOM` 的平移：true 且有图标时直接显示为顶栏图标按钮
+ * @param showAsAction  true 且有图标时直接显示为顶栏图标按钮（空间足够就显示，不够则收进溢出菜单）
  */
 class ScopePageAction(
     val key: String,
@@ -127,16 +129,16 @@ class ScopePageAction(
 )
 
 /**
- * 一个 Compose 作用域页的声明——旧 [BaseScopePreferenceFeagment] 子类中
- * scopes/currentPrefsName/loadPreferences 等字段的注册单元等价物。
+ * 一个 Compose 作用域页的声明：页面注册键、prefs 文件名、宿主包名与显示包名、作用域包名列表、
+ * 「重启作用域」菜单开关、页面级可见性、下拉刷新回调，以及页面内容 DSL（或自带的两线呈现槽位）。
  *
- * @param pageKey        页面注册键（nav_container.xml 中 page_key 参数值）
+ * @param pageKey        页面注册键（如 statusbar_clock），[ScopePageRegistry] 以它为查表键
  * @param prefsName      SharedPreferences 文件名（ModulePrefs 等）
  * @param packName       宿主包名（sendPrefsValue 通知目标）
  * @param displayPackName 功能树标题/图标来源包名（默认 = packName；通知目标与显示 App 不同时单独指定）
  * @param scopes         Xposed 作用域包名列表（重启作用域对话框用）
  * @param restartEnabled 是否显示"重启作用域"菜单
- * @param isVisible      页面级可见性（旧 loadRootPreference 根条目 isVisible 平移）：false 时功能树、搜索与子页入口均不出现此页
+ * @param isVisible      页面级可见性：false 时功能树、搜索与子页入口均不出现此页
  * @param onRefresh      下拉刷新回调（null = 无下拉刷新；如 OTA 提取、捐赠数据页）
  * @param content        页面内容 DSL（每次重组重跑，条件可见性写 Kotlin if）
  * @param contentMiuix   页面自带的 Miuix 呈现（null = 走共享渲染层 [ScopeScreen]）
@@ -160,7 +162,7 @@ class ScopePageSpec(
     val scopes: Array<String>,
     val restartEnabled: Boolean,
     /**
-     * 页面级可见性（旧 loadRootPreference 根条目 isVisible 平移）：
+     * 页面级可见性：
      * false 时功能树、搜索与子页入口均不出现此页；默认恒可见。
      */
     val isVisible: Context.() -> Boolean = { true },
@@ -173,7 +175,7 @@ class ScopePageSpec(
     val onRefresh: (suspend () -> Unit)? = null,
     val fullContent: (@Composable LazyItemScope.(PrefScopeBuilder) -> Unit)? = null,
     /**
-     * 顶栏动作清单（旧 Toolbar 菜单项平移）：有图标且 [ScopePageAction.showAsAction] 的直接显示为
+     * 顶栏动作清单：有图标且 [ScopePageAction.showAsAction] 的直接显示为
      * 图标按钮，其余收进顶栏溢出菜单。动作处理函数由页面在组合期登记到 [actionHandler]。
      */
     val topActions: List<ScopePageAction> = emptyList(),
@@ -380,7 +382,7 @@ object ScopePageRegistry {
     fun all(): List<ScopePageSpec> = pages.values.toList()
 
     /**
-     * headless 构建一页的搜索索引（等价旧 getAllPrefsItem：条件可见性已由 DSL 的 Kotlin if 应用）。
+     * headless 构建一页的搜索索引（条件可见性已由 DSL 的 Kotlin if 应用）。
      * 构建是纯记录（emit 不渲染），可在任意线程运行；功能树、全屏搜索与 DSL page() 子页入口可达性判断共用。
      * 注意：空索引**不等于**该页不可见——见 [hasVisibleContent]。
      */
@@ -398,7 +400,7 @@ object ScopePageRegistry {
     }
 
     /**
-     * 旧 BaseScopePreferenceFeagment.getAllPrefsItem 开头的「单 App 作用域存在性检查」平移：
+     * 单 App 作用域存在性检查：
      * 恰有一个作用域且不是 system、且该包未安装 → 整页不可见（功能树/搜索/子页入口共用）。
      */
     fun isScopeAppPresent(context: Context, spec: ScopePageSpec): Boolean {
@@ -411,7 +413,7 @@ object ScopePageRegistry {
         ThreadLocal.withInitial { ArrayDeque() }
 
     /**
-     * 一页是否有可见内容（旧 getRootPreference 检查2「可见子 item<=0 隐藏」的判据）。
+     * 一页是否有可见内容（判据：可见子条目数 <= 0 时隐藏该页入口）。
      *
      * [ScopePageSpec.selfRendered] 的特殊页（暗色模式列表 / 意图 / 自定义浮窗 / 应用分身 / MEMC 等）
      * 自带整页渲染、行清单画在自己的布局里，DSL content 恒为空、索引恒为空；它们的可见性**只看
@@ -422,11 +424,11 @@ object ScopePageRegistry {
         spec.selfRendered || buildIndex(context, spec).isNotEmpty()
 
     /**
-     * 一页是否可进入（旧 getRootPreference 三级判断的集中版，供 DSL page() 子页入口使用）：
-     * spec.isVisible（旧根条目 isVisible；作用域判断通常也写在这里面）&& 单 App 作用域已安装
-     * && 存在可见条目（旧检查2「可见子 item<=0 隐藏」）。
+     * 一页是否可进入（下面三级判断集中在此，供 DSL page() 子页入口使用）：
+     * spec.isVisible（作用域判断通常也写在这里面）&& 单 App 作用域已安装
+     * && 存在可见条目（可见子条目数 <= 0 时隐藏）。
      * [ScopePageSpec.selfRendered] 的特殊页到第三步直接为真——它们只靠 isVisible + 作用域，不看索引。
-     * 目标页不可达时父页不发射入口行。未注册的 pageKey 视为可达（不拦截未知目标，保持旧行为）。
+     * 目标页不可达时父页不发射入口行。未注册的 pageKey 视为可达（不拦截未知目标）。
      */
     fun isPageReachable(context: Context, pageKey: String): Boolean {
         val spec = pages[pageKey] ?: return true
@@ -442,7 +444,7 @@ object ScopePageRegistry {
         }
     }
 
-    /** 功能树页面顺序（对齐旧 XposedFragment.loadPreferences 的 addFragmentPreference 顺序，50 页） */
+    /** 功能树页面顺序（功能树按此固定排序，共 51 页） */
     val treeOrder: List<String> = listOf(
         "android_related",
         "statusbar",
@@ -474,6 +476,7 @@ object ScopePageRegistry {
         "oplus_weather",
         "oplus_calendar",
         "oplus_smart_sidebar",
+        "oplus_metis",
         "oplus_phone_manager",
         "oplus_health",
         "oplus_sound_recorder",
@@ -497,9 +500,9 @@ object ScopePageRegistry {
     )
 
     /**
-     * 树标题覆盖表（pageKey → 字符串资源）：对齐旧功能树 root 标题。
-     * 其余页标题 = AppUtils.getAppLabel(packName)（旧 root key == packName）；
-     * android_related 特殊：旧标题 = getAppLabel("android")（见 FunctionPage.pageTitle）。
+     * 树标题覆盖表（pageKey → 字符串资源）：登记过的页用固定字符串资源作功能树标题。
+     * 其余页标题 = AppUtils.getAppLabel(packName)（标题即该页宿主 App 的名称）；
+     * android_related 特殊：标题取 getAppLabel("android")（见 FunctionPage.pageTitle）。
      */
     val treeTitleRes: Map<String, Int> = mapOf(
         "statusbar" to R.string.StatusBar,
@@ -513,7 +516,7 @@ object ScopePageRegistry {
         "statusbar_icon_order" to R.string.statusbar_icon_order,
     )
 
-    /** DSL page(target=...) 的旧 nav id 名 → pageKey（tools/p3_nav_switch.ps1 $pairs + $specialPairs + P1 两页） */
+    /** DSL page(target=...) 的驼峰 target 串 → pageKey：target 沿用历史 nav 参数名（如 statusBarClock），这里翻成页面注册键（如 statusbar_clock） */
     val pageTargetMap: Map<String, String> = mapOf(
         "statusBarClock" to "statusbar_clock",
         "statusBar" to "statusbar",
@@ -556,7 +559,7 @@ object ScopePageRegistry {
         "oplusWirelessSettings" to "oplus_wireless_settings",
         "statusBarNotify" to "statusbar_notify",
         "statusBarIcon" to "statusbar_icon",
-        // 无旧 nav id 的新页：入口行 target 直接用 pageKey，自映射让 page() 跳转与搜索索引都能解析
+        // 新页没有历史驼峰 target 名：入口行 target 直接用 pageKey，自映射让 page() 跳转与搜索索引都能解析
         "statusbar_icon_order" to "statusbar_icon_order",
         "statusBarControlCenter" to "statusbar_control_center",
         "statusBarLayout" to "statusbar_layout",
@@ -617,6 +620,7 @@ object ScopePageRegistry {
         register(OplusMarketPage.spec)
         register(OplusMMSPage.spec)
         register(OplusMcsPage.spec)
+        register(OplusMetisPage.spec)
         register(OplusMyDevicesPage.spec)
         register(OplusNfcPage.spec)
         register(OplusOSharePage.spec)

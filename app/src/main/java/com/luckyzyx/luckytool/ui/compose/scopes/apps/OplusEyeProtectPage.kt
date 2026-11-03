@@ -7,7 +7,9 @@ import com.luckyzyx.luckytool.utils.checkPackName
 import com.luckyzyx.luckytool.utils.getOSVersionCode
 
 /**
- * 护眼页（旧 ui.fragment.scopes.apps.OplusEyeProtect 的 Compose 等价物）。
+ * 护眼页：开启纸张纹理效果的开关。
+ * 仅在 osCode >= 33 且装有 com.oplus.eyeprotect 时出现（见 spec.isVisible），开关本身也在同一条件下渲染；
+ * 改动需要重启系统。
  */
 object OplusEyeProtectPage {
 

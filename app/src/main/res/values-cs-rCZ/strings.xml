@@ -202,6 +202,7 @@
     <string name="StatusBarWIFIIcon">Ikona WIFI</string>
     <string name="remove_wifi_data_inout">Skrýt indikátor využití WiFi</string>
     <string name="force_display_wifi_standard">Vynucené zobrazení standardů WIFI signálu</string>
+    <string name="force_display_wifi_standard_summary">Po přepnutí je nutné restartovat zahrnuté procesy, aby se změna projevila</string>
     <string name="StatusBarMobileDataIcon">Ikona mobilních dat</string>
     <string name="remove_mobile_data_icon">Odstranit ikonu mobilních dat</string>
     <string name="remove_mobile_data_inout">Skrýt indikátor využití mobilních dat</string>
@@ -808,6 +809,7 @@
     <string name="remove_side_slider">Odstranit boční posuvník</string>
     <string name="remove_side_slider_black_background">Odstranit černé pozadí bočního posuvníku</string>
     <string name="remove_rotate_screen_button">Odebrat tlačítko otáčení obrazovky</string>
+    <string name="custom_rotate_screen_button_size">Vlastní velikost tlačítka otáčení obrazovky</string>
     <string name="remove_back_gesture_confirmation_limit">Odstranění limitu potvrzení gesta zpět</string>
     <string name="CustomSideSliderIcon">Vlastní ikona bočního posuvníku</string>
     <string name="replace_side_slider_icon_switch">Nahradit přepínač bočních ikon posuvníku</string>
@@ -968,7 +970,6 @@
     <string name="adb_port">ADB port</string>
     <string name="enable_remote_adb_debugging">Povolit vzdálené ladění ADB</string>
     <string name="adb_debug_port_cannot_null">ADB debug port nemůže být prázdný a null</string>
-    <string name="adb_tv_tip">Dlouhým stisknutím zkopírujete</string>
     <!--LOG Fragment-->
     <string name="log_save_success">Protokol úspěšně uložen!</string>
     <string name="log_save_failed">Uložení protokolu se nezdařilo!</string>
@@ -1004,6 +1005,12 @@
     <string name="appinfo_last_updated_time">Čas poslední aktualizace</string>
     <string name="appinfo_target_sdk">Cílové SDK</string>
     <string name="appinfo_system_app">Systémová aplikace</string>
+    <string name="appinfo_app_count">%1$d aplikací</string>
+    <string name="appinfo_selected_count">Vybráno: %1$d</string>
+    <string name="appinfo_select_all">Vybrat vše</string>
+    <string name="appinfo_deselect_all">Zrušit výběr</string>
+    <string name="appinfo_no_match">Žádné odpovídající aplikace</string>
+    <string name="appinfo_clear_search">Vymazat hledání</string>
     <!--Intent-->
     <string name="custom_config_app_intent_list">Vlastní seznam záměrů konfigurační aplikace</string>
     <string name="select_all_share_intent">Vyberte všechny záměry sdílení</string>

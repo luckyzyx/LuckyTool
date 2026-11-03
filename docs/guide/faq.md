@@ -30,3 +30,13 @@
 ## Root 相关
 
 - 部分需要写系统分区的功能（高刷、DC 调光等）需要 Root 与权限授权
+
+## 已知问题
+
+### MEMC 配置弹窗切换输入框时输入法闪一下
+
+在 MEMC「添加 / 编辑配置」弹窗（包名配置与活动配置，Miuix 与 Material 两套主题表现一致）里，光标从一个可编辑输入框切到另一个时，输入法会完整下滑收起、再重新上滑弹出一次；切换后输入正常，只是视觉上闪一下。
+
+- 仅在两个可编辑框之间切换时出现；点空白处收起键盘属正常行为；换第三方输入法表现相同；与 `android:windowSoftInputMode` 无关。
+- 成因方向已定位：两套主题的输入框都是 Compose 的 value 版 `MiuixTextField` / `OutlinedTextField`，焦点切换必然经过 Compose 的 `TextInputService`，固定执行 `imm.restartInput()` + `showSoftInput()`；换成新的 `state` 输入框管线同样会 restart（`AndroidPlatformTextInputSession` 内部也调用 `textInputService.startInput()` / `stopInput()`），所以换 API 并不能消除该现象。
+- 可行修法是结构性的：弹窗内只保留一个真实可聚焦输入框，其余行用同款样式但不可聚焦，使焦点永不转移。当前**先搁置未实施**。

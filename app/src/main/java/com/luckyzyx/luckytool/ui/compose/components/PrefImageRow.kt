@@ -87,6 +87,7 @@ fun PrefImageRow(
     enabled: Boolean = true,
     previewHeight: Dp = DefaultPreviewHeight,
     onClick: (() -> Unit)? = null,
+    onLongClick: (() -> Unit)? = null,
 ) {
     PrefRowInset(modifier) {
         PrefRow(
@@ -95,6 +96,7 @@ fun PrefImageRow(
             enabled = enabled,
             trailing = { PrefImagePreview(path = path, height = previewHeight) },
             onClick = onClick,
+            onLongClick = onLongClick,
         )
     }
 }
@@ -203,6 +205,7 @@ fun PrefVideoRow(
     enabled: Boolean = true,
     previewHeight: Dp = DefaultPreviewHeight,
     onClick: (() -> Unit)? = null,
+    onLongClick: (() -> Unit)? = null,
 ) {
     PrefRowInset(modifier) {
         PrefRow(
@@ -211,6 +214,7 @@ fun PrefVideoRow(
             enabled = enabled,
             trailing = { PrefVideoPreview(path = path, height = previewHeight) },
             onClick = onClick,
+            onLongClick = onLongClick,
         )
     }
 }

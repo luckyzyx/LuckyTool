@@ -66,7 +66,7 @@ internal val categoryBadges: Map<String, CategoryBadge> = mapOf(
     "miscellaneous" to CategoryBadge(Icons.Filled.MoreHoriz, Color(0xFF607D8B)),
 )
 
-/** 页标题：对齐旧功能树 root 标题（apps/others = App 标签；related/statusbar = 覆盖表） */
+/** 页标题：登记在覆盖表的页取固定字符串资源，其余取宿主 App 标签（android_related 取 "android" 的标签） */
 internal fun pageTitle(context: Context, spec: ScopePageSpec): String {
     ScopePageRegistry.treeTitleRes[spec.pageKey]?.let { return context.getString(it) }
     val pack = spec.displayPackName ?: if (spec.pageKey == "android_related") "android" else spec.packName
@@ -94,13 +94,13 @@ internal data class FunctionPageSnapshot(
  * 图标预热通过 [AppIconCache.state] 只在主线程调用（该缓存自身不是线程安全的）。
  *
  * 新鲜度：进入功能页 / 搜索页时调用 [revalidate]，先用旧快照渲染、后台重算、算完替换 ——
- * 与旧实现「每次进入都重算」的数据新鲜度一致，但不再阻塞首帧。
+ * 数据新鲜度与「每次进入都重算」一致，但不再阻塞首帧。
  */
 internal object FunctionPageData {
 
     private val _snapshot = MutableStateFlow<FunctionPageSnapshot?>(null)
 
-    /** null = 还没算过一次（此时界面按空数据处理，等同旧实现的加载中） */
+    /** null = 还没算过一次（此时界面按空数据处理，相当于加载中） */
     val snapshot: StateFlow<FunctionPageSnapshot?> = _snapshot.asStateFlow()
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
@@ -129,7 +129,7 @@ internal object FunctionPageData {
                 withContext(Dispatchers.Main.immediate) { warmIcons(context, built.rows, iconSizePx) }
             } catch (t: Throwable) {
                 // buildIndex 内部逐页兜底，这里兜住 isVisible / 标题 / 图标包名等外层逻辑，
-                // 失败时保留上一份快照（旧实现是整棵树变空）
+                // 失败时保留上一份快照，不让整棵树变空
                 LogUtils.e("FunctionPageData", "build", t.toString(), true)
             } finally {
                 building.set(false)

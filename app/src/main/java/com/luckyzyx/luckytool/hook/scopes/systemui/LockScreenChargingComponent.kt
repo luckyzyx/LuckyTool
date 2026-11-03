@@ -114,10 +114,8 @@ object LockScreenChargingComponent : YukiBaseHooker() {
             //OplusBatteryService: 注册监听器缓存瓦数, 与 StatusBarBatteryInfoNotify 一致
             //该广播在 C15 C16 C17 框架中均携带 chargewattage/cpa_charge_wattage
             registerAppLifecycle {
-                onCreate {
-                    registerReceiver("android.intent.action.ADDITIONAL_BATTERY_CHANGED") { _: Context, intent: Intent ->
-                        onWattageBroadcast(intent)
-                    }
+                registerReceiver("android.intent.action.ADDITIONAL_BATTERY_CHANGED") { _: Context, intent: Intent ->
+                    onWattageBroadcast(intent)
                 }
             }
 

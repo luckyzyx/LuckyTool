@@ -1,24 +1,21 @@
 package com.luckyzyx.luckytool.hook.scopes.alarmclock
 
-import android.annotation.SuppressLint
 import android.content.Context
-import android.graphics.Bitmap
 import android.os.Handler
 import android.text.SpannableStringBuilder
 import android.text.style.ForegroundColorSpan
 import android.widget.RemoteViews
-import androidx.collection.arrayMapOf
 import androidx.core.graphics.toColorInt
 import com.highcapable.kavaref.KavaRef.Companion.resolve
+import com.highcapable.kavaref.condition.type.Modifiers
 import com.highcapable.kavaref.extension.classOf
-import com.highcapable.yukihookapi.extension.kavaref.hook
+import com.highcapable.yukihookapi.extension.kavaref.intercept
 import com.highcapable.yukihookapi.extension.kavaref.toClass
 import com.highcapable.yukihookapi.extension.kavaref.toClassOrNull
 import com.highcapable.yukihookapi.hook.entity.YukiBaseHooker
-import com.highcapable.yukihookapi.hook.factory.injectModuleResources
+import com.highcapable.yukihookapi.hook.log.YLog
 import com.luckyzyx.luckytool.utils.DexkitUtils.checkDataList
 import com.luckyzyx.luckytool.utils.ModulePrefs
-import com.luckyzyx.luckytool.utils.safeOfNull
 import org.lsposed.lsparanoid.Obfuscate
 import org.luckypray.dexkit.DexKitBridge
 
@@ -28,14 +25,11 @@ class AlarmClockWidget(val dexKitBridge: DexKitBridge) : YukiBaseHooker() {
     companion object {
         private lateinit var redMode: String
 
-        private val BaseClockWidget = "com.coloros.widget.smallweather.BaseClockWidget"
+        //红 layout 依赖的自定义 View，同时也是各版本红一开关方法的稳定锚点字符串
+        private val OplusTextClock = "com.oplus.widget.OplusTextClock"
+
+        //没有红 layout 的老版本（如 COS12.1）直接给组件文本里的 "1" 上色
         private val OnePlusWidget = "com.coloros.widget.smallweather.OnePlusWidget"
-//        val OppoWeather = "com.coloros.widget.smallweather.OppoWeather"
-//        val OppoWeatherSingle = "com.coloros.widget.smallweather.OppoWeatherSingle"
-//        val OppoWeatherVertical = "com.coloros.widget.smallweather.OppoWeatherVertical"
-//        val OppoWeatherMultiVertical = "com.coloros.widget.smallweather.OppoWeatherMultiVertical"
-//        val RealmeWeather = "com.coloros.widget.smallweather.RealmeWeather"
-//        val OxygenWeatherSingle = "com.coloros.widget.smallweather.OxygenWeatherSingle"
 
         fun setCharRedOne(format: CharSequence): CharSequence {
             val sp = SpannableStringBuilder(format)
@@ -51,205 +45,80 @@ class AlarmClockWidget(val dexKitBridge: DexKitBridge) : YukiBaseHooker() {
             return sp
         }
 
-        /**
-         * 新版时钟V14+替换RemoteViews
-         * @receiver Class<*>
-         */
-        fun YukiBaseHooker.hookBaseClock(clazz: Class<Any>) {
-            clazz.resolve().apply {
-                method {
-                    emptyParameters()
-                    returnType = RemoteViews::class
-                }.forEach {
-                    it.hook {
-                        after {
-                            val context = (field { type = Context::class }.firstOrNull()
-                                ?: field { type = Context::class; superclass() }.firstOrNull())
-                                ?.of(instance)?.get<Context>() ?: return@after
-                            context.injectModuleResources()
-                            val res = result<RemoteViews>() ?: return@after
-                            val layoutName = safeOfNull {
-                                context.resources.getResourceEntryName(res.layoutId)
-                            } ?: return@after
-                            val replaceLayoutId = getReplaceLayout(context, layoutName, redMode)
-                                ?: return@after
-                            result = RemoteViews(context.packageName, replaceLayoutId)
-                        }
-                    }
-                }
-            }
-        }
+        /** 红一开关方法，类名与方法名每版都不同，一律取自 DexKit 定位结果 */
+        private data class RedOneGate(val className: String, val methodName: String)
 
-        /**
-         * 获取要替换的布局
-         * @param context Context
-         * @param layoutName String
-         * @param redMode String
-         * @return Int?
-         */
-        @SuppressLint("DiscouragedApi")
-        fun getReplaceLayout(context: Context, layoutName: String, redMode: String): Int? {
-            val isRedMode = layoutName.contains("red")
-            val replaceLayoutName = when (redMode) {
-                "1" -> if (isRedMode) null else convertLayoutResMap(layoutName, redMode)
-                "2" -> if (isRedMode) convertLayoutResMap(layoutName, redMode) else null
-                else -> null
-            } ?: return null
-            val resId =
-                context.resources.getIdentifier(replaceLayoutName, "layout", context.packageName)
-            return resId.takeIf { it != 0 }
-        }
-
-        /**
-         * 转换布局名
-         * @param layoutName String
-         * @param redMode String
-         * @return String?
-         */
-        fun convertLayoutResMap(layoutName: String, redMode: String): String? {
-            val layouts = arrayMapOf(
-                //OnePlusWidget
-                "op_double_clock_red_widget_land_view" to "op_double_clock_widget_land_view",
-                "op_double_clock_red_widget_view" to "op_double_clock_widget_view",
-                "one_plus_red_widget_land_view" to "one_plus_widget_land_view",
-                "one_plus_red_widget_view" to "one_plus_widget_view",
-                "table_op_double_clock_red_widget_land_view" to "table_op_double_clock_widget_land_view",
-                "table_op_double_clock_red_widget_view" to "table_op_double_clock_widget_view",
-                "table_one_plus_red_widget_land_view" to "table_one_plus_widget_land_view",
-                "table_one_plus_red_widget_view" to "table_one_plus_widget_view",
-                //OppoWeather
-                "hor_double_clock_red_widget_land_view_t" to "hor_double_clock_widget_land_view_t",
-                "hor_double_clock_red_widget_view_t" to "hor_double_clock_widget_view_t",
-                "hor_single_clock_red_widget_land_view_t" to "hor_single_clock_widget_land_view_t",
-                "hor_single_clock_red_widget_view_t" to "hor_single_clock_widget_view_t",
-                "table_hor_double_clock_red_widget_land_view_t" to "table_hor_double_clock_widget_land_view_t",
-                "table_hor_double_clock_red_widget_view_t" to "table_hor_double_clock_widget_view_t",
-                "table_hor_single_clock_red_widget_land_view_t" to "table_hor_single_clock_widget_land_view_t",
-                "table_hor_single_clock_red_widget_view_t" to "table_hor_single_clock_widget_view_t",
-                //OppoWeatherSingle
-                "one_line_double_clock_red_widget_land_view_t" to "one_line_double_clock_widget_land_view_t",
-                "one_line_double_clock_red_widget_view_t" to "one_line_double_clock_widget_view_t",
-                "one_line_hor_single_clock_red_widget_land_view_t" to "one_line_hor_single_clock_widget_land_view_t",
-                "one_line_hor_single_clock_red_widget_view_t" to "one_line_hor_single_clock_widget_view_t",
-                "table_one_line_double_clock_red_widget_land_view_t" to "table_one_line_double_clock_widget_land_view_t",
-                "table_one_line_double_clock_red_widget_view_t" to "table_one_line_double_clock_widget_view_t",
-                "table_one_line_hor_single_clock_red_widget_land_view_t" to "table_one_line_hor_single_clock_widget_land_view_t",
-                "table_one_line_hor_single_clock_red_widget_view_t" to "table_one_line_hor_single_clock_widget_view_t",
-                //OppoWeatherVertical
-                "vertical_double_clock_red_widget_land_view_t" to "vertical_double_clock_widget_land_view_t",
-                "vertical_double_clock_red_widget_view_t" to "vertical_double_clock_widget_view_t",
-                "vertical_single_clock_red_widget_land_view_t" to "vertical_single_clock_widget_land_view_t",
-                "vertical_single_clock_red_widget_view_t" to "vertical_single_clock_widget_view_t",
-                "table_vertical_double_clock_red_widget_land_view_t" to "table_vertical_double_clock_widget_land_view_t",
-                "table_vertical_double_clock_red_widget_view_t" to "table_vertical_double_clock_widget_view_t",
-                "table_vertical_single_clock_red_widget_land_view_t" to "table_vertical_single_clock_widget_land_view_t",
-                //OppoWeatherMultiVertical
-                "hor_double_clock_red_widget_land_view_t" to "hor_double_clock_widget_land_view_t",
-                "hor_double_clock_red_widget_view_t" to "hor_double_clock_widget_view_t",
-                "hor_single_clock_red_widget_land_view_t" to "hor_single_clock_widget_land_view_t",
-                "vertical_multi_clock_red_widget_view_t" to "vertical_multi_clock_widget_view_t",
-                "table_hor_double_clock_red_widget_land_view_t" to "table_hor_double_clock_widget_land_view_t",
-                "table_hor_double_clock_red_widget_view_t" to "table_hor_double_clock_widget_view_t",
-                "table_hor_single_clock_red_widget_land_view_t" to "table_hor_single_clock_widget_land_view_t",
-                "table_vertical_multi_clock_red_widget_view_t" to "table_vertical_multi_clock_widget_view_t",
-                //OxygenWeatherSingle
-
-                //RealmeWeather
-
-            )
-            val filter = layouts.filter { it.key == layoutName || it.value == layoutName }
-            return filter.firstNotNullOfOrNull {
-                when (redMode) {
-                    "1" -> it.key
-                    "2" -> it.value
-                    else -> null
-                }
-            }
-        }
+        /** 按红 layout 依赖的 OplusTextClock 字符串反查宿主选 layout 的开关方法 */
+        private fun DexKitBridge.findRedOneGates(): List<RedOneGate> = runCatching {
+            findMethod {
+                matcher { usingStrings(OplusTextClock) }
+            }.apply {
+                checkDataList("AlarmClockRedOne", onlyOne = false)
+            }.mapNotNull { data ->
+                if (data.paramTypeNames.isNotEmpty() || data.returnTypeName != "boolean") null
+                else RedOneGate(data.className, data.methodName)
+            }.distinct()
+        }.getOrNull().orEmpty()
     }
-
 
     override fun onHook() {
         redMode = preferences(ModulePrefs).getString("alarmclock_widget_redone_mode", "0")
         dataChannel.wait<String>("alarmclock_widget_redone_mode") { redMode = it }
 
-        val onePlusWidget = OnePlusWidget.toClassOrNull()?.resolve() ?: return
+        //先找宿主的红一开关：找到说明该版本有红 layout，拦开关即可，不需要替换 layout
+        val gates = dexKitBridge.findRedOneGates()
+        if (gates.isNotEmpty()) {
+            loadHooker(RedOneSwitch(gates))
+            return
+        }
+        //找不到开关说明该版本没有红 layout，退回文本上色
+        hookTextRedOne()
+    }
+
+    /** 没有红 layout 的版本：拦截组件生成时间的 CharSequence，把 "1" 上色 */
+    private fun hookTextRedOne() {
+        val onePlusWidget = OnePlusWidget.toClassOrNull()?.resolve()
+        if (onePlusWidget == null) {
+            YLog.debug("AlarmClockTextRedOne -> 未找到 OnePlusWidget，跳过", tag = "AlarmClockWidget")
+            return
+        }
         when {
-            onePlusWidget.optional(true).firstMethodOrNull {
+            onePlusWidget.firstMethodOrNull {
                 parameters(String::class, String::class)
                 returnType = CharSequence::class
             } != null -> loadHooker(AlarmClock12)
 
-            onePlusWidget.optional(true).firstMethodOrNull {
+            onePlusWidget.firstMethodOrNull {
                 returnType = RemoteViews::class
             } != null -> loadHooker(AlarmClock130(dexKitBridge))
-
-            else -> {
-                val baseClockWidget = BaseClockWidget.toClassOrNull()
-                if (baseClockWidget != null) loadHooker(BaseAlarmClock14)
-                else loadHooker(BaseAlarmClock15(dexKitBridge))
-            }
         }
     }
 
-    private class BaseAlarmClock15(val dexKitBridge: DexKitBridge) : YukiBaseHooker() {
+    private class RedOneSwitch(private val gates: List<RedOneGate>) : YukiBaseHooker() {
         override fun onHook() {
-            //Source BaseClockWidget
-            //Source OnePlusWidget / OppoWeather / OppoWeatherSingle / OppoWeatherVertical
-            dexKitBridge.findClass {
-                matcher {
-                    fields {
-                        addForType(classOf<Class<*>>())
-                        addForType(classOf<Context>())
-                        addForType(classOf<Bitmap>())
-                        addForType(classOf<Boolean>())
-                        addForType(classOf<Int>())
-                    }
-                    methods {
-                        add {
-                            paramCount(0)
-                            returnType(classOf<Int>())
-                        }
-                        add {
-                            paramTypes(classOf<RemoteViews>(), classOf<Int>(), classOf<String>())
-                            usingStrings("setTimeZone")
-                        }
-                        add {
-                            paramTypes(
-                                classOf<RemoteViews>(),
-                                classOf<Boolean>(),
-                                classOf<Boolean>()
-                            )
-//                            usingStrings(
-//                                "com.oplus.widget.smallweather.WEATHER_CLICK",
-//                                "com.oplus.widget.smallweather.RESIDENT_CITY_CLICK"
-//                            )
-                        }
-                        add {
-                            paramTypes(
-                                classOf<RemoteViews>(),
-                                classOf<Int>(),
-                                classOf<CharSequence>()
-                            )
-                            usingStrings("setFormat24Hour", "setFormat12Hour")
-                        }
-                        add {
-                            paramTypes(classOf<RemoteViews>())
-                            usingStrings("com.oplus.widget.smallweather.REFRESH_CLICK")
+            gates.forEach { gate ->
+                //宿主布局选择点走的是 O() { if (k()) return false; return i() } 这类包装方法，k() 恒为 false，
+                //最终都会落到这里拦的开关方法上，所以只拦一个方法就能覆盖全部布局选择点
+                val clazz = gate.className.toClassOrNull() ?: return@forEach
+                clazz.resolve().method {
+                    name = gate.methodName
+                    parameterCount = 0
+                    returnType = classOf<Boolean>()
+                    modifiers(Modifiers.STATIC, Modifiers.PUBLIC)
+                }.forEach { method ->
+                    method.intercept {
+                        when (redMode) {
+                            //跟随系统
+                            "0" -> proceed()
+                            //强制红一，宿主缺 OplusTextClock 时选中红 layout 会 inflate 崩溃，退回原逻辑
+                            "1" -> if (OplusTextClock.toClassOrNull() != null) true else proceed()
+                            //强制普通
+                            "2" -> false
+                            else -> proceed()
                         }
                     }
                 }
-            }.apply {
-                checkDataList("AlarmClock145")
-                hookBaseClock(single().name.toClass())
             }
-        }
-    }
-
-    private object BaseAlarmClock14 : YukiBaseHooker() {
-        override fun onHook() {
-            //Source BaseClockWidget
-            hookBaseClock(BaseClockWidget.toClass())
         }
     }
 
@@ -283,14 +152,14 @@ class AlarmClockWidget(val dexKitBridge: DexKitBridge) : YukiBaseHooker() {
                         parameters { it[0] == classOf<Context>() && it[1] == classOf<String>() }
                         parameterCount { it in 2..3 }
                     }.forEach {
-                        it.hook {
-                            after {
-                                if (redMode == "0") return@after
-                                result = when (redMode) {
-                                    "1" -> result<CharSequence>()?.let { s -> setCharRedOne(s) }
-                                    "2" -> result<CharSequence>().toString()
-                                    else -> result
-                                }
+                        it.intercept {
+                            if (redMode == "0") return@intercept proceed()
+                            val raw = proceed()
+                            val text = raw as? CharSequence ?: return@intercept raw
+                            when (redMode) {
+                                "1" -> setCharRedOne(text)
+                                "2" -> text.toString()
+                                else -> raw
                             }
                         }
                     }
@@ -302,18 +171,18 @@ class AlarmClockWidget(val dexKitBridge: DexKitBridge) : YukiBaseHooker() {
     private object AlarmClock12 : YukiBaseHooker() {
         override fun onHook() {
             //Source OnePlusWidget
-            "com.coloros.widget.smallweather.OnePlusWidget".toClass().resolve().apply {
+            OnePlusWidget.toClass().resolve().apply {
                 firstMethod {
                     parameters(String::class, String::class)
                     returnType = CharSequence::class
-                }.hook {
-                    after {
-                        if (redMode == "0") return@after
-                        result = when (redMode) {
-                            "1" -> result<CharSequence>()?.let { setCharRedOne(it) }
-                            "2" -> result<CharSequence>().toString()
-                            else -> result
-                        }
+                }.intercept {
+                    if (redMode == "0") return@intercept proceed()
+                    val raw = proceed()
+                    val text = raw as? CharSequence ?: return@intercept raw
+                    when (redMode) {
+                        "1" -> setCharRedOne(text)
+                        "2" -> text.toString()
+                        else -> raw
                     }
                 }
             }

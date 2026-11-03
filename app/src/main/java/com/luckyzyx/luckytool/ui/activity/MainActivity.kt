@@ -50,7 +50,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
 import org.lsposed.lsparanoid.Obfuscate
 
-/** 激活检测超时（ms）：框架服务绑定是异步的，超过这个时间仍未激活就按未激活处理（对齐迁移前 awaitReady 的默认值） */
+/** 激活检测超时（ms）：框架服务绑定是异步的，超过这个时间仍未激活就按未激活处理 */
 private const val ActivationCheckTimeoutMillis = 3000L
 
 @Obfuscate
@@ -186,7 +186,7 @@ open class MainActivity : AppCompatActivity() {
             gateDialog = GateDialogSpec(
                 title = getString(R.string.unsupported_os),
                 message = getString(R.string.unsupported_os_summary),
-                // 与迁移前一致：osCode > 0 时额外提供「忽略」，点击只关闭对话框
+                // osCode > 0（系统有上报版本号）时额外提供「忽略」，点击只关闭对话框、不改其它门
                 neutralLabel = if (osCode > 0) getString(R.string.ignore) else null,
             )
         }

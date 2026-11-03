@@ -201,6 +201,7 @@
     <string name="StatusBarWIFIIcon">Icona Wi-Fi</string>
     <string name="remove_wifi_data_inout">Rimuovi \"in-out\" Dati Wi-Fi</string>
     <string name="force_display_wifi_standard">Visualizzazione forzata degli standard del segnale WIFI</string>
+    <string name="force_display_wifi_standard_summary">Dopo la modifica è necessario riavviare i processi di destinazione perché abbia effetto</string>
     <string name="StatusBarMobileDataIcon">Icona Dati Mobile</string>
     <string name="remove_mobile_data_icon">Rimuovi icona dati mobile</string>
     <string name="remove_mobile_data_inout">Rimuovi \"in-out\" Dati Mobile</string>
@@ -807,6 +808,7 @@
     <string name="remove_side_slider">Rimuovi cursore laterale</string>
     <string name="remove_side_slider_black_background">Rimuovi lo sfondo nero del cursore laterale</string>
     <string name="remove_rotate_screen_button">Rimuovi il pulsante rotazione dello schermo</string>
+    <string name="custom_rotate_screen_button_size">Dimensione personalizzata del pulsante di rotazione dello schermo</string>
     <string name="remove_back_gesture_confirmation_limit">Remove the back gesture confirmation limit</string>
     <string name="CustomSideSliderIcon">Icona cursore laterale personalizzata</string>
     <string name="replace_side_slider_icon_switch">Sostituisci l\'icona del dispositivo di scorrimento laterale</string>
@@ -967,7 +969,6 @@
     <string name="adb_port">Porta ADB</string>
     <string name="enable_remote_adb_debugging">Abilita debug ADB remoto</string>
     <string name="adb_debug_port_cannot_null">La porta di debug ADB non può essere nulla</string>
-    <string name="adb_tv_tip">Premi a lungo per copiare</string>
     <!--LOG Fragment-->
     <string name="log_save_success">LOG Salvato Con Successo!</string>
     <string name="log_save_failed">LOG Salvato Fallito!</string>
@@ -1003,6 +1004,12 @@
     <string name="appinfo_last_updated_time">Ora ultimo aggiornamento</string>
     <string name="appinfo_target_sdk">Destinazione SDK</string>
     <string name="appinfo_system_app">App di sistema</string>
+    <string name="appinfo_app_count">%1$d app</string>
+    <string name="appinfo_selected_count">%1$d selezionate</string>
+    <string name="appinfo_select_all">Seleziona tutto</string>
+    <string name="appinfo_deselect_all">Deseleziona tutto</string>
+    <string name="appinfo_no_match">Nessuna app corrispondente</string>
+    <string name="appinfo_clear_search">Cancella ricerca</string>
     <!--Intent-->
     <string name="custom_config_app_intent_list">Elenco di intenzioni dell\'app di configurazione personalizzata</string>
     <string name="select_all_share_intent">Seleziona tutti gli intenzioni di condivisione</string>

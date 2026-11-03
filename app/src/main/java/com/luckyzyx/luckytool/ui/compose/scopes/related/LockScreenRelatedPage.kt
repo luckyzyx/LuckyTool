@@ -11,8 +11,10 @@ import com.luckyzyx.luckytool.utils.getOSVersionCode
 import com.luckyzyx.luckytool.utils.sendPrefsValue
 
 /**
- * 锁屏相关页（旧 ui.fragment.scopes.related.LockScreenRelated 的 Compose 等价物）。
- * 逐项对齐：键、默认值、条件可见性、notify（sendPrefsValue）。
+ * 锁屏相关页：锁屏状态栏组件、时钟组件、充电动画、按钮与事件开关，写入
+ * com.android.systemui 等四个作用域。
+ * 每项都显式声明键、默认值与条件可见性（osCode = getOSVersionCode 判 OS 版本）；
+ * 时钟重绘模式写值后经 sendPrefsValue("com.oplus.keyguard.clock.base") 通知宿主。
  */
 object LockScreenRelatedPage {
 

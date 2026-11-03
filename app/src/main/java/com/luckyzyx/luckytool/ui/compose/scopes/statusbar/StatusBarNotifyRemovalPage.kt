@@ -7,9 +7,10 @@ import com.luckyzyx.luckytool.utils.arraySummaryLine
 import com.luckyzyx.luckytool.utils.getOSVersionCode
 
 /**
- * 状态栏通知移除页（旧 ui.fragment.scopes.statusbar.StatusBarNotifyRemoval 的 Compose 等价物）。
- * 逐项对齐：键、默认值、条件可见性（osCode = getOSVersionCode）、summary 多行提示。
- * 旧 remove_smart_rapid_charging_notification 条目 isVisible = false 从未展示，按规则丢弃。
+ * 状态栏通知移除页：顶栏通知、VPN、高性能模式等常驻通知的移除开关，写入
+ * com.android.systemui、com.oplus.battery、com.coloros.phonemanager。
+ * 每项都显式声明键、默认值与条件可见性（osCode = getOSVersionCode 判 OS 版本），摘要用多行提示。
+ * remove_smart_rapid_charging_notification 不可见（isVisible = false）且从未展示，故未收录。
  */
 object StatusBarNotifyRemovalPage {
 
@@ -72,7 +73,7 @@ object StatusBarNotifyRemovalPage {
                 c.getString(R.string.need_restart_system)
             ),
         )
-        // 旧 remove_smart_rapid_charging_notification：isVisible = false，从未展示，按规则丢弃
+        // remove_smart_rapid_charging_notification 不可见且从未展示，故未收录
         switch(
             key = "remove_notifications_for_mute_notifications",
             title = c.getString(R.string.remove_notifications_for_mute_notifications),

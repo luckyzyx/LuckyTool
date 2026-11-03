@@ -26,7 +26,7 @@ object Config {
         BYPASS_BLOCK
     )
 
-    //LuckyTool：配置统一存 ModulePrefs 组，键名沿用上游，由 BaseHook 在 hook 前绑定
+    //LuckyTool：配置统一存 ModulePrefs 组，键名即上方各常量的值，由 BaseHook 在 hook 前绑定
     @Volatile
     private var preferences: YukiHookPreferences? = null
 

@@ -36,16 +36,16 @@ import top.yukonga.miuix.kmp.basic.TextField as MiuixTextField
  * 应用列表页（ZoomWindowPage / MultiAppPage）共享的双线组件。
  *
  * 与 prefCard（`components/PrefCards.kt`）同一分派哲学：分派统一读 [LocalUiMode]，
- * 只在渲染体里分派到 Miuix 或 Material 原语，取值与两线旧实现逐字一致，
+ * 只在渲染体里分派到 Miuix 或 Material 原语，两条渲染线的取值完全一致，
  * 避免每个页面各写一份 Material / Miuix 变体。
  */
 
 /**
  * 搜索框与下方列表之间的间距。
  *
- * 复刻迁移前的取景：旧 `fragment_mutli_app_applist_layout.xml` 用 `SwipeRefreshLayout`
- * 的 `paddingVertical = 12dp` 把列表与搜索框隔开；迁移到 Compose 后搜索框与 LazyColumn
- * 成了同一 Column 的兄弟节点、彼此没有间距，视觉上"贴"在一起（用户反馈的原始症状）。
+ * 搜索框与 LazyColumn 是同一 Column 的兄弟节点，Compose 不替它们保留间距：
+ * 不留这层空白，两者在视觉上会直接"贴"在一起。
+ * 取 12dp 而不用分节间距：搜索框与列表属于同一组内容，只需分开、不需要分成两组。
  */
 internal val AppListContentGap = 12.dp
 

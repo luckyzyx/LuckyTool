@@ -55,6 +55,13 @@ object LauncherBackupUtils {
     /** 备份目录（相对外部存储根）：Download/LuckyTool/launcher_backup */
     const val RELATIVE_DIR = "Download/LuckyTool/launcher_backup"
 
+    /**
+     * 子目录名（[RELATIVE_DIR] 的最后一段）。
+     * 宿主退到自己的外部媒体目录时用同一个名字：`Android/media/<桌面包名>/launcher_backup`，
+     * app 侧列快照前会把里面的文件搬回 [RELATIVE_DIR]，两边名字一致才认得出哪些是本工具的快照。
+     */
+    const val MEDIA_SUBDIR = "launcher_backup"
+
     /** 容器格式版本（meta.json 的 version）；恢复时版本不符直接拒绝，避免读旧格式半截数据 */
     const val PAYLOAD_VERSION = 1
 
@@ -466,6 +473,90 @@ object LauncherBackupTransfer {
                 ?: emptyList()
         }.getOrDefault(emptyList())
         return LauncherBackupUtils.parseSnapshotFiles(entries)
+    }
+
+    /**
+     * 把宿主（launcher）进程兜底写下的快照搬进正式备份目录。
+     *
+     * 为什么需要：宿主进程没有存储权限，MediaStore 投稿一旦失败（真机报
+     * `Unknown URL content://media/external_primary/downloads`），它只能退到自己的外部媒体目录
+     * `Android/media/<桌面包名>/launcher_backup`。那个目录不需要任何权限、文件管理器里也看得见，
+     * 但不在本模块的备份目录里，界面既恢复不了也删不掉，等于一份看不见的备份。
+     * app 侧有全盘访问权限，所以在这里做一次搬运：搬成功就删掉桌面侧的副本，不留两份。
+     *
+     * 搬运失败（读不了、删不掉、长度对不上）一律保留原文件并记日志：已有的备份绝不能因为搬运出错而消失。
+     * 宿主退到 `Android/data/<桌面包名>/files` 的那一档搬不动（Android 11+ 禁止跨应用读 data 目录），
+     * 那种快照只能在日志里看到位置，恢复需要手动取出——所以它排在最后。
+     */
+    suspend fun adoptHostFallback(context: Context): Unit = withContext(Dispatchers.IO) {
+        val dir = backupDir()
+        if (!dir.isDirectory && !dir.mkdirs()) return@withContext
+        renameLegacyArchives(dir)
+        for (source in hostFallbackDirs(context)) {
+            val files = runCatching {
+                source.listFiles()?.filter {
+                    it.isFile && LauncherBackupUtils.isSnapshotFileName(it.name) && it.length() > 0L
+                }
+            }.getOrNull() ?: continue
+            for (file in files) {
+                val target = File(dir, file.name)
+                runCatching {
+                    if (!target.exists()) {
+                        file.inputStream().use { input -> target.outputStream().use { input.copyTo(it) } }
+                    }
+                    if (target.length() != file.length()) error("长度不一致")
+                    if (!file.delete()) error("无法删除桌面侧副本")
+                }.onFailure { throwable ->
+                    // 搬不过去的残片不能留在正式目录里冒充一份可用快照
+                    if (target.isFile && target.length() != file.length()) runCatching { target.delete() }
+                    LogUtils.d(
+                        "LauncherBackupTransfer", "adoptHostFallback",
+                        "搬运 " + file.name + " 失败: " + (throwable.message ?: throwable.javaClass.simpleName),
+                    )
+                }
+            }
+        }
+    }
+
+    /**
+     * 把历史上被媒体库改写掉扩展名的 .zip 快照改回 [LauncherBackupUtils.FILE_SUFFIX]。
+     *
+     * 老版本自动备份投稿时声明的 MIME 是 application/zip，媒体库按 MIME 把 .ltbackup 换成了 .zip，
+     * 这类文件列表与恢复都不认，等于凭空少了一份备份。只改「去掉 .zip 后仍是合法快照名」的文件，
+     * 目录里的其它 zip（用户自己放的）一律不动；改不动就留在原处并记日志。
+     */
+    private fun renameLegacyArchives(dir: File) {
+        val legacy = runCatching {
+            dir.listFiles()?.filter {
+                it.isFile && it.name.endsWith(".zip") && it.length() > 0L &&
+                    LauncherBackupUtils.parseSnapshotName(it.name.removeSuffix(".zip")) != null
+            }
+        }.getOrNull() ?: return
+        for (file in legacy) {
+            val target = File(dir, file.name.removeSuffix(".zip") + LauncherBackupUtils.FILE_SUFFIX)
+            runCatching {
+                if (target.exists()) error("目标已存在 " + target.name)
+                if (!file.renameTo(target)) error("重命名失败")
+                LogUtils.d("LauncherBackupTransfer", "renameLegacyArchives", "改回扩展名 " + file.name)
+            }.onFailure { throwable ->
+                LogUtils.d(
+                    "LauncherBackupTransfer", "renameLegacyArchives",
+                    "改写 " + file.name + " 失败: " + (throwable.message ?: throwable.javaClass.simpleName),
+                )
+            }
+        }
+    }
+
+    /** 宿主兜底目录候选：只列 app 侧读得到的那一档（媒体目录） */
+    @Suppress("DEPRECATION")
+    private fun hostFallbackDirs(context: Context): List<File> {
+        val launcher = runCatching { LauncherBackupUtils.detectLauncherPackage(context) }.getOrNull()
+            ?: return emptyList()
+        val media = File(
+            Environment.getExternalStorageDirectory(),
+            "Android/media/" + launcher + "/" + LauncherBackupUtils.MEDIA_SUBDIR,
+        )
+        return listOf(media)
     }
 
     /** 手动/自动备份：建空文件 → 授权 → 下发 backup → 等文件变非空 → 走保留策略 */

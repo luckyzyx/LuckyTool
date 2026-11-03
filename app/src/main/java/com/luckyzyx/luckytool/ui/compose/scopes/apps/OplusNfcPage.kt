@@ -5,7 +5,7 @@ import com.luckyzyx.luckytool.ui.compose.scopes.ScopePageSpec
 import com.luckyzyx.luckytool.utils.ModulePrefs
 
 /**
- * 旧 ui.fragment.scopes.apps.OplusNfc 的 Compose 等价物（机械翻译 loadPreferences）。
+ * NFC 页：扫描到 NFC 标签时自动点击的开关，改动需要重启系统。
  */
 object OplusNfcPage {
 

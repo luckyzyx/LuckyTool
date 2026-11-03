@@ -149,6 +149,7 @@ object StatusBarNetWorkSpeed : YukiBaseHooker() {
     @Obfuscate
     object NetWorkSpeedView : YukiBaseHooker() {
         var layoutMode = preferences(ModulePrefs).getString("statusbar_network_layout", "0")
+
         //用户字体是独立开关：与布局模式无关，默认模式下也可以只开字体
         var userTypeface =
             preferences(ModulePrefs).getBoolean("statusbar_network_user_typeface", false)
@@ -166,6 +167,34 @@ object StatusBarNetWorkSpeed : YukiBaseHooker() {
         var bMargin = 0
         var tMargin = 0
 
+        private var baselineResolved = false
+
+        /**
+         * 解析系统自带的双行基线间距（number 的 bottomMargin / unit 的 topMargin）。
+         *
+         * 热重载只会重建 hooker 实例，已经存在的 NetworkSpeedView 不会再走 onFinishInflate，
+         * 把解析放在 onFinishInflate 里会让重载后的基线间距归零，两行网速就贴在一起了。
+         * 因此改为首次真正需要间距时再解析。
+         */
+        @SuppressLint("DiscouragedApi")
+        private fun ensureBaselineMargins(view: View) {
+            if (baselineResolved) return
+            val res = view.resources
+            //5.34dp
+            bMargin = res.getDimensionPixelSize(
+                res.getIdentifier(
+                    "network_speed_number_margin_bottom", "dimen", this@NetWorkSpeedView.packageName
+                )
+            )
+            //7.34dp
+            tMargin = res.getDimensionPixelSize(
+                res.getIdentifier(
+                    "network_speed_unit_margin_top", "dimen", this@NetWorkSpeedView.packageName
+                )
+            )
+            baselineResolved = true
+        }
+
         @SuppressLint("DiscouragedApi")
         override fun onHook() {
             dataChannel.wait<String>("statusbar_network_layout") { layoutMode = it }
@@ -178,7 +207,7 @@ object StatusBarNetWorkSpeed : YukiBaseHooker() {
             dataChannel.wait<Int>("set_network_speed_padding_bottom") { getBottomPadding = it }
             dataChannel.wait<Int>("set_network_speed_double_row_spacing") { setInterval = it }
 
-            val NetworkSpeedIconState = VariousClass(
+            val networkSpeedIconState = VariousClass(
                 "com.oplusos.systemui.ext.BaseNetworkControllerImplExt\$NetworkSpeedIconState", //C12
                 "com.oplus.systemui.statusbar.phone.netspeed.NetworkSpeedIconState"
             ).toClass()
@@ -188,7 +217,7 @@ object StatusBarNetWorkSpeed : YukiBaseHooker() {
                 "com.oplusos.systemui.statusbar.widget.NetworkSpeedView",
                 "com.oplus.systemui.statusbar.phone.netspeed.widget.NetworkSpeedView" //C14 C15
             ).toClass().resolve().apply {
-                val mState = firstField { type = NetworkSpeedIconState }
+                val mState = firstField { type = networkSpeedIconState }
                 val mBlocked = firstFieldOrNull { name = "mBlocked" }
                 val mSpeed = firstField { name = "mSpeed" }
                 val mSpeedNumber = firstField { name = "mSpeedNumber" }
@@ -202,22 +231,6 @@ object StatusBarNetWorkSpeed : YukiBaseHooker() {
 
                 firstMethod { name = "onFinishInflate" }.hook {
                     after {
-                        val viewGroup = instance<ViewGroup>()
-                        //5.34dp
-                        if (bMargin <= 0) bMargin = viewGroup.resources.getDimensionPixelSize(
-                            viewGroup.resources.getIdentifier(
-                                "network_speed_number_margin_bottom",
-                                "dimen", this@NetWorkSpeedView.packageName
-                            )
-                        )
-                        //7.34dp
-                        if (tMargin <= 0) tMargin = viewGroup.resources.getDimensionPixelSize(
-                            viewGroup.resources.getIdentifier(
-                                "network_speed_unit_margin_top",
-                                "dimen", this@NetWorkSpeedView.packageName
-                            )
-                        )
-
                         defaultTypeface = if (mDefaultBoldFont != null) {
                             mDefaultBoldFont.copy().of(instance).get<Typeface>()
                         } else {
@@ -285,6 +298,7 @@ object StatusBarNetWorkSpeed : YukiBaseHooker() {
                                 mSpeedUnitTv?.visibility = View.VISIBLE
 
                                 val (rx, tx) = calcTotal()
+                                ensureBaselineMargins(viewGroup)
 
                                 mSpeedNumberTv?.apply {
                                     text = getTotalFormatSpeed(

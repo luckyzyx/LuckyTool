@@ -204,6 +204,7 @@
     <string name="StatusBarWIFIIcon">Biểu tượng WIFI</string>
     <string name="remove_wifi_data_inout">Xóa thông tin dữ liệu WiFi</string>
     <string name="force_display_wifi_standard">Bắt buộc hiện các tiêu chuẩn tín hiệu WIFI</string>
+    <string name="force_display_wifi_standard_summary">Cần khởi động lại quy trình phạm vi sau khi chuyển để có hiệu lực</string>
     <string name="StatusBarMobileDataIcon">Biểu tượng dữ liệu di động</string>
     <string name="remove_mobile_data_icon">Xóa biểu tượng dữ diệu di động</string>
     <string name="remove_mobile_data_inout">Xóa mũi tên dữ liệu di động</string>
@@ -810,6 +811,7 @@
     <string name="remove_side_slider">Xóa thanh trượt bên</string>
     <string name="remove_side_slider_black_background">Xóa nền đen của thanh trượt bên</string>
     <string name="remove_rotate_screen_button">Tắt nút xoay màn hình</string>
+    <string name="custom_rotate_screen_button_size">Tùy chỉnh kích thước nút xoay màn hình</string>
     <string name="remove_back_gesture_confirmation_limit">Xóa giới hạn xác nhận thao tác vuốt về</string>
     <string name="CustomSideSliderIcon">Tùy chỉnh biểu tượng thanh trượt bên</string>
     <string name="replace_side_slider_icon_switch">Thay thế công tắc biểu tượng thanh trượt bên</string>
@@ -970,7 +972,6 @@
     <string name="adb_port">Cổng ADB</string>
     <string name="enable_remote_adb_debugging">Bật gỡ lỗi ADB từ xa</string>
     <string name="adb_debug_port_cannot_null">Cổng gỡ lỗi ADB không được để trống</string>
-    <string name="adb_tv_tip">Nhấn và giữ để sao chép</string>
     <!--LOG Fragment-->
     <string name="log_save_success">Nhật ký lưu thành công!</string>
     <string name="log_save_failed">Nhật ký lưu thất bại!</string>
@@ -1006,6 +1007,12 @@
     <string name="appinfo_last_updated_time">Lần cập nhật cuối</string>
     <string name="appinfo_target_sdk">Mục tiêu SDK</string>
     <string name="appinfo_system_app">Ứng dụng hệ thống</string>
+    <string name="appinfo_app_count">%1$d ứng dụng</string>
+    <string name="appinfo_selected_count">Đã chọn %1$d</string>
+    <string name="appinfo_select_all">Chọn tất cả</string>
+    <string name="appinfo_deselect_all">Bỏ chọn tất cả</string>
+    <string name="appinfo_no_match">Không có ứng dụng phù hợp</string>
+    <string name="appinfo_clear_search">Xóa tìm kiếm</string>
     <!--Intent-->
     <string name="custom_config_app_intent_list">Tùy chỉnh danh sách ý định của ứng dụng</string>
     <string name="select_all_share_intent">Chọn tất cả các mục đích chia sẻ</string>

@@ -25,8 +25,9 @@ import com.luckyzyx.luckytool.utils.getOSVersionCode
 import com.luckyzyx.luckytool.utils.sendPrefsValue
 
 /**
- * 状态栏相关页（旧 ui.fragment.scopes.related.StatusBarRelated 的 Compose 等价物）。
- * 含 8 个页面入口 + 状态栏事件 + 音乐流体云（osCode 33/35 门控）。
+ * 状态栏相关页：8 个状态栏子页入口 + 状态栏事件 + 音乐流体云（osCode 33/35 门控）。
+ * 流体云涟漪开关的目标进程与页面不同，走 onChange 经
+ * sendPrefsValue("com.oplus.mediacontroller") 通知。
  */
 object StatusBarRelatedPage {
 

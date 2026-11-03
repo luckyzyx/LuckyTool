@@ -5,7 +5,7 @@ import com.luckyzyx.luckytool.ui.compose.scopes.ScopePageSpec
 import com.luckyzyx.luckytool.utils.ModulePrefs
 
 /**
- * 云服务页（旧 ui.fragment.scopes.apps.OplusCloudService 的 Compose 等价物）。
+ * 云服务页：解除网络限速与关闭强制备份应用列表的开关。
  */
 object OplusCloudServicePage {
 

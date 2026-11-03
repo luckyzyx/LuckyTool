@@ -9,8 +9,9 @@ import com.luckyzyx.luckytool.utils.arraySummaryLine
 import com.luckyzyx.luckytool.utils.getOSVersionCode
 
 /**
- * 状态栏电池页（旧 ui.fragment.scopes.statusbar.StatusBarBattery 的 Compose 等价物）。
- * 逐项对齐：键、默认值、条件可见性、notify（sendPrefsValue）。
+ * 状态栏电池页：电量百分号、电量文字字体样式/字号与电池详情通知的显示项（写入 com.android.systemui）。
+ * 每项都显式声明键、默认值与条件可见性（osCode = getOSVersionCode 判 OS 版本）；
+ * 标了 notify 的项写值后经 sendPrefsValue("com.android.systemui") 通知宿主。
  */
 object StatusBarBatteryPage {
 

@@ -5,7 +5,7 @@ import com.luckyzyx.luckytool.ui.compose.scopes.ScopePageSpec
 import com.luckyzyx.luckytool.utils.ModulePrefs
 
 /**
- * Alpha Backup Pro 页（旧 ui.fragment.scopes.others.AlphaBackupPro 的 Compose 等价物）。
+ * Alpha Backup Pro 页：Pro 授权检查的屏蔽开关（写入 com.ruet_cse_1503050.ragib.appbackup.pro）。
  */
 object AlphaBackupProPage {
 

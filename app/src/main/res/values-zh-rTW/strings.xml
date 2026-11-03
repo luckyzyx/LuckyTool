@@ -324,6 +324,7 @@
     <string name="StatusBarWIFIIcon">WiFi 圖示</string>
     <string name="remove_wifi_data_inout">移除WiFi資料箭頭</string>
     <string name="force_display_wifi_standard">強制顯示 WIFI 訊號標準</string>
+    <string name="force_display_wifi_standard_summary">切換後需重啟作用域才能生效</string>
 
     <string name="StatusBarMobileDataIcon">移動資料圖示</string>
     <string name="remove_mobile_data_icon">移除移動資料圖示</string>
@@ -1060,6 +1061,7 @@
     <string name="remove_side_slider">移除側滑條</string>
     <string name="remove_side_slider_black_background">移除側滑條黑色背景</string>
     <string name="remove_rotate_screen_button">移除旋轉螢幕按鈕</string>
+    <string name="custom_rotate_screen_button_size">自定義旋轉螢幕按鈕大小</string>
     <string name="remove_back_gesture_confirmation_limit">移除返回手勢確認限制</string>
 
     <string name="CustomSideSliderIcon">自定義側滑條圖示</string>
@@ -1286,7 +1288,9 @@
     <string name="adb_port">埠</string>
     <string name="enable_remote_adb_debugging">開啟遠端ADB除錯</string>
     <string name="adb_debug_port_cannot_null">ADB除錯埠不可為空</string>
-    <string name="adb_tv_tip">長按複製</string>
+    <string name="adb_port_out_of_range">埠需在 1 - 65535 之間</string>
+    <string name="adb_debug_operation_failed">操作失敗，請重試</string>
+    <string name="copy">複製</string>
 
     <!--LOG Fragment-->
     <string name="log_save_success">LOG 儲存成功！</string>
@@ -1331,6 +1335,12 @@
     <string name="appinfo_last_updated_time">最近更新時間</string>
     <string name="appinfo_target_sdk">Target 版本</string>
     <string name="appinfo_system_app">系統應用</string>
+    <string name="appinfo_app_count">共 %1$d 個應用</string>
+    <string name="appinfo_selected_count">已選 %1$d</string>
+    <string name="appinfo_select_all">全選</string>
+    <string name="appinfo_deselect_all">取消全選</string>
+    <string name="appinfo_no_match">沒有符合的應用</string>
+    <string name="appinfo_clear_search">清除搜尋</string>
 
     <!--Intent-->
     <string name="custom_config_app_intent_list">自定義配置App意圖列表</string>
@@ -1533,6 +1543,8 @@
     <string name="launcher_backup_category_actions">操作</string>
     <string name="launcher_backup_category_history">快照歷史</string>
     <string name="launcher_backup_status">快照狀態</string>
+    <string name="launcher_backup_last_auto">上次自動備份</string>
+    <string name="launcher_backup_auto_never">還沒有自動備份過</string>
     <string name="launcher_backup_busy">執行中…</string>
     <string name="launcher_backup_waiting_launcher">等待桌面程序就緒…（第 %1$d/%2$d 次嘗試）</string>
     <string name="launcher_backup_no_launcher">未檢測到桌面包名：請在 LSPosed 中為本模組勾選桌面作用域，並先開啟一次桌面</string>
@@ -1565,7 +1577,7 @@
     <string name="launcher_backup_err_io">檔案讀寫失敗：%1$s</string>
     <string name="launcher_backup_err_invalid">這個檔案不是有效的桌面佈局備份</string>
     <string name="launcher_backup_auto">自動備份</string>
-    <string name="launcher_backup_auto_summary">由桌面程序按週期間隔自查並直接生成快照（寫到 Download），需要 LSPosed 中啟用桌面作用域；手動「立即備份」也會從此刻重新計時</string>
+    <string name="launcher_backup_auto_summary">由桌面程序按週期間隔自查並直接生成快照（預設寫到 Download，投稿失敗時退到桌面媒體目錄並自動搬回），需要 LSPosed 中啟用桌面作用域；手動「立即備份」也會從此刻重新計時</string>
     <string name="launcher_backup_interval">備份週期</string>
     <string name="launcher_backup_interval_summary">當前：%s</string>
     <string name="launcher_backup_interval_6h">6 小時</string>

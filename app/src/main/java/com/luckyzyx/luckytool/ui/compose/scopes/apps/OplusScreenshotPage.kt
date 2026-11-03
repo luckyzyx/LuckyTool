@@ -6,8 +6,8 @@ import com.luckyzyx.luckytool.utils.ModulePrefs
 import com.luckyzyx.luckytool.utils.arraySummaryLine
 
 /**
- * 旧 ui.fragment.scopes.apps.OplusScreenshot 的 Compose 等价物（机械翻译 loadPreferences）。
- * 旧 remove_system_screenshot_delay 与 remove_screenshot_privacy_limit 均 isVisible=false 从未展示，按规则丢弃。
+ * 截屏页：FLAG_SECURE 屏蔽、长截图页数上限、PNG 保存格式与包名 MD5 加密的开关。
+ * remove_system_screenshot_delay 与 remove_screenshot_privacy_limit 均 isVisible=false 从不展示，本页不含这两项。
  */
 object OplusScreenshotPage {
 

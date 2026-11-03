@@ -5,7 +5,7 @@ import com.luckyzyx.luckytool.ui.compose.scopes.ScopePageSpec
 import com.luckyzyx.luckytool.utils.ModulePrefs
 
 /**
- * 软件商店页（旧 ui.fragment.scopes.apps.OplusMarket 的 Compose 等价物）。
+ * 软件商店页：去掉开屏页、更新下载页、我的页面应用推荐，以及默认展开更新列表。
  */
 object OplusMarketPage {
 

@@ -10,8 +10,8 @@ import com.luckyzyx.luckytool.utils.checkResolveActivity
 import com.topjohnwu.superuser.ShellUtils
 
 /**
- * QuickEntry 页（旧 ui.fragment.others.QuickEntryFragment 的 Compose 等价物）。
- * 纯点击入口页：两个分类 + 若干条件可见（checkResolveActivity）的跳转项。
+ * QuickEntry 页：两个分类下的纯点击跳转入口。
+ * 每项先用 checkResolveActivity 判断目标 Activity 是否存在，不存在就不显示。
  */
 object QuickEntryPage {
 

@@ -5,9 +5,10 @@ import android.graphics.Point
 import java.lang.reflect.Field
 
 /**
- * 上游 CorePatch 用于改写静态 final 字段的工具。
+ * 改写静态 final 字段的工具（[setStaticBoolean]）。
  *
- * 迁移自 libxposed 版本 XposedHelper.setStaticBoolean，仅依赖反射与 sun.misc.Unsafe，与钩子框架无关。
+ * 不经过钩子框架，只用反射与 sun.misc.Unsafe：先取字段在 ART 中的内部偏移
+ * （先试 Field.offset，取不到就用 Point 字段探测后按 4 字节步长扫描定位），再按该偏移直接写入新值。
  */
 internal object UnsafeField {
 

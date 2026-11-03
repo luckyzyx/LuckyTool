@@ -1,10 +1,7 @@
 package com.luckyzyx.luckytool.ui.compose.pages
 
 import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -29,6 +26,8 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.luckyzyx.luckytool.R
 import com.luckyzyx.luckytool.service.GlobalFuncService
 import com.luckyzyx.luckytool.ui.activity.MainActivity
+import com.luckyzyx.luckytool.ui.compose.components.ActionListDialog
+import com.luckyzyx.luckytool.ui.compose.components.ChoiceItem
 import com.luckyzyx.luckytool.ui.compose.components.MainPageActivationEffect
 import com.luckyzyx.luckytool.ui.service.XposedServiceBridge
 import com.luckyzyx.luckytool.ui.shell.ShellBadgeState
@@ -57,7 +56,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import top.yukonga.miuix.kmp.basic.BasicComponent
 import top.yukonga.miuix.kmp.basic.ButtonDefaults
 import top.yukonga.miuix.kmp.overlay.OverlayDialog
 import java.io.File
@@ -310,55 +308,37 @@ fun HomePage(activity: MainActivity, isCurrentPage: Boolean = true) {
     }
 
     if (showDonateList) {
-        val donateList = arrayListOf(
-            stringResource(R.string.qq),
-            stringResource(R.string.wechat),
-            stringResource(R.string.alipay),
+        // 原来 Miuix / Material 两条线各手写一遍同一个动作列表，差异只在容器组件；
+        // 统一交给 ActionListDialog 后只剩一份数据，且改用 key 而不是下标路由：
+        // patreon 在非中文环境插在末尾，用下标判断就得依赖列表长度，key 不随插入位置漂移。
+        val donateItems = arrayListOf(
+            ChoiceItem(key = "qq", title = stringResource(R.string.qq)),
+            ChoiceItem(key = "wechat", title = stringResource(R.string.wechat)),
+            ChoiceItem(key = "alipay", title = stringResource(R.string.alipay)),
         )
-        if (!zh) donateList.add(3, stringResource(R.string.patreon))
-        when (LocalUiMode.current) {
-            UiMode.Miuix -> OverlayDialog(
-                show = true,
-                onDismissRequest = { showDonateList = false },
-            ) {
-                Column {
-                    donateList.forEachIndexed { index, label ->
-                        BasicComponent(
-                            title = label,
-                            insideMargin = PaddingValues(horizontal = 24.dp, vertical = 14.dp),
-                            onClick = {
-                                showDonateList = false
-                                when (index) {
-                                    0, 1, 2 -> showQrType = index
-                                    else -> context.openUrl("https://www.patreon.com/LuckyTool")
-                                }
-                            },
-                        )
-                    }
-                }
-            }
-
-            UiMode.Material -> AlertDialog(
-                onDismissRequest = { showDonateList = false },
-                text = {
-                    Column {
-                        donateList.forEachIndexed { index, label ->
-                            Text(
-                                label,
-                                Modifier.fillMaxWidth().clickable {
-                                    showDonateList = false
-                                    when (index) {
-                                        0, 1, 2 -> showQrType = index
-                                        else -> context.openUrl("https://www.patreon.com/LuckyTool")
-                                    }
-                                }.padding(horizontal = 24.dp, vertical = 14.dp),
-                            )
-                        }
-                    }
-                },
-                confirmButton = {},
-            )
+        // 非中文环境追加 patreon（原实现在下标 3 处 add，等价于追加到末尾）
+        if (!zh) {
+            donateItems.add(ChoiceItem(key = "patreon", title = stringResource(R.string.patreon)))
         }
+        ActionListDialog(
+            // 原来两条线都没有标题，ActionListDialog 的 title 必填，用捐赠入口自己的文案补上
+            title = stringResource(R.string.donate),
+            items = donateItems,
+            onDismiss = { showDonateList = false },
+            onSelect = { item ->
+                // 先关弹层再执行动作，保持原实现里 showDonateList = false 在路由之前的顺序
+                showDonateList = false
+                when (item.key) {
+                    "qq" -> showQrType = 0
+                    "wechat" -> showQrType = 1
+                    "alipay" -> showQrType = 2
+                    "patreon" -> context.openUrl("https://www.patreon.com/LuckyTool")
+                }
+            },
+            // 原两条线都没有可点的按钮（Miuix 无按钮行、Material 是空 confirmButton），
+            // 所以这里不造「取消」：showCancel = false 让整行动作区都不画
+            showCancel = false,
+        )
     }
 
     if (showQrType >= 0) {

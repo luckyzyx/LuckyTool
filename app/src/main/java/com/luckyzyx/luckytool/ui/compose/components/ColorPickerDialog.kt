@@ -10,7 +10,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -54,6 +53,7 @@ import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.core.graphics.toColorInt
 import com.luckyzyx.luckytool.R
+import com.luckyzyx.luckytool.ui.compose.components.miuix.MiuixDialogScrollBody
 import com.luckyzyx.luckytool.ui.theme.LocalUiMode
 import com.luckyzyx.luckytool.ui.theme.UiMode
 import top.yukonga.miuix.kmp.basic.ButtonDefaults
@@ -66,8 +66,12 @@ import top.yukonga.miuix.kmp.basic.TextFieldDefaults as MiuixTextFieldDefaults
 import kotlin.math.roundToInt
 import kotlin.math.sqrt
 
-/** SV 面板宽高比，保持与旧实现一致的 360:288 */
-private const val SV_ASPECT_RATIO = 360f / 288f
+/**
+ * SV 面板高度。原先按屏幕宽度取 360:288 宽高比，宽度决定高度后整块弹层过高 —— 键盘弹出时
+ * 可用高度只剩「屏幕 − 键盘」，底对齐的弹层会被顶出屏幕顶部，面板下面的渐变条与十六进制
+ * 输入框同屏看不到。改成固定 216dp：宽度仍占满，高度可控，压扁后正文滚动即可读完。
+ */
+private val SvPanelHeight = 216.dp
 
 /** 色相条 / 透明度条高度（胶囊） */
 private val BarHeight = 28.dp
@@ -288,28 +292,29 @@ private fun MiuixColorPickerDialog(
         title = stringResource(R.string.select_color),
         onDismissRequest = onDismiss,
     ) {
-        Column(Modifier.fillMaxWidth()) {
+        // 正文可滚动、按钮行固定：键盘弹出后可用高度被压缩，靠后的输入框与按钮行会被压成 0 高度
+        MiuixDialogScrollBody(
+            actions = {
+                Row(
+                    Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                ) {
+                    MiuixTextButton(
+                        text = stringResource(android.R.string.cancel),
+                        onClick = onDismiss,
+                        modifier = Modifier.weight(1f),
+                    )
+                    Spacer(Modifier.width(20.dp))
+                    MiuixTextButton(
+                        text = stringResource(android.R.string.ok),
+                        onClick = { onColorSelected(state.colorInt, formatHex(state.colorInt)) },
+                        modifier = Modifier.weight(1f),
+                        colors = ButtonDefaults.textButtonColorsPrimary(),
+                    )
+                }
+            },
+        ) {
             ColorPickerBody(state)
-
-            Spacer(Modifier.height(12.dp))
-
-            Row(
-                Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-            ) {
-                MiuixTextButton(
-                    text = stringResource(android.R.string.cancel),
-                    onClick = onDismiss,
-                    modifier = Modifier.weight(1f),
-                )
-                Spacer(Modifier.width(20.dp))
-                MiuixTextButton(
-                    text = stringResource(android.R.string.ok),
-                    onClick = { onColorSelected(state.colorInt, formatHex(state.colorInt)) },
-                    modifier = Modifier.weight(1f),
-                    colors = ButtonDefaults.textButtonColorsPrimary(),
-                )
-            }
         }
     }
 }
@@ -398,7 +403,7 @@ private fun SvPickers(state: ColorPickerUiState, modifier: Modifier = Modifier) 
             state = state,
             modifier = Modifier
                 .fillMaxWidth()
-                .aspectRatio(SV_ASPECT_RATIO)
+                .height(SvPanelHeight)
                 .clip(RoundedCornerShape(PanelCornerRadius)),
         )
 

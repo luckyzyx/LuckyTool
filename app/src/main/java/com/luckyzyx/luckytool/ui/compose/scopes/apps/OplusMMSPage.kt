@@ -8,7 +8,8 @@ import com.luckyzyx.luckytool.utils.SDK
 import com.luckyzyx.luckytool.utils.checkPackName
 
 /**
- * 短信页（旧 ui.fragment.scopes.apps.OplusMMS 的 Compose 等价物）。
+ * 短信页：去掉验证码悬浮窗、输入框菜单与卡片营销按钮的开关。
+ * 整页要求 SDK >= Android 13 且装有 com.android.mms（见 spec.isVisible），验证码悬浮窗项也在同一 SDK 条件下渲染。
  */
 object OplusMMSPage {
 

@@ -6,25 +6,10 @@ import android.content.ComponentName
 import android.content.Context
 import android.content.pm.PackageManager
 import androidx.collection.ArrayMap
-import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.combinedClickable
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.calculateEndPadding
 import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.selection.selectable
-import androidx.compose.foundation.selection.toggleable
-import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.AddToHomeScreen
 import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowRight
@@ -33,45 +18,37 @@ import androidx.compose.material.icons.rounded.Adb
 import androidx.compose.material.icons.rounded.GridView
 import androidx.compose.material.icons.rounded.Speed
 import androidx.compose.material.icons.rounded.TouchApp
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Checkbox
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.RadioButton
-import androidx.compose.material3.Switch
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
+import androidx.compose.material3.IconButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
-import androidx.compose.runtime.toMutableStateList
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.unit.dp
 import androidx.core.graphics.drawable.toBitmap
-import com.luckyzyx.luckytool.IAdbDebugController
+import com.highcapable.kavaref.extension.classOf
 import com.luckyzyx.luckytool.ITileServiceController
 import com.luckyzyx.luckytool.R
 import com.luckyzyx.luckytool.service.AdbService
 import com.luckyzyx.luckytool.service.TilesService
 import com.luckyzyx.luckytool.ui.activity.MainActivity
+import com.luckyzyx.luckytool.ui.compose.components.ActionListDialog
+import com.luckyzyx.luckytool.ui.compose.components.AdbDebugDialog
 import com.luckyzyx.luckytool.ui.compose.components.AppPickerDialog
+import com.luckyzyx.luckytool.ui.compose.components.ChoiceItem
+import com.luckyzyx.luckytool.ui.compose.components.MultiChoiceDialog
+import com.luckyzyx.luckytool.ui.compose.components.SingleChoiceDialog
 import com.luckyzyx.luckytool.ui.compose.components.LocalScopeTopInset
+import com.luckyzyx.luckytool.ui.compose.components.MainPageActivationEffect
+import com.luckyzyx.luckytool.ui.compose.components.OtherTopBarActions
 import com.luckyzyx.luckytool.ui.compose.components.PrefIcon
 import com.luckyzyx.luckytool.ui.compose.components.ScopeScreen
-import com.luckyzyx.luckytool.ui.compose.components.OtherTopBarActions
-import com.luckyzyx.luckytool.ui.compose.components.MainPageActivationEffect
 import com.luckyzyx.luckytool.ui.compose.components.material.MaterialPageScaffold
 import com.luckyzyx.luckytool.ui.theme.LocalUiMode
 import com.luckyzyx.luckytool.ui.theme.UiMode
@@ -84,26 +61,16 @@ import com.luckyzyx.luckytool.utils.RestartMenuUtils
 import com.luckyzyx.luckytool.utils.SDK
 import com.luckyzyx.luckytool.utils.SettingsPrefs
 import com.luckyzyx.luckytool.utils.ShortcutUtils
-import com.luckyzyx.luckytool.utils.copyStr
 import com.luckyzyx.luckytool.utils.showToast
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
-import top.yukonga.miuix.kmp.basic.BasicComponent
-import top.yukonga.miuix.kmp.basic.ButtonDefaults
-import top.yukonga.miuix.kmp.overlay.OverlayDialog
-import top.yukonga.miuix.kmp.preference.CheckboxLocation
-import top.yukonga.miuix.kmp.preference.CheckboxPreference
-import top.yukonga.miuix.kmp.preference.RadioButtonPreference
-import top.yukonga.miuix.kmp.preference.SwitchPreference
-import top.yukonga.miuix.kmp.basic.Text as MiuixText
-import top.yukonga.miuix.kmp.basic.TextButton as MiuixTextButton
-import top.yukonga.miuix.kmp.basic.TextField as MiuixTextField
+import top.yukonga.miuix.kmp.basic.Icon as MiuixIcon
+import top.yukonga.miuix.kmp.basic.IconButton as MiuixIconButton
+import top.yukonga.miuix.kmp.icon.MiuixIcons
+import top.yukonga.miuix.kmp.icon.extended.Pin
 
 /**
- * 其他页（旧 OtherFragment 的 Compose 等价实现）。
- * 卡片顺序、可见性条件、对话框行为与旧实现逐项对齐。
+ * 其他页：磁贴控制器、远程 ADB、快捷方式、触摸采样率、快捷入口与 DEX 优化等工具入口。
+ * 卡片顺序固定；每张卡能否操作取决于控制器是否连上（tileController / adbController），
+ * 交互结果用对话框呈现（showTileDialog / showAdbDialog / showShortcutDialog / showTouchDialog）。
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -111,7 +78,6 @@ fun OtherPage(activity: MainActivity, isCurrentPage: Boolean = true) {
     val context = LocalContext.current
     val settings = remember { PrefState.of(context, SettingsPrefs) }
     val otherPrefs = remember { PrefState.of(context, OtherPrefs) }
-    val scope = rememberCoroutineScope()
     // 使用存活控制器作为恢复种子；分页保留本页状态，切换标签不重新加载。
     var tileController by remember { mutableStateOf(TilesService.getCachedController()) }
     var adbController by remember { mutableStateOf(AdbService.getCachedController()) }
@@ -228,10 +194,15 @@ fun OtherPage(activity: MainActivity, isCurrentPage: Boolean = true) {
                 }
                 if (hasAdbNow) {
                     group()
+                    // ADB 服务是异步连上的，这一组会在页面已显示后才出现：稳定 itemKey + animate
+                    // 让它淡入/淡出，而不是在列表末尾直接弹出来（默认槽位 key 会随上方条件行漂移，
+                    // animateItem 认不出是同一行）。
                     click(
                         title = remoteAdbTitle,
                         summary = remoteAdbSummary,
                         leading = { PrefIcon(Icons.Rounded.Adb) },
+                        itemKey = "other_adb",
+                        animate = true,
                         onClick = { showAdbDialog = true },
                     )
                 }
@@ -275,14 +246,14 @@ fun OtherPage(activity: MainActivity, isCurrentPage: Boolean = true) {
         ShortcutDialog(context) { showShortcutDialog = false }
     }
     if (showTouchDialog && tileController?.checkTouchMode() == true) {
-        TouchSamplingRateDialog(context, settings, tileController) { showTouchDialog = false }
+        TouchSamplingRateDialog(settings, tileController) { showTouchDialog = false }
     }
     if (showAdbDialog && adbController != null) {
-        AdbDebugDialog(context, otherPrefs, adbController, scope) { showAdbDialog = false }
+        AdbDebugDialog(otherPrefs, adbController) { showAdbDialog = false }
     }
 }
 
-/** 模块内置磁贴列表：请求添加到控制中心（旧 initQuickTile） */
+/** 模块内置磁贴列表：枚举带 BIND_QUICK_SETTINGS_TILE 权限的服务，选中项请求添加到控制中心 */
 @SuppressLint("NewApi")
 @Composable
 private fun TileListDialog(context: Context, onDismiss: () -> Unit) {
@@ -296,529 +267,127 @@ private fun TileListDialog(context: Context, onDismiss: () -> Unit) {
             it.permission == "android.permission.BIND_QUICK_SETTINGS_TILE"
         }?.toList() ?: emptyList()
     }
-    val statusBarManager = remember { context.getSystemService(StatusBarManager::class.java) }
+    val statusBarManager = remember { context.getSystemService(classOf<StatusBarManager>()) }
     // 添加结果回调内没有 Composer，字符串先在这里取一次
     val addFailText = stringResource(R.string.add_fail)
     val addRepeatText = stringResource(R.string.add_repeat)
     val addSuccessText = stringResource(R.string.add_success)
-    when (LocalUiMode.current) {
-        UiMode.Miuix -> OverlayDialog(
-            show = true,
-            onDismissRequest = onDismiss,
-        ) {
-            Column {
-                tileInfos.forEach { serviceInfo ->
-                    val label = serviceInfo.loadLabel(context.packageManager).toString()
-                    BasicComponent(
-                        title = label,
-                        insideMargin = PaddingValues(horizontal = 24.dp, vertical = 12.dp),
-                        onClick = {
-                            val icon = serviceInfo.loadIcon(context.packageManager)
-                            statusBarManager.requestAddTileService(
-                                ComponentName(context.packageName, serviceInfo.name),
-                                label,
-                                android.graphics.drawable.Icon.createWithBitmap(icon.toBitmap()),
-                                context.mainExecutor
-                            ) { resultCode ->
-                                when (resultCode) {
-                                    StatusBarManager.TILE_ADD_REQUEST_RESULT_TILE_NOT_ADDED ->
-                                        context.showToast("$label $addFailText")
-
-                                    StatusBarManager.TILE_ADD_REQUEST_RESULT_TILE_ALREADY_ADDED ->
-                                        context.showToast("$label $addRepeatText")
-
-                                    StatusBarManager.TILE_ADD_REQUEST_RESULT_TILE_ADDED ->
-                                        context.showToast("$label $addSuccessText")
-                                }
-                            }
-                            onDismiss()
-                        },
-                    )
-                }
-            }
+    val items = remember(tileInfos) {
+        tileInfos.map { serviceInfo ->
+            ChoiceItem(
+                key = serviceInfo.name,
+                title = serviceInfo.loadLabel(context.packageManager).toString(),
+            )
         }
+    }
+    ActionListDialog(
+        title = stringResource(R.string.tile_list),
+        items = items,
+        onDismiss = onDismiss,
+        onSelect = { item ->
+            val serviceInfo = tileInfos.firstOrNull { it.name == item.key }
+            if (serviceInfo != null) {
+                val icon = serviceInfo.loadIcon(context.packageManager)
+                statusBarManager.requestAddTileService(
+                    ComponentName(context.packageName, serviceInfo.name),
+                    item.title,
+                    android.graphics.drawable.Icon.createWithBitmap(icon.toBitmap()),
+                    context.mainExecutor
+                ) { resultCode ->
+                    when (resultCode) {
+                        StatusBarManager.TILE_ADD_REQUEST_RESULT_TILE_NOT_ADDED ->
+                            context.showToast("${item.title} $addFailText")
 
-        UiMode.Material -> AlertDialog(
-            onDismissRequest = onDismiss,
-            confirmButton = {},
-            text = {
-                Column {
-                    tileInfos.forEach { serviceInfo ->
-                        val label = serviceInfo.loadLabel(context.packageManager).toString()
-                        Text(
-                            text = label,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clickable {
-                                    val icon = serviceInfo.loadIcon(context.packageManager)
-                                    statusBarManager.requestAddTileService(
-                                        ComponentName(context.packageName, serviceInfo.name),
-                                        label,
-                                        android.graphics.drawable.Icon.createWithBitmap(icon.toBitmap()),
-                                        context.mainExecutor
-                                    ) { resultCode ->
-                                        when (resultCode) {
-                                            StatusBarManager.TILE_ADD_REQUEST_RESULT_TILE_NOT_ADDED ->
-                                                context.showToast("$label $addFailText")
+                        StatusBarManager.TILE_ADD_REQUEST_RESULT_TILE_ALREADY_ADDED ->
+                            context.showToast("${item.title} $addRepeatText")
 
-                                            StatusBarManager.TILE_ADD_REQUEST_RESULT_TILE_ALREADY_ADDED ->
-                                                context.showToast("$label $addRepeatText")
-
-                                            StatusBarManager.TILE_ADD_REQUEST_RESULT_TILE_ADDED ->
-                                                context.showToast("$label $addSuccessText")
-                                        }
-                                    }
-                                    onDismiss()
-                                }
-                                .padding(vertical = 12.dp)
-                        )
+                        StatusBarManager.TILE_ADD_REQUEST_RESULT_TILE_ADDED ->
+                            context.showToast("${item.title} $addSuccessText")
                     }
                 }
-            },
-        )
-    }
+            }
+            onDismiss()
+        },
+    )
 }
 
-/** 模块快捷方式：多选启用 + Pin 到桌面（旧 shortcut 卡点击） */
+/** 模块快捷方式：多选启用 + Pin 到桌面 */
 @Composable
 private fun ShortcutDialog(context: Context, onDismiss: () -> Unit) {
     val shortcutUtils = remember { ShortcutUtils(context) }
     val beans = remember { shortcutUtils.getDefaultShortcutBean() }
-    val checked = remember(beans) {
-        val enabledIds = shortcutUtils.getEnabledShortcutList().map { it.id }.toSet()
-        beans.map { bean -> enabledIds.contains(bean.key) }.toMutableStateList()
+    val enabledKeys = remember(beans) {
+        shortcutUtils.getEnabledShortcutList().map { it.id }.toSet()
     }
-    when (LocalUiMode.current) {
-        UiMode.Miuix -> OverlayDialog(
-            show = true,
-            title = stringResource(R.string.set_module_shortcuts),
-            onDismissRequest = onDismiss,
-        ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .heightIn(max = 360.dp)
-                    .verticalScroll(rememberScrollState()),
-            ) {
-                beans.forEachIndexed { i, bean ->
-                    CheckboxPreference(
-                        title = bean.label,
-                        checked = checked[i],
-                        onCheckedChange = { checked[i] = it },
-                        checkboxLocation = CheckboxLocation.End,
-                    )
+    val items = remember(beans) {
+        beans.map { bean -> ChoiceItem(key = bean.key, title = bean.label) }
+    }
+    val pinContentDescription = stringResource(R.string.pin_shortcut)
+    // 固定的图标两条 UI 线共用同一个图钉，只有按钮外壳按模式区分，
+    // 否则同一行在 Miuix / Material 下会显示成两个不同含义的图标
+    val pinIcon = MiuixIcons.Pin
+    // Pin 改为行尾自定义动作：固定被点的那一项，不再用当前勾选反推
+    val pinAction: (@Composable (ChoiceItem) -> Unit)? = if (
+        shortcutUtils.shortcutManager.isRequestPinShortcutSupported
+    ) {
+        { item ->
+            val onClick: () -> Unit = {
+                beans.firstOrNull { it.key == item.key }?.let { bean ->
+                    shortcutUtils.requestPinShortcut(bean.toShortcutInfo(context))
                 }
             }
-            Row(modifier = Modifier.padding(top = 12.dp)) {
-                if (shortcutUtils.shortcutManager.isRequestPinShortcutSupported) {
-                    MiuixTextButton(
-                        text = "Pin",
-                        onClick = {
-                            val selected = beans.indices.filter { checked[it] }
-                            if (selected.size > 1) {
-                                context.showToast("Only select one item")
-                            } else {
-                                selected.firstOrNull()?.let { index ->
-                                    shortcutUtils.requestPinShortcut(
-                                        beans[index].toShortcutInfo(
-                                            context
-                                        )
-                                    )
-                                }
-                            }
-                        },
-                        modifier = Modifier.weight(1f),
-                    )
-                    Spacer(Modifier.width(20.dp))
+            when (LocalUiMode.current) {
+                UiMode.Miuix -> MiuixIconButton(onClick = onClick) {
+                    MiuixIcon(imageVector = pinIcon, contentDescription = pinContentDescription)
                 }
-                MiuixTextButton(
-                    text = stringResource(android.R.string.cancel),
-                    onClick = onDismiss,
-                    modifier = Modifier.weight(1f),
-                )
-                Spacer(Modifier.width(20.dp))
-                MiuixTextButton(
-                    text = stringResource(android.R.string.ok),
-                    onClick = {
-                        beans.forEachIndexed { i, bean ->
-                            shortcutUtils.setShortcutStatus(beans, bean, checked[i])
-                        }
-                        onDismiss()
-                    },
-                    modifier = Modifier.weight(1f),
-                    colors = ButtonDefaults.textButtonColorsPrimary(),
-                )
+
+                UiMode.Material -> IconButton(onClick = onClick) {
+                    Icon(imageVector = pinIcon, contentDescription = pinContentDescription)
+                }
             }
         }
-
-        UiMode.Material -> AlertDialog(
-            onDismissRequest = onDismiss,
-            title = { Text(stringResource(R.string.set_module_shortcuts)) },
-            text = {
-                Column {
-                    beans.forEachIndexed { i, bean ->
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .toggleable(
-                                    value = checked[i],
-                                    role = Role.Checkbox,
-                                    onValueChange = { checked[i] = it },
-                                )
-                                .padding(vertical = 12.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                        ) {
-                            Checkbox(checked = checked[i], onCheckedChange = { checked[i] = it })
-                            Spacer(Modifier.width(8.dp))
-                            Text(bean.label)
-                        }
-                    }
-                }
-            },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        beans.forEachIndexed { i, bean ->
-                            shortcutUtils.setShortcutStatus(beans, bean, checked[i])
-                        }
-                        onDismiss()
-                    },
-                ) { Text(stringResource(android.R.string.ok)) }
-            },
-            dismissButton = {
-                Row {
-                    if (shortcutUtils.shortcutManager.isRequestPinShortcutSupported) {
-                        TextButton(
-                            onClick = {
-                                val selected = beans.indices.filter { checked[it] }
-                                if (selected.size > 1) {
-                                    context.showToast("Only select one item")
-                                } else {
-                                    selected.firstOrNull()?.let { index ->
-                                        shortcutUtils.requestPinShortcut(
-                                            beans[index].toShortcutInfo(
-                                                context
-                                            )
-                                        )
-                                    }
-                                }
-                            },
-                        ) { Text("Pin") }
-                    }
-                    TextButton(onClick = onDismiss) { Text(stringResource(android.R.string.cancel)) }
-                }
-            },
-        )
-    }
+    } else null
+    MultiChoiceDialog(
+        title = stringResource(R.string.set_module_shortcuts),
+        items = items,
+        selectedKeys = enabledKeys,
+        onDismiss = onDismiss,
+        onConfirm = { keys ->
+            beans.forEachIndexed { _, bean ->
+                shortcutUtils.setShortcutStatus(beans, bean, bean.key in keys)
+            }
+            onDismiss()
+        },
+        itemActions = pinAction,
+    )
 }
 
-/** 触摸采样率档位（旧 initTouchPanelView） */
+/** 触摸采样率档位：120~720 单选，确认后写 prefs 并同步给磁贴 */
 @Composable
 private fun TouchSamplingRateDialog(
-    context: Context,
     settings: PrefState,
     controller: ITileServiceController?,
     onDismiss: () -> Unit,
 ) {
     val touchs = remember { arrayOf("120", "180", "240", "360", "480", "600", "720") }
-    var tempSelection by remember {
-        mutableStateOf(touchs.indexOf(settings.getString(keyTouchSamplingRateLevel, "240")))
+    val initialIndex = remember {
+        touchs.indexOf(settings.getString(keyTouchSamplingRateLevel, "240"))
     }
-    when (LocalUiMode.current) {
-        UiMode.Miuix -> OverlayDialog(
-            show = true,
-            title = stringResource(R.string.set_touch_sampling_rate_tile_level),
-            onDismissRequest = onDismiss,
-        ) {
-            Column {
-                touchs.forEachIndexed { position, level ->
-                    RadioButtonPreference(
-                        title = level,
-                        selected = tempSelection == position,
-                        onClick = { tempSelection = position },
-                    )
-                }
-            }
-            Row(modifier = Modifier.padding(top = 12.dp)) {
-                MiuixTextButton(
-                    text = stringResource(android.R.string.cancel),
-                    onClick = onDismiss,
-                    modifier = Modifier.weight(1f),
-                )
-                Spacer(Modifier.width(20.dp))
-                MiuixTextButton(
-                    text = stringResource(android.R.string.ok),
-                    onClick = {
-                        val value =
-                            if (tempSelection > 0) touchs[tempSelection] else tempSelection.toString()
-                        settings.set(keyTouchSamplingRateLevel, value)
-                        controller?.touchMode = value.toInt()
-                        onDismiss()
-                    },
-                    modifier = Modifier.weight(1f),
-                    colors = ButtonDefaults.textButtonColorsPrimary(),
-                )
-            }
-        }
-
-        UiMode.Material -> AlertDialog(
-            onDismissRequest = onDismiss,
-            title = { Text(stringResource(R.string.set_touch_sampling_rate_tile_level)) },
-            text = {
-                Column {
-                    touchs.forEachIndexed { position, level ->
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .selectable(
-                                    selected = tempSelection == position,
-                                    role = Role.RadioButton,
-                                    onClick = { tempSelection = position },
-                                )
-                                .padding(vertical = 12.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                        ) {
-                            RadioButton(
-                                selected = tempSelection == position,
-                                onClick = { tempSelection = position },
-                            )
-                            Spacer(Modifier.width(8.dp))
-                            Text(level)
-                        }
-                    }
-                }
-            },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        val value =
-                            if (tempSelection > 0) touchs[tempSelection] else tempSelection.toString()
-                        settings.set(keyTouchSamplingRateLevel, value)
-                        controller?.touchMode = value.toInt()
-                        onDismiss()
-                    },
-                ) { Text(stringResource(android.R.string.ok)) }
-            },
-            dismissButton = {
-                TextButton(onClick = onDismiss) { Text(stringResource(android.R.string.cancel)) }
-            },
-        )
+    val items = remember(touchs) {
+        touchs.map { level -> ChoiceItem(key = level, title = level) }
     }
-}
-
-/** 远程 ADB 调试（旧 initAdbDebugView，布局与状态机保持原样） */
-@OptIn(ExperimentalFoundationApi::class)
-@SuppressLint("SetTextI18n")
-@Composable
-private fun AdbDebugDialog(
-    context: Context,
-    otherPrefs: PrefState,
-    controller: IAdbDebugController?,
-    scope: CoroutineScope,
-    onDismiss: () -> Unit,
-) {
-    val adb = controller ?: return
-    val getPort = adb.adbPort
-    var getIP by remember { mutableStateOf(adb.wifiIP ?: "IP") }
-
-    var portText by remember {
-        mutableStateOf(
-            (if (getPort == 0 || getPort == -1) otherPrefs.getString("adb_port", "6666")
-            else getPort.toString()) ?: "6666"
-        )
-    }
-    var adbTvText by remember {
-        mutableStateOf(if (getPort != 0 && getPort != -1) "adb connect $getIP:$getPort" else "")
-    }
-    var busy by remember { mutableStateOf(false) }
-    var adbEnabled by remember { mutableStateOf(getPort != 0 && getPort != -1) }
-    // 开关回调与协程内没有 Composer，端口校验提示先在这里取一次
-    val portCannotNullText = stringResource(R.string.adb_debug_port_cannot_null)
-
-    when (LocalUiMode.current) {
-        UiMode.Miuix -> OverlayDialog(
-            show = true,
-            onDismissRequest = onDismiss,
-        ) {
-            SwitchPreference(
-                checked = adbEnabled,
-                onCheckedChange = { checked ->
-                    if (checked) {
-                        val portStr = portText
-                        if (portStr.isBlank()) {
-                            adbTvText = portCannotNullText
-                        } else {
-                            scope.launch {
-                                val port = portStr.toIntOrNull()
-                                if (port == null) {
-                                    adbTvText =
-                                        portCannotNullText
-                                    return@launch
-                                }
-                                busy = true
-                                runCatching {
-                                    withContext(Dispatchers.IO) {
-                                        adb.adbPort = port
-                                        adb.restartAdb()
-                                    }
-                                    getIP = adb.wifiIP ?: "IP"
-                                    otherPrefs.set("adb_port", port.toString())
-                                }
-                                adbEnabled = true
-                                adbTvText = "adb connect $getIP:$portStr"
-                                busy = false
-                            }
-                        }
-                    } else {
-                        scope.launch {
-                            busy = true
-                            runCatching {
-                                withContext(Dispatchers.IO) {
-                                    adb.adbPort = -1
-                                    adb.restartAdb()
-                                    adb.adbPort = 0
-                                }
-                            }
-                            adbEnabled = false
-                            adbTvText = ""
-                            busy = false
-                        }
-                    }
-                },
-                title = stringResource(R.string.enable_remote_adb_debugging),
-                enabled = !busy,
-            )
-            MiuixTextField(
-                value = portText,
-                onValueChange = { portText = it },
-                enabled = !adbEnabled && !busy,
-                label = stringResource(R.string.adb_port),
-                useLabelAsPlaceholder = true,
-                singleLine = true,
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-            )
-            if (adbTvText.isNotBlank()) {
-                MiuixText(
-                    text = adbTvText,
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .combinedClickable(
-                            onLongClick = { context.copyStr(adbTvText) },
-                            onClick = {},
-                        )
-                        .padding(vertical = 12.dp),
-                )
-                MiuixText(
-                    text = stringResource(R.string.adb_tv_tip),
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .combinedClickable(
-                            onLongClick = { context.copyStr(adbTvText) },
-                            onClick = {},
-                        )
-                        .padding(bottom = 20.dp),
-                )
-            }
-        }
-
-        UiMode.Material -> AlertDialog(
-            onDismissRequest = onDismiss,
-            confirmButton = {},
-            text = {
-                Column {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        Text(
-                            stringResource(R.string.enable_remote_adb_debugging),
-                            modifier = Modifier.weight(1f),
-                        )
-                        Switch(
-                            checked = adbEnabled,
-                            enabled = !busy,
-                            onCheckedChange = { checked ->
-                                if (checked) {
-                                    val portStr = portText
-                                    if (portStr.isBlank()) {
-                                        adbTvText =
-                                            portCannotNullText
-                                    } else {
-                                        scope.launch {
-                                            val port = portStr.toIntOrNull()
-                                            if (port == null) {
-                                                adbTvText =
-                                                    portCannotNullText
-                                                return@launch
-                                            }
-                                            busy = true
-                                            runCatching {
-                                                withContext(Dispatchers.IO) {
-                                                    adb.adbPort = port
-                                                    adb.restartAdb()
-                                                }
-                                                getIP = adb.wifiIP ?: "IP"
-                                                otherPrefs.set("adb_port", port.toString())
-                                            }
-                                            adbEnabled = true
-                                            adbTvText = "adb connect $getIP:$portStr"
-                                            busy = false
-                                        }
-                                    }
-                                } else {
-                                    scope.launch {
-                                        busy = true
-                                        runCatching {
-                                            withContext(Dispatchers.IO) {
-                                                adb.adbPort = -1
-                                                adb.restartAdb()
-                                                adb.adbPort = 0
-                                            }
-                                        }
-                                        adbEnabled = false
-                                        adbTvText = ""
-                                        busy = false
-                                    }
-                                }
-                            },
-                        )
-                    }
-                    OutlinedTextField(
-                        value = portText,
-                        onValueChange = { portText = it },
-                        enabled = !adbEnabled && !busy,
-                        label = { Text(stringResource(R.string.adb_port)) },
-                        singleLine = true,
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                    )
-                    if (adbTvText.isNotBlank()) {
-                        Text(
-                            text = adbTvText,
-                            textAlign = TextAlign.Center,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .combinedClickable(
-                                    onLongClick = { context.copyStr(adbTvText) },
-                                    onClick = {},
-                                )
-                                .padding(vertical = 12.dp),
-                        )
-                        Text(
-                            text = stringResource(R.string.adb_tv_tip),
-                            textAlign = TextAlign.Center,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .combinedClickable(
-                                    onLongClick = { context.copyStr(adbTvText) },
-                                    onClick = {},
-                                )
-                                .padding(bottom = 20.dp),
-                        )
-                    }
-                }
-            },
-        )
-    }
+    SingleChoiceDialog(
+        title = stringResource(R.string.set_touch_sampling_rate_tile_level),
+        items = items,
+        selectedKey = touchs.getOrNull(initialIndex),
+        onDismiss = onDismiss,
+        onConfirm = { level ->
+            // 历史写值算法保持等价：索引 0 落库为 "0"（而不是 "120"）
+            val index = touchs.indexOf(level)
+            val value = if (index > 0) touchs[index] else index.toString()
+            settings.set(keyTouchSamplingRateLevel, value)
+            controller?.touchMode = value.toInt()
+            onDismiss()
+        },
+    )
 }

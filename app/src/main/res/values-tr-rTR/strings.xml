@@ -230,6 +230,7 @@
     <string name="StatusBarWIFIIcon">WIFI Simgesi</string>
     <string name="remove_wifi_data_inout">WiFi veri giriş/çıkış göstergesini kaldır</string>
     <string name="force_display_wifi_standard">WIFI sinyal standartlarının zorla görüntülenmesi</string>
+    <string name="force_display_wifi_standard_summary">Değişiklikten sonra etkili olması için kapsam içi süreçleri yeniden başlatın</string>
     
     <string name="StatusBarMobileDataIcon">Mobil Veri Simgesi</string>
     <string name="remove_mobile_data_icon">Mobil veri simgesini kaldır</string>
@@ -952,6 +953,7 @@
     <string name="remove_side_slider">Geri kaydırma (side slide) animasyon okunu kaldır</string>
     <string name="remove_side_slider_black_background">Yan Geri kaydırma kaydırıcısının siyah arka planını (side slide blur effecti) kaldır</string>
     <string name="remove_rotate_screen_button">Ekranı döndürme düğmesini kaldır</string>
+    <string name="custom_rotate_screen_button_size">Özel ekran döndürme düğmesi boyutu</string>
     <string name="remove_back_gesture_confirmation_limit">Tam ekran el hareketlerinde geri dönme/çıkma onayı sınırını kaldır</string>
     
     <string name="CustomSideSliderIcon">Özel geri kaydırma oku/simgesi</string>
@@ -1161,7 +1163,6 @@
     <string name="adb_port">ADB Bağlantı Noktası (Portu)</string>
     <string name="enable_remote_adb_debugging">Uzaktan (Kablosuz-Remote vb.)  hata ayıklamayı / bağlantıyı etkinleştir</string>
     <string name="adb_debug_port_cannot_null">Port (Bağlantı Noktası) Boş Bırakılamaz , Geçersiz Sayılmaz !...</string>
-    <string name="adb_tv_tip">Kopyalamak için Uzun Basın.</string>
     
     <!--LOG Fragment-->
     <string name="log_save_success">Sistem / Modül kayıt Verisi (Günlük Verileri - LOG) Başarıyla Kaydedildi / Alındı. !</string>
@@ -1204,6 +1205,12 @@
     <string name="appinfo_last_updated_time">Son Güncelleme Zamanı</string>
     <string name="appinfo_target_sdk">Hedeflenen Cihazın Kullandığı vs SDK Api  Seviyesi .</string>
     <string name="appinfo_system_app">Cihaza Ait Sistem Uygulamasıdır...</string>
+    <string name="appinfo_app_count">%1$d uygulama</string>
+    <string name="appinfo_selected_count">%1$d seçili</string>
+    <string name="appinfo_select_all">Tümünü seç</string>
+    <string name="appinfo_deselect_all">Seçimi kaldır</string>
+    <string name="appinfo_no_match">Eşleşen uygulama yok</string>
+    <string name="appinfo_clear_search">Aramayı temizle</string>
     
     <!--Intent-->
     <string name="custom_config_app_intent_list">Özel uygulamaların \"Nefen Kullanılmak İsteniyor/Amacı Niyet vs. (intent)\" konfigürasyon listesi</string>

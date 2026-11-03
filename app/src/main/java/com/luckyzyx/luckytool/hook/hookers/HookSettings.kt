@@ -142,8 +142,10 @@ object HookSettings : YukiBaseHooker() {
         ) {
             loadHooker(ForceDisplayPasswordManagementSettings)
         }
-        //自定义设备OTA卡片背景
-        if (preferences(ModulePrefs).getBoolean("customize_device_ota_card_background", false)) {
+        //自定义设备OTA卡片背景/视频：两个开关任一开启都要加载，视频开关本身不能靠背景开关兜着
+        if (preferences(ModulePrefs).getBoolean("customize_device_ota_card_background", false) ||
+            preferences(ModulePrefs).getBoolean("customize_device_ota_card_video", false)
+        ) {
             loadHooker(CustomizeDeviceOTACardBackground)
         }
         //禁用OTG自动关闭

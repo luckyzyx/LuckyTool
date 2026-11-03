@@ -325,6 +325,7 @@
     <string name="StatusBarWIFIIcon">WIFI Icon</string>
     <string name="remove_wifi_data_inout">Remove WiFi data inout</string>
     <string name="force_display_wifi_standard">Forced display of WIFI signal standards</string>
+    <string name="force_display_wifi_standard_summary">Restart the scope process after switching for it to take effect</string>
     
     <string name="StatusBarMobileDataIcon">Mobile Data Icon</string>
     <string name="remove_mobile_data_icon">Remove mobile data icon</string>
@@ -843,6 +844,8 @@
     <string name="confirm_to_delete_this_configuration">Confirm to delete this configuration?\n%1$s</string>
     <string name="edit_memc_configuration_tips">For more parameters, please query\n%1$s</string>
     <string name="no_memc_data">No Memc Data</string>
+    <string name="memc_version_select_title">Select version</string>
+    <string name="memc_activity_picker_title">Select activity</string>
     
     <string name="video_frame_insertion_support_2K120">Video frame insertion supports 2K 120</string>
     <string name="video_frame_insertion_support_2K120_summary">If your device does not support MEMC, please do not use this function</string>
@@ -1074,6 +1077,7 @@
     <string name="remove_side_slider">Remove side slider</string>
     <string name="remove_side_slider_black_background">Remove the black background of the side slider</string>
     <string name="remove_rotate_screen_button">Remove the rotate screen button</string>
+    <string name="custom_rotate_screen_button_size">Custom rotate screen button size</string>
     <string name="remove_back_gesture_confirmation_limit">Remove the back gesture confirmation limit</string>
     
     <string name="CustomSideSliderIcon">Custom side slider icon</string>
@@ -1290,6 +1294,8 @@
     <!--Shortcut-->
     <string name="set_module_shortcuts">Set module shortcuts</string>
     <string name="set_module_shortcuts_summary">Long press on module icon to show enabled shortcuts</string>
+    <string name="pin_shortcut">Pin shortcut</string>
+    <string name="choice_dialog_empty">No options available</string>
     
     <!--TouchPanel-->
     <string name="set_touch_sampling_rate_tile_level">Set the touch sampling rate tile level</string>
@@ -1301,7 +1307,9 @@
     <string name="adb_port">ADB Port</string>
     <string name="enable_remote_adb_debugging">Enable remote ADB debugging</string>
     <string name="adb_debug_port_cannot_null">ADB debug port cannot be null</string>
-    <string name="adb_tv_tip">Long press to copy</string>
+    <string name="adb_port_out_of_range">Port must be between 1 and 65535</string>
+    <string name="adb_debug_operation_failed">Operation failed. Please try again.</string>
+    <string name="copy">Copy</string>
     
     <!--LOG Fragment-->
     <string name="log_save_success">LOG Saved Success!</string>
@@ -1338,6 +1346,7 @@
     <string name="appinfo_filter">Filter</string>
     <string name="appinfo_reverse">Reverse</string>
     <string name="appinfo_search_hint">Search App Name Or Package Name</string>
+    <string name="activity_search_hint">Search Activity</string>
     
     <string name="appinfo_app_name">App Name</string>
     <string name="appinfo_package_name">Package Name</string>
@@ -1346,6 +1355,12 @@
     <string name="appinfo_last_updated_time">Last Updated Time</string>
     <string name="appinfo_target_sdk">Target SDK</string>
     <string name="appinfo_system_app">System App</string>
+    <string name="appinfo_app_count">%1$d apps</string>
+    <string name="appinfo_selected_count">%1$d selected</string>
+    <string name="appinfo_select_all">Select all</string>
+    <string name="appinfo_deselect_all">Unselect all</string>
+    <string name="appinfo_no_match">No matching apps</string>
+    <string name="appinfo_clear_search">Clear search</string>
     
     <!--Intent-->
     <string name="custom_config_app_intent_list">Custom configuration app intent list</string>
@@ -1549,6 +1564,8 @@
     <string name="launcher_backup_category_actions">Actions</string>
     <string name="launcher_backup_category_history">Snapshot history</string>
     <string name="launcher_backup_status">Snapshot status</string>
+    <string name="launcher_backup_last_auto">Last auto backup</string>
+    <string name="launcher_backup_auto_never">No auto backup yet</string>
     <string name="launcher_backup_busy">Working…</string>
     <string name="launcher_backup_waiting_launcher">Waiting for the launcher process… (attempt %1$d/%2$d)</string>
     <string name="launcher_backup_no_launcher">Launcher package not detected: enable the launcher scope in LSPosed and open the home screen once.</string>
@@ -1581,7 +1598,7 @@
     <string name="launcher_backup_err_io">File error: %1$s</string>
     <string name="launcher_backup_err_invalid">This file is not a valid desktop layout backup</string>
     <string name="launcher_backup_auto">Automatic backup</string>
-    <string name="launcher_backup_auto_summary">The launcher process checks the interval itself and writes the snapshot to Download; the launcher scope must be enabled in LSPosed. A manual backup also restarts the countdown</string>
+    <string name="launcher_backup_auto_summary">The launcher process checks the interval itself and writes the snapshot to Download (falling back to its own media directory, which the app moves back into place); the launcher scope must be enabled in LSPosed. A manual backup also restarts the countdown</string>
     <string name="launcher_backup_interval">Backup interval</string>
     <string name="launcher_backup_interval_summary">Current: %s</string>
     <string name="launcher_backup_interval_6h">6 hours</string>
@@ -1606,4 +1623,18 @@
     <string name="settings_enable_glass_summary">Enable liquid glass effect for floating bottom bar.</string>
     <string name="allow_third_party_installer">Allow third-party installers</string>
     <string name="allow_third_party_installer_summary">Use your chosen default app to open APK files and remember the installer selection</string>
+    <!--流体云卡片重定向（OplusMetisPage）-->
+    <string name="metis_category_redirect">Fluid cloud redirect</string>
+    <string name="metis_redirect_enabled">Enable card redirect</string>
+    <string name="metis_redirect_enabled_summary">Tapping a fluid cloud card opens the target browser picked below instead of the destination the card carries</string>
+    <string name="metis_target_browser">Target browser</string>
+    <string name="metis_target_browser_summary">Current: %s</string>
+    <string name="metis_rule_protocol">heytapbrowser:// cards</string>
+    <string name="metis_rule_protocol_summary">Redirect cards whose link uses the heytapbrowser:// protocol</string>
+    <string name="metis_rule_text_search">Text search cards</string>
+    <string name="metis_rule_text_search_summary">Redirect text search cards (textType 29)</string>
+    <string name="metis_rule_heytap_http">Browser http(s) cards</string>
+    <string name="metis_rule_heytap_http_summary">Redirect cards that point to com.heytap.browser with a valid http(s) link</string>
+    <string name="metis_rule_browser_card">Other browser http(s) cards (experimental)</string>
+    <string name="metis_rule_browser_card_summary">Redirect cards that point to another browser with a valid http(s) link. Experimental: cards that need their own app to handle the link may break</string>
 </resources>

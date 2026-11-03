@@ -24,8 +24,8 @@ import com.luckyzyx.luckytool.utils.getOSVersionCode
 import com.luckyzyx.luckytool.utils.sendPrefsValue
 
 /**
- * 手势页（旧 ui.fragment.scopes.apps.OplusGesture 的 Compose 等价物）。
- * 旧 open 菜单（IntentUtils.jumpGesture）不在 Compose 页呈现；视频白名单项旧代码 isVisible=false 不渲染。
+ * 手势页：熄屏手势、全屏手势、侧滑图标与自定义按键的开关与取值。
+ * open 菜单（IntentUtils.jumpGesture）不在本页呈现；视频白名单项的 isVisible=false，不渲染。
  * 注意：action_button_* 系列通知目标是 "android" 而非 scopes[0]，故用 onChange + sendPrefsValue 而非 notify。
  */
 object OplusGesturePage {
@@ -109,6 +109,14 @@ object OplusGesturePage {
         switch(
             key = "remove_rotate_screen_button",
             title = c.getString(R.string.remove_rotate_screen_button),
+        )
+        slider(
+            key = "custom_rotate_screen_button_size",
+            title = c.getString(R.string.custom_rotate_screen_button_size),
+            valueRange = 50..100,
+            default = 100,
+            summary = c.getString(R.string.need_restart_scope),
+            valueLabel = { "$it%" },
         )
         if (getOSVersionCode in 35..36) {
             switch(

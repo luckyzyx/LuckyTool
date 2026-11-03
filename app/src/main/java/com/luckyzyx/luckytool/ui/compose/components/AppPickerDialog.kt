@@ -6,11 +6,16 @@ import android.graphics.Canvas
 import android.graphics.drawable.BitmapDrawable
 import android.graphics.drawable.Drawable
 import androidx.annotation.StringRes
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -20,13 +25,18 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -38,17 +48,26 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.painter.BitmapPainter
 import androidx.compose.ui.graphics.painter.Painter
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.core.graphics.createBitmap
 import com.luckyzyx.luckytool.R
 import com.luckyzyx.luckytool.data.AppInfo
-import com.luckyzyx.luckytool.ui.compose.components.material.MaterialListItem
+import com.luckyzyx.luckytool.ui.compose.components.material.MaterialItem
+import com.luckyzyx.luckytool.ui.compose.components.material.MaterialItemContainer
+import com.luckyzyx.luckytool.ui.compose.components.miuix.MiuixDialogScrollBody
+import com.luckyzyx.luckytool.ui.compose.components.miuix.MiuixPrefItem
 import com.luckyzyx.luckytool.ui.theme.LocalUiMode
 import com.luckyzyx.luckytool.ui.theme.UiMode
 import com.luckyzyx.luckytool.utils.PackageUtils
@@ -57,17 +76,19 @@ import kotlinx.coroutines.withContext
 import top.yukonga.miuix.kmp.basic.BasicComponent
 import top.yukonga.miuix.kmp.basic.Button
 import top.yukonga.miuix.kmp.basic.ButtonDefaults
-import top.yukonga.miuix.kmp.basic.Card
 import top.yukonga.miuix.kmp.overlay.OverlayDialog
 import top.yukonga.miuix.kmp.preference.CheckboxLocation
 import top.yukonga.miuix.kmp.preference.CheckboxPreference
+import top.yukonga.miuix.kmp.theme.MiuixTheme
 import kotlin.math.roundToInt
 import top.yukonga.miuix.kmp.basic.HorizontalDivider as MiuixHorizontalDivider
+import top.yukonga.miuix.kmp.basic.Icon as MiuixIcon
+import top.yukonga.miuix.kmp.basic.IconButton as MiuixIconButton
 import top.yukonga.miuix.kmp.basic.Text as MiuixText
 import top.yukonga.miuix.kmp.basic.TextButton as MiuixTextButton
 import top.yukonga.miuix.kmp.basic.TextField as MiuixTextField
 
-/** AppInfo 排序模式（与旧 AppInfoSelectDialog 的 sortMode 对齐） */
+/** AppInfo 排序模式：名称 / 包名 / 大小 / 安装时间 / 最近更新 / 目标 SDK 六个排序维度 */
 enum class AppSortMode(@StringRes val labelRes: Int) {
     Name(R.string.appinfo_app_name),
     Package(R.string.appinfo_package_name),
@@ -76,6 +97,13 @@ enum class AppSortMode(@StringRes val labelRes: Int) {
     LastInstallTime(R.string.appinfo_last_updated_time),
     Target(R.string.appinfo_target_sdk),
 }
+
+/** 对话框内应用列表的高度上限：两条线的弹层都不给内容加高度上限，由内容自己收敛 */
+private val PickerListMaxHeight: Dp = 420.dp
+
+/** 行内图标尺寸：Miuix 线 44dp，Material 线的紧凑行用 34dp */
+private val AppIconSize: Dp = 44.dp
+private val MaterialAppIconSize: Dp = 34.dp
 
 /** Drawable → Painter（AppInfo.icon 为平台 Drawable，转位图渲染，避免引入图片库） */
 @Composable
@@ -100,7 +128,7 @@ fun rememberAppIconPainter(icon: Drawable?): Painter? {
     }
 }
 
-/** 应用选择对话框内部状态（搜索 / 排序 / 系统应用开关 / 多选集合），两条外观线共用。 */
+/** 应用选择对话框内部状态（搜索 / 排序 / 系统应用开关 / 多选集合 / 排序筛选面板开合），两条外观线共用。 */
 private class AppPickerUiState(
     includeSystemApps: Boolean,
     enabledPackages: Set<String>,
@@ -111,22 +139,32 @@ private class AppPickerUiState(
     var includeSystem by mutableStateOf(includeSystemApps)
     var selected by mutableStateOf(enabledPackages)
 
+    /** 排序/筛选面板开合：面板默认收起，避免常驻一排 chip 挤压列表 */
+    var sortFilterOpen by mutableStateOf(false)
+
     fun toggle(packageName: String) {
         selected = if (packageName in selected) selected - packageName else selected + packageName
+    }
+
+    /** 全选/取消全选：只作用于当前可见（已过滤）的应用 */
+    fun toggleAll(packages: List<String>) {
+        val allSelected = packages.isNotEmpty() && packages.all { it in selected }
+        selected = if (allSelected) selected - packages.toSet() else selected + packages
     }
 }
 
 /**
- * 应用选择对话框 —— 旧 AppInfoSelectDialog 的 Compose 等价物。
+ * 应用选择对话框：可搜索、可排序的已安装应用列表选择器。
  *
- * 行为对齐旧实现：加载 `PackageUtils(context.packageManager).getInstalledAppInfos(0)`，
+ * 行为：加载 `PackageUtils(context.packageManager).getInstalledAppInfos(0)`，
  * 排除 overlay 应用，默认隐藏系统应用；搜索匹配名称/包名；6 种排序 + 倒序；
- * 多选模式底部确认返回，单选模式点击即返回；
- * 已选应用（旧 setEnabledList 逻辑）：预勾选并置顶显示。
+ * 多选模式底部确认返回，单选模式点击即返回；已选应用预勾选并置顶显示。
  *
- * 外观按 [LocalUiMode] 分派：Miuix 线走 Miuix 弹层（OverlayDialog + Miuix 行件），
- * Material 线行为不变；对外签名与调用点零改动。Miuix 弹层统一由根部 Miuix Scaffold
- * 的默认 popup host 承载，本组件不自装 host、不传 `renderInRootScaffold = false`。
+ * 版式（重新设计）：顶部常驻搜索框（尾部漏斗入口展开内联「排序与筛选」面板）→
+ * 「共 N 个应用 · 已选 M」状态行（多选模式带全选/取消全选）→ 分段卡片列表 →
+ * 底部动作栏。两条线共用 [AppPickerUiState] 与过滤/排序，只在渲染体里分派到
+ * Miuix / Material 原语；对外签名与调用点零改动。Miuix 弹层统一由根部 Miuix
+ * Scaffold 的默认 popup host 承载，本组件不自装 host、不传 `renderInRootScaffold = false`。
  */
 @Composable
 fun AppPickerDialog(
@@ -161,14 +199,19 @@ fun AppPickerDialog(
             .toList()
     }
 
+    val allVisibleSelected = filtered.isNotEmpty() && filtered.all { it.packageName in state.selected }
+
     // 单选模式点击即返回；多选模式切换勾选
     val onSelect: (AppInfo) -> Unit = { app ->
         if (multiMode) state.toggle(app.packageName) else onConfirm(listOf(app))
     }
+    // 确认返回「全量已选」并按当前排序排列：不能只取 filtered，
+    // 否则先搜索勾选、再清空搜索时这些勾选会在确认时被丢掉
     val onConfirmSelected: () -> Unit = {
-        onConfirm(filtered.filter { it.packageName in state.selected })
+        onConfirm(apps.filter { it.packageName in state.selected }.sortedWith(comparatorOf(state.sortMode, state.reverse)))
         onDismiss()
     }
+    val onSelectAll: () -> Unit = { state.toggleAll(filtered.map { it.packageName }) }
 
     when (LocalUiMode.current) {
         UiMode.Miuix -> MiuixAppPickerDialog(
@@ -177,8 +220,10 @@ fun AppPickerDialog(
             state = state,
             filtered = filtered,
             loading = loading,
+            allVisibleSelected = allVisibleSelected,
             onDismiss = onDismiss,
             onSelect = onSelect,
+            onSelectAll = onSelectAll,
             onConfirmSelected = onConfirmSelected,
         )
 
@@ -188,14 +233,16 @@ fun AppPickerDialog(
             state = state,
             filtered = filtered,
             loading = loading,
+            allVisibleSelected = allVisibleSelected,
             onDismiss = onDismiss,
             onSelect = onSelect,
+            onSelectAll = onSelectAll,
             onConfirmSelected = onConfirmSelected,
         )
     }
 }
 
-/** Material 线：M3 AlertDialog（本任务不改行为，只把状态提到 [AppPickerUiState]） */
+/** Material 线：M3 AlertDialog + 搜索头 + 内联排序筛选面板 + 分段卡片列表 */
 @Composable
 private fun MaterialAppPickerDialog(
     title: String,
@@ -203,8 +250,10 @@ private fun MaterialAppPickerDialog(
     state: AppPickerUiState,
     filtered: List<AppInfo>,
     loading: Boolean,
+    allVisibleSelected: Boolean,
     onDismiss: () -> Unit,
     onSelect: (AppInfo) -> Unit,
+    onSelectAll: () -> Unit,
     onConfirmSelected: () -> Unit,
 ) {
     AlertDialog(
@@ -212,75 +261,48 @@ private fun MaterialAppPickerDialog(
         title = { Text(title) },
         text = {
             Column(Modifier.fillMaxWidth()) {
-                OutlinedTextField(
-                    value = state.query,
-                    onValueChange = { state.query = it },
-                    placeholder = { Text(stringResource(R.string.appinfo_search_hint)) },
-                    singleLine = true,
-                    enabled = !loading,
-                    modifier = Modifier.fillMaxWidth(),
-                )
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 4.dp),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    FilterChip(
-                        selected = state.includeSystem,
-                        onClick = { state.includeSystem = !state.includeSystem },
-                        label = { Text(stringResource(R.string.appinfo_system_app)) },
-                        enabled = !loading,
-                    )
-                    FilterChip(
-                        selected = state.reverse,
-                        onClick = { state.reverse = !state.reverse },
-                        label = { Text("倒序") },
-                        enabled = !loading,
-                    )
+                MaterialPickerSearchField(state = state, loading = loading)
+                AnimatedVisibility(visible = state.sortFilterOpen) {
+                    MaterialPickerSortFilterPanel(state = state, loading = loading)
                 }
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .horizontalScroll(rememberScrollState()),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                ) {
-                    AppSortMode.entries.forEach { mode ->
-                        FilterChip(
-                            selected = state.sortMode == mode,
-                            onClick = { state.sortMode = mode },
-                            label = { Text(stringResource(mode.labelRes)) },
-                            enabled = !loading,
+                MaterialPickerStatusRow(
+                    state = state,
+                    multiMode = multiMode,
+                    visibleCount = filtered.size,
+                    loading = loading,
+                    allVisibleSelected = allVisibleSelected,
+                    onSelectAll = onSelectAll,
+                )
+                HorizontalDivider(Modifier.padding(top = 6.dp, bottom = 6.dp))
+                when {
+                    loading -> PickerPlaceholder {
+                        CircularProgressIndicator(modifier = Modifier.size(28.dp), strokeWidth = 3.dp)
+                    }
+
+                    filtered.isEmpty() -> PickerPlaceholder {
+                        Text(
+                            text = stringResource(R.string.appinfo_no_match),
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
                     }
-                }
-                HorizontalDivider(Modifier.padding(vertical = 4.dp))
-                if (loading) {
-                    Box(
+
+                    else -> LazyColumn(
                         modifier = Modifier
                             .fillMaxWidth()
                             .weight(1f, fill = false)
-                            .heightIn(min = 240.dp, max = 420.dp),
-                        contentAlignment = Alignment.Center,
-                    ) {
-                        CircularProgressIndicator()
-                    }
-                } else {
-                    LazyColumn(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .weight(1f, fill = false)
-                            .heightIn(max = 420.dp),
+                            .heightIn(max = PickerListMaxHeight),
                         verticalArrangement = Arrangement.spacedBy(2.dp),
                     ) {
-                        items(filtered, key = { it.packageName }) { app ->
-                            AppRow(
-                                app = app,
-                                multiMode = multiMode,
-                                checked = app.packageName in state.selected,
-                                onSelect = { onSelect(app) },
-                            )
+                        itemsIndexed(filtered, key = { _, app -> app.packageName }) { index, app ->
+                            MaterialItem(index = index, count = filtered.size) {
+                                MaterialAppRow(
+                                    app = app,
+                                    multiMode = multiMode,
+                                    checked = app.packageName in state.selected,
+                                    onSelect = { onSelect(app) },
+                                )
+                            }
                         }
                     }
                 }
@@ -288,17 +310,20 @@ private fun MaterialAppPickerDialog(
         },
         confirmButton = {
             if (multiMode) {
-                TextButton(
-                    enabled = !loading,
-                    onClick = onConfirmSelected,
-                ) { Text(stringResource(android.R.string.ok)) }
+                TextButton(enabled = !loading, onClick = onConfirmSelected) {
+                    Text(stringResource(android.R.string.ok))
+                }
             } else {
-                TextButton(enabled = !loading, onClick = onDismiss) { Text(stringResource(android.R.string.cancel)) }
+                TextButton(enabled = !loading, onClick = onDismiss) {
+                    Text(stringResource(android.R.string.cancel))
+                }
             }
         },
         dismissButton = {
             if (multiMode) {
-                TextButton(enabled = !loading, onClick = onDismiss) { Text(stringResource(android.R.string.cancel)) }
+                TextButton(enabled = !loading, onClick = onDismiss) {
+                    Text(stringResource(android.R.string.cancel))
+                }
             }
         },
     )
@@ -307,8 +332,9 @@ private fun MaterialAppPickerDialog(
 /**
  * Miuix 线：OverlayDialog（根部 popup host 承载）+ Miuix 行件。
  *
- * 内容列高度上限 520.dp：OverlayDialog 在小屏为底部贴合展示且不给内容加高度上限，
- * 因此由内容自己收敛高度，列表用 `weight(1f, fill = false)` 吃掉剩余空间。
+ * 内容列整体上限 520.dp：OverlayDialog 在小屏为底部贴合展示且不给内容加高度上限，
+ * 由内容自己收敛高度；按钮行交给 [MiuixDialogScrollBody] 的 actions 槽，避免被
+ * 可收缩的列表体挤到 0 高。
  */
 @Composable
 private fun MiuixAppPickerDialog(
@@ -317,8 +343,10 @@ private fun MiuixAppPickerDialog(
     state: AppPickerUiState,
     filtered: List<AppInfo>,
     loading: Boolean,
+    allVisibleSelected: Boolean,
     onDismiss: () -> Unit,
     onSelect: (AppInfo) -> Unit,
+    onSelectAll: () -> Unit,
     onConfirmSelected: () -> Unit,
 ) {
     OverlayDialog(
@@ -326,78 +354,68 @@ private fun MiuixAppPickerDialog(
         title = title,
         onDismissRequest = onDismiss,
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .heightIn(max = 520.dp),
-        ) {
-            MiuixTextField(
-                value = state.query,
-                onValueChange = { state.query = it },
-                modifier = Modifier.fillMaxWidth(),
-                label = stringResource(R.string.appinfo_search_hint),
-                useLabelAsPlaceholder = true,
-                singleLine = true,
-                enabled = !loading,
-            )
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 12.dp),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                MiuixToggleChip(
-                    selected = state.includeSystem,
-                    onClick = { state.includeSystem = !state.includeSystem },
-                    label = stringResource(R.string.appinfo_system_app),
-                    enabled = !loading,
-                )
-                MiuixToggleChip(
-                    selected = state.reverse,
-                    onClick = { state.reverse = !state.reverse },
-                    label = "倒序",
-                    enabled = !loading,
-                )
-            }
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 8.dp)
-                    .horizontalScroll(rememberScrollState()),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
-                AppSortMode.entries.forEach { mode ->
-                    MiuixToggleChip(
-                        selected = state.sortMode == mode,
-                        onClick = { state.sortMode = mode },
-                        label = stringResource(mode.labelRes),
+        MiuixDialogScrollBody(
+            modifier = Modifier.heightIn(max = 520.dp),
+            // 列表本身可滚动（LazyColumn 不接受无界高度），正文只做有界收缩
+            scrollable = false,
+            actions = {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                ) {
+                    MiuixTextButton(
+                        text = stringResource(android.R.string.cancel),
+                        onClick = onDismiss,
                         enabled = !loading,
+                        modifier = Modifier.weight(1f),
+                    )
+                    if (multiMode) {
+                        Spacer(Modifier.width(20.dp))
+                        MiuixTextButton(
+                            text = stringResource(android.R.string.ok),
+                            onClick = onConfirmSelected,
+                            enabled = !loading,
+                            modifier = Modifier.weight(1f),
+                            colors = ButtonDefaults.textButtonColorsPrimary(),
+                        )
+                    }
+                }
+            },
+        ) {
+            MiuixPickerSearchField(state = state, loading = loading)
+            AnimatedVisibility(visible = state.sortFilterOpen) {
+                MiuixPickerSortFilterPanel(state = state, loading = loading)
+            }
+            MiuixPickerStatusRow(
+                state = state,
+                multiMode = multiMode,
+                visibleCount = filtered.size,
+                loading = loading,
+                allVisibleSelected = allVisibleSelected,
+                onSelectAll = onSelectAll,
+            )
+            MiuixHorizontalDivider(Modifier.padding(top = 6.dp, bottom = 6.dp))
+            when {
+                loading -> PickerPlaceholder(minHeight = 240.dp) {
+                    CircularProgressIndicator(modifier = Modifier.size(28.dp), strokeWidth = 3.dp)
+                }
+
+                filtered.isEmpty() -> PickerPlaceholder {
+                    MiuixText(
+                        text = stringResource(R.string.appinfo_no_match),
+                        style = MiuixTheme.textStyles.body2,
+                        color = MiuixTheme.colorScheme.onBackgroundVariant,
                     )
                 }
-            }
-            MiuixHorizontalDivider(Modifier.padding(top = 12.dp))
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 8.dp)
-                    .weight(1f, fill = false),
-            ) {
-                if (loading) {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .heightIn(min = 240.dp),
-                        contentAlignment = Alignment.Center,
-                    ) {
-                        CircularProgressIndicator()
-                    }
-                } else {
-                    LazyColumn(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalArrangement = Arrangement.spacedBy(2.dp),
-                    ) {
-                        items(filtered, key = { it.packageName }) { app ->
+
+                else -> LazyColumn(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .weight(1f, fill = false),
+                    verticalArrangement = Arrangement.spacedBy(2.dp),
+                ) {
+                    itemsIndexed(filtered, key = { _, app -> app.packageName }) { index, app ->
+                        MiuixPrefItem(index = index, count = filtered.size) {
                             MiuixAppRow(
                                 app = app,
                                 multiMode = multiMode,
@@ -408,38 +426,301 @@ private fun MiuixAppPickerDialog(
                     }
                 }
             }
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 12.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-            ) {
-                if (multiMode) {
-                    MiuixTextButton(
-                        text = stringResource(android.R.string.cancel),
-                        onClick = onDismiss,
-                        enabled = !loading,
-                        modifier = Modifier.weight(1f),
-                    )
-                    Spacer(Modifier.width(20.dp))
-                    MiuixTextButton(
-                        text = stringResource(android.R.string.ok),
-                        onClick = onConfirmSelected,
-                        enabled = !loading,
-                        modifier = Modifier.weight(1f),
-                        colors = ButtonDefaults.textButtonColorsPrimary(),
-                    )
-                } else {
-                    MiuixTextButton(
-                        text = stringResource(android.R.string.cancel),
-                        onClick = onDismiss,
-                        enabled = !loading,
-                        modifier = Modifier.weight(1f),
+        }
+    }
+}
+
+/** 两条线共用的空态/加载态占位（有界高度，避免弹层塌成一条） */
+@Composable
+private fun PickerPlaceholder(
+    minHeight: Dp = 180.dp,
+    content: @Composable () -> Unit,
+) {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .heightIn(min = minHeight),
+        contentAlignment = Alignment.Center,
+    ) {
+        content()
+    }
+}
+
+/** Material 线搜索头：搜索图标 + 清除 + 排序/筛选开关 */
+@Composable
+private fun MaterialPickerSearchField(state: AppPickerUiState, loading: Boolean) {
+    OutlinedTextField(
+        value = state.query,
+        onValueChange = { state.query = it },
+        placeholder = { Text(stringResource(R.string.appinfo_search_hint)) },
+        singleLine = true,
+        enabled = !loading,
+        leadingIcon = {
+            Icon(painterResource(R.drawable.ic_baseline_search_24), contentDescription = null)
+        },
+        trailingIcon = {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                if (state.query.isNotEmpty()) {
+                    IconButton(onClick = { state.query = "" }) {
+                        Icon(
+                            painterResource(R.drawable.ic_baseline_close_24),
+                            contentDescription = stringResource(R.string.appinfo_clear_search),
+                        )
+                    }
+                }
+                IconButton(onClick = { state.sortFilterOpen = !state.sortFilterOpen }) {
+                    Icon(
+                        painterResource(R.drawable.baseline_filter_list_24),
+                        contentDescription = stringResource(R.string.appinfo_sort_and_filter),
+                        tint = if (state.sortFilterOpen) {
+                            MaterialTheme.colorScheme.primary
+                        } else {
+                            MaterialTheme.colorScheme.onSurfaceVariant
+                        },
                     )
                 }
             }
+        },
+        modifier = Modifier.fillMaxWidth(),
+    )
+}
+
+/** Miuix 线搜索头：与 Material 线同版式，图标与行件换成 Miuix 原语 */
+@Composable
+private fun MiuixPickerSearchField(state: AppPickerUiState, loading: Boolean) {
+    MiuixTextField(
+        value = state.query,
+        onValueChange = { state.query = it },
+        modifier = Modifier.fillMaxWidth(),
+        label = stringResource(R.string.appinfo_search_hint),
+        useLabelAsPlaceholder = true,
+        singleLine = true,
+        enabled = !loading,
+        leadingIcon = {
+            // miuix TextField 把 leading/trailing 图标直接贴边（无内边距），手动补内边距
+            MiuixIcon(
+                painterResource(R.drawable.ic_baseline_search_24),
+                contentDescription = null,
+                modifier = Modifier.padding(start = 16.dp, end = 8.dp),
+            )
+        },
+        trailingIcon = {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                if (state.query.isNotEmpty()) {
+                    MiuixIconButton(onClick = { state.query = "" }) {
+                        MiuixIcon(
+                            painterResource(R.drawable.ic_baseline_close_24),
+                            contentDescription = stringResource(R.string.appinfo_clear_search),
+                        )
+                    }
+                }
+                MiuixIconButton(
+                    onClick = { state.sortFilterOpen = !state.sortFilterOpen },
+                    modifier = Modifier.padding(end = 8.dp),
+                ) {
+                    MiuixIcon(
+                        painterResource(R.drawable.baseline_filter_list_24),
+                        contentDescription = stringResource(R.string.appinfo_sort_and_filter),
+                    )
+                }
+            }
+        },
+    )
+}
+
+/** Material 线状态行：共 N 个应用 · 已选 M（多选），右侧全选/取消全选 */
+@Composable
+private fun MaterialPickerStatusRow(
+    state: AppPickerUiState,
+    multiMode: Boolean,
+    visibleCount: Int,
+    loading: Boolean,
+    allVisibleSelected: Boolean,
+    onSelectAll: () -> Unit,
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(top = 8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(
+            text = stringResource(R.string.appinfo_app_count, visibleCount) +
+                if (multiMode) " · " + stringResource(R.string.appinfo_selected_count, state.selected.size) else "",
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            modifier = Modifier.weight(1f),
+        )
+        if (multiMode) {
+            TextButton(
+                enabled = !loading && visibleCount > 0,
+                onClick = onSelectAll,
+                contentPadding = PaddingValues(horizontal = 8.dp, vertical = 0.dp),
+            ) {
+                Text(
+                    stringResource(
+                        if (allVisibleSelected) R.string.appinfo_deselect_all else R.string.appinfo_select_all
+                    )
+                )
+            }
         }
     }
+}
+
+/** Miuix 线状态行：与 Material 线同版式 */
+@Composable
+private fun MiuixPickerStatusRow(
+    state: AppPickerUiState,
+    multiMode: Boolean,
+    visibleCount: Int,
+    loading: Boolean,
+    allVisibleSelected: Boolean,
+    onSelectAll: () -> Unit,
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(top = 8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        MiuixText(
+            text = stringResource(R.string.appinfo_app_count, visibleCount) +
+                if (multiMode) " · " + stringResource(R.string.appinfo_selected_count, state.selected.size) else "",
+            style = MiuixTheme.textStyles.body2,
+            color = MiuixTheme.colorScheme.onBackgroundVariant,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            modifier = Modifier.weight(1f),
+        )
+        if (multiMode) {
+            MiuixTextButton(
+                text = stringResource(
+                    if (allVisibleSelected) R.string.appinfo_deselect_all else R.string.appinfo_select_all
+                ),
+                onClick = onSelectAll,
+                enabled = !loading && visibleCount > 0,
+            )
+        }
+    }
+}
+
+/** Material 线内联排序/筛选面板（由搜索头漏斗按钮开合） */
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun MaterialPickerSortFilterPanel(state: AppPickerUiState, loading: Boolean) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(top = 12.dp),
+    ) {
+        MaterialPanelLabel(stringResource(R.string.appinfo_sort_by))
+        FlowRow(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = 4.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            AppSortMode.entries.forEach { mode ->
+                FilterChip(
+                    selected = state.sortMode == mode,
+                    onClick = { state.sortMode = mode },
+                    label = { Text(stringResource(mode.labelRes)) },
+                    enabled = !loading,
+                )
+            }
+            FilterChip(
+                selected = state.reverse,
+                onClick = { state.reverse = !state.reverse },
+                label = { Text(stringResource(R.string.appinfo_reverse)) },
+                enabled = !loading,
+            )
+        }
+        MaterialPanelLabel(stringResource(R.string.appinfo_filter), Modifier.padding(top = 10.dp))
+        FlowRow(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = 4.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            FilterChip(
+                selected = state.includeSystem,
+                onClick = { state.includeSystem = !state.includeSystem },
+                label = { Text(stringResource(R.string.appinfo_system_app)) },
+                enabled = !loading,
+            )
+        }
+    }
+}
+
+@Composable
+private fun MaterialPanelLabel(text: String, modifier: Modifier = Modifier) {
+    Text(
+        text = text,
+        modifier = modifier,
+        style = MaterialTheme.typography.labelLarge,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+    )
+}
+
+/** Miuix 线内联排序/筛选面板：与 Material 线同结构，chip 用同包 [MiuixToggleChip] */
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun MiuixPickerSortFilterPanel(state: AppPickerUiState, loading: Boolean) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(top = 12.dp),
+    ) {
+        MiuixPanelLabel(stringResource(R.string.appinfo_sort_by))
+        FlowRow(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = 4.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            AppSortMode.entries.forEach { mode ->
+                MiuixToggleChip(
+                    selected = state.sortMode == mode,
+                    onClick = { state.sortMode = mode },
+                    label = stringResource(mode.labelRes),
+                    enabled = !loading,
+                )
+            }
+            MiuixToggleChip(
+                selected = state.reverse,
+                onClick = { state.reverse = !state.reverse },
+                label = stringResource(R.string.appinfo_reverse),
+                enabled = !loading,
+            )
+        }
+        MiuixPanelLabel(stringResource(R.string.appinfo_filter), Modifier.padding(top = 10.dp))
+        FlowRow(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = 4.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            MiuixToggleChip(
+                selected = state.includeSystem,
+                onClick = { state.includeSystem = !state.includeSystem },
+                label = stringResource(R.string.appinfo_system_app),
+                enabled = !loading,
+            )
+        }
+    }
+}
+
+@Composable
+private fun MiuixPanelLabel(text: String, modifier: Modifier = Modifier) {
+    MiuixText(
+        text = text,
+        modifier = modifier,
+        style = MiuixTheme.textStyles.footnote1,
+        color = MiuixTheme.colorScheme.onBackgroundVariant,
+    )
 }
 
 /**
@@ -468,33 +749,88 @@ internal fun MiuixToggleChip(
     }
 }
 
-/** Material 线条目：与全局 Expressive 分段卡片一致的条目外观 */
+/** 应用图标：无图标时留同等占位，保证行高一致 */
 @Composable
-private fun AppRow(
+private fun AppIcon(icon: Drawable?, modifier: Modifier = Modifier, size: Dp = AppIconSize) {
+    val painter = rememberAppIconPainter(icon)
+    val box = modifier.size(size)
+    if (painter != null) {
+        Image(
+            painter = painter,
+            contentDescription = null,
+            contentScale = ContentScale.Crop,
+            modifier = box.clip(RoundedCornerShape(size * 0.27f)),
+        )
+    } else {
+        Box(box)
+    }
+}
+
+/** Material 线条目：分段卡片外壳 + 紧凑两行（14sp 应用名 / 12sp 包名），尾部 18dp 圆形勾选 */
+@Composable
+private fun MaterialAppRow(
     app: AppInfo,
     multiMode: Boolean,
     checked: Boolean,
     onSelect: () -> Unit,
 ) {
-    MaterialListItem(
-        onClick = { onSelect() },
-        headlineContent = { Text(app.name) },
-        supportingContent = { Text(app.packageName) },
-        leadingContent = {
-            val painter = rememberAppIconPainter(app.icon)
-            if (painter != null) {
-                Image(painter, contentDescription = null, modifier = Modifier.size(40.dp))
-            } else {
-                Box(Modifier.size(40.dp))
+    MaterialItemContainer {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable { onSelect() }
+                .padding(start = 12.dp, end = 10.dp, top = 7.dp, bottom = 7.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            AppIcon(app.icon, size = MaterialAppIconSize)
+            Column(
+                modifier = Modifier
+                    .weight(1f)
+                    .padding(start = 10.dp),
+            ) {
+                Text(
+                    text = app.name,
+                    style = MaterialTheme.typography.bodyMedium,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+                Text(
+                    text = app.packageName,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
             }
-        },
-        trailingContent = {
             if (multiMode) {
-                Checkbox(checked = checked, onCheckedChange = { onSelect() })
+                Spacer(Modifier.width(8.dp))
+                MaterialCheckIndicator(checked)
             }
-        },
-        modifier = Modifier.fillMaxWidth(),
-    )
+        }
+    }
+}
+
+/** 多选指示：M3 Checkbox 自带 48dp 触摸区，塞进对话框会挤掉包名宽度，这里用 18dp 圆形指示 */
+@Composable
+private fun MaterialCheckIndicator(checked: Boolean) {
+    val colors = MaterialTheme.colorScheme
+    Box(
+        modifier = Modifier
+            .size(18.dp)
+            .clip(CircleShape)
+            .background(if (checked) colors.primary else Color.Transparent)
+            .border(1.5.dp, if (checked) colors.primary else colors.outline, CircleShape),
+        contentAlignment = Alignment.Center,
+    ) {
+        if (checked) {
+            Icon(
+                imageVector = Icons.Rounded.Check,
+                contentDescription = null,
+                tint = colors.onPrimary,
+                modifier = Modifier.size(12.dp),
+            )
+        }
+    }
 }
 
 /** Miuix 线条目：多选用 CheckboxPreference（勾选在尾部），单选用 BasicComponent，整行可点 */
@@ -505,14 +841,7 @@ private fun MiuixAppRow(
     checked: Boolean,
     onSelect: () -> Unit,
 ) {
-    val icon: @Composable () -> Unit = {
-        val painter = rememberAppIconPainter(app.icon)
-        if (painter != null) {
-            Image(painter, contentDescription = null, modifier = Modifier.size(40.dp))
-        } else {
-            Box(Modifier.size(40.dp))
-        }
-    }
+    val icon: @Composable () -> Unit = { AppIcon(app.icon) }
     if (multiMode) {
         CheckboxPreference(
             title = app.name,

@@ -31,6 +31,7 @@ import com.luckyzyx.luckytool.hook.hookers.HookKeyguardPersonality
 import com.luckyzyx.luckytool.hook.hookers.HookLauncher
 import com.luckyzyx.luckytool.hook.hookers.HookMarket
 import com.luckyzyx.luckytool.hook.hookers.HookMediaController
+import com.luckyzyx.luckytool.hook.hookers.HookMetis
 import com.luckyzyx.luckytool.hook.hookers.HookMultiApp
 import com.luckyzyx.luckytool.hook.hookers.HookNfc
 import com.luckyzyx.luckytool.hook.hookers.HookNotificationManager
@@ -136,6 +137,7 @@ import java.io.File
         "com.heytap.accessory",
         "com.heytap.mcs",
         "com.oplus.claw",
+        "com.oplus.metis",
         "ru.kslabs.ksweb",
         "com.dv.adm",
         "com.ruet_cse_1503050.ragib.appbackup.pro",
@@ -171,9 +173,9 @@ class MainHook : YukiHookXposedModule {
 
         //系统框架
         loadSystem(HookAndroid)
-        //核心破解（上游 CorePatch）
+        //核心破解
         loadSystem(HookCorePatch)
-        //禁用安全标记（上游 DisableFlagSecure，system_server 侧）
+        //禁用安全标记（system_server 侧）
         loadSystem(HookDisableFlagSecure)
 
         //系统界面
@@ -326,6 +328,9 @@ class MainHook : YukiHookXposedModule {
 
         //小布Next
         loadApp("com.oplus.claw", HookClaw)
+
+        //流体云
+        loadApp("com.oplus.metis", HookMetis)
 
         //其他APP
         loadApp("com.theappninjas.fakegpsjoystick", HookFakeGpsJoyStick)

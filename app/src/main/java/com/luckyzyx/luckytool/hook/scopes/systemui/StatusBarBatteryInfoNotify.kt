@@ -12,7 +12,6 @@ import com.highcapable.betterandroid.ui.component.notification.factory.Notificat
 import com.highcapable.betterandroid.ui.component.notification.factory.NotificationChannel
 import com.highcapable.betterandroid.ui.component.notification.type.NotificationImportance
 import com.highcapable.yukihookapi.hook.entity.YukiBaseHooker
-import com.highcapable.yukihookapi.hook.factory.injectModuleResources
 import com.highcapable.yukihookapi.hook.log.YLog
 import com.luckyzyx.luckytool.BuildConfig
 import com.luckyzyx.luckytool.R
@@ -142,40 +141,34 @@ object StatusBarBatteryInfoNotify : YukiBaseHooker() {
         }
 
         registerAppLifecycle {
-            onCreate {
-                injectModuleResources()
-            }
             //BatteryService
             registerReceiver(Intent.ACTION_BATTERY_CHANGED) { context: Context, _: Intent ->
-                context.injectModuleResources()
-
-                initInfo(context)
+                initInfo()
                 initSend(context)
             }
             //OplusBatteryService
             registerReceiver("android.intent.action.ADDITIONAL_BATTERY_CHANGED") { context: Context, intent: Intent ->
-                context.injectModuleResources()
                 chargerTechnology = intent.getIntExtra("chargertechnology", 0)
                 chargeWattage = intent.getIntExtra("chargewattage", 0)
                 ppsMode = intent.getIntExtra("pps_chg_mode", 0)
                 chargerWattageCpa = intent.getIntExtra("cpa_charge_wattage", 0)
 
-                initInfo(context)
+                initInfo()
                 initSend(context)
             }
         }
     }
 
-    private fun initInfo(context: Context) {
+    private fun initInfo() {
         try {
             chargeInfo = getChargeInfo()
             statusValue = chargeInfo.getIntProperty("battery_status")
             status = when (statusValue) {
-                2 -> safeOf("Charging") { context.getString(R.string.battery_status_charging) }
-                3 -> safeOf("Discharging") { context.getString(R.string.battery_status_discharging) }
-                4 -> safeOf("Not Charging") { context.getString(R.string.battery_status_not_charging) }
-                5 -> safeOf("Full") { context.getString(R.string.battery_status_full) }
-                else -> safeOf("Unknown") { context.getString(R.string.battery_status_unknown) }
+                2 -> safeOf("Charging") { module.resources.getString(R.string.battery_status_charging) }
+                3 -> safeOf("Discharging") { module.resources.getString(R.string.battery_status_discharging) }
+                4 -> safeOf("Not Charging") { module.resources.getString(R.string.battery_status_not_charging) }
+                5 -> safeOf("Full") { module.resources.getString(R.string.battery_status_full) }
+                else -> safeOf("Unknown") { module.resources.getString(R.string.battery_status_unknown) }
             }
             isCharging = statusValue == 2 || statusValue == 5
             plugged = when (getPlugType(chargeInfo)) {
@@ -260,7 +253,7 @@ object StatusBarBatteryInfoNotify : YukiBaseHooker() {
         val powerCalc = if (isSeriesDual || isParallelDual) {
             (voltage + voltage2) * electricCurrent / 1000.0
         } else voltage * electricCurrent / 1000.0
-
+        
         val batteryIcon = safeOf(android.R.drawable.sym_def_app_icon) {
             if (isCharging) R.drawable.ic_round_battery_charging_full_24
             else when (level) {
@@ -275,14 +268,15 @@ object StatusBarBatteryInfoNotify : YukiBaseHooker() {
                 else -> R.drawable.round_battery_unknown_24
             }
         }
-        val tempStr = safeOf("Temp") { context.getString(R.string.battery_temperature) }
-        val volStr = safeOf("Vol") { context.getString(R.string.battery_voltage) }
-        val curStr = safeOf("Cur") { context.getString(R.string.battery_electric_current) }
-        val hltStr = safeOf("Cur") { context.getString(R.string.battery_health) }
-        val typeStr = safeOf("Type") { context.getString(R.string.battery_charger_type) }
-        val pwrStr = safeOf("Pwr") { context.getString(R.string.battery_power) }
-        val techStr = safeOf("Tech") { context.getString(R.string.battery_technology) }
-        val updateTimeStr = safeOf("UpdateTime") { context.getString(R.string.battery_update_time) }
+        val tempStr = safeOf("Temp") { module.resources.getString(R.string.battery_temperature) }
+        val volStr = safeOf("Vol") { module.resources.getString(R.string.battery_voltage) }
+        val curStr = safeOf("Cur") { module.resources.getString(R.string.battery_electric_current) }
+        val hltStr = safeOf("Cur") { module.resources.getString(R.string.battery_health) }
+        val typeStr = safeOf("Type") { module.resources.getString(R.string.battery_charger_type) }
+        val pwrStr = safeOf("Pwr") { module.resources.getString(R.string.battery_power) }
+        val techStr = safeOf("Tech") { module.resources.getString(R.string.battery_technology) }
+        val updateTimeStr =
+            safeOf("UpdateTime") { module.resources.getString(R.string.battery_update_time) }
 
         val power = abs(powerCalc).formatDecimals(2) + "W"
         val wattage = if (chargeWattage == 0) {
@@ -378,12 +372,11 @@ object StatusBarBatteryInfoNotify : YukiBaseHooker() {
             R.id.battery_notify_tv, TypedValue.COMPLEX_UNIT_SP, fontSize.toFloat()
         )
         val notify = Notification(context = context, channel = channel) {
-            //不能传 context 创建图标：IconCompat.createWithResource(context, id) 构造时会调用
-            //Resources.getResourceName(id) 解析资源名，依赖 SystemUI 进程内的模块资源注入，
-            //且 0x7f 段 ID 与 SystemUI 自身资源表易撞车；解析失败直接抛
-            //IllegalArgumentException("Icon resource cannot be found")，notify 根本不会执行。
-            //传 null Resources 只记录包名+ID、不做任何解析，加载时任何进程都经已安装模块 APK 获取
-            smallIcon(IconCompat.createWithResource(null, BuildConfig.APPLICATION_ID, batteryIcon))
+            smallIcon(
+                IconCompat.createWithResource(
+                    module.resources, BuildConfig.APPLICATION_ID, batteryIcon
+                )
+            )
             contentTitle = "BatteryInfo"
             contentText = info
             customContentView = remoteViews

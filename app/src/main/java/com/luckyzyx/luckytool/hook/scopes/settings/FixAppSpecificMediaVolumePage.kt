@@ -7,7 +7,6 @@ import com.highcapable.kavaref.extension.classOf
 import com.highcapable.yukihookapi.extension.kavaref.hook
 import com.highcapable.yukihookapi.extension.kavaref.toClass
 import com.highcapable.yukihookapi.hook.entity.YukiBaseHooker
-import com.highcapable.yukihookapi.hook.factory.injectModuleResources
 import com.luckyzyx.luckytool.BuildConfig
 import com.luckyzyx.luckytool.utils.DexkitUtils.checkDataList
 import com.luckyzyx.luckytool.utils.safeOfNull
@@ -47,15 +46,14 @@ class FixAppSpecificMediaVolumePage(val dexKitBridge: DexKitBridge) : YukiBaseHo
                         val assetsInputStream = safeOfNull { context.assets.open(path) }
                         if (assetsInputStream != null) return@before
 
-                        context.injectModuleResources()
                         if (!path.endsWith(".zip") && !path.endsWith(".lottie")) {
                             val resName = path.substringAfter("/").substringBefore(".json")
-                            val resId = context.resources.getIdentifier(
+                            val resId = module.resources.getIdentifier(
                                 resName, "raw", BuildConfig.APPLICATION_ID
                             )
                             if (resId == 0) return@before
                             val rawInputStream = safeOfNull {
-                                context.resources.openRawResource(resId)
+                                module.resources.openRawResource(resId)
                             } ?: return@before
                             result = firstMethod {
 //                                name = "fromJsonInputStreamSync"

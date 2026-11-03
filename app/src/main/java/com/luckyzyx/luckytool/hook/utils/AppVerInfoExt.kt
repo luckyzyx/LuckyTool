@@ -8,8 +8,8 @@ import kotlinx.serialization.json.Json
 /**
  * 读取模块侧 [com.luckyzyx.luckytool.utils.AppUtils.getAppVerInfo] 写入的宿主版本信息。
  *
- * YukiHook 1.5.0 没有宿主版本信息 API，此为项目业务工具（原自研
- * Env.NonNullPrefs.getAppVerInfo 的迁移归宿），写入格式见 AppUtils（JSON 字符串集合）。
+ * YukiHook 1.5.0 没有宿主版本信息 API，故由项目自己的业务工具补上；
+ * 写入格式见 AppUtils（JSON 字符串集合，这里取集合首个元素反序列化）。
  */
 fun YukiHookPreferences.getAppVerInfo(packName: String): AppVerInfo? {
     val set = getStringSet(packName, emptySet())

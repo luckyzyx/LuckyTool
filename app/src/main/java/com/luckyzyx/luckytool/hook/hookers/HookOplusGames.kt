@@ -2,7 +2,6 @@ package com.luckyzyx.luckytool.hook.hookers
 
 import com.highcapable.yukihookapi.hook.entity.YukiBaseHooker
 import com.luckyzyx.luckytool.hook.globals.HookGlobalFeatureConfig
-import com.luckyzyx.luckytool.hook.globals.HookGlobalFeatureProvider
 import com.luckyzyx.luckytool.hook.scopes.games.CloudConditionFeature
 import com.luckyzyx.luckytool.hook.scopes.games.CompetitionModeSound
 import com.luckyzyx.luckytool.hook.scopes.games.CustomBarrageNotificationWhitelist
@@ -36,7 +35,6 @@ object HookOplusGames : YukiBaseHooker() {
         loadHooker(HookGlobalFeatureConfig)
 
         DexkitUtils.create(appInfo.sourceDir) { dexKitBridge ->
-            loadHooker(HookGlobalFeatureProvider(dexKitBridge))
             //HookCloudConditionFeature
             if (!isNew) loadHooker(CloudConditionFeature(appVer, dexKitBridge))
             //游戏滤镜-->Root检测
@@ -45,7 +43,7 @@ object HookOplusGames : YukiBaseHooker() {
             }
             //移除启动动画
             if (preferences(ModulePrefs).getBoolean("remove_startup_animation", false)) {
-                loadHooker(RemoveStartupAnimation(dexKitBridge))
+                loadHooker(RemoveStartupAnimation)
             }
             //启用赛事支持模式
             if (preferences(ModulePrefs).getBoolean("enable_support_competition_mode", false)) {
@@ -63,10 +61,9 @@ object HookOplusGames : YukiBaseHooker() {
             if (preferences(ModulePrefs).getBoolean("enable_game_run_in_background", false)) {
                 if (osCode >= 27) loadHooker(EnableGameRunInBackground(dexKitBridge))
             }
+            //自定义媒体播放器支持
+            loadHooker(CustomMediaPlayerSupport(dexKitBridge))
         }
-
-        //自定义媒体播放器支持
-        loadHooker(CustomMediaPlayerSupport)
 
         //启用开发者选项
         if (preferences(ModulePrefs).getBoolean("enable_developer_page", false)) {

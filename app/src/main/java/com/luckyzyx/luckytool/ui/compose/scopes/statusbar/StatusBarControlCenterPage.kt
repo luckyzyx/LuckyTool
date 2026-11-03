@@ -26,12 +26,11 @@ import com.luckyzyx.luckytool.utils.getOSVersionCode
 import com.luckyzyx.luckytool.utils.isZh
 
 /**
- * 控制中心页（旧 ui.fragment.scopes.statusbar.StatusBarControlCenter 的 Compose 等价物）。
- * 逐项对齐：键、默认值、条件可见性（osCode = getOSVersionCode、SDK = Android API）、
- * notify（sendPrefsValue("com.android.systemui")）。
- * ColorPickerPreference 迁移为 custom：点击弹 Compose ui/components/ColorPickerDialog，
- * 存储 #AARRGGBB 十六进制字符串（默认 "#FFFFFFFF"，旧 setDefaultValue(Color.WHITE)），
- * 选色后经 sendValue 通知 SystemUI。
+ * 控制中心页：SystemUI 控制中心的时钟 / 网速 / 进度条等开关与取值。
+ * 每项都显式声明键、默认值与条件可见性（osCode = getOSVersionCode 判 OS 版本、
+ * SDK = Android API 级别），写值后经 sendPrefsValue("com.android.systemui") 通知宿主。
+ * 进度百分比颜色这一项用 custom 渲染：点击弹 Compose ui/components/ColorPickerDialog，
+ * 以 #AARRGGBB 十六进制字符串存储（默认 "#FFFFFFFF" 即不透明白），选色后经 sendValue 通知 SystemUI。
  */
 object StatusBarControlCenterPage {
 

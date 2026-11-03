@@ -201,7 +201,8 @@
     <string name="StatusBarIcon_summary">Usuń ikony z pasku stanu</string>
     <string name="StatusBarWIFIIcon">Ikona Wi-Fi</string>
     <string name="remove_wifi_data_inout">Usuń wskaźnik użycia Wi-Fi</string>
-    <string name="force_display_wifi_standard">Forced display of WIFI signal standards</string>
+    <string name="force_display_wifi_standard">Wymuszone wyświetlanie standardów sygnału Wi-Fi</string>
+    <string name="force_display_wifi_standard_summary">Po zmianie wymagane jest ponowne uruchomienie procesów w zakresie, aby ustawienie zaczęło działać</string>
     <string name="StatusBarMobileDataIcon">Ikona danych mobilnych</string>
     <string name="remove_mobile_data_icon">Usuń ikonę mobilnej sieci</string>
     <string name="remove_mobile_data_inout">Usuń wskaźnik użycia danych mobilnych</string>
@@ -809,6 +810,7 @@
     <string name="remove_side_slider">Usuń boczny suwak</string>
     <string name="remove_side_slider_black_background">Usuń czarne tło paska bocznego</string>
     <string name="remove_rotate_screen_button">Usuń przycisk obracania ekranu</string>
+    <string name="custom_rotate_screen_button_size">Niestandardowy rozmiar przycisku obracania ekranu</string>
     <string name="remove_back_gesture_confirmation_limit">Remove the back gesture confirmation limit</string>
     <string name="CustomSideSliderIcon">Niestandardowa ikona paska bocznego</string>
     <string name="replace_side_slider_icon_switch">Zastąp ikonę</string>
@@ -969,7 +971,6 @@
     <string name="adb_port">Port ADB</string>
     <string name="enable_remote_adb_debugging">Zdalne debugowanie ADB</string>
     <string name="adb_debug_port_cannot_null">Port ADB nie może być pusty</string>
-    <string name="adb_tv_tip">Przytrzymaj, aby skopiować</string>
     <!--LOG Fragment-->
     <string name="log_save_success">Logi zapisano pomyślnie!</string>
     <string name="log_save_failed">Zapis logów się nie powiódł!</string>
@@ -1005,6 +1006,12 @@
     <string name="appinfo_last_updated_time">Last Updated Time</string>
     <string name="appinfo_target_sdk">Target SDK</string>
     <string name="appinfo_system_app">System App</string>
+    <string name="appinfo_app_count">%1$d aplikacji</string>
+    <string name="appinfo_selected_count">Wybrano: %1$d</string>
+    <string name="appinfo_select_all">Zaznacz wszystko</string>
+    <string name="appinfo_deselect_all">Odznacz wszystko</string>
+    <string name="appinfo_no_match">Brak pasujących aplikacji</string>
+    <string name="appinfo_clear_search">Wyczyść wyszukiwanie</string>
     <!--Intent-->
     <string name="custom_config_app_intent_list">Custom configuration app intent list</string>
     <string name="select_all_share_intent">Select all share intent</string>

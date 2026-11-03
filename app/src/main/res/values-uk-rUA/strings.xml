@@ -201,7 +201,8 @@
     <string name="StatusBarIcon_summary">Іконка рядку стану</string>
     <string name="StatusBarWIFIIcon">Іконка WI-FI</string>
     <string name="remove_wifi_data_inout">Видалити вхідні Wi-Fi дані</string>
-    <string name="force_display_wifi_standard">Forced display of WIFI signal standards</string>
+    <string name="force_display_wifi_standard">Примусове відображення стандартів сигналу Wi-Fi</string>
+    <string name="force_display_wifi_standard_summary">Після перемикання потрібно перезавантажити заплановані процеси, щоб зміна набула чинності</string>
     <string name="StatusBarMobileDataIcon">Іконка мобільних даних</string>
     <string name="remove_mobile_data_icon">Видалити іконку мобільних даних</string>
     <string name="remove_mobile_data_inout">Видалити вхідні мобільні дані</string>
@@ -808,6 +809,7 @@
     <string name="remove_side_slider">Видалити бічну панель</string>
     <string name="remove_side_slider_black_background">Прибрати чорний фон бічної панелі</string>
     <string name="remove_rotate_screen_button">Видалити кнопку повороту екрану</string>
+    <string name="custom_rotate_screen_button_size">Власний розмір кнопки повороту екрану</string>
     <string name="remove_back_gesture_confirmation_limit">Remove the back gesture confirmation limit</string>
     <string name="CustomSideSliderIcon">Користувацька іконка бічної панелі</string>
     <string name="replace_side_slider_icon_switch">Замінити іконку бічної панелі</string>
@@ -968,7 +970,6 @@
     <string name="adb_port">ADB порт</string>
     <string name="enable_remote_adb_debugging">Увімкнути віддалене налагодження ADB</string>
     <string name="adb_debug_port_cannot_null">Порт налагодження ADB не може бути порожнім</string>
-    <string name="adb_tv_tip">Утримуйте для копіювання</string>
     <!--LOG Fragment-->
     <string name="log_save_success">Лог збережено успішно!</string>
     <string name="log_save_failed">Не вдалося зберегти лог!</string>
@@ -1004,6 +1005,12 @@
     <string name="appinfo_last_updated_time">Last Updated Time</string>
     <string name="appinfo_target_sdk">Target SDK</string>
     <string name="appinfo_system_app">System App</string>
+    <string name="appinfo_app_count">%1$d додатків</string>
+    <string name="appinfo_selected_count">Вибрано: %1$d</string>
+    <string name="appinfo_select_all">Вибрати все</string>
+    <string name="appinfo_deselect_all">Зняти вибір</string>
+    <string name="appinfo_no_match">Немає відповідних додатків</string>
+    <string name="appinfo_clear_search">Очистити пошук</string>
     <!--Intent-->
     <string name="custom_config_app_intent_list">Custom configuration app intent list</string>
     <string name="select_all_share_intent">Select all share intent</string>

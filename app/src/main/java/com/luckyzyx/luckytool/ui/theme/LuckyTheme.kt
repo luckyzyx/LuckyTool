@@ -31,7 +31,7 @@ import com.luckyzyx.luckytool.ui.shell.LocalModuleDescriptionMaxLines
 import com.luckyzyx.luckytool.ui.shell.LocalPagerInterceptionMode
 import com.luckyzyx.luckytool.ui.shell.ShellSettingsController
 
-/** 关闭动态取色、且未选自定义主题色时的种子色：M3 基线紫，观感对齐旧 light/darkColorScheme() 默认值。 */
+/** 关闭动态取色、且未选自定义主题色时的种子色：M3 基线紫，与 light/darkColorScheme() 的默认种子色一致。 */
 private val DefaultSeedColor = Color(0xFF6750A4)
 
 /**

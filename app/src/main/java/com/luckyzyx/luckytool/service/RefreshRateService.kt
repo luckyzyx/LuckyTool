@@ -107,12 +107,12 @@ object RefreshRateService : BaseControllerService<IRefreshRateController>() {
                         }
                         DynamicDisplayInfoUtils(dynamicInfo).apply {
                             val allDisplayModes = getSupportedDisplayModes()
-                            LogUtils.e(
-                                TAG,
-                                "getSupportModes",
-                                "supportedDisplayModes size = ${allDisplayModes.size}",
-                                true
-                            )
+//                            LogUtils.d(
+//                                TAG,
+//                                "getSupportModes",
+//                                "supportedDisplayModes size = ${allDisplayModes.size}",
+//                                true
+//                            )
                             allDisplayModes.forEach {
                                 val mode = getDisplayMode(it)
                                 if (mode == null) {

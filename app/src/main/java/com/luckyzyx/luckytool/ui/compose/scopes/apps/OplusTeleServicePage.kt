@@ -9,7 +9,9 @@ import com.luckyzyx.luckytool.utils.SDK
 import com.luckyzyx.luckytool.utils.checkPackName
 
 /**
- * 旧 ui.fragment.scopes.apps.OplusTeleService 的 Compose 等价物（机械翻译 loadPreferences）。
+ * 电话服务页：强制显示 5G 开关、VoLTE 与首选网络类型，以及声音封印通话的开关。
+ * 整页要求 SDK >= Android 13 且装有 com.android.phone（见 spec.isVisible）；
+ * 前三个开关要求 SDK >= A13，声音封印通话要求 SDK >= A14。
  */
 object OplusTeleServicePage {
 

@@ -5,7 +5,7 @@ import com.luckyzyx.luckytool.ui.compose.scopes.ScopePageSpec
 import com.luckyzyx.luckytool.utils.ModulePrefs
 
 /**
- * 系统消息页（旧 ui.fragment.scopes.apps.OplusMcs 的 Compose 等价物）。
+ * 系统消息页：系统消息的区域默认值取值。
  */
 object OplusMcsPage {
 

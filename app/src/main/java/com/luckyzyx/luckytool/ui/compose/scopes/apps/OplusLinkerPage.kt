@@ -6,7 +6,8 @@ import com.luckyzyx.luckytool.utils.ModulePrefs
 import com.luckyzyx.luckytool.utils.getOSVersionCode
 
 /**
- * 互联页（旧 ui.fragment.scopes.apps.OplusLinker 的 Compose 等价物）。
+ * 互联页：强制开启与 iPhone 互通支持的开关。
+ * 仅在 osCode >= 37 时渲染；改动需要重启系统。
  */
 object OplusLinkerPage {
 

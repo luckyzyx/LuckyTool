@@ -7,8 +7,8 @@ import com.luckyzyx.luckytool.utils.ModulePrefs
 import com.luckyzyx.luckytool.utils.SDK
 
 /**
- * 状态栏布局页（旧 ui.fragment.scopes.statusbar.StatusBarLayout 的 Compose 等价物）。
- * 逐项对齐：键、默认值、条件可见性（SDK == A13 才展示全部条目）、margin 滑条依赖兼容模式开关。
+ * 状态栏布局页：布局模式、兼容模式与左右 margin（写入 com.android.systemui）。
+ * 页面整体可见性以 SDK == A13 为条件（spec.isVisible），margin 滑条依赖兼容模式开关。
  */
 object StatusBarLayoutPage {
 
@@ -21,7 +21,7 @@ object StatusBarLayoutPage {
         isVisible = { SDK == A13 },
     ) {
         val c = requireNotNull(context) { "ScopeScreen 未注入 Context" }
-        // 旧 root 条目 isVisible = SDK == A13 已平移为 spec.isVisible；本页所有条目亦同条件
+        // 整页可见性由 spec.isVisible（SDK == A13）判定，这里提前 return 与该条件保持一致
         if (SDK != A13) return@ScopePageSpec
         list(
             key = "statusbar_layout_mode",

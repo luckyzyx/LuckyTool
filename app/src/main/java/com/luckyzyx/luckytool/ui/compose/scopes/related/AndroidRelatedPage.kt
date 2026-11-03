@@ -8,8 +8,9 @@ import com.luckyzyx.luckytool.utils.SDK
 import com.luckyzyx.luckytool.utils.arraySummaryLine
 
 /**
- * Android 系统页（旧 ui.fragment.scopes.related.AndroidRelated 的 Compose 等价物）。
- * 逐项对齐：键、默认值、条件可见性。
+ * Android 系统页：system 作用域下的系统级开关（GMS 用量限制、root 状态检测、触摸、
+ * 高斯模糊等级、LTPO 等）。
+ * 每项都显式声明键、默认值与条件可见性（SDK = Android API 级别）。
  */
 object AndroidRelatedPage {
 

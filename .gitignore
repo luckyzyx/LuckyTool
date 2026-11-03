@@ -38,3 +38,4 @@ vcs.xml
 
 # dsh-ops 更新锁边车：ops 写工具在每个被写入的文件旁生成，0 字节，不自动删除
 .dsh-ops-update-*.lock
+.dsh-ops/

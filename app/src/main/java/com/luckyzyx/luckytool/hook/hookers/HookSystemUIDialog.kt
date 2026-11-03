@@ -59,9 +59,9 @@ object HookSystemUIDialog : YukiBaseHooker() {
         if (preferences(ModulePrefs).getBoolean("remove_start_recording_or_casting_dialog", false)) {
             loadHooker(RemoveStartRecordingOrCastingDialog)
         }
-        //浮窗贴边前台运行
+        //浮窗贴边前台运行：C14 仍走 SystemUI 侧的 zoom 状态机，C15+ 改由 system_server 侧接管
         if (preferences(ModulePrefs).getBoolean("run_floating_window_tasks_in_foreground", false)) {
-            if (osCode in 26..33) loadHooker(RunFloatingWindowTasksInForeground)
+            if (osCode in 26..34) loadHooker(RunFloatingWindowTasksInForeground)
         }
         //强制显示Toast提示图标
         if (preferences(ModulePrefs).getBoolean("force_show_toast_icon", false)) {

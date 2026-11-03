@@ -11,8 +11,9 @@ import com.luckyzyx.luckytool.utils.arraySummaryDot
 import com.luckyzyx.luckytool.utils.getOSVersionCode
 
 /**
- * 杂项页（旧 ui.fragment.scopes.related.Miscellaneous 的 Compose 等价物）。
- * 顶部三条为旧 add(DialogRelated/FingerPrintRelated/SoundRelated().getRootPreference) 的页面入口。
+ * 杂项页：充电波纹、OTG 自动关闭、存储限制、SystemUI 模糊与电源菜单等零散开关，写入
+ * com.android.systemui、com.android.externalstorage、com.oplus.exsystemservice。
+ * 顶部三条 page() 是悬浮窗/对话框、指纹、声音三个子页面的入口。
  */
 object MiscellaneousPage {
 

@@ -43,9 +43,9 @@ import top.yukonga.miuix.kmp.basic.Button as MiuixButton
 import top.yukonga.miuix.kmp.basic.Text as MiuixText
 
 /**
- * ExtractOTA 页（旧 ui.fragment.extension.ExtractOTAFragment 的 Compose 等价物）。
+ * ExtractOTA 页：读出系统 OTA 数据库（ota.db 的 pkgList 表）里各应用包的 OTA 信息并列出。
  * 无 Xposed 作用域（packName="" / scopes=arrayOf()），数据仅本地读取展示。
- * 下拉刷新（onRefresh）重跑加载流程，等价旧 SwipeRefreshLayout。
+ * 下拉刷新（onRefresh）重跑加载流程。
  * 页内文字与按钮按 [LocalUiMode] 分派：Miuix 线 `MiuixText` / miuix `Button`，material 线不变。
  */
 @SuppressLint("SdCardPath")

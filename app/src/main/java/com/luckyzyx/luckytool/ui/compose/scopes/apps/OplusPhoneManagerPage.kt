@@ -5,8 +5,8 @@ import com.luckyzyx.luckytool.ui.compose.scopes.ScopePageSpec
 import com.luckyzyx.luckytool.utils.ModulePrefs
 
 /**
- * 旧 ui.fragment.scopes.apps.OplusPhoneManager 的 Compose 等价物（机械翻译 loadPreferences）。
- * 旧类未覆写 isEnableRestartMenu（基类默认 false）。
+ * 手机管家页：去掉病毒风险通知与加入白名单倒计时的开关。
+ * 本页不显示重启菜单（restartEnabled = false）。
  */
 object OplusPhoneManagerPage {
 

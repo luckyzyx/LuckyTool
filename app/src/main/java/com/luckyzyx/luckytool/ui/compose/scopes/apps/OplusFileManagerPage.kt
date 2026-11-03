@@ -6,7 +6,8 @@ import com.luckyzyx.luckytool.utils.ModulePrefs
 import com.luckyzyx.luckytool.utils.getOSVersionCode
 
 /**
- * 文件管理页（旧 ui.fragment.scopes.apps.OplusFileManager 的 Compose 等价物）。
+ * 文件管理页：去掉保存、压缩、命名文件时的字数限制。
+ * 三项都只在 osCode >= 37 时渲染。
  */
 object OplusFileManagerPage {
 

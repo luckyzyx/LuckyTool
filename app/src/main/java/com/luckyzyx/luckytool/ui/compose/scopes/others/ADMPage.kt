@@ -5,7 +5,7 @@ import com.luckyzyx.luckytool.ui.compose.scopes.ScopePageSpec
 import com.luckyzyx.luckytool.utils.ModulePrefs
 
 /**
- * ADM 页（旧 ui.fragment.scopes.others.ADM 的 Compose 等价物）。
+ * ADM 页：Pro 解锁与线程数档位（写入 com.dv.adm）。
  */
 object ADMPage {
 

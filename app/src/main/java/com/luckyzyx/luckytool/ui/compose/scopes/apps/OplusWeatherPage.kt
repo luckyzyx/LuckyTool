@@ -6,7 +6,7 @@ import com.luckyzyx.luckytool.utils.ModulePrefs
 import com.luckyzyx.luckytool.utils.getOSVersionCode
 
 /**
- * 旧 ui.fragment.scopes.apps.OplusWeather 的 Compose 等价物（机械翻译 loadPreferences）。
+ * 天气页：去掉页面底部广告、禁止跳浏览器、展开 15 天预报与恢复降雨云图的开关。
  */
 object OplusWeatherPage {
 

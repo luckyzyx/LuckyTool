@@ -5,7 +5,7 @@ import com.luckyzyx.luckytool.ui.compose.scopes.ScopePageSpec
 import com.luckyzyx.luckytool.utils.ModulePrefs
 
 /**
- * GPS 摇杆页（旧 ui.fragment.scopes.others.GpsJoyStick 的 Compose 等价物）。
+ * GPS 摇杆页：Pro 解锁开关（写入 com.theappninjas.fakegpsjoystick）。
  */
 object GpsJoyStickPage {
 

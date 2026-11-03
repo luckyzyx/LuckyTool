@@ -12,7 +12,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyItemScope
@@ -21,7 +20,6 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
-import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.SecondaryTabRow
@@ -47,11 +45,14 @@ import androidx.compose.ui.unit.dp
 import com.luckyzyx.luckytool.R
 import com.luckyzyx.luckytool.data.MemcConfigActivity
 import com.luckyzyx.luckytool.data.MemcConfigPackage
+import com.luckyzyx.luckytool.ui.compose.components.ActionListDialog
 import com.luckyzyx.luckytool.ui.compose.components.AppPickerDialog
+import com.luckyzyx.luckytool.ui.compose.components.ChoiceItem
 import com.luckyzyx.luckytool.ui.compose.components.PrefCard
 import com.luckyzyx.luckytool.ui.compose.components.material.MaterialItem
 import com.luckyzyx.luckytool.ui.compose.components.material.MaterialListItem
 import com.luckyzyx.luckytool.ui.compose.components.material.materialBottomInset
+import com.luckyzyx.luckytool.ui.compose.components.miuix.MiuixDialogScrollBody
 import com.luckyzyx.luckytool.ui.compose.components.miuix.MiuixListItem
 import com.luckyzyx.luckytool.ui.compose.components.miuix.MiuixPrefDefaults
 import com.luckyzyx.luckytool.ui.compose.components.miuix.MiuixPrefItem
@@ -86,17 +87,17 @@ private const val CONFIG_PACKAGE_LIST = GlobalKeyValue.memcConfigPackageList
 private const val CONFIG_ACTIVITY_LIST = GlobalKeyValue.memcConfigActivityList
 
 /**
- * P4 特殊页：Memc 帧插入配置（旧 MemcConfigFragment 1:1 迁移）。
+ * P4 特殊页：Memc 帧插入配置。
  * 双 Tab（Packages/Activitys）+ 搜索 + 下拉刷新 + Import Xml / Reset。
  *
- * 原「三文件制」已合并为单文件：状态/写值逻辑唯一一份 [MemcConfigState]，
+ * 单文件承载：状态与写值逻辑只有一份 [MemcConfigState]，
  * 渲染差异集中在 [MemcConfigContent] 的 `if (miuix)` 分派上——Import Xml / Reset 通过
- * [ScopePageAction] 交回顶栏溢出菜单（旧 Fragment 即 `SHOW_AS_ACTION_NEVER`），
+ * [ScopePageAction] 进顶栏溢出菜单（不设 `showAsAction`，只出现在溢出菜单里、不占页面空间），
  * 双面板与四个弹层按线分派。
  */
 object MemcConfigPage {
 
-    /** 顶栏溢出菜单动作 key（对应旧 Fragment `onCreateMenu` 的菜单项）。 */
+    /** 顶栏溢出菜单动作 key，页面在 `actionHandler` 里据此分派。 */
     const val ACTION_IMPORT_XML = "import_xml"
     const val ACTION_RESET = "reset"
 
@@ -110,7 +111,7 @@ object MemcConfigPage {
         selfRendered = true,
         onRefresh = { memcRefresh?.invoke() },
         fullContent = { _ -> MemcConfigContent() },
-        // 旧版这两项都在 Toolbar 溢出菜单里（无图标、SHOW_AS_ACTION_NEVER），保持一致
+        // 这两项都不设图标、不显示为顶栏按钮，只出现在溢出菜单里
         topActions = listOf(
             ScopePageAction(ACTION_IMPORT_XML, R.string.menu_import_xml),
             ScopePageAction(ACTION_RESET, R.string.reset),
@@ -260,7 +261,7 @@ internal class MemcConfigState(private val context: Context) {
 }
 
 /**
- * 页面渲染体：状态/加载逻辑唯一一份（两线旧实现逐字一致），渲染差异集中在此。
+ * 页面渲染体：状态/加载逻辑唯一一份，两条渲染线共用，渲染差异集中在此。
  *
  * LazyItemScope 扩展：[ScopePageSpec.fullContent] 挂在 LazyColumn 的 item 内，item 的高度约束无界，
  * 根容器必须用 `fillParentMaxHeight()` 取列表视口高度，否则整列高度为 0（子项 weight 分不到空间）→ 白屏。
@@ -435,51 +436,16 @@ internal fun LazyItemScope.MemcConfigContent() {
     }
 
     if (showVersionSheet) {
-        if (miuix) {
-            OverlayDialog(
-                show = true,
-                onDismissRequest = { showVersionSheet = false },
-            ) {
-                Column {
-                    listOf("x7", "x7p").forEach { v ->
-                        MiuixListItem(
-                            title = v,
-                            onClick = {
-                                showVersionSheet = false
-                                scope.launch { state.reset(null, v) }
-                            },
-                        )
-                    }
-                    MiuixTextButton(
-                        text = stringResource(android.R.string.cancel),
-                        onClick = { showVersionSheet = false },
-                        modifier = Modifier.fillMaxWidth(),
-                    )
-                }
-            }
-        } else {
-            AlertDialog(
-                onDismissRequest = { showVersionSheet = false },
-                text = {
-                    Column {
-                        listOf("x7", "x7p").forEach { v ->
-                            ListItem(
-                                modifier = Modifier.clickable {
-                                    showVersionSheet = false
-                                    scope.launch { state.reset(null, v) }
-                                },
-                                content = { Text(v) },
-                            )
-                        }
-                    }
-                },
-                confirmButton = {
-                    TextButton(onClick = { showVersionSheet = false }) {
-                        Text(stringResource(android.R.string.cancel))
-                    }
-                },
-            )
-        }
+        ActionListDialog(
+            title = stringResource(R.string.memc_version_select_title),
+            items = listOf("x7", "x7p").map { ChoiceItem(key = it, title = it) },
+            onDismiss = { showVersionSheet = false },
+            onSelect = { item ->
+                // 动作列表语义：组件自己不关闭弹层，先关再执行（保持原来「关弹层 → 重置」的顺序）
+                showVersionSheet = false
+                scope.launch { state.reset(null, item.key) }
+            },
+        )
     }
 }
 
@@ -773,52 +739,57 @@ internal fun MemcPackageDialog(
             show = true,
             onDismissRequest = onDismiss,
         ) {
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                PickerField(onClick = { showAppPicker = true }) {
+            MiuixDialogScrollBody(
+                actions = {
+                    DialogButtons(
+                        dismissText = if (initial != null) stringResource(R.string.remove)
+                        else stringResource(android.R.string.cancel),
+                        confirmText = stringResource(android.R.string.ok),
+                        onDismiss = { if (initial != null) showDeleteConfirm = true else onDismiss() },
+                        onConfirm = {
+                            if (packName.isBlank() || rate.isBlank() || type.isBlank()) {
+                                context.showToast("Data is incomplete!")
+                            } else {
+                                onSave(MemcConfigPackage(packName, rate, type))
+                            }
+                        },
+                    )
+                },
+            ) {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    PickerField(onClick = { showAppPicker = true }) {
+                        MiuixTextField(
+                            value = packName,
+                            onValueChange = {},
+                            readOnly = true,
+                            singleLine = true,
+                            label = "PackageName",
+                            modifier = Modifier.fillMaxWidth(),
+                        )
+                    }
                     MiuixTextField(
-                        value = packName,
-                        onValueChange = {},
-                        readOnly = true,
+                        value = rate,
+                        onValueChange = { rate = it },
                         singleLine = true,
-                        label = "PackageName",
+                        label = "ScreenRate",
                         modifier = Modifier.fillMaxWidth(),
                     )
+                    MiuixTextField(
+                        value = type,
+                        onValueChange = { type = it },
+                        singleLine = true,
+                        label = "Type",
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                    MiuixText(
+                        stringResource(
+                            R.string.edit_memc_configuration_tips,
+                            CommandUtils.memcHdrConfigHelp,
+                        ),
+                        style = MiuixTheme.textStyles.footnote1,
+                        color = MiuixTheme.colorScheme.onBackgroundVariant,
+                    )
                 }
-                MiuixTextField(
-                    value = rate,
-                    onValueChange = { rate = it },
-                    singleLine = true,
-                    label = "ScreenRate",
-                    modifier = Modifier.fillMaxWidth(),
-                )
-                MiuixTextField(
-                    value = type,
-                    onValueChange = { type = it },
-                    singleLine = true,
-                    label = "Type",
-                    modifier = Modifier.fillMaxWidth(),
-                )
-                MiuixText(
-                    stringResource(
-                        R.string.edit_memc_configuration_tips,
-                        CommandUtils.memcHdrConfigHelp,
-                    ),
-                    style = MiuixTheme.textStyles.footnote1,
-                    color = MiuixTheme.colorScheme.onBackgroundVariant,
-                )
-                DialogButtons(
-                    dismissText = if (initial != null) stringResource(R.string.remove)
-                    else stringResource(android.R.string.cancel),
-                    confirmText = stringResource(android.R.string.ok),
-                    onDismiss = { if (initial != null) showDeleteConfirm = true else onDismiss() },
-                    onConfirm = {
-                        if (packName.isBlank() || rate.isBlank() || type.isBlank()) {
-                            context.showToast("Data is incomplete!")
-                        } else {
-                            onSave(MemcConfigPackage(packName, rate, type))
-                        }
-                    },
-                )
             }
         }
     } else {
@@ -967,8 +938,8 @@ internal fun filterMemcActivityOptions(
 /**
  * Activity 选择弹层：搜索框 + 列表（标题=label / 副标题=类名）。
  *
- * 与页面级的 [MemcSearchField] 不同，弹层内容自带内边距，字段不再额外加水平内边距；
- * 行件沿用 [AppPickerDialog] 的「显示名当标题、标识当副标题」约定。
+ * 行渲染、按钮行与空态统一交给 [ActionListDialog]：这里只留过滤与 key→选项的还原。
+ * 两条渲染线合并后行首图标不再渲染（ChoiceItem 没有行首槽），显示信息由标题/副标题承担。
  */
 @Composable
 private fun MemcActivityPickerDialog(
@@ -978,94 +949,53 @@ private fun MemcActivityPickerDialog(
 ) {
     var query by remember { mutableStateOf("") }
     val filtered = remember(options, query) { filterMemcActivityOptions(options, query) }
+    val items = filtered.map { ChoiceItem(key = it.name, title = it.label, summary = it.name) }
+    ActionListDialog(
+        title = stringResource(R.string.memc_activity_picker_title),
+        items = items,
+        onDismiss = onDismiss,
+        onSelect = { item ->
+            // 动作列表语义：先按 key 还原选项再回调，关不关闭由调用点决定（原来是先动作后关闭）
+            options.firstOrNull { it.name == item.key }?.let(onSelect)
+        },
+        header = { MemcActivityQueryField(query = query, onQueryChange = { query = it }) },
+    )
+}
 
+/**
+ * 弹层内搜索框：MiuixTextField 与 OutlinedTextField 没有统一封装（页面级的 MemcSearchField
+ * 带水平内边距语义，不适用于弹层正文），只在这一处按 UI 线分派，放大镜图标保持原样。
+ */
+@Composable
+private fun MemcActivityQueryField(query: String, onQueryChange: (String) -> Unit) {
     if (LocalUiMode.current == UiMode.Miuix) {
-        OverlayDialog(
-            show = true,
-            title = "ActivityName",
-            onDismissRequest = onDismiss,
-        ) {
-            Column {
-                MiuixTextField(
-                    value = query,
-                    onValueChange = { query = it },
-                    singleLine = true,
-                    label = "ActivityName",
-                    useLabelAsPlaceholder = true,
-                    leadingIcon = {
-                        MiuixIcon(
-                            painterResource(R.drawable.ic_baseline_search_24),
-                            contentDescription = null,
-                        )
-                    },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(top = 8.dp),
+        MiuixTextField(
+            value = query,
+            onValueChange = onQueryChange,
+            singleLine = true,
+            label = stringResource(R.string.activity_search_hint),
+            useLabelAsPlaceholder = true,
+            leadingIcon = {
+                MiuixIcon(
+                    painterResource(R.drawable.ic_baseline_search_24),
+                    contentDescription = null,
                 )
-                LazyColumn(Modifier.heightIn(max = 320.dp)) {
-                    items(filtered, key = { it.name }) { option ->
-                        MiuixListItem(
-                            title = option.label,
-                            summary = option.name,
-                            onClick = { onSelect(option) },
-                        )
-                    }
-                }
-                MiuixTextButton(
-                    text = stringResource(android.R.string.cancel),
-                    onClick = onDismiss,
-                    modifier = Modifier.fillMaxWidth(),
-                )
-            }
-        }
+            },
+            modifier = Modifier.fillMaxWidth(),
+        )
     } else {
-        AlertDialog(
-            onDismissRequest = onDismiss,
-            title = { Text("ActivityName") },
-            text = {
-                Column {
-                    OutlinedTextField(
-                        value = query,
-                        onValueChange = { query = it },
-                        singleLine = true,
-                        placeholder = { Text("ActivityName") },
-                        leadingIcon = {
-                            Icon(
-                                painterResource(R.drawable.ic_baseline_search_24),
-                                contentDescription = null,
-                            )
-                        },
-                        modifier = Modifier.fillMaxWidth(),
-                    )
-                    LazyColumn(Modifier.heightIn(max = 320.dp)) {
-                        items(filtered, key = { it.name }) { option ->
-                            MaterialListItem(
-                                onClick = { onSelect(option) },
-                                headlineContent = {
-                                    Text(
-                                        option.label,
-                                        maxLines = 1,
-                                        overflow = TextOverflow.Ellipsis,
-                                    )
-                                },
-                                supportingContent = {
-                                    Text(
-                                        option.name,
-                                        maxLines = 2,
-                                        overflow = TextOverflow.Ellipsis,
-                                    )
-                                },
-                            )
-                            HorizontalDivider()
-                        }
-                    }
-                }
+        OutlinedTextField(
+            value = query,
+            onValueChange = onQueryChange,
+            singleLine = true,
+            placeholder = { Text(stringResource(R.string.activity_search_hint)) },
+            leadingIcon = {
+                Icon(
+                    painterResource(R.drawable.ic_baseline_search_24),
+                    contentDescription = null,
+                )
             },
-            confirmButton = {
-                TextButton(onClick = onDismiss) {
-                    Text(stringResource(android.R.string.cancel))
-                }
-            },
+            modifier = Modifier.fillMaxWidth(),
         )
     }
 }
@@ -1121,55 +1051,60 @@ internal fun MemcActivityDialog(
             show = true,
             onDismissRequest = onDismiss,
         ) {
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                PickerField(onClick = { showAppPicker = true }) {
+            MiuixDialogScrollBody(
+                actions = {
+                    DialogButtons(
+                        dismissText = if (initial != null) stringResource(R.string.remove)
+                        else stringResource(android.R.string.cancel),
+                        confirmText = stringResource(android.R.string.ok),
+                        onDismiss = { if (initial != null) showDeleteConfirm = true else onDismiss() },
+                        onConfirm = {
+                            if (packName.isBlank() || activity.isBlank() || type.isBlank()) {
+                                context.showToast("Data is incomplete!")
+                            } else {
+                                onSave(MemcConfigActivity(packName, activity, type))
+                            }
+                        },
+                    )
+                },
+            ) {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    PickerField(onClick = { showAppPicker = true }) {
+                        MiuixTextField(
+                            value = packName,
+                            onValueChange = {},
+                            readOnly = true,
+                            singleLine = true,
+                            label = "PackageName",
+                            modifier = Modifier.fillMaxWidth(),
+                        )
+                    }
+                    PickerField(onClick = openActivityPicker) {
+                        MiuixTextField(
+                            value = activity,
+                            onValueChange = {},
+                            readOnly = true,
+                            singleLine = true,
+                            label = "ActivityName",
+                            modifier = Modifier.fillMaxWidth(),
+                        )
+                    }
                     MiuixTextField(
-                        value = packName,
-                        onValueChange = {},
-                        readOnly = true,
+                        value = type,
+                        onValueChange = { type = it },
                         singleLine = true,
-                        label = "PackageName",
+                        label = "Type",
                         modifier = Modifier.fillMaxWidth(),
                     )
-                }
-                PickerField(onClick = openActivityPicker) {
-                    MiuixTextField(
-                        value = activity,
-                        onValueChange = {},
-                        readOnly = true,
-                        singleLine = true,
-                        label = "ActivityName",
-                        modifier = Modifier.fillMaxWidth(),
+                    MiuixText(
+                        stringResource(
+                            R.string.edit_memc_configuration_tips,
+                            CommandUtils.memcConfigHelp,
+                        ),
+                        style = MiuixTheme.textStyles.footnote1,
+                        color = MiuixTheme.colorScheme.onBackgroundVariant,
                     )
                 }
-                MiuixTextField(
-                    value = type,
-                    onValueChange = { type = it },
-                    singleLine = true,
-                    label = "Type",
-                    modifier = Modifier.fillMaxWidth(),
-                )
-                MiuixText(
-                    stringResource(
-                        R.string.edit_memc_configuration_tips,
-                        CommandUtils.memcConfigHelp,
-                    ),
-                    style = MiuixTheme.textStyles.footnote1,
-                    color = MiuixTheme.colorScheme.onBackgroundVariant,
-                )
-                DialogButtons(
-                    dismissText = if (initial != null) stringResource(R.string.remove)
-                    else stringResource(android.R.string.cancel),
-                    confirmText = stringResource(android.R.string.ok),
-                    onDismiss = { if (initial != null) showDeleteConfirm = true else onDismiss() },
-                    onConfirm = {
-                        if (packName.isBlank() || activity.isBlank() || type.isBlank()) {
-                            context.showToast("Data is incomplete!")
-                        } else {
-                            onSave(MemcConfigActivity(packName, activity, type))
-                        }
-                    },
-                )
             }
         }
     } else {

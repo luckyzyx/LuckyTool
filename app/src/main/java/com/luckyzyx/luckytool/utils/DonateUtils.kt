@@ -26,7 +26,7 @@ import top.yukonga.miuix.kmp.basic.TextButton as MiuixTextButton
 import top.yukonga.miuix.kmp.overlay.OverlayDialog
 
 /**
- * 捐赠二维码 Compose 对话框（旧 DialogDonateLayoutBinding 对话框的等价物）
+ * 捐赠二维码 Compose 对话框
  */
 @Obfuscate
 object DonateUtils {

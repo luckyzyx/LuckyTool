@@ -158,7 +158,7 @@ private fun FunctionTreeScreen(
     }
 }
 
-/** 全屏搜索：索引 = 全部已注册页 headless 构建，spec 手动不可见与单 App 作用域未安装页不入索引；过滤平移旧 SearchResultAdapter 规则 */
+/** 全屏搜索：索引 = 全部已注册页 headless 构建，spec 手动不可见与单 App 作用域未安装页不入索引；过滤按 key/title/summary 与页标题做不区分大小写的包含匹配 */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun FunctionSearchScreen(onBack: () -> Unit, onOpen: (ScopeRoute) -> Unit) {
@@ -184,7 +184,7 @@ internal fun FunctionSearchScreen(onBack: () -> Unit, onOpen: (ScopeRoute) -> Un
     val iconSize = with(LocalDensity.current) { 48.dp.roundToPx() }
     LaunchedEffect(context, iconSize) { FunctionPageData.revalidate(context, iconSize) }
 
-    // 过滤规则对齐 SearchResultAdapter.getFilter：key/title/summary contains(ignoreCase)，并补充页标题匹配
+    // 过滤规则：key/title/summary 做 contains(ignoreCase)，并补充页标题匹配
     val filtered = remember(entries, query) {
         val q = query.trim()
         if (q.isEmpty()) emptyList() else entries.filter { entry ->
@@ -215,7 +215,7 @@ internal fun FunctionSearchScreen(onBack: () -> Unit, onOpen: (ScopeRoute) -> Un
         }
         val scopeContent: @Composable () -> Unit = {
             // 页面级状态在 @Composable 作用域内先读取：只在 ScopeScreen 的 content lambda 内
-            // 读取不会被列表追踪（旧症状：搜索结果不随输入刷新）
+            // 读取不会被列表追踪，后果是搜索结果不随输入刷新
             val queryNow = query
             val entriesNow = entries
             val filteredNow = filtered
@@ -324,7 +324,7 @@ internal fun ScopePageHost(
     val spec = ScopePageRegistry[route.pageKey]
     var showRestartScope by remember { mutableStateOf(false) }
 
-    // 旧 Toolbar 菜单项平移：有图标且声明 showAsAction 的直接显示为图标按钮，其余收进溢出菜单
+    // 有图标且声明 showAsAction 的直接显示为图标按钮，其余收进溢出菜单
     val topActions = spec?.topActions.orEmpty()
     val overflowActions = topActions.filter { !(it.showAsAction && it.icon != 0) }
 
@@ -441,7 +441,7 @@ internal fun ScopePageHost(
     }
 }
 
-/** 版本信息对话框：xposed_scope 各包版本表（对齐旧 showBottomDialog，Markwon 渲染） */
+/** 版本信息对话框：xposed_scope 各包版本表（Markdown 表格经 Markwon 渲染） */
 @Composable
 private fun VersionInfoDialog(onDismiss: () -> Unit) {
     val context = LocalContext.current

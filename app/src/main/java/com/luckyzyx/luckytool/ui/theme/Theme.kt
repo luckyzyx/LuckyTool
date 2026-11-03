@@ -167,7 +167,7 @@ object ThemeController {
 
 /**
  * 主题偏好变更通知：主题页写入偏好后自增 [revision]，让 [LuckyAppTheme] 重新读取主题设置，
- * 从而在页内即时预览配色，无需 recreate Activity（旧实现靠 recreate 生效）。
+ * 从而在页内即时预览配色，不必 recreate Activity 即生效。
  */
 object ThemePrefs {
     var revision by mutableIntStateOf(0)

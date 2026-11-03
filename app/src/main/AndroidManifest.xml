@@ -54,10 +54,14 @@
             android:requestLegacyExternalStorage="true"
             android:hasFragileUserData="true"
             android:enableOnBackInvokedCallback="true">
+        <!--输入法弹出时不让系统缩短/平移窗口：窗口被缩短后 Compose 的 WindowInsets.ime 仍按整块键盘高度
+            上报，miuix 的 .imePadding() 会再抬一次（双重扣减），底部对齐的弹层会被顶到屏幕上方、顶部
+            内容被裁。adjustNothing 只让 inset 派发，弹层位置交给 miuix 自己摆到键盘正上方。-->
         <activity
                 android:name=".ui.activity.MainActivity"
                 android:exported="true"
-                android:theme="@style/Theme.Luckyzyx.Splash">
+                android:theme="@style/Theme.Luckyzyx.Splash"
+                android:windowSoftInputMode="adjustNothing">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="de.robv.android.xposed.category.MODULE_SETTINGS" />

@@ -5,9 +5,7 @@ import android.os.Process
 import android.os.RemoteException
 import androidx.collection.ArrayMap
 import androidx.collection.arrayMapOf
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -36,6 +34,8 @@ import com.luckyzyx.luckytool.R
 import com.luckyzyx.luckytool.service.ActivityManagerService
 import com.luckyzyx.luckytool.service.PackagesService
 import com.luckyzyx.luckytool.service.PowerService
+import com.luckyzyx.luckytool.ui.compose.components.ActionListDialog
+import com.luckyzyx.luckytool.ui.compose.components.ChoiceItem
 import com.luckyzyx.luckytool.ui.theme.LocalUiMode
 import com.luckyzyx.luckytool.ui.theme.UiMode
 import com.topjohnwu.superuser.Shell
@@ -46,7 +46,6 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.lsposed.lsparanoid.Obfuscate
-import top.yukonga.miuix.kmp.basic.BasicComponent
 import top.yukonga.miuix.kmp.basic.ButtonDefaults
 import top.yukonga.miuix.kmp.overlay.OverlayDialog
 import top.yukonga.miuix.kmp.basic.Text as MiuixText
@@ -65,11 +64,11 @@ object RestartMenuUtils {
     @Composable
     fun RestartMenuDialog(context: Context, onDismiss: () -> Unit) {
         val items = listOf(
-            stringResource(R.string.restart_scope),
-            stringResource(R.string.re_optimize_dex),
-            stringResource(R.string.reload_hooker),
-            stringResource(R.string.reboot),
-            stringResource(R.string.fast_reboot)
+            ChoiceItem(key = "restart_scope", title = stringResource(R.string.restart_scope)),
+            ChoiceItem(key = "re_optimize_dex", title = stringResource(R.string.re_optimize_dex)),
+            ChoiceItem(key = "reload_hooker", title = stringResource(R.string.reload_hooker)),
+            ChoiceItem(key = "reboot", title = stringResource(R.string.reboot)),
+            ChoiceItem(key = "fast_reboot", title = stringResource(R.string.fast_reboot)),
         )
         var showConfirmScope by remember { mutableStateOf(false) }
         var showConfirmHooker by remember { mutableStateOf(false) }
@@ -84,67 +83,30 @@ object RestartMenuUtils {
                 onDismiss
             )
 
-            else -> when (LocalUiMode.current) {
-                UiMode.Miuix -> OverlayDialog(
-                    show = true,
-                    onDismissRequest = onDismiss,
-                ) {
-                    Column {
-                        items.forEachIndexed { index, label ->
-                            BasicComponent(
-                                title = label,
-                                insideMargin = PaddingValues(horizontal = 24.dp, vertical = 14.dp),
-                                onClick = {
-                                    when (index) {
-                                        0 -> showConfirmScope = true
-                                        1 -> showOptimize = true
-                                        2 -> showConfirmHooker = true
-                                        3 -> {
-                                            PowerService.get(context) { controller ->
-                                                controller?.reboot(false, null, false)
-                                            }
-                                            onDismiss()
-                                        }
+            // 点行执行动作、关闭由动作自己决定：前三项只把本层换成另一层对话框，后两项执行完再关
+            else -> ActionListDialog(
+                title = stringResource(R.string.menu_reboot),
+                items = items,
+                onDismiss = onDismiss,
+                onSelect = { item ->
+                    when (item.key) {
+                        "restart_scope" -> showConfirmScope = true
+                        "re_optimize_dex" -> showOptimize = true
+                        "reload_hooker" -> showConfirmHooker = true
+                        "reboot" -> {
+                            PowerService.get(context) { controller ->
+                                controller?.reboot(false, null, false)
+                            }
+                            onDismiss()
+                        }
 
-                                        else -> {
-                                            ShellUtils.fastCmd(CommandUtils.killzygote)
-                                            onDismiss()
-                                        }
-                                    }
-                                },
-                            )
+                        else -> {
+                            ShellUtils.fastCmd(CommandUtils.killzygote)
+                            onDismiss()
                         }
                     }
-                }
-
-                UiMode.Material -> AlertDialog(onDismissRequest = onDismiss, text = {
-                    Column {
-                        items.forEachIndexed { index, label ->
-                            Text(label, Modifier
-                                .fillMaxWidth()
-                                .clickable {
-                                    when (index) {
-                                        0 -> showConfirmScope = true
-                                        1 -> showOptimize = true
-                                        2 -> showConfirmHooker = true
-                                        3 -> {
-                                            PowerService.get(context) { controller ->
-                                                controller?.reboot(false, null, false)
-                                            }
-                                            onDismiss()
-                                        }
-
-                                        else -> {
-                                            ShellUtils.fastCmd(CommandUtils.killzygote)
-                                            onDismiss()
-                                        }
-                                    }
-                                }
-                                .padding(horizontal = 24.dp, vertical = 14.dp))
-                        }
-                    }
-                }, confirmButton = {})
-            }
+                },
+            )
         }
     }
 
@@ -159,18 +121,31 @@ object RestartMenuUtils {
         if (scopes.isEmpty()) return
         val isSystemPage = isSystem && scopes.first() == "system"
         val items = if (isSystemPage) {
-            arrayOf(
-                R.string.reload_hooker, R.string.reload_only_this_page_hooker
-            ).map { stringResource(it) }
+            listOf(
+                ChoiceItem(key = "reload_hooker", title = stringResource(R.string.reload_hooker)),
+                ChoiceItem(
+                    key = "reload_page_hooker",
+                    title = stringResource(R.string.reload_only_this_page_hooker),
+                ),
+            )
         } else {
-            arrayOf(
-                R.string.restart_scope,
-                R.string.re_optimize_dex,
-                R.string.reload_hooker,
-                R.string.restart_only_this_page_scope,
-                R.string.optimize_only_this_page_scope,
-                R.string.reload_only_this_page_hooker
-            ).map { stringResource(it) }
+            listOf(
+                ChoiceItem(key = "restart_scope", title = stringResource(R.string.restart_scope)),
+                ChoiceItem(key = "re_optimize_dex", title = stringResource(R.string.re_optimize_dex)),
+                ChoiceItem(key = "reload_hooker", title = stringResource(R.string.reload_hooker)),
+                ChoiceItem(
+                    key = "restart_page_scope",
+                    title = stringResource(R.string.restart_only_this_page_scope),
+                ),
+                ChoiceItem(
+                    key = "optimize_page_scope",
+                    title = stringResource(R.string.optimize_only_this_page_scope),
+                ),
+                ChoiceItem(
+                    key = "reload_page_hooker",
+                    title = stringResource(R.string.reload_only_this_page_hooker),
+                ),
+            )
         }
         var showConfirmScope by remember { mutableStateOf(false) }
         var showConfirmHooker by remember { mutableStateOf(false) }
@@ -184,111 +159,52 @@ object RestartMenuUtils {
                 context, optimizeScopes, optimizeConfirmFirst, onDismiss
             )
 
-            else -> when (LocalUiMode.current) {
-                UiMode.Miuix -> OverlayDialog(
-                    show = true,
-                    onDismissRequest = onDismiss,
-                ) {
-                    Column {
-                        items.forEachIndexed { index, label ->
-                            BasicComponent(
-                                title = label,
-                                insideMargin = PaddingValues(horizontal = 24.dp, vertical = 14.dp),
-                                onClick = {
-                                    if (isSystemPage) {
-                                        when (index) {
-                                            0 -> showConfirmHooker = true
-                                            else -> {
-                                                restartHooker(context, scopes)
-                                                onDismiss()
-                                            }
-                                        }
-                                    } else {
-                                        when (index) {
-                                            0 -> showConfirmScope = true
-                                            1 -> {
-                                                optimizeScopes = buildScopeMaps(
-                                                    context,
-                                                    context.resources.getStringArray(R.array.xposed_scope)
-                                                )
-                                                optimizeConfirmFirst = true
-                                                showOptimize = true
-                                            }
+            // 点行执行动作、关闭由动作自己决定（换另一层对话框的项不关）
+            else -> ActionListDialog(
+                title = stringResource(R.string.menu_reboot),
+                items = items,
+                onDismiss = onDismiss,
+                onSelect = { item ->
+                    if (isSystemPage) {
+                        when (item.key) {
+                            "reload_hooker" -> showConfirmHooker = true
+                            else -> {
+                                restartHooker(context, scopes)
+                                onDismiss()
+                            }
+                        }
+                    } else {
+                        when (item.key) {
+                            "restart_scope" -> showConfirmScope = true
+                            "re_optimize_dex" -> {
+                                optimizeScopes = buildScopeMaps(
+                                    context,
+                                    context.resources.getStringArray(R.array.xposed_scope)
+                                )
+                                optimizeConfirmFirst = true
+                                showOptimize = true
+                            }
 
-                                            2 -> showConfirmHooker = true
-                                            3 -> {
-                                                restartScope(context, scopes)
-                                                onDismiss()
-                                            }
+                            "reload_hooker" -> showConfirmHooker = true
+                            "restart_page_scope" -> {
+                                restartScope(context, scopes)
+                                onDismiss()
+                            }
 
-                                            4 -> {
-                                                optimizeScopes = buildScopeMaps(context, scopes)
-                                                optimizeConfirmFirst = false
-                                                showOptimize = true
-                                            }
+                            "optimize_page_scope" -> {
+                                optimizeScopes = buildScopeMaps(context, scopes)
+                                optimizeConfirmFirst = false
+                                showOptimize = true
+                            }
 
-                                            else -> {
-                                                restartHooker(context, scopes)
-                                                onDismiss()
-                                            }
-                                        }
-                                    }
-                                },
-                            )
+                            else -> {
+                                restartHooker(context, scopes)
+                                onDismiss()
+                            }
                         }
                     }
-                }
-
-                UiMode.Material -> AlertDialog(onDismissRequest = onDismiss, text = {
-                    Column {
-                        items.forEachIndexed { index, label ->
-                            Text(label, Modifier
-                                .fillMaxWidth()
-                                .clickable {
-                                    if (isSystemPage) {
-                                        when (index) {
-                                            0 -> showConfirmHooker = true
-                                            else -> {
-                                                restartHooker(context, scopes)
-                                                onDismiss()
-                                            }
-                                        }
-                                    } else {
-                                        when (index) {
-                                            0 -> showConfirmScope = true
-                                            1 -> {
-                                                optimizeScopes = buildScopeMaps(
-                                                    context,
-                                                    context.resources.getStringArray(R.array.xposed_scope)
-                                                )
-                                                optimizeConfirmFirst = true
-                                                showOptimize = true
-                                            }
-
-                                            2 -> showConfirmHooker = true
-                                            3 -> {
-                                                restartScope(context, scopes)
-                                                onDismiss()
-                                            }
-
-                                            4 -> {
-                                                optimizeScopes = buildScopeMaps(context, scopes)
-                                                optimizeConfirmFirst = false
-                                                showOptimize = true
-                                            }
-
-                                            else -> {
-                                                restartHooker(context, scopes)
-                                                onDismiss()
-                                            }
-                                        }
-                                    }
-                                }
-                                .padding(horizontal = 24.dp, vertical = 14.dp))
-                        }
-                    }
-                }, confirmButton = {})
-            }
+                },
+            )
         }
     }
 
@@ -428,7 +344,7 @@ object RestartMenuUtils {
             targets.filter {
                 scopes.contains(it.processName.substringBefore(":"))
             }.forEach { target ->
-                // skippedIfUpToDate = false：与迁移前 hotReloadModule 一致，不做「代码已是最新」的跳过
+                // skippedIfUpToDate = false：不做「代码已是最新」的跳过，无论目标进程的 jar 是否变化都重新加载
                 reload.request(target, skippedIfUpToDate = false) { result ->
                     LogUtils.d(
                         "restartHooker",

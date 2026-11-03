@@ -1063,8 +1063,8 @@ private fun ThemeScreenMiuix(onBack: () -> Unit) {
         colorMode = mode
         context.putString(SettingsPrefs, KeyDarkTheme, mode.value.toString())
         ThemePrefs.notifyChanged()
-        // 同步平台 DayNight 主题（与旧版 DropDownPreference 改完重启 Activity 等价，
-        // AppCompat 会在明暗变化时自行重建）；取值未变时 setDefaultNightMode 是空操作
+        // 同步平台 DayNight 主题（模式真正变化时 AppCompat 会自行重建 Activity，不手动 recreate）；
+        // 取值未变时 setDefaultNightMode 是空操作
         ThemeUtils.initTheme(context)
     }
     val setMiuixMonet: (Boolean) -> Unit = { enabled ->

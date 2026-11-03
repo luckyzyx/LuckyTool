@@ -5,7 +5,7 @@ import com.luckyzyx.luckytool.ui.compose.scopes.ScopePageSpec
 import com.luckyzyx.luckytool.utils.ModulePrefs
 
 /**
- * 旧 ui.fragment.scopes.apps.OplusWirelessSettings 的 Compose 等价物（机械翻译 loadPreferences）。
+ * 无线设置页：WiFi 详情页显示网关的开关。
  */
 object OplusWirelessSettingsPage {
 

@@ -9,9 +9,7 @@ import android.util.ArraySet
 import androidx.collection.ArrayMap
 import androidx.collection.arrayMapOf
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
@@ -21,7 +19,6 @@ import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -30,7 +27,6 @@ import androidx.compose.foundation.lazy.LazyItemScope
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Checkbox
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.MaterialTheme
@@ -42,12 +38,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
@@ -61,6 +55,8 @@ import com.luckyzyx.luckytool.R
 import com.luckyzyx.luckytool.data.AppInfo
 import com.luckyzyx.luckytool.data.AppIntentInfo
 import com.luckyzyx.luckytool.enums.IntentType
+import com.luckyzyx.luckytool.ui.compose.components.ChoiceItem
+import com.luckyzyx.luckytool.ui.compose.components.MultiChoiceDialog
 import com.luckyzyx.luckytool.ui.compose.components.PrefGroup
 import com.luckyzyx.luckytool.ui.compose.components.PrefSwitchRow
 import com.luckyzyx.luckytool.ui.compose.components.material.MaterialItem
@@ -92,27 +88,25 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
 import top.yukonga.miuix.kmp.overlay.OverlayDialog
-import top.yukonga.miuix.kmp.theme.MiuixTheme
 import top.yukonga.miuix.kmp.utils.overScrollVertical
 import top.yukonga.miuix.kmp.utils.scrollEndHaptic
-import top.yukonga.miuix.kmp.basic.Text as MiuixText
 import top.yukonga.miuix.kmp.basic.TextButton as MiuixTextButton
 import top.yukonga.miuix.kmp.basic.TextField as MiuixTextField
 
 /**
- * P4 特殊页：隐藏应用 Intent（旧 HideAppIntentFragment 1:1 迁移）。
+ * P4 特殊页：隐藏应用 Intent。
  * 使用 ScopeScreen 的 fullContent 全屏自定义渲染 + onRefresh 下拉刷新。
  *
- * 原「三文件制」已合并为单文件：状态/加载/写值逻辑唯一一份，渲染差异集中在
+ * 单文件承载：状态/加载/写值逻辑只有一份，渲染差异集中在
  * [HideAppIntentContent] 的 `if (miuix)` 分派上——开关独占一张卡（[PrefGroup] 内
  * [PrefSwitchRow]）、搜索框复用 [AppSearchField]、
  * 应用行 [IntentAppRow] 与多选对话框 [IntentInfoSelectDialog] 按线分派。
- * 批量操作（旧 Fragment 的 Toolbar 溢出菜单）通过 [ScopePageAction] 交回顶栏溢出菜单，
- * 不再平铺成页面上的选项行。
+ * 批量操作（按 Intent 类型分别全选、清空全部）声明为 [ScopePageAction] 进顶栏溢出菜单：
+ * 它们作用于整份数据而非某一项，放进正文选项行会与单个开关混排。
  */
 object HideAppIntentPage {
 
-    /** 顶栏溢出菜单动作 key（对应旧 Fragment `onCreateMenu` 的菜单项）。 */
+    /** 顶栏溢出菜单动作 key，页面在 `actionHandler` 里据此分派整页批量操作。 */
     const val ACTION_SELECT_SHARE = "select_all_share_intent"
     const val ACTION_SELECT_TEXT = "select_all_text_intent"
     const val ACTION_SELECT_OPEN = "select_all_open_intent"
@@ -129,7 +123,7 @@ object HideAppIntentPage {
         selfRendered = true,
         onRefresh = { hideAppIntentRefresh?.invoke() },
         fullContent = { _ -> HideAppIntentContent() },
-        // 旧版这 5 项都在 Toolbar 溢出菜单里（无图标、不 SHOW_AS_ACTION），保持一致
+        // 这 5 项都不设图标、不显示为顶栏按钮，只出现在溢出菜单里
         topActions = listOf(
             ScopePageAction(ACTION_SELECT_SHARE, R.string.select_all_share_intent),
             ScopePageAction(ACTION_SELECT_TEXT, R.string.select_all_text_intent),
@@ -168,7 +162,7 @@ internal fun intentTypeLabel(type: IntentType): String = stringResource(
 )
 
 /**
- * 页面渲染体：状态/加载逻辑唯一一份（两线旧实现逐字一致），渲染差异集中在此：
+ * 页面渲染体：状态/加载逻辑唯一一份，两条渲染线共用，渲染差异集中在此：
  * 顶部开关独占一张卡（[PrefGroup] 内 [PrefSwitchRow]，批量操作已移回顶栏溢出菜单）、
  * 搜索框 [AppSearchField]，
  * 列表容器与行、清空对话框、多选对话框、排序过滤弹层均按 `if (miuix)` 分派。
@@ -469,7 +463,7 @@ internal fun LazyItemScope.HideAppIntentContent() {
                 onSortClick = { showSortSheet = true },
             )
         }
-        // 复刻旧布局 SwipeRefreshLayout.paddingVertical = 12dp 的搜索框↔列表间距
+        // 搜索框↔列表的间距：两者是同一 Column 的兄弟节点，不显式留白会直接贴在一起
         Spacer(Modifier.height(AppListContentGap))
         if (miuix) {
             LazyColumn(
@@ -705,7 +699,7 @@ internal fun LazyItemScope.HideAppIntentContent() {
 
 /**
  * 应用行：图标 + 应用名 + 包名 + 四组类型计数按钮。
- * 与 material/miuix 两线旧实现行为等价：每组类型 (share/text/open/browser) 各自回调
+ * 两条渲染线行为一致：每组类型 (share/text/open/browser) 各自回调
  * `(packName, 全部条目, 已启用条目, 类型组)`；容器分派在调用点（`MiuixPrefItem`/`MaterialItem`），
  * 行内 ListItem 与计数按钮在此按线分派。
  */
@@ -853,10 +847,11 @@ private fun RowScope.IntentCountChip(
 }
 
 /**
- * 多选 Intent 对话框：已启用项置顶预选、按 label/activity 过滤、全选/清空、
- * confirm 回传 `ArrayList(selected)`（对话框内状态，取消不落盘）。
- * Material 线 `AlertDialog` 列表行带 32dp 图标 + Checkbox；Miuix 线 `OverlayDialog` 用
- * `MiuixCheckboxItem` 多选（库行件无前置图标槽位、无 maxLines/ellipsis，属允许差异）。
+ * 多选 Intent 对话框：已启用项置顶预选、按 label/activity 过滤、全选/清空，
+ * confirm 回传 ArrayList(selected)（对话框内临时态，取消不落盘）。
+ *
+ * 行渲染、全选/计数行与按钮行统一交给 MultiChoiceDialog；两条渲染线共用同一套行布局，
+ * 行首不再单独渲染 32dp 应用图标，信息由 title/summary 承担。
  */
 @Composable
 internal fun IntentInfoSelectDialog(
@@ -868,9 +863,7 @@ internal fun IntentInfoSelectDialog(
     val context = LocalContext.current
     val pm = context.packageManager
     var query by remember(data) { mutableStateOf("") }
-    val selected = remember(data) {
-        mutableStateListOf<AppIntentInfo>().apply { addAll(data.enabled) }
-    }
+    // 已启用项置顶；过滤只在它上面收缩，所以已启用项之间的相对顺序保持不变
     val ordered = remember(data) {
         ArrayList<AppIntentInfo>().apply {
             addAll(data.appInfos.filter { it !in data.enabled })
@@ -888,172 +881,52 @@ internal fun IntentInfoSelectDialog(
                 )
         }
     }
+    val items = filtered.map { info ->
+        ChoiceItem(
+            key = info.choiceKey(),
+            title = "${resolveMap[info]?.loadLabel(pm) ?: info.name} " + intentTypeLabel(info.type),
+            summary = info.activity,
+        )
+    }
+    MultiChoiceDialog(
+        title = stringResource(R.string.custom_config_app_intent_list),
+        items = items,
+        selectedKeys = remember(data) { data.enabled.map { it.choiceKey() }.toSet() },
+        onDismiss = onDismiss,
+        onConfirm = { keys ->
+            // 回传顺序沿用已启用项置顶的稳定顺序，不让 set 的迭代顺序决定落盘内容
+            onConfirm(ArrayList(ordered.filter { it.choiceKey() in keys }))
+        },
+        header = { IntentQueryField(query = query, onQueryChange = { query = it }) },
+        showSelectAll = true,
+    )
+}
 
+/** 行 key（也是 confirm 回传时还原对象的索引）：沿用旧的 action|type|activity 组合 */
+private fun AppIntentInfo.choiceKey(): String = "$action|$type|$activity"
+
+/**
+ * 对话框内搜索框：MiuixTextField 与 OutlinedTextField 来自不同库、没有统一封装，
+ * 只在这一处按 UI 线分派，调用点的 header 里仍然只有一次调用。
+ */
+@Composable
+private fun IntentQueryField(query: String, onQueryChange: (String) -> Unit) {
     if (LocalUiMode.current == UiMode.Miuix) {
-        OverlayDialog(
-            show = true,
-            title = stringResource(R.string.custom_config_app_intent_list),
-            onDismissRequest = onDismiss,
-        ) {
-            Column {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    MiuixTextButton(
-                        text = stringResource(android.R.string.selectAll),
-                        onClick = {
-                            if (selected.size == ordered.size) {
-                                selected.clear()
-                            } else {
-                                selected.clear()
-                                selected.addAll(ordered)
-                            }
-                        },
-                        modifier = Modifier.weight(1f),
-                    )
-                    Spacer(Modifier.width(12.dp))
-                    MiuixText(
-                        "${selected.size}/${ordered.size}",
-                        style = MiuixTheme.textStyles.body2,
-                    )
-                }
-                MiuixTextField(
-                    value = query,
-                    onValueChange = { query = it },
-                    singleLine = true,
-                    label = "ActivityName",
-                    useLabelAsPlaceholder = true,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(top = 8.dp),
-                )
-                LazyColumn(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .heightIn(max = 380.dp),
-                    verticalArrangement = Arrangement.spacedBy(MiuixPrefDefaults.ItemGap),
-                    overscrollEffect = null,
-                ) {
-                    items(filtered, key = { "${it.action}|${it.type}|${it.activity}" }) { info ->
-                        MiuixCheckboxItem(
-                            title = "${resolveMap[info]?.loadLabel(pm) ?: info.name} " +
-                                intentTypeLabel(info.type),
-                            checked = selected.contains(info),
-                            onCheckedChange = { v ->
-                                if (v) {
-                                    if (!selected.contains(info)) selected.add(info)
-                                } else {
-                                    selected.remove(info)
-                                }
-                            },
-                            summary = info.activity,
-                        )
-                    }
-                }
-                Row(
-                    Modifier
-                        .fillMaxWidth()
-                        .padding(top = 8.dp),
-                ) {
-                    MiuixTextButton(
-                        text = stringResource(android.R.string.cancel),
-                        onClick = onDismiss,
-                        modifier = Modifier.weight(1f),
-                    )
-                    Spacer(Modifier.width(8.dp))
-                    MiuixTextButton(
-                        text = stringResource(android.R.string.ok),
-                        onClick = { onConfirm(ArrayList(selected)) },
-                        modifier = Modifier.weight(1f),
-                    )
-                }
-            }
-        }
+        MiuixTextField(
+            value = query,
+            onValueChange = onQueryChange,
+            singleLine = true,
+            label = stringResource(R.string.activity_search_hint),
+            useLabelAsPlaceholder = true,
+            modifier = Modifier.fillMaxWidth(),
+        )
     } else {
-        AlertDialog(
-            onDismissRequest = onDismiss,
-            confirmButton = {
-                TextButton(onClick = { onConfirm(ArrayList(selected)) }) {
-                    Text(stringResource(android.R.string.ok))
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = onDismiss) { Text(stringResource(android.R.string.cancel)) }
-            },
-            text = {
-                Column {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        TextButton(
-                            onClick = {
-                                if (selected.size == ordered.size) {
-                                    selected.clear()
-                                } else {
-                                    selected.clear()
-                                    selected.addAll(ordered)
-                                }
-                            },
-                        ) { Text(stringResource(android.R.string.selectAll)) }
-                        Spacer(Modifier.weight(1f))
-                        Text("${selected.size}/${ordered.size}")
-                    }
-                    OutlinedTextField(
-                        value = query,
-                        onValueChange = { query = it },
-                        singleLine = true,
-                        placeholder = { Text("ActivityName") },
-                        modifier = Modifier.fillMaxWidth(),
-                    )
-                    LazyColumn(Modifier.fillMaxWidth().heightIn(max = 380.dp)) {
-                        items(filtered, key = { "${it.action}|${it.type}|${it.activity}" }) { info ->
-                            val ri = resolveMap[info]
-                            val checked = selected.contains(info)
-                            Row(
-                                Modifier
-                                    .fillMaxWidth()
-                                    .clickable {
-                                        if (checked) selected.remove(info)
-                                        else selected.add(info)
-                                    }
-                                    .padding(vertical = 4.dp),
-                                verticalAlignment = Alignment.CenterVertically,
-                            ) {
-                                Box(Modifier.size(40.dp)) {
-                                    ri?.loadIcon(pm)?.let { d ->
-                                        Image(
-                                            remember(info) { d.toBitmap().asImageBitmap() },
-                                            contentDescription = null,
-                                            contentScale = ContentScale.Fit,
-                                            modifier = Modifier.size(32.dp),
-                                        )
-                                    }
-                                }
-                                Spacer(Modifier.width(12.dp))
-                                Column(Modifier.weight(1f)) {
-                                    Text(
-                                        "${ri?.loadLabel(pm) ?: info.name} ${intentTypeLabel(info.type)}",
-                                        maxLines = 2,
-                                        overflow = TextOverflow.Ellipsis,
-                                    )
-                                    Text(
-                                        info.activity,
-                                        style = MaterialTheme.typography.bodySmall,
-                                        maxLines = 2,
-                                        overflow = TextOverflow.Ellipsis,
-                                    )
-                                }
-                                Checkbox(
-                                    checked = checked,
-                                    onCheckedChange = { v ->
-                                        if (v) {
-                                            if (!selected.contains(info)) selected.add(info)
-                                        } else {
-                                            selected.remove(info)
-                                        }
-                                    },
-                                )
-                            }
-                        }
-                    }
-                }
-            },
+        OutlinedTextField(
+            value = query,
+            onValueChange = onQueryChange,
+            singleLine = true,
+            placeholder = { Text(stringResource(R.string.activity_search_hint)) },
+            modifier = Modifier.fillMaxWidth(),
         )
     }
 }

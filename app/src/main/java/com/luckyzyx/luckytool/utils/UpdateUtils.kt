@@ -3,9 +3,7 @@ package com.luckyzyx.luckytool.utils
 import android.content.Context
 import android.content.Intent
 import android.provider.Settings
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -36,13 +34,14 @@ import com.drake.net.scope.NetCoroutineScope
 import com.drake.net.utils.scopeNet
 import com.highcapable.betterandroid.ui.extension.view.toast
 import com.luckyzyx.luckytool.R
+import com.luckyzyx.luckytool.ui.compose.components.ActionListDialog
+import com.luckyzyx.luckytool.ui.compose.components.ChoiceItem
 import com.luckyzyx.luckytool.ui.theme.LocalUiMode
 import com.luckyzyx.luckytool.ui.theme.UiMode
 import io.noties.markwon.Markwon
 import org.json.JSONArray
 import org.json.JSONObject
 import org.lsposed.lsparanoid.Obfuscate
-import top.yukonga.miuix.kmp.basic.BasicComponent
 import top.yukonga.miuix.kmp.basic.ButtonDefaults
 import top.yukonga.miuix.kmp.basic.Text as MiuixText
 import top.yukonga.miuix.kmp.basic.TextButton as MiuixTextButton
@@ -229,40 +228,20 @@ fun UpdateDownloadSourceDialog(
     onSelect: (String) -> Unit
 ) {
     val sources = remember(downloadUrl) { UpdateUtils(context).downloadSources(downloadUrl) }
-    when (LocalUiMode.current) {
-        UiMode.Miuix -> OverlayDialog(
-            show = true,
-            title = stringResource(R.string.select_download_source),
-            onDismissRequest = { if (isDev) onDismiss() },
-        ) {
-            Column {
-                sources.forEach { (name, url) ->
-                    BasicComponent(
-                        title = name,
-                        insideMargin = PaddingValues(horizontal = 24.dp, vertical = 14.dp),
-                        onClick = { onSelect(url) },
-                    )
-                }
-            }
-        }
-
-        UiMode.Material -> AlertDialog(
-            onDismissRequest = { if (isDev) onDismiss() },
-            title = { Text(stringResource(R.string.select_download_source)) },
-            text = {
-                Column {
-                    sources.forEach { (name, url) ->
-                        Text(
-                            name,
-                            Modifier.fillMaxWidth().clickable { onSelect(url) }
-                                .padding(horizontal = 24.dp, vertical = 14.dp)
-                        )
-                    }
-                }
-            },
-            confirmButton = {}
-        )
-    }
+    // key 直接用下载地址：六个源的地址前缀互不相同，天然唯一
+    val items = sources.map { (name, url) -> ChoiceItem(key = url, title = name) }
+    ActionListDialog(
+        title = stringResource(R.string.select_download_source),
+        items = items,
+        // release 版不允许关闭（与原实现一致）：连「取消」也不画，否则会出现点了没反应的按钮
+        onDismiss = { if (isDev) onDismiss() },
+        onSelect = { item ->
+            // 只回调 onSelect：调用方在 onSelect 里切 UpdateStage 让对话框自然消失，
+            // 这里再补一次 onDismiss 会把刚发起的更新取消掉
+            onSelect(item.key)
+        },
+        showCancel = isDev,
+    )
 }
 
 /**

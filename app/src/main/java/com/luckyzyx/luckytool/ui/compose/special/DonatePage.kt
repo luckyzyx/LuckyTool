@@ -61,7 +61,7 @@ import java.io.File
 import java.text.DecimalFormat
 
 /**
- * Donate 页（旧 ui.fragment.settings.DonateFragment 的 Compose 等价物）。
+ * Donate 页：捐赠名单展示页（搜索、排序过滤、下拉刷新）。
  * 捐赠数据经 GitHub API 检查更新、jsDelivr 镜像下载、AESCrypt 加密缓存后由
  * Markwon(+TablePlugin) 渲染为 Markdown 表格；筛选/排序选项在排序过滤弹层中。
  * 下拉刷新（onRefresh）重跑 initData 管线。
@@ -257,7 +257,7 @@ internal fun formatUserDetailInfo(
 }
 
 /**
- * Donate 页渲染体：数据管线唯一一份（两线旧实现逐条等价），渲染差异集中在此：
+ * Donate 页渲染体：数据管线唯一一份，两条渲染线共用，渲染差异集中在此：
  * 搜索框复用 [AppSearchField]（label 传入 "Name"）；排序过滤弹层 Material 线用
  * `ModalBottomSheet` + `FilterChip`，Miuix 线用 `OverlayBottomSheet` + `MiuixRadioItem`
  * 单选排序 + `MiuixCheckboxItem` 过滤 + `MiuixSwitchItem` 反转。
@@ -281,7 +281,7 @@ internal fun PrefScopeBuilder.DonateBody(c: Context) {
 
     val develop = state.getBoolean(developKey, false)
 
-    // ---- 数据管线（对齐旧 DonateFragment；网络/文件 IO 放 IO 调度器） ----
+    // ---- 数据管线（网络/文件 IO 放 IO 调度器） ----
 
     suspend fun loadJson(): String? {
         val dd = File(appContext.filesDir, "dd")
@@ -363,7 +363,7 @@ internal fun PrefScopeBuilder.DonateBody(c: Context) {
     }
     LaunchedEffect(Unit) { reload() }
 
-    // ---- UI（旧布局顺序：搜索框在上，Markdown 内容在下） ----
+    // ---- UI（搜索框在上，Markdown 内容在下） ----
 
     val rerunFilter: () -> Unit = {
         scope.launch { loadJson()?.let { markdown = it } }

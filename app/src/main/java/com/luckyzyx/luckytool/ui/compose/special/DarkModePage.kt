@@ -80,14 +80,14 @@ import top.yukonga.miuix.kmp.basic.Switch as MiuixSwitch
 import top.yukonga.miuix.kmp.basic.Text as MiuixText
 
 /**
- * P4 特殊页：暗色模式应用列表（旧 DarkModeFragment 1:1 迁移）。
+ * P4 特殊页：暗色模式应用列表。
  * 使用 ScopeScreen 的 fullContent 全屏自定义渲染 + onRefresh 下拉刷新。
  *
- * 原「三文件制」已合并为单文件：状态/加载/写值逻辑唯一一份，渲染差异集中在
+ * 单文件承载：状态/加载/写值逻辑只有一份，渲染差异集中在
  * [DarkModeContent] 的 `if (miuix)` 分派与双线 [DarkModeAppRow] 上。
  *
- * 「打开暗色模式设置」是旧 Toolbar 菜单项（`SHOW_AS_ACTION_IF_ROOM`），放回页面顶栏
- * （[ScopePageAction]）；「重启作用域」继续由 `restartEnabled` 提供。
+ * 「打开暗色模式设置」是对整页数据的一次性动作，声明为 [ScopePageAction] 由页面宿主渲染进顶栏
+ * （不占页面正文的卡片）；「重启作用域」由 `restartEnabled` 提供。
  */
 object DarkModePage {
 

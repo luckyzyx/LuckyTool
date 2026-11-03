@@ -13,7 +13,6 @@ import com.highcapable.kavaref.extension.isSubclassOf
 import com.highcapable.yukihookapi.extension.kavaref.hook
 import com.highcapable.yukihookapi.extension.kavaref.toClass
 import com.highcapable.yukihookapi.hook.entity.YukiBaseHooker
-import com.highcapable.yukihookapi.hook.factory.injectModuleResources
 import com.luckyzyx.luckytool.R
 import com.luckyzyx.luckytool.utils.ModulePrefs
 import com.luckyzyx.luckytool.utils.closeScreen
@@ -46,7 +45,7 @@ object LockScreenBottomButton : YukiBaseHooker() {
                     firstMethod { name = "onTriggered" }.hook {
                         after {
                             if (!autoCloseScreen) return@after
-                            val context = firstField { name = "context";superclass() }.of(instance)
+                            val context = firstField { name = "context"; superclass() }.of(instance)
                                 .get<Context>() ?: return@after
                             closeScreen(context)
                         }
@@ -106,7 +105,7 @@ object LockScreenBottomButton : YukiBaseHooker() {
                     firstMethod { name = "onTriggered" }.hook {
                         after {
                             if (rmLeft || !autoCloseScreen) return@after
-                            val context = firstField { name = "context";superclass() }.of(instance)
+                            val context = firstField { name = "context"; superclass() }.of(instance)
                                 .get<Context>() ?: return@after
                             closeScreen(context)
                         }
@@ -144,16 +143,9 @@ object LockScreenBottomButton : YukiBaseHooker() {
             //Source KeyguardBottomAreaView
             "com.android.systemui.statusbar.phone.KeyguardBottomAreaView".toClass().resolve()
                 .apply {
-                    firstMethod { name = "onFinishInflate" }.hook {
-                        before {
-                            if (!useFlashLight) return@before
-                            instance<ViewGroup>().context.injectModuleResources()
-                        }
-                    }
                     firstMethod { name = "updateLeftAffordanceIcon" }.hook {
                         after {
                             if (!useFlashLight) return@after
-                            val context = instance<ViewGroup>().context
                             firstMethod { name = "updateLeftAffordanceVisibility" }.of(instance)
                                 .invoke()
                             val mFlashlightController =
@@ -164,9 +156,9 @@ object LockScreenBottomButton : YukiBaseHooker() {
                             val resId = if (isEnable) R.drawable.affordance_flashlight_on
                             else R.drawable.affordance_flashlight
                             val drawable = safeOfNull {
-                                context.resources.getDrawableCompat(resId, null)
+                                module.resources.getDrawableCompat(resId, null)
                             }
-                            firstField { name = "mLeftAffordanceView";superclass() }.of(instance)
+                            firstField { name = "mLeftAffordanceView"; superclass() }.of(instance)
                                 .get()?.asResolver()?.firstMethod {
                                     name = "setImageDrawable"
                                     parameters(Drawable::class, Boolean::class)
@@ -178,13 +170,13 @@ object LockScreenBottomButton : YukiBaseHooker() {
                         after {
                             if (rmLeft) {
                                 firstField {
-                                    name = "mLeftAffordanceView";superclass()
+                                    name = "mLeftAffordanceView"; superclass()
                                 }.of(instance).get<View>()?.isVisible = false
                                 return@after
                             }
                             if (useFlashLight) {
                                 firstField {
-                                    name = "mLeftAffordanceView";superclass()
+                                    name = "mLeftAffordanceView"; superclass()
                                 }.of(instance).get<ImageView>()?.isVisible = true
                             }
                         }
@@ -192,7 +184,7 @@ object LockScreenBottomButton : YukiBaseHooker() {
                     firstMethod { name = "launchLeftAffordance" }.hook {
                         before {
                             if (!useFlashLight) return@before
-                            firstMethod { name = "baseLaunchLeftAffordance";superclass() }.of(
+                            firstMethod { name = "baseLaunchLeftAffordance"; superclass() }.of(
                                 instance
                             ).invoke()
                             val mFlashlightController =
@@ -211,7 +203,7 @@ object LockScreenBottomButton : YukiBaseHooker() {
                     firstMethod { name = "updateCameraVisibility" }.hook {
                         before {
                             if (!rmRight) return@before
-                            firstField { name = "mRightAffordanceView";superclass() }.of(instance)
+                            firstField { name = "mRightAffordanceView"; superclass() }.of(instance)
                                 .get<ImageView>()?.isVisible = false
                             result = null
                         }

@@ -130,7 +130,7 @@ class ShowMoreApkPackageInformation(val dexKitBridge: DexKitBridge) : YukiBaseHo
                     // of its ConstraintLayout integration. The incoming/current comparison only
                     // makes sense on install, so pass incoming as null otherwise.
                     val tag = "LuckyTool.ClassicApkDetails"
-                    val panel = apkInfoView.findViewWithTag(tag) ?: ApkDetailsView(context).also {
+                    val panel = apkInfoView.findViewWithTag(tag) ?: ApkDetailsView(context, module.resources).also {
                         it.tag = tag
                         apkInfoView.addView(
                             it, LinearLayout.LayoutParams(

@@ -5,7 +5,7 @@ import com.luckyzyx.luckytool.ui.compose.scopes.ScopePageSpec
 import com.luckyzyx.luckytool.utils.ModulePrefs
 
 /**
- * KSWeb 页（旧 ui.fragment.scopes.others.KsWeb 的 Compose 等价物）。
+ * KSWeb 页：Pro 授权检查的屏蔽开关（写入 ru.kslabs.ksweb）。
  */
 object KsWebPage {
 

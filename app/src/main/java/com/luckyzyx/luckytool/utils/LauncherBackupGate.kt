@@ -82,7 +82,17 @@ object LauncherBackupGate {
      */
     fun isProviderUnavailable(throwable: Throwable?): Boolean =
         throwable is IllegalArgumentException &&
-            throwable.message.orEmpty().startsWith("Unknown URL")
+            throwable.message.orEmpty().startsWith(PROVIDER_UNAVAILABLE_PREFIX)
+
+    /**
+     * 多种落盘写法聚合后的失败文本里是否含 provider 不可用原文。
+     * 聚合后类型是 IllegalStateException，靠类型判不出来，只能看文本。
+     */
+    fun mentionsProviderUnavailable(detail: String): Boolean =
+        detail.contains(PROVIDER_UNAVAILABLE_PREFIX)
+
+    /** ContentResolver 在 acquireProvider 返回 null 时的固定前缀 */
+    private const val PROVIDER_UNAVAILABLE_PREFIX = "Unknown URL"
 
     /** 还有 [retriesLeft] 次机会时返回下次重试的延迟毫秒数；用尽了返回 null（调用方据此收尾） */
     fun providerRetryDelayMs(retriesLeft: Int): Long? =

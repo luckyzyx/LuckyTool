@@ -201,7 +201,8 @@
     <string name="StatusBarIcon_summary">Status bar icon related</string>
     <string name="StatusBarWIFIIcon">WIFI Icon</string>
     <string name="remove_wifi_data_inout">Remove WiFi data inout</string>
-    <string name="force_display_wifi_standard">Forced display of WIFI signal standards</string>
+    <string name="force_display_wifi_standard">Afișare forțată a standardelor semnalului Wi-Fi</string>
+    <string name="force_display_wifi_standard_summary">După comutare este necesară repornirea proceselor din scop pentru ca modificarea să aibă efect</string>
     <string name="StatusBarMobileDataIcon">Mobile Data Icon</string>
     <string name="remove_mobile_data_icon">Remove mobile data icon</string>
     <string name="remove_mobile_data_inout">Remove Mobile data inout</string>
@@ -809,6 +810,7 @@
     <string name="remove_side_slider">Remove side slider</string>
     <string name="remove_side_slider_black_background">Remove the black background of the side slider</string>
     <string name="remove_rotate_screen_button">Remove the rotate screen button</string>
+    <string name="custom_rotate_screen_button_size">Dimensiune personalizată a butonului de rotire a ecranului</string>
     <string name="remove_back_gesture_confirmation_limit">Remove the back gesture confirmation limit</string>
     <string name="CustomSideSliderIcon">Custom side slider icon</string>
     <string name="replace_side_slider_icon_switch">Replace side slider icon switch</string>
@@ -969,7 +971,6 @@
     <string name="adb_port">ADB Port</string>
     <string name="enable_remote_adb_debugging">Enable remote ADB debugging</string>
     <string name="adb_debug_port_cannot_null">ADB debug port cannot be null</string>
-    <string name="adb_tv_tip">Long press to copy</string>
     <!--LOG Fragment-->
     <string name="log_save_success">LOG Saved Success!</string>
     <string name="log_save_failed">LOG Saved Failed!</string>
@@ -1005,6 +1006,12 @@
     <string name="appinfo_last_updated_time">Last Updated Time</string>
     <string name="appinfo_target_sdk">Target SDK</string>
     <string name="appinfo_system_app">System App</string>
+    <string name="appinfo_app_count">%1$d aplicații</string>
+    <string name="appinfo_selected_count">%1$d selectate</string>
+    <string name="appinfo_select_all">Selectează tot</string>
+    <string name="appinfo_deselect_all">Deselectează tot</string>
+    <string name="appinfo_no_match">Nicio aplicație potrivită</string>
+    <string name="appinfo_clear_search">Șterge căutarea</string>
     <!--Intent-->
     <string name="custom_config_app_intent_list">Custom configuration app intent list</string>
     <string name="select_all_share_intent">Select all share intent</string>

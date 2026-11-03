@@ -1,48 +1,29 @@
 package com.luckyzyx.luckytool.ui.compose.scopes.apps
 
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.RadioButton
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.unit.dp
 import com.luckyzyx.luckytool.R
 import com.luckyzyx.luckytool.service.UserService
+import com.luckyzyx.luckytool.ui.compose.components.ChoiceItem
 import com.luckyzyx.luckytool.ui.compose.components.PrefRow
 import com.luckyzyx.luckytool.ui.compose.components.PrefRowInset
-import com.luckyzyx.luckytool.ui.compose.components.miuix.MiuixRadioItem
+import com.luckyzyx.luckytool.ui.compose.components.SingleChoiceDialog
 import com.luckyzyx.luckytool.ui.compose.scopes.ScopePageSpec
-import com.luckyzyx.luckytool.ui.theme.LocalUiMode
-import com.luckyzyx.luckytool.ui.theme.UiMode
 import com.luckyzyx.luckytool.utils.ModulePrefs
 import com.luckyzyx.luckytool.utils.getOSVersionCode
 import com.luckyzyx.luckytool.utils.sendPrefsValue
 import com.luckyzyx.luckytool.utils.showToast
-import top.yukonga.miuix.kmp.basic.ButtonDefaults
-import top.yukonga.miuix.kmp.basic.TextButton as MiuixTextButton
-import top.yukonga.miuix.kmp.overlay.OverlayDialog
 
 /**
- * 旧 ui.fragment.scopes.apps.OplusSecuritypPermission 的 Compose 等价物（机械翻译 loadPreferences）。
+ * 安全权限页：恶意应用拦截、应用启动弹窗与权限限制开关，以及按用户编辑的启动白名单。
  * enable_always_allow_app_start_dialog 受 app_start_dialog_use_old_version 依赖；
  * remove_always_allow_app_start_list 为用户多选对话框 custom 条目。
  */
 object OplusSecuritypPermissionPage {
+    /** 「All」行的 ChoiceItem key：其余行的 key 是十进制 userId，不会与之相撞 */
+    private const val AllUsersKey = "all"
 
     private data class UserDialogData(
         val title: String,
@@ -80,7 +61,6 @@ object OplusSecuritypPermissionPage {
             val removeListTitle = c.getString(R.string.remove_always_allow_app_start_list)
             custom(key = "remove_always_allow_app_start_list", title = removeListTitle) {
                 var userDialogData by remember { mutableStateOf<UserDialogData?>(null) }
-                var curUserId by remember { mutableStateOf(arrayListOf<Int>()) }
                 PrefRowInset {
                     PrefRow(
                         title = removeListTitle,
@@ -95,7 +75,6 @@ object OplusSecuritypPermissionPage {
                                 users.forEach { info ->
                                     items.add(Pair("${info.name} [${info.id}]", info.id))
                                 }
-                                curUserId = ArrayList(users.map { info -> info.id })
                                 userDialogData = UserDialogData(
                                     title = removeListTitle,
                                     items = items,
@@ -107,96 +86,31 @@ object OplusSecuritypPermissionPage {
                 }
 
                 userDialogData?.let { data ->
-                    when (LocalUiMode.current) {
-                        UiMode.Miuix -> OverlayDialog(
-                            show = true,
-                            title = data.title,
-                            onDismissRequest = { userDialogData = null },
-                        ) {
-                            Column {
-                                data.items.forEachIndexed { index, item ->
-                                    val selected = when {
-                                        index == 0 -> curUserId.size == data.allUserIds.size
-                                        else -> curUserId.size == 1 && curUserId.firstOrNull() == item.second
-                                    }
-                                    MiuixRadioItem(
-                                        title = item.first,
-                                        selected = selected,
-                                        onClick = {
-                                            curUserId = when (index) {
-                                                0 -> ArrayList(data.allUserIds)
-                                                else -> arrayListOf(item.second)
-                                            }
-                                        },
-                                    )
-                                }
-                            }
-                            Row(horizontalArrangement = Arrangement.SpaceBetween) {
-                                MiuixTextButton(
-                                    text = stringResource(android.R.string.cancel),
-                                    onClick = { userDialogData = null },
-                                    modifier = Modifier.weight(1f),
-                                )
-                                Spacer(Modifier.width(20.dp))
-                                MiuixTextButton(
-                                    text = stringResource(android.R.string.ok),
-                                    onClick = {
-                                        c.sendPrefsValue(
-                                            "android", "remove_always_allow_app_start_list", curUserId
-                                        )
-                                        userDialogData = null
-                                    },
-                                    modifier = Modifier.weight(1f),
-                                    colors = ButtonDefaults.textButtonColorsPrimary(),
-                                )
-                            }
+                    // items 用 remember(data) 固定身份：SingleChoiceDialog 的临时选中按 items 记忆，
+                    // 每次重组重建列表会把用户刚点的行重置回初始值
+                    val items = remember(data) {
+                        data.items.mapIndexed { index, item ->
+                            ChoiceItem(
+                                // 第 0 项是「All」，其余行的数值 key 是 userId，不会撞
+                                key = if (index == 0) AllUsersKey else item.second.toString(),
+                                title = item.first,
+                            )
                         }
-
-                        UiMode.Material -> AlertDialog(
-                            onDismissRequest = { userDialogData = null },
-                            title = { Text(data.title) },
-                            text = {
-                                Column {
-                                    data.items.forEachIndexed { index, item ->
-                                        val selected = when {
-                                            index == 0 -> curUserId.size == data.allUserIds.size
-                                            else -> curUserId.size == 1 && curUserId.firstOrNull() == item.second
-                                        }
-                                        Row(
-                                            modifier = Modifier
-                                                .fillMaxWidth()
-                                                .clickable {
-                                                    curUserId = when (index) {
-                                                        0 -> ArrayList(data.allUserIds)
-                                                        else -> arrayListOf(item.second)
-                                                    }
-                                                }
-                                                .padding(vertical = 2.dp),
-                                            verticalAlignment = Alignment.CenterVertically,
-                                        ) {
-                                            RadioButton(selected = selected, onClick = null)
-                                            Text(item.first)
-                                        }
-                                    }
-                                }
-                            },
-                            dismissButton = {
-                                TextButton(onClick = { userDialogData = null }) {
-                                    Text(stringResource(android.R.string.cancel))
-                                }
-                            },
-                            confirmButton = {
-                                TextButton(
-                                    onClick = {
-                                        c.sendPrefsValue(
-                                            "android", "remove_always_allow_app_start_list", curUserId
-                                        )
-                                        userDialogData = null
-                                    },
-                                ) { Text(stringResource(android.R.string.ok)) }
-                            },
-                        )
                     }
+                    SingleChoiceDialog(
+                        title = data.title,
+                        items = items,
+                        // 初始选中恒为「All」：打开前 curUserId 刚被置为全部 userId
+                        selectedKey = AllUsersKey,
+                        onDismiss = { userDialogData = null },
+                        onConfirm = { key ->
+                            // All 写回全部 userId，单行写回只含该 userId 的列表
+                            val userIds = if (key == AllUsersKey) ArrayList(data.allUserIds)
+                            else arrayListOf(key.toInt())
+                            c.sendPrefsValue("android", "remove_always_allow_app_start_list", userIds)
+                            userDialogData = null
+                        },
+                    )
                 }
             }
         }

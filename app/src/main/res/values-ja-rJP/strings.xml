@@ -200,7 +200,8 @@
     <string name="StatusBarIcon_summary">ステータスバーアイコン関連</string>
     <string name="StatusBarWIFIIcon">Wi-Fi アイコン</string>
     <string name="remove_wifi_data_inout">Wi-Fiのインジケーターを削除</string>
-    <string name="force_display_wifi_standard">Forced display of WIFI signal standards</string>
+    <string name="force_display_wifi_standard">Wi-Fi 信号規格の強制表示</string>
+    <string name="force_display_wifi_standard_summary">切り替えた後はスコープしたプロセスを再起動すると反映されます</string>
     <string name="StatusBarMobileDataIcon">モバイルデータアイコン</string>
     <string name="remove_mobile_data_icon">モバイルデータアイコンを削除</string>
     <string name="remove_mobile_data_inout">モバイルデータのインジケーターを削除</string>
@@ -807,6 +808,7 @@
     <string name="remove_side_slider">サイドスライダーを削除</string>
     <string name="remove_side_slider_black_background">サイドスライダーの黒い背景を削除</string>
     <string name="remove_rotate_screen_button">画面回転のボタンを削除</string>
+    <string name="custom_rotate_screen_button_size">画面回転ボタンのサイズをカスタマイズ</string>
     <string name="remove_back_gesture_confirmation_limit">Remove the back gesture confirmation limit</string>
     <string name="CustomSideSliderIcon">サイドスライダーのアイコンをカスタム</string>
     <string name="replace_side_slider_icon_switch">サイドスライダーの切り替えを置き換え</string>
@@ -967,7 +969,6 @@
     <string name="adb_port">ADBのポート</string>
     <string name="enable_remote_adb_debugging">リモートADBデバッグを有効化</string>
     <string name="adb_debug_port_cannot_null">ADBデバッグポートをnullにすることはできません</string>
-    <string name="adb_tv_tip">長押しでコピー</string>
     <!--LOG Fragment-->
     <string name="log_save_success">ログの保存に成功しました!</string>
     <string name="log_save_failed">ログの保存に失敗しました!</string>
@@ -1003,6 +1004,12 @@
     <string name="appinfo_last_updated_time">最終更新時間</string>
     <string name="appinfo_target_sdk">ターゲット SDK</string>
     <string name="appinfo_system_app">システムアプリ</string>
+    <string name="appinfo_app_count">%1$d 個のアプリ</string>
+    <string name="appinfo_selected_count">%1$d 件選択中</string>
+    <string name="appinfo_select_all">すべて選択</string>
+    <string name="appinfo_deselect_all">選択を解除</string>
+    <string name="appinfo_no_match">一致するアプリがありません</string>
+    <string name="appinfo_clear_search">検索をクリア</string>
     <!--Intent-->
     <string name="custom_config_app_intent_list">Custom configuration app intent list</string>
     <string name="select_all_share_intent">Select all share intent</string>
