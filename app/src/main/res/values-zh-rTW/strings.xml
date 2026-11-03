@@ -1459,6 +1459,8 @@
     <string name="apk_details_size">安裝包大小</string>
     <string name="apk_details_min_sdk">最低 SDK</string>
     <string name="apk_details_target_sdk">目標 SDK</string>
+    <string name="apk_details_min_os_version">最低 OS 版本</string>
+    <string name="apk_details_max_os_version">最高 OS 版本</string>
     <string name="apk_details_unknown">暫無資訊</string>
     <string name="select_color">選擇顏色</string>
     <string name="current_color">目前顏色: %1$s</string>

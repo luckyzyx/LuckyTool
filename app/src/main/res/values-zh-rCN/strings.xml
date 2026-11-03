@@ -1297,6 +1297,8 @@
     <string name="apk_details_size">安装包大小</string>
     <string name="apk_details_min_sdk">最低 SDK</string>
     <string name="apk_details_target_sdk">目标 SDK</string>
+    <string name="apk_details_min_os_version">最低 OS 版本</string>
+    <string name="apk_details_max_os_version">最高 OS 版本</string>
     <string name="apk_details_unknown">暂无信息</string>
     <string name="enable_notification_side_spacing">启用通知两侧间距</string>
     <string name="custom_notification_side_spacing_vertical">自定义通知两侧间距(竖屏)</string>

@@ -9,6 +9,7 @@ import android.graphics.Color
 import android.graphics.Typeface
 import android.graphics.drawable.Drawable
 import android.graphics.drawable.GradientDrawable
+import android.os.Bundle
 import android.text.TextUtils
 import android.text.format.Formatter
 import android.util.TypedValue
@@ -108,6 +109,14 @@ internal class ApkDetailsView(context: Context, private val moduleResources: Res
                     incoming.applicationInfo?.targetSdkVersion?.toString() ?: unknown
                 )
             )
+            // 部分系统应用在清单 metadata 里声明可用的 OS 版本区间，缺字段时整行不显示
+            val metaData = incoming.applicationInfo?.metaData
+            metaData?.metadataValue("minOsdkVersion")?.let {
+                info.addView(row(R.string.apk_details_min_os_version, it))
+            }
+            metaData?.metadataValue("maxOsdkVersion")?.let {
+                info.addView(row(R.string.apk_details_max_os_version, it))
+            }
             addView(
                 info, LayoutParams(
                     LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT
@@ -223,6 +232,10 @@ internal class ApkDetailsView(context: Context, private val moduleResources: Res
         else if (value.type in TypedValue.TYPE_FIRST_COLOR_INT..TypedValue.TYPE_LAST_COLOR_INT) value.data
         else fallback
     }
+
+    // meta-data 的值可能是数字也可能是字符串，统一转成文本后再判断有没有实际内容
+    private fun Bundle.metadataValue(key: String) =
+        get(key)?.toString()?.trim()?.takeIf { it.isNotEmpty() }
 
     private fun dp(value: Int) = (value * resources.displayMetrics.density + 0.5f).toInt()
 }

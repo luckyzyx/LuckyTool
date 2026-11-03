@@ -3,6 +3,7 @@ package com.luckyzyx.luckytool.hook.scopes.packageinstaller
 import android.annotation.SuppressLint
 import android.content.Context
 import android.content.pm.PackageInfo
+import android.content.pm.PackageManager
 import android.view.Gravity
 import android.widget.LinearLayout
 import androidx.collection.ArrayMap
@@ -112,7 +113,10 @@ class ShowMoreApkPackageInformation(val dexKitBridge: DexKitBridge) : YukiBaseHo
                     val apkFilePath = cacheApkInfo["apkPath"] as? String ?: ""
                     val apkSize = cacheApkInfo["size"] as? Long ?: -1
 
-                    val packInfo = PackageUtils(pm).getPackageArchiveInfo(apkFilePath, 1)
+                    // 只有带上 GET_META_DATA，解析出来的清单才会带 meta-data（OS 版本区间靠它显示）
+                    val packInfo = PackageUtils(pm).getPackageArchiveInfo(
+                        apkFilePath, PackageManager.GET_ACTIVITIES or PackageManager.GET_META_DATA
+                    )
                     val newIcon = packInfo?.applicationInfo?.apply {
                         sourceDir = apkFilePath
                         publicSourceDir = apkFilePath
