@@ -41,7 +41,6 @@ in [TG Channel’s associated groups](https://t.me/LuckyTool)**
 - 自定义旋转屏幕按钮大小 (@RealmeOS)
 - 流体云卡片重定向
 - 安装包信息显示 OS 版本区间（minOsdkVersion / maxOsdkVersion）
-- 忽略默认应用列表中的安装器强制指定
 - 极暗模式控制页（系统设置页为空白时替代）
 
 #### 优化
