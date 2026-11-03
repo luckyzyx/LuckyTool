@@ -63,6 +63,14 @@ object WiFiDataIconRelated : YukiBaseHooker() {
         @Volatile
         private var callbackRegistered = false
 
+        // 当前用来取标准号的主 WiFi 网络：别的 WiFi 网络断开时不能连带清掉状态
+        @Volatile
+        private var wifiNetwork: Network? = null
+
+        // 诊断日志去重键，状态没变就不重复打
+        @Volatile
+        private var logStateKey: String? = null
+
         @Volatile
         private var wifiLeftId = 0
 
@@ -103,6 +111,7 @@ object WiFiDataIconRelated : YukiBaseHooker() {
         override fun onHook() {
             val forceStandard =
                 preferences(ModulePrefs).getBoolean("force_display_wifi_standard", false)
+            YLog.debug("force_display_wifi_standard -> $forceStandard")
 
             if (!forceStandard) return
 
@@ -131,6 +140,11 @@ object WiFiDataIconRelated : YukiBaseHooker() {
                 lastWifiLeftTv = WeakReference(it)
             }
             ensureWifiCallback(context)
+            YLog.debug(
+                "wifi left capture: group=${Integer.toHexString(System.identityHashCode(viewGroup))}" +
+                    " left=$wifiLeftId tv=$wifiLeftTvId" +
+                    " image=${lastWifiLeftView?.get() != null} text=${lastWifiLeftTv?.get() != null}"
+            )
             if (watchedContainer?.get() !== viewGroup) {
                 watchedContainer = WeakReference(viewGroup)
                 // 只在状态栏真正重新布局时才看一眼槽位，不挂 framework 的 setter
@@ -162,7 +176,18 @@ object WiFiDataIconRelated : YukiBaseHooker() {
                 mainHandler.post { applyLowStandardDigit() }
                 return
             }
-            val digit = lowStandardDigitOf(wifiStandard) ?: return
+            val digit = lowStandardDigitOf(wifiStandard)
+            val textSlot = lastWifiLeftTv?.get()
+            val imageSlot = lastWifiLeftView?.get()
+            logState(
+                "apply $wifiStandard|$wifiConnected|$hostTextMode|" +
+                    "${textSlot.describeSlot()}|${imageSlot.describeSlot()}"
+            ) {
+                "wifi standard apply: standard=$wifiStandard connected=$wifiConnected" +
+                    " digit=$digit textMode=$hostTextMode" +
+                    " textSlot=${textSlot.describeSlot()} imageSlot=${imageSlot.describeSlot()}"
+            }
+            if (digit == null) return
             if (!wifiConnected) return
             if (hostTextMode != false) {
                 val textView = lastWifiLeftTv?.get() ?: return
@@ -239,15 +264,29 @@ object WiFiDataIconRelated : YukiBaseHooker() {
             val now = SystemClock.elapsedRealtime()
             if (now - gateCheckedAt < STANDARD_GATE_CACHE_MS) return gateAllowed
             gateCheckedAt = now
-            gateAllowed = runCatching {
-                val wifiUtils = WifiUtils(hostClassLoader)
-                if (wifiUtils.isDualWifiConnected(context) || wifiUtils.isPassPointAp(context)) {
-                    return@runCatching false
-                }
-                AbsSettingsValueProxyUtils(hostClassLoader!!)
-                    .getGlobalIntValue(context, TECHNICAL_ICON_SWITCH, 0) == 1
-            }.getOrDefault(false)
+            gateAllowed = evaluateStandardGate(context)
+            logState("gate=$gateAllowed") { "wifi standard gate -> $gateAllowed" }
             return gateAllowed
+        }
+
+        //双 WiFi / PassPoint 由宿主自己接管标准号，系统技术标准图标开关没开时宿主也不显示，
+        //任何一项读不到都按「不补画」处理，但要把原因留下来，不能静默失效
+        private fun evaluateStandardGate(context: Context): Boolean {
+            val classLoader = hostClassLoader ?: return false
+            val wifiUtils = WifiUtils(classLoader)
+            val dualWifi = runCatching { wifiUtils.isDualWifiConnected(context) }
+                .onFailure { YLog.warn("wifi standard gate: isDualWifiConnected failed: " + it.message) }
+                .getOrDefault(false)
+            if (dualWifi) return false
+            val passPoint = runCatching { wifiUtils.isPassPointAp(context) }
+                .onFailure { YLog.warn("wifi standard gate: isPassPointAp failed: " + it.message) }
+                .getOrDefault(false)
+            if (passPoint) return false
+            return runCatching {
+                AbsSettingsValueProxyUtils(classLoader)
+                    .getGlobalIntValue(context, TECHNICAL_ICON_SWITCH, 0) == 1
+            }.onFailure { YLog.warn("wifi standard gate: technical switch read failed: " + it.message) }
+                .getOrDefault(false)
         }
 
         @SuppressLint("MissingPermission")
@@ -268,15 +307,24 @@ object WiFiDataIconRelated : YukiBaseHooker() {
                             network: Network, networkCapabilities: NetworkCapabilities
                         ) {
                             val info = networkCapabilities.transportInfo as? WifiInfo ?: return
-                            val isPrimary = info.asResolver().firstMethod {
-                                name = "isPrimary"; emptyParameters()
-                            }.invoke<Boolean>() ?: false
+                            val isPrimary = runCatching {
+                                info.asResolver().firstMethod {
+                                    name = "isPrimary"; emptyParameters()
+                                }.invoke<Boolean>() ?: false
+                            }.onFailure {
+                                YLog.warn("wifi standard: isPrimary failed: " + it.message)
+                            }.getOrDefault(false)
                             if (!isPrimary) return
+                            wifiNetwork = network
                             wifiConnected = true
                             onWifiStandardChanged(info.wifiStandard)
                         }
 
+                        //只有当前取标准号的那个网络断开才收掉状态，避免别的 WiFi 网络（副卡热点等）
+                        //断开时把主网络的标准号一起清掉，之后又等不到新的回调
                         override fun onLost(network: Network) {
+                            if (network != wifiNetwork) return
+                            wifiNetwork = null
                             wifiConnected = false
                             wifiStandard = ScanResult.WIFI_STANDARD_UNKNOWN
                             clearLowDigit()
@@ -290,6 +338,18 @@ object WiFiDataIconRelated : YukiBaseHooker() {
         private fun onWifiStandardChanged(standard: Int) {
             if (wifiStandard != standard) wifiStandard = standard
             applyLowStandardDigit()
+        }
+
+        //槽位被宿主收起、滑出窗口或已经随状态栏重建掉时，补画是无效的，靠这行日志区分
+        private fun View?.describeSlot(): String = this?.let {
+            "shown=${it.isShown} attached=${it.isAttachedToWindow} visibility=${it.visibility}"
+        } ?: "null"
+
+        //布局每帧都会回调，同一组状态只打一行，状态变了才再打
+        private inline fun logState(key: String, message: () -> String) {
+            if (key == logStateKey) return
+            logStateKey = key
+            YLog.debug(message())
         }
     }
 
