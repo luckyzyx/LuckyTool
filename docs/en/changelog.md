@@ -10,6 +10,7 @@ Entries for versions before `1.3.5_beta` are currently only available in the
 
 #### Added
 
+- Keep Google services on the network when the battery component blocks them C16+
 - Force enable the Feiniu Cloud NAS option
 - Custom system message region presets
 - Disable malicious application intercept C16.1
