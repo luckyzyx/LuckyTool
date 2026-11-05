@@ -81,6 +81,7 @@ Entries for versions before `1.3.5_beta` are currently only available in the
 - Fixed docked floating window keep-alive moving the task before the dock transition finished, which pulled it back and paused the app
 - Fixed the virtual display being released before the restore finished, which made the mini window disappear
 - Fixed three broken com.oplus.games hooks V10.43
+- Fixed "Remove startup animation" not removing the game start popup animation V10.43
 
 #### Adapted
 
