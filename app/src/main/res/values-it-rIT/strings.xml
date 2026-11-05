@@ -385,6 +385,8 @@
     <string name="statusbar_carriers_use_user_typeface">Nome Operatore utilizza carattere utente</string>
     <string name="LockScreenButton">Pulsanti schermata di blocco</string>
     <string name="remove_top_lock_screen_icon">Rimuovi le icone superiori della schermata di blocco</string>
+    <string name="lock_screen_credential_shortcut">Scorciatoia per lo sblocco con password</string>
+    <string name="lock_screen_credential_shortcut_summary">Scorri sulla scorciatoia sul lato opposto alla fotocamera per aprire la schermata di sequenza, PIN o password. Un semplice scorrimento verso l\'alto non apre più questa schermata finché lo sblocco con impronta digitale è disponibile. Sostituisce la scorciatoia in quella posizione.</string>
     <string name="remove_lock_screen_bottom_left_button">Rimuovi il pulsante in basso a sinistra nella schermata di blocco</string>
     <string name="lock_screen_bottom_left_button_replace_with_flashlight">Il pulsante nell\'angolo in basso a sinistra nella schermata di blocco viene sostituito con la torcia</string>
     <string name="lock_screen_switch_flashlight_auto_close_screen">Attiva la torcia per spegnere automaticamente lo schermo</string>

@@ -10,6 +10,7 @@ import com.luckyzyx.luckytool.hook.scopes.systemui.LockScreenCarriers
 import com.luckyzyx.luckytool.hook.scopes.systemui.LockScreenChargingComponent
 import com.luckyzyx.luckytool.hook.scopes.systemui.LockScreenClock
 import com.luckyzyx.luckytool.hook.scopes.systemui.LockScreenComponentStyle
+import com.luckyzyx.luckytool.hook.scopes.systemui.LockScreenCredentialShortcut
 import com.luckyzyx.luckytool.hook.scopes.systemui.RemoveAodMusicWhitelist
 import com.luckyzyx.luckytool.hook.scopes.systemui.RemoveLockScreenBottomSOSButton
 import com.luckyzyx.luckytool.hook.scopes.systemui.RemoveLockScreenCloseNotificationButton
@@ -36,6 +37,7 @@ object HookSystemUILockScreen : YukiBaseHooker() {
 
         //锁屏底部按钮
         loadHooker(LockScreenBottomButton)
+        loadHooker(LockScreenCredentialShortcut)
 
         //锁屏状态栏运营商
         loadHooker(LockScreenCarriers)

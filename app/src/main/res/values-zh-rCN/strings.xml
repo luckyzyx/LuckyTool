@@ -492,6 +492,8 @@
     <string name="statusbar_carriers_use_user_typeface">状态栏运营商使用用户字体</string>
     <string name="LockScreenButton">锁屏按钮</string>
     <string name="remove_top_lock_screen_icon">移除锁屏顶部图标</string>
+    <string name="lock_screen_credential_shortcut">快捷入口打开密码页</string>
+    <string name="lock_screen_credential_shortcut_summary">滑动相机对侧的快捷按钮进入图案、PIN 或密码页；指纹可用时，普通上滑不再进入。会替换该位置原有的快捷方式。</string>
     <string name="remove_lock_screen_bottom_left_button">移除锁屏左下角按钮</string>
     <string name="lock_screen_bottom_left_button_replace_with_flashlight">锁屏左下角按钮替换手电筒</string>
     <string name="lock_screen_switch_flashlight_auto_close_screen">开关手电筒自动息屏</string>

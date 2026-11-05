@@ -386,6 +386,8 @@
     <string name="statusbar_carriers_use_user_typeface">Оператори використовують користувацькі шрифти в рядку стану</string>
     <string name="LockScreenButton">Кнопки екрану блокування</string>
     <string name="remove_top_lock_screen_icon">Видалити іконку замка на екрані блокування</string>
+    <string name="lock_screen_credential_shortcut">Ярлик для розблокування паролем</string>
+    <string name="lock_screen_credential_shortcut_summary">Проведіть по ярлику навпроти камери, щоб відкрити екран графічного ключа, PIN-кода або пароля. Звичайне проведення вгору більше не відкриває його, поки доступне розблокування відбитком пальця. Замінює ярлик у цій позиції.</string>
     <string name="remove_lock_screen_bottom_left_button">Видалити ліву нижню кнопку на екрані блокування</string>
     <string name="lock_screen_bottom_left_button_replace_with_flashlight">The button in the lower left corner of the lock screen is replaced with a flashlight</string>
     <string name="lock_screen_switch_flashlight_auto_close_screen">Switch the flashlight to automatically turn off the screen</string>

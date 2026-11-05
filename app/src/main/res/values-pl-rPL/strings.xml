@@ -387,6 +387,8 @@
     <string name="statusbar_carriers_use_user_typeface">Użyj niestandardowej czcionki w nazwie operatora sieci</string>
     <string name="LockScreenButton">Przyciski ekranu blokady</string>
     <string name="remove_top_lock_screen_icon">Usuń ikonę kłódki</string>
+    <string name="lock_screen_credential_shortcut">Skrót do odblokowania hasłem</string>
+    <string name="lock_screen_credential_shortcut_summary">Przesuń skrót po przeciwnej stronie aparatu, aby otworzyć ekran wzoru, kodu PIN lub hasła. Zwykłe przesunięcie w górę nie otwiera go, gdy dostępne jest odblokowywanie odciskiem palca. Zastępuje skrót w tym miejscu.</string>
     <string name="remove_lock_screen_bottom_left_button">Usuń lewy dolny skrót</string>
     <string name="lock_screen_bottom_left_button_replace_with_flashlight">The button in the lower left corner of the lock screen is replaced with a flashlight</string>
     <string name="lock_screen_switch_flashlight_auto_close_screen">Switch the flashlight to automatically turn off the screen</string>

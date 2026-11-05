@@ -546,6 +546,8 @@
 
     <string name="LockScreenButton">鎖屏按鈕</string>
     <string name="remove_top_lock_screen_icon">移除鎖屏頂部圖示</string>
+    <string name="lock_screen_credential_shortcut">快捷入口開啟密碼頁</string>
+    <string name="lock_screen_credential_shortcut_summary">滑動相機對側的快捷按鈕進入圖案、PIN 或密碼頁；指紋可用時，普通上滑不再進入。會替換該位置原有的快捷方式。</string>
     <string name="remove_lock_screen_bottom_left_button">移除鎖屏左下角按鈕</string>
     <string name="lock_screen_bottom_left_button_replace_with_flashlight">鎖屏左下角按鈕替換手電筒</string>
     <string name="lock_screen_switch_flashlight_auto_close_screen">開關手電筒自動息屏</string>

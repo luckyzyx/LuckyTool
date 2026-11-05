@@ -549,6 +549,8 @@
     
     <string name="LockScreenButton">Lock Screen Button</string>
     <string name="remove_top_lock_screen_icon">Remove top lock screen icons</string>
+    <string name="lock_screen_credential_shortcut">Shortcut to password unlock</string>
+    <string name="lock_screen_credential_shortcut_summary">Swipe the shortcut opposite the camera to open the pattern, PIN or password screen. A plain swipe up no longer opens it while fingerprint unlock is available. Replaces the shortcut in that position.</string>
     <string name="remove_lock_screen_bottom_left_button">Remove lockscreen bottom left button</string>
     <string name="lock_screen_bottom_left_button_replace_with_flashlight">The button in the lower left corner of the lock screen is replaced with a flashlight</string>
     <string name="lock_screen_switch_flashlight_auto_close_screen">Switch the flashlight to automatically turn off the screen</string>

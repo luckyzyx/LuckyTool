@@ -386,6 +386,8 @@
     <string name="statusbar_carriers_use_user_typeface">Použít vlastní font textu operátora ve stavové liště</string>
     <string name="LockScreenButton">Tlačítka na zamykací obrazovce</string>
     <string name="remove_top_lock_screen_icon">Odstranit horní ikony na zamykací obrazovce</string>
+    <string name="lock_screen_credential_shortcut">Zkratka pro odemčení heslem</string>
+    <string name="lock_screen_credential_shortcut_summary">Přetáhněte zkratku naproti kameře a otevřete obrazovku obrazce, kódu PIN nebo hesla. Běžné tažení nahoru ji už neotevře, pokud je k dispozici odemčení otiskem prstu. Nahradí zkratku na této pozici.</string>
     <string name="remove_lock_screen_bottom_left_button">Odstranit levé tlačítko na zamykací obrazovce</string>
     <string name="lock_screen_bottom_left_button_replace_with_flashlight">Tlačítko v levém dolním rohu zamykací obrazovky je nahrazeno svítilnou</string>
     <string name="lock_screen_switch_flashlight_auto_close_screen">Zapnutím svítilny automaticky vypnete obrazovku</string>
