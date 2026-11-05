@@ -43,7 +43,7 @@ object HookOplusGames : YukiBaseHooker() {
             }
             //移除启动动画
             if (preferences(ModulePrefs).getBoolean("remove_startup_animation", false)) {
-                loadHooker(RemoveStartupAnimation)
+                loadHooker(RemoveStartupAnimation(dexKitBridge))
             }
             //启用赛事支持模式
             if (preferences(ModulePrefs).getBoolean("enable_support_competition_mode", false)) {
