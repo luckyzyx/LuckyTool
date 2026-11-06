@@ -29,6 +29,7 @@ import org.lsposed.lsparanoid.Obfuscate
 import java.io.StringReader
 import java.lang.ref.WeakReference
 import java.util.Properties
+import java.util.WeakHashMap
 
 @Suppress("MayBeConstant")
 @Obfuscate
@@ -66,6 +67,35 @@ object LockScreenChargingComponent : YukiBaseHooker() {
         private var currentWattageView = WeakReference<TextView?>(null)
         private var lastCpaWattage = 0
         private var lastWattage: Int? = null
+
+        //同一技术视图只挂一次布局监听, 避免每轮刷新重复注册
+        private val techWidthSyncTargets = WeakHashMap<View, WeakReference<TextView>>()
+
+        /**
+         * 让瓦数视图与充电技术视图等宽并水平居中.
+         *
+         * 瓦数文案长短会变, 宽度由技术视图决定才能保证这一行不左右跳动; 技术视图尺寸在布局阶段才确定,
+         * 所以首次对齐后继续监听它的布局变化, 技术文案换了宽度也跟着换.
+         */
+        private fun TextView.matchTechWidth(techView: View?) {
+            if (techView == null || techView === this) return
+            gravity = Gravity.CENTER
+            syncWidth(techView.width)
+            if (techWidthSyncTargets[techView]?.get() === this) return
+            techWidthSyncTargets[techView] = WeakReference(this)
+            techView.addOnLayoutChangeListener { view, _, _, _, _, _, _, _, _ ->
+                techWidthSyncTargets[view]?.get()?.syncWidth(view.width)
+            }
+        }
+
+        //宽度未测出来 (GONE 或首帧) 时保持原样, 重复设置同一宽度会白白触发一次布局
+        private fun TextView.syncWidth(width: Int) {
+            if (width <= 0) return
+            val params = layoutParams ?: return
+            if (params.width == width) return
+            params.width = width
+            layoutParams = params
+        }
 
         override fun onHook() {
             var userTypeface =
@@ -210,6 +240,14 @@ object LockScreenChargingComponent : YukiBaseHooker() {
                                 createTextDrawable(viewGroup.context, text)
                             )
                         }
+
+                        if (showWattage) {
+                            firstField { name = "chargeWattage" }.of(instance).get<TextView>()
+                                ?.matchTechWidth(
+                                    firstField { name = "chargeTechLogo" }.of(instance)
+                                        .get<ImageView>()
+                                )
+                        }
                     }
                 }
                 firstMethod { name = "updateAllIconAndBg" }.hook {
@@ -286,6 +324,13 @@ object LockScreenChargingComponent : YukiBaseHooker() {
                             lastWattage = wattage
                             chargeWattageView?.isVisible = true
                             chargeWattageView?.text = resolveWattageText(cpaWattage, wattage)
+                        }
+
+                        if (showWattage) {
+                            firstField { name = "chargeWattage" }.of(instance).get<TextView>()
+                                ?.matchTechWidth(
+                                    firstField { name = "textLogo" }.of(instance).get<TextView>()
+                                )
                         }
                     }
                 }
