@@ -1,8 +1,10 @@
 package com.luckyzyx.luckytool.ui.compose.special
 
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -14,9 +16,13 @@ import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.itos.coui.layout.Divider as CouiDivider
+import com.itos.coui.switch.Switch as CouiSwitch
 import com.itos.coui.text.CouiTextKind
 import com.itos.coui.text.Text as CouiText
 import com.itos.coui.theme.CouiTheme
@@ -67,7 +73,7 @@ internal fun SortFilterSheet(
     }
 }
 
-/** Material 线：material3 `ModalBottomSheet` + `FilterChip` 的排序/筛选弹层。 */
+/** Material 线：material3 `ModalBottomSheet` + `FilterChip` 的排序/筛选弹层；标签自带描边，折行时补 8dp 间距避免相邻描边贴成一段。 */
 @Suppress("DEPRECATION") // rememberModalBottomSheetState() 自 material3 1.5 起弃用（改用 rememberBottomSheetState + 显式 enabledValues）；Material 线沿用旧重载，以免改动半展开状态的既有组合
 @OptIn(ExperimentalLayoutApi::class, ExperimentalMaterial3Api::class)
 @Composable
@@ -102,7 +108,11 @@ internal fun SortFilterSheetMaterial(
                 onClick = onReverseChange,
                 label = { Text(stringResource(R.string.appinfo_reverse)) },
             )
-            FlowRow {
+            FlowRow(
+                Modifier.padding(top = 8.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
                 sortLabels.forEachIndexed { index, label ->
                     FilterChip(
                         selected = sortMode == index,
@@ -125,11 +135,12 @@ internal fun SortFilterSheetMaterial(
 }
 
 /**
- * COUI 线：面板由 [CouiModalBottomSheet] 承载，标签用 COUI 筛选标签。
+ * COUI 线：面板由 [CouiModalBottomSheet] 承载，标题居中，反转是开关行，排序项是 COUI 筛选标签。
  *
- * 关闭行为与 Material 线一致：点遮罩或按返回键都走 [onDismiss]；面板本身已经带了
- * 最大高度与竖向滚动，内容再多也只滚面板内部，不会把整块内容顶出屏幕。
- * 左右留白在这里补，弹层自带的上下留白与导航栏内边距不再重复叠加。
+ * 标签本身不带外边距，行内与行间都要在这里补：不补的话相邻胶囊贴在一起，整行读起来像一串连写的文字。
+ * 排序项比其他入口多（6 项），用 FlowRow 折行而不是横向滚动，靠后的项不会被挤出屏幕外。
+ * 标题用 [CouiTextKind.SectionTitle]：比小节标题更大，层级才不会反过来。
+ * 关闭行为由面板负责：点遮罩或按返回键都走 [onDismiss]，内容再多也只在面板内部滚动。
  */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
@@ -142,31 +153,50 @@ private fun CouiSortFilterSheet(
     filterContent: (@Composable () -> Unit)? = null,
     onDismiss: () -> Unit,
 ) {
-    val colors = CouiTheme.colorScheme
     CouiModalBottomSheet(onDismissRequest = onDismiss) {
         Column(
             Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 16.dp)
+                .padding(bottom = 24.dp)
         ) {
             CouiText(
                 text = stringResource(R.string.appinfo_sort_and_filter),
-                kind = CouiTextKind.GroupTitle,
-                color = colors.onSurface,
+                kind = CouiTextKind.SectionTitle,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.fillMaxWidth(),
             )
-            Spacer(Modifier.size(8.dp))
-            CouiText(
-                text = stringResource(R.string.appinfo_sort_by),
-                kind = CouiTextKind.PreferenceTitle,
-                color = colors.onSurfaceVariant,
-            )
-            Spacer(Modifier.size(4.dp))
-            CouiFilterChip(
-                label = stringResource(R.string.appinfo_reverse),
-                selected = reverse,
-                onClick = onReverseChange,
-            )
-            FlowRow {
+            Row(
+                Modifier
+                    .fillMaxWidth()
+                    .padding(top = 12.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                CouiText(
+                    text = stringResource(R.string.appinfo_sort_by),
+                    kind = CouiTextKind.PreferenceTitle,
+                    modifier = Modifier.weight(1f),
+                )
+                CouiText(
+                    text = stringResource(R.string.appinfo_reverse),
+                    kind = CouiTextKind.PreferenceTitle,
+                )
+                CouiSwitch(
+                    modifier = Modifier.padding(start = 8.dp),
+                    checked = reverse,
+                    onCheckedChange = null,
+                    // 开关只上报“翻了一下”，具体取反由调用方持有
+                    onDragCheckedChange = { onReverseChange() },
+                    dark = CouiTheme.isDark,
+                )
+            }
+            FlowRow(
+                Modifier
+                    .fillMaxWidth()
+                    .padding(top = 8.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
                 sortLabels.forEachIndexed { index, label ->
                     CouiFilterChip(
                         label = label,
@@ -176,13 +206,16 @@ private fun CouiSortFilterSheet(
                 }
             }
             if (filterContent != null) {
-                Spacer(Modifier.size(12.dp))
+                CouiDivider(
+                    modifier = Modifier.padding(top = 12.dp, bottom = 8.dp),
+                    startIndent = 0.dp,
+                    endIndent = 0.dp,
+                )
                 CouiText(
                     text = stringResource(R.string.appinfo_filter),
                     kind = CouiTextKind.PreferenceTitle,
-                    color = colors.onSurfaceVariant,
                 )
-                Spacer(Modifier.size(4.dp))
+                Spacer(Modifier.size(8.dp))
                 filterContent()
             }
         }
