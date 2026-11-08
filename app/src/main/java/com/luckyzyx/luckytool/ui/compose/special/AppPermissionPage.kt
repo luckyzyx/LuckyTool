@@ -22,6 +22,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
@@ -302,6 +303,8 @@ private fun Category(title: String, summary: String? = null) {
                 text = title,
                 kind = CouiTextKind.GroupTitle,
                 color = CouiTheme.colorScheme.accent,
+                // GroupTitle 在库内默认水平居中，这里强制起始对齐，保持 32dp 内缩起点
+                textAlign = TextAlign.Start,
                 modifier = Modifier
                     .fillMaxWidth()
                     // COUI 分类标题统一 32dp 水平内缩，与卡片内行文字（16+16）对齐
