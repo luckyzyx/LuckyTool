@@ -22,6 +22,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -144,12 +145,15 @@ fun SearchPage(isCurrentPage: Boolean, onOpen: (ScopeRoute) -> Unit) {
                     // 顶栏折叠/展开由列表滚动驱动：滚动一开始就清掉搜索框焦点并收键盘，
                     // 否则仍聚焦的字段会在布局变化时被平台恢复输入法。
                     val scopeListState = LocalScopeListState.current
-                    LaunchedEffect(scopeListState, searchFocusRequester, keyboardController) {
+                    val focusManager = LocalFocusManager.current
+                    LaunchedEffect(scopeListState, focusManager, keyboardController) {
                         if (scopeListState == null) return@LaunchedEffect
                         snapshotFlow { scopeListState.isScrollInProgress }
                             .collect { scrolling ->
                                 if (scrolling) {
-                                    searchFocusRequester.freeFocus()
+                                    // freeFocus 只释放 Captured 焦点，对普通聚焦的输入框无效，
+                                    // 必须用 FocusManager.clearFocus 才能真正清焦并收键盘。
+                                    focusManager.clearFocus(force = true)
                                     keyboardController?.hide()
                                 }
                             }
