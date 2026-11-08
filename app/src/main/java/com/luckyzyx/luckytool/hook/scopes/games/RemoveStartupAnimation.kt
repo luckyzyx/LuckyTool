@@ -25,8 +25,8 @@ class RemoveStartupAnimation(val dexKitBridge: DexKitBridge) : YukiBaseHooker() 
         if (setDuration == null) YLog.error("RemoveStartupAnimation -> setDuration is null")
         else setDuration.hook {
             before {
-                val animator = instance as? ObjectAnimator ?: return@before
-                if (firstArg().long() != 500L) return@before
+                val animator = instanceOrNull<ObjectAnimator>() ?: return@before
+                if ((firstArg().get<Long>() ?: 0L) != 500L) return@before
                 if (animator.propertyName != "translationX") return@before
                 if (animator.target?.javaClass?.name != "business.secondarypanel.view.GameOptimizedNewView") {
                     return@before
@@ -80,7 +80,7 @@ class RemoveStartupAnimation(val dexKitBridge: DexKitBridge) : YukiBaseHooker() 
                     }
                 }
                 result.checkDataList("RemoveStartupAnimation find StartupAnimationFeature ($anchor)")
-                result.firstOrNull()?.let { return it }
+                result.singleOrNull()?.let { return it }
             }
         }
         return null
