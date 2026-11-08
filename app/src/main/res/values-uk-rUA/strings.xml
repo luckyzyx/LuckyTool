@@ -6,7 +6,7 @@
     <string name="nav_function">Функції</string>
     <string name="nav_home">Головна сторінка</string>
     <string name="nav_other">Інше</string>
-    <string name="nav_log">Логи</string>
+    <string name="nav_search">Пошук</string>
     <string name="nav_setting">Налаштування</string>
     <string name="fragment_source">Джерело коду</string>
     <!-- Settings -->

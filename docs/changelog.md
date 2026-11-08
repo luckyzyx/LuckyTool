@@ -24,7 +24,9 @@ in [TG Channel’s associated groups](https://t.me/LuckyTool)**
 - 自定义快捷键事件拦截（无操作 / 响铃循环）
 - 手动热重载作用域进程
 - 软件商店默认展开更新列表
-- Miuix 界面风格（默认启用，可切回 Material）
+- COUI 界面风格（默认启用，可切回 Material）
+- 界面导航改用 NavHost（单 Activity），页面骨架随界面风格替换
+- 独立搜索页，支持最近搜索历史（取代底部日志标签）
 - 冷启动启动动画
 - 自定义状态栏图标排序
 - 自定义状态栏网速刷新间隔（0.1–5 秒）
@@ -46,6 +48,7 @@ in [TG Channel’s associated groups](https://t.me/LuckyTool)**
 
 #### 优化
 
+- COUI 界面风格全量适配（对话框、列表与偏好行、滑杆、下拉刷新、作用域页）
 - 重构桌面时钟组件「红一」控制
 - 重新设计单选、多选与动作列表对话框
 - 重新设计应用选择对话框
@@ -55,6 +58,7 @@ in [TG Channel’s associated groups](https://t.me/LuckyTool)**
 - 功能页「XX相关」分类行改用彩色徽标
 - 设置页备份 / 恢复记录数据落点
 - 重构浮窗贴边后台运行
+- COUI 界面风格默认使用 COUI 预设配色，动态取色开关改为本线独立（默认关闭）
 
 #### 修复
 
@@ -76,6 +80,7 @@ in [TG Channel’s associated groups](https://t.me/LuckyTool)**
 - 修复状态栏网速「使用用户字体」在默认布局下不生效
 - 修复捐赠数据加载（改用 jsDelivr 镜像）
 - 修复「移除启动动画」未去除游戏助手启动弹窗动画 V10.43
+- 修复未授予 Root 的新设备跳过应用权限页，直接进主页弹「无 Root」提示
 
 #### 适配
 

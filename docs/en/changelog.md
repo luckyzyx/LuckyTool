@@ -26,7 +26,8 @@ Entries for versions before `1.3.5_beta` are currently only available in the
 - Custom action key event interception (no-op / ringtone cycle)
 - Manual scope hot reload
 - Expand the update list by default in the software store
-- Miuix UI style (default, switchable back to Material)
+- Navigation now uses NavHost in a single Activity, with page scaffolds that follow the UI style
+- Standalone search tab with recent search history (replaces the Log tab)
 - Cold-start animation
 - Custom status bar icon order
 - Custom status bar network speed refresh interval (0.1-5 s)
@@ -47,6 +48,7 @@ Entries for versions before `1.3.5_beta` are currently only available in the
 
 #### Optimized
 
+- Full COUI UI style coverage (dialogs, lists and preference rows, sliders, pull-to-refresh, scope pages)
 - Rework the red-one control on the home screen clock widget
 - Redesigned the single-choice, multi-choice and action-list dialogs
 - Redesigned the app picker dialog
@@ -82,6 +84,7 @@ Entries for versions before `1.3.5_beta` are currently only available in the
 - Fixed the virtual display being released before the restore finished, which made the mini window disappear
 - Fixed three broken com.oplus.games hooks V10.43
 - Fixed "Remove startup animation" not removing the game start popup animation V10.43
+- Fixed the app permission page being skipped on a device without root, which went straight to the home page and showed the no-root dialog
 
 #### Adapted
 

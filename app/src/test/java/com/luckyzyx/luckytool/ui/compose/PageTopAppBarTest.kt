@@ -11,6 +11,7 @@ import androidx.activity.ComponentActivity
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.SideEffect
 import androidx.compose.ui.Modifier
@@ -19,7 +20,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Density
 import com.luckyzyx.luckytool.ui.compose.components.LocalScopeTopInset
 import com.luckyzyx.luckytool.ui.compose.components.ScopeScreen
-import com.luckyzyx.luckytool.ui.compose.components.material.MaterialPageScaffold
+import com.luckyzyx.luckytool.ui.compose.components.LuckyPageScaffold
 import com.luckyzyx.luckytool.ui.theme.AppSettings
 import com.luckyzyx.luckytool.ui.theme.ColorMode
 import com.luckyzyx.luckytool.ui.theme.LocalUiMode
@@ -37,20 +38,19 @@ import org.robolectric.annotation.Config
 import org.robolectric.annotation.GraphicsMode
 import java.io.File
 import java.util.concurrent.TimeUnit
-import top.yukonga.miuix.kmp.basic.Scaffold
 
 @RunWith(RobolectricTestRunner::class)
-@Config(sdk = [32], application = Application::class, qualifiers = "zh-rCN-w411dp-h880dp-xhdpi")
+@Config(sdk = [31, 32, 33, 34, 35], application = Application::class, qualifiers = "zh-rCN-w411dp-h880dp-xhdpi")
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
 class PageTopAppBarTest {
     @Test
     fun `function list collapses title and restores it only after scrolling to the top`() {
-        checkScrolling(UiMode.Miuix, scopeList = false)
+        checkScrolling(UiMode.Coui, scopeList = false)
     }
 
     @Test
     fun `shared settings list drives the native title through overscroll`() {
-        checkScrolling(UiMode.Miuix, scopeList = true)
+        checkScrolling(UiMode.Coui, scopeList = true)
     }
 
     @Test
@@ -77,7 +77,7 @@ class PageTopAppBarTest {
             CompositionLocalProvider(LocalUiMode provides mode, LocalDensity provides Density(2f)) {
                 LuckyTheme(AppSettings(colorMode = ColorMode.LIGHT, dynamicColor = false), uiMode = mode) {
                     Scaffold(contentWindowInsets = WindowInsets(0, 0, 0, 0)) {
-                        MaterialPageScaffold(
+                        LuckyPageScaffold(
                             title = if (scopeList) "系统设置" else "功能",
                             onBack = if (scopeList) ({}) else null,
                         ) { padding ->
@@ -85,7 +85,7 @@ class PageTopAppBarTest {
                             SideEffect { topInset = top }
                             if (scopeList) {
                                 CompositionLocalProvider(LocalScopeTopInset provides padding.calculateTopPadding()) {
-                                    val listModifier = if (mode == UiMode.Miuix) {
+                                    val listModifier = if (mode == UiMode.Coui) {
                                         Modifier.fillMaxSize()
                                     } else {
                                         Modifier.fillMaxSize().padding(padding)

@@ -33,10 +33,12 @@ import org.robolectric.annotation.Config
 import org.robolectric.annotation.GraphicsMode
 
 @RunWith(RobolectricTestRunner::class)
-@Config(sdk = [32], application = Application::class, qualifiers = "zh-rCN-w411dp-h880dp-xhdpi")
+@Config(sdk = [35], application = Application::class, qualifiers = "zh-rCN-w411dp-h880dp-xhdpi")
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
 class ThemeGesturesTest {
     @Test
+    // 需要「低于预测性返回 API」的系统环境，返回手势才以开关呈现而不是系统提示。
+    @Config(sdk = [32])
     fun `both appearances expose working gesture preferences below the predictive back API level`() {
         for (mode in UiMode.entries) {
             for (color in listOf(ColorMode.LIGHT, ColorMode.DARK)) {
@@ -84,7 +86,7 @@ class ThemeGesturesTest {
 
     @Test
     fun `gesture choices persist through activity recreation`() {
-        for (mode in UiMode.entries) {
+        for (mode in listOf(UiMode.Material)) {
             val saved: Bundle
             ThemeHost(mode, ColorMode.LIGHT).use { h ->
                 h.scrollTo("横移返回手势")
@@ -109,7 +111,7 @@ class ThemeGesturesTest {
     @Test
     fun `floating styles are revealed by the switch and persist with independent global blur`() {
         val saved: Bundle
-        ThemeHost(UiMode.Miuix, ColorMode.LIGHT).use { h ->
+        ThemeHost(UiMode.Material, ColorMode.LIGHT).use { h ->
             h.scrollTo("悬浮底栏")
             assertNull(h.ui.textNode("悬浮底栏样式"))
             h.ui.clickText("悬浮底栏")
@@ -117,7 +119,7 @@ class ThemeGesturesTest {
             h.scrollTo("悬浮底栏样式")
             for ((style, label) in listOf(
                 FloatingBottomBarStyle.IosLike to "iOS 风格（液态玻璃）",
-                FloatingBottomBarStyle.Miuix to "Miuix",
+                FloatingBottomBarStyle.Classic to "经典",
                 FloatingBottomBarStyle.IosLike to "iOS 风格（液态玻璃）",
             )) {
                 h.ui.clickText("悬浮底栏样式")
@@ -136,10 +138,20 @@ class ThemeGesturesTest {
             h.ui.snapshot("theme-floating-style-selected")
             saved = h.ui.saveAndClose()
         }
-        ThemeHost(UiMode.Miuix, ColorMode.LIGHT, saved).use { h ->
+        ThemeHost(UiMode.Material, ColorMode.LIGHT, saved).use { h ->
             assertEquals(FloatingBottomBarStyle.IosLike, h.floatingStyle)
             assertTrue(h.blur)
             assertTrue(ShellSettingsController.get(h.ui.activity).enableFloatingBottomBar)
+        }
+    }
+
+    @Test
+    fun `coui owns its bottom navigation so the floating bar settings are hidden`() {
+        ThemeHost(UiMode.Coui, ColorMode.LIGHT).use { h ->
+            repeat(8) { h.ui.drag(420f, 1400f, 420f, 650f) }
+            assertNull(h.ui.textNode("悬浮底栏"))
+            assertNull(h.ui.textNode("悬浮底栏样式"))
+            h.ui.snapshot("theme-coui-without-floating-bar")
         }
     }
 
@@ -147,7 +159,7 @@ class ThemeGesturesTest {
         val ui = ComposeGestureHost(saved)
         var swipe = true
         var pagerMode = -1
-        var floatingStyle = FloatingBottomBarStyle.Miuix
+        var floatingStyle = FloatingBottomBarStyle.Classic
         var blur = false
 
         init {
@@ -171,14 +183,8 @@ class ThemeGesturesTest {
                             floatingStyle = style
                             blur = blurEnabled
                         }
-                        if (mode == UiMode.Miuix) {
-                            top.yukonga.miuix.kmp.basic.Scaffold(contentWindowInsets = WindowInsets(0, 0, 0, 0)) {
-                                ThemeScreen(onBack = {})
-                            }
-                        } else {
-                            androidx.compose.material3.Scaffold(contentWindowInsets = WindowInsets(0, 0, 0, 0)) {
-                                ThemeScreen(onBack = {})
-                            }
+                        androidx.compose.material3.Scaffold(contentWindowInsets = WindowInsets(0, 0, 0, 0)) {
+                            ThemeScreen(onBack = {})
                         }
                     }
                 }

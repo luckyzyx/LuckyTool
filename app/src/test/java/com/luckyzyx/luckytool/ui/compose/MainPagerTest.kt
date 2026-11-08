@@ -35,7 +35,7 @@ import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
 import androidx.navigationevent.DirectNavigationEventInput
 import com.luckyzyx.luckytool.ui.compose.components.MainPageActivationEffect
-import com.luckyzyx.luckytool.ui.compose.components.material.MaterialPageScaffold
+import com.luckyzyx.luckytool.ui.compose.components.LuckyPageScaffold
 import com.luckyzyx.luckytool.ui.shell.FloatingBottomBarStyle
 import com.luckyzyx.luckytool.ui.shell.LocalEnableBlur
 import com.luckyzyx.luckytool.ui.shell.ShellBadgeState
@@ -51,6 +51,7 @@ import com.luckyzyx.luckytool.ui.theme.LocalUiMode
 import com.luckyzyx.luckytool.ui.theme.LuckyTheme
 import com.luckyzyx.luckytool.ui.theme.UiMode
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertSame
 import org.junit.Assert.assertTrue
@@ -59,21 +60,20 @@ import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 import org.robolectric.annotation.GraphicsMode
-import top.yukonga.miuix.kmp.utils.overScrollVertical
 
 @RunWith(RobolectricTestRunner::class)
-@Config(sdk = [32], application = Application::class, qualifiers = "zh-rCN-w411dp-h880dp-xhdpi")
+@Config(sdk = [35], application = Application::class, qualifiers = "zh-rCN-w411dp-h880dp-xhdpi")
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
 class MainPagerTest {
     @Test
     fun `all bottom bars coordinate rapid navigation without an obsolete target winning`() {
         for ((mode, floating, style) in listOf(
-            Triple(UiMode.Material, false, FloatingBottomBarStyle.Miuix),
-            Triple(UiMode.Material, true, FloatingBottomBarStyle.Miuix),
+            Triple(UiMode.Material, false, FloatingBottomBarStyle.Classic),
+            Triple(UiMode.Material, true, FloatingBottomBarStyle.Classic),
             Triple(UiMode.Material, true, FloatingBottomBarStyle.IosLike),
-            Triple(UiMode.Miuix, false, FloatingBottomBarStyle.Miuix),
-            Triple(UiMode.Miuix, true, FloatingBottomBarStyle.Miuix),
-            Triple(UiMode.Miuix, true, FloatingBottomBarStyle.IosLike),
+            Triple(UiMode.Coui, false, FloatingBottomBarStyle.Classic),
+            Triple(UiMode.Coui, true, FloatingBottomBarStyle.Classic),
+            Triple(UiMode.Coui, true, FloatingBottomBarStyle.IosLike),
         )) {
             PagerHost(mode, floating, floatingStyle = style).use { h ->
                 assertEquals(2, h.state.pagerState.settledPage)
@@ -111,7 +111,7 @@ class MainPagerTest {
     @Test
     @Config(sdk = [35])
     fun `liquid glass bottom bar shares the same pager navigation`() {
-        PagerHost(UiMode.Miuix, floating = true, floatingStyle = FloatingBottomBarStyle.IosLike, blur = true).use { h ->
+        PagerHost(UiMode.Coui, floating = true, floatingStyle = FloatingBottomBarStyle.IosLike, blur = true).use { h ->
             h.ui.clickLabel("其他")
             h.ui.advance()
             h.assertSettled(0)
@@ -167,8 +167,8 @@ class MainPagerTest {
     }
 
     @Test
-    fun `cross-axis can change pages while a Miuix list rebounds at its top edge`() {
-        PagerHost(UiMode.Miuix).use { h ->
+    fun `cross-axis can change pages while a Coui list rebounds at its top edge`() {
+        PagerHost(UiMode.Coui).use { h ->
             h.ui.drag(410f, 450f, 410f, 1300f, holdBeforeUp = false, settle = false)
             h.ui.drag(700f, 800f, 120f, 800f)
             h.assertSettled(3)
@@ -205,9 +205,9 @@ class MainPagerTest {
             h.ui.drag(410f, 1300f, 410f, 450f)
             position = h.lists.getValue(MainTab.Setting).firstVisibleItemIndex
             assertTrue(position > 0)
-            for (appearance in listOf(UiMode.Miuix, UiMode.Material, UiMode.Miuix)) {
+            for (appearance in listOf(UiMode.Coui, UiMode.Material, UiMode.Coui)) {
                 h.mode = appearance
-                h.floating = appearance == UiMode.Miuix
+                h.floating = appearance == UiMode.Material
                 h.ui.advance()
                 h.assertSettled(4)
                 assertEquals(position, h.lists.getValue(MainTab.Setting).firstVisibleItemIndex)
@@ -218,7 +218,7 @@ class MainPagerTest {
             }
             saved = h.ui.saveAndClose()
         }
-        PagerHost(UiMode.Miuix, floating = true, saved = saved, withHeaders = true).use { h ->
+        PagerHost(UiMode.Coui, floating = true, saved = saved, withHeaders = true).use { h ->
             h.assertSettled(4)
             assertEquals(position, h.lists.getValue(MainTab.Setting).firstVisibleItemIndex)
         }
@@ -277,10 +277,10 @@ class MainPagerTest {
     @Test
     fun `floating bars keep five accessible targets at maximum scale on narrow screens`() {
         for ((appearance, style) in listOf(
-            UiMode.Material to FloatingBottomBarStyle.Miuix,
+            UiMode.Material to FloatingBottomBarStyle.Classic,
             UiMode.Material to FloatingBottomBarStyle.IosLike,
-            UiMode.Miuix to FloatingBottomBarStyle.Miuix,
-            UiMode.Miuix to FloatingBottomBarStyle.IosLike,
+            UiMode.Coui to FloatingBottomBarStyle.Classic,
+            UiMode.Coui to FloatingBottomBarStyle.IosLike,
         )) {
             for (direction in LayoutDirection.entries) {
                 for (color in listOf(ColorMode.LIGHT, ColorMode.DARK)) {
@@ -299,8 +299,19 @@ class MainPagerTest {
                         }
                         for (tab in MainTab.entries) {
                             val label = h.ui.activity.getString(tab.labelRes)
-                            assertTrue("Floating labels must be icon descriptions", h.ui.textNode(label) == null)
-                            h.ui.clickLabel(label)
+                            if (appearance == UiMode.Coui) {
+                                // COUI 底栏始终显示页签标题，图标本身不带描述，所以按文字定位后点它的中心。
+                                val title = h.ui.nodes().firstOrNull {
+                                    it.boundsInRoot.top > 1200f &&
+                                        it.config.getOrNull(SemanticsProperties.Text)?.any { text -> text.text == label } == true
+                                }
+                                assertNotNull("COUI navigation labels its tabs", title)
+                                val at = requireNotNull(title).boundsInRoot.center
+                                h.ui.drag(at.x, at.y, at.x, at.y)
+                            } else {
+                                assertTrue("Floating labels must be icon descriptions", h.ui.textNode(label) == null)
+                                h.ui.clickLabel(label)
+                            }
                             h.ui.advance()
                             h.assertSettled(tab.ordinal)
                             assertEquals(1, h.ui.nodes().count {
@@ -317,55 +328,62 @@ class MainPagerTest {
 
     @Test
     fun `floating style and blur changes retain page state and badges`() {
-        PagerHost(UiMode.Miuix, floating = true, withHeaders = true).use { h ->
-            h.ui.clickLabel("设置")
-            h.ui.advance()
-            h.ui.drag(410f, 1300f, 410f, 450f)
-            val position = h.lists.getValue(MainTab.Setting).firstVisibleItemIndex
-            val instances = h.instances.toMap()
-            try {
-                ShellBadgeState.updateAvailable = true
-                for (style in FloatingBottomBarStyle.entries) {
-                    for (blur in listOf(true, false)) {
-                        h.floatingStyle = style
-                        h.blur = blur
-                        h.ui.advance()
-                        h.assertSettled(4)
-                        assertEquals(position, h.lists.getValue(MainTab.Setting).firstVisibleItemIndex)
-                        MainTab.entries.forEach { assertSame(instances[it], h.instances[it]) }
-                        assertTrue("Update badge must survive the style switch", h.ui.textNode("1") != null)
-                    }
-                }
-                val input = DirectNavigationEventInput()
-                h.ui.activity.navigationEventDispatcher.addInput(input)
-                input.backCompleted()
+        for (mode in listOf(UiMode.Material, UiMode.Coui)) {
+            PagerHost(mode, floating = true, withHeaders = true).use { h ->
+                h.ui.clickLabel("设置")
                 h.ui.advance()
-                h.assertSettled(2)
-                h.ui.activity.navigationEventDispatcher.removeInput(input)
-            } finally {
-                ShellBadgeState.updateAvailable = false
+                h.ui.drag(410f, 1300f, 410f, 450f)
+                val position = h.lists.getValue(MainTab.Setting).firstVisibleItemIndex
+                val instances = h.instances.toMap()
+                try {
+                    // COUI 底栏是库自带的导航条，没有角标槽位，只验证外观切换不重建页面。
+                    ShellBadgeState.updateAvailable = true
+                    for (style in FloatingBottomBarStyle.entries) {
+                        for (blur in listOf(true, false)) {
+                            h.floatingStyle = style
+                            h.blur = blur
+                            h.ui.advance()
+                            h.assertSettled(4)
+                            assertEquals(position, h.lists.getValue(MainTab.Setting).firstVisibleItemIndex)
+                            MainTab.entries.forEach { assertSame(instances[it], h.instances[it]) }
+                            if (mode == UiMode.Material) {
+                                assertTrue("Update badge must survive the style switch", h.ui.textNode("1") != null)
+                            }
+                        }
+                    }
+                    val input = DirectNavigationEventInput()
+                    h.ui.activity.navigationEventDispatcher.addInput(input)
+                    input.backCompleted()
+                    h.ui.advance()
+                    h.assertSettled(2)
+                    h.ui.activity.navigationEventDispatcher.removeInput(input)
+                } finally {
+                    ShellBadgeState.updateAvailable = false
+                }
             }
         }
     }
-
     @Test
-    @Config(sdk = [30, 32, 35])
+    @Config(sdk = [31, 32, 35])
     fun `floating pointer taps and iOS drag selection work across effect support levels`() {
         for ((mode, style) in listOf(
-            UiMode.Material to FloatingBottomBarStyle.Miuix,
+            UiMode.Material to FloatingBottomBarStyle.Classic,
             UiMode.Material to FloatingBottomBarStyle.IosLike,
-            UiMode.Miuix to FloatingBottomBarStyle.Miuix,
-            UiMode.Miuix to FloatingBottomBarStyle.IosLike,
+            UiMode.Coui to FloatingBottomBarStyle.Classic,
+            UiMode.Coui to FloatingBottomBarStyle.IosLike,
         )) {
             PagerHost(mode, floating = true, floatingStyle = style, blur = true).use { h ->
+                // COUI 页签只有标题文字，Material 悬浮底栏只有图标描述；页面上方的同名标题也要排除。
                 fun center(label: String) = h.ui.nodes().first {
-                    it.config.getOrNull(SemanticsProperties.ContentDescription)?.contains(label) == true &&
-                        it.boundsInRoot.width > 0
+                    it.boundsInRoot.width > 0 && it.boundsInRoot.top > 1200f &&
+                        (it.config.getOrNull(SemanticsProperties.ContentDescription)?.contains(label) == true ||
+                            it.config.getOrNull(SemanticsProperties.Text)?.any { text -> text.text == label } == true)
                 }.boundsInRoot.center
                 val settings = center("设置")
                 h.ui.drag(settings.x, settings.y, settings.x, settings.y)
                 h.assertSettled(4)
-                if (mode == UiMode.Material || style == FloatingBottomBarStyle.IosLike) {
+                // 跨项拖拽选择是悬浮底栏自己的手势；COUI 底栏的滑动选择在库里实现，这里只验点击。
+                if (mode == UiMode.Material) {
                     val other = center("其他")
                     h.ui.drag(settings.x, settings.y, other.x, other.y)
                     h.assertSettled(0)
@@ -411,7 +429,7 @@ class MainPagerTest {
         floating: Boolean = false,
         saved: Bundle? = null,
         withHeaders: Boolean = false,
-        floatingStyle: FloatingBottomBarStyle = FloatingBottomBarStyle.Miuix,
+        floatingStyle: FloatingBottomBarStyle = FloatingBottomBarStyle.Classic,
         blur: Boolean = false,
         width: Int = 822,
         density: Float = 2f,
@@ -473,10 +491,10 @@ class MainPagerTest {
                                     }
                                 }
                                 // Match ScopeScreen's separate list nodes while retaining their shared state.
-                                if (this.mode == UiMode.Miuix) {
+                                if (this.mode == UiMode.Coui) {
                                     LazyColumn(
                                         state = list,
-                                        modifier = Modifier.fillMaxSize().then(if (withHeaders) Modifier.overScrollVertical() else Modifier),
+                                        modifier = Modifier.fillMaxSize(),
                                         contentPadding = padding,
                                         overscrollEffect = if (withHeaders) null else rememberOverscrollEffect(),
                                         content = listItems,
@@ -489,7 +507,7 @@ class MainPagerTest {
                                     )
                                 }
                             }
-                            if (withHeaders) MaterialPageScaffold(title = tab.name, content = rows)
+                            if (withHeaders) LuckyPageScaffold(title = tab.name, content = rows)
                             else rows(PaddingValues())
                         }
                         androidx.activity.compose.BackHandler(enabled = !active) { blockedBacks++ }

@@ -6,7 +6,7 @@
     <string name="nav_function">Funkce</string>
     <string name="nav_home">Domovská stránka</string>
     <string name="nav_other">Ostatní</string>
-    <string name="nav_log">Protokoly</string>
+    <string name="nav_search">Hledat</string>
     <string name="nav_setting">Nastavení</string>
     <string name="fragment_source">Zdrojový kód</string>
     <!-- Settings -->

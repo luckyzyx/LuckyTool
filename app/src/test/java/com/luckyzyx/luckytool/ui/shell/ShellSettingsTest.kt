@@ -25,8 +25,8 @@ class ShellSettingsTest {
     }
 
     @Test
-    fun `new installs use Miuix and legacy glass selects iOS without changing global blur`() {
-        assertEquals(FloatingBottomBarStyle.Miuix, ShellSettingsController.get(context).floatingBottomBarStyle)
+    fun `new installs use the classic bar and legacy glass selects iOS without changing global blur`() {
+        assertEquals(FloatingBottomBarStyle.Classic, ShellSettingsController.get(context).floatingBottomBarStyle)
         prefs.edit().putBoolean(ShellSettingsController.KEY_FLOATING_BOTTOM_BAR_BLUR, true).commit()
         assertEquals(FloatingBottomBarStyle.IosLike, ShellSettingsController.get(context).floatingBottomBarStyle)
         assertFalse(ShellSettingsController.get(context).enableBlur)
@@ -36,19 +36,19 @@ class ShellSettingsTest {
     }
 
     @Test
-    fun `explicit style takes precedence over the old liquid glass switch`() {
+    fun `explicit style takes precedence over the old liquid glass switch and legacy miuix value maps to classic`() {
         prefs.edit().putBoolean(ShellSettingsController.KEY_FLOATING_BOTTOM_BAR_BLUR, true)
             .putString(ShellSettingsController.KEY_FLOATING_BOTTOM_BAR_STYLE, "miuix").commit()
-        assertEquals(FloatingBottomBarStyle.Miuix, ShellSettingsController.get(context).floatingBottomBarStyle)
+        assertEquals(FloatingBottomBarStyle.Classic, ShellSettingsController.get(context).floatingBottomBarStyle)
         prefs.edit().putBoolean(ShellSettingsController.KEY_FLOATING_BOTTOM_BAR_BLUR, false)
             .putString(ShellSettingsController.KEY_FLOATING_BOTTOM_BAR_STYLE, "ios_like").commit()
         assertEquals(FloatingBottomBarStyle.IosLike, ShellSettingsController.get(context).floatingBottomBarStyle)
     }
 
     @Test
-    fun `unknown stored style falls back to Miuix`() {
+    fun `unknown stored style falls back to the classic bar`() {
         prefs.edit().putString(ShellSettingsController.KEY_FLOATING_BOTTOM_BAR_STYLE, "unknown")
             .putBoolean(ShellSettingsController.KEY_FLOATING_BOTTOM_BAR_BLUR, true).commit()
-        assertEquals(FloatingBottomBarStyle.Miuix, ShellSettingsController.get(context).floatingBottomBarStyle)
+        assertEquals(FloatingBottomBarStyle.Classic, ShellSettingsController.get(context).floatingBottomBarStyle)
     }
 }

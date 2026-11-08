@@ -8,7 +8,7 @@
     <string name="nav_function">Chức năng</string>
     <string name="nav_home">Trang chủ</string>
     <string name="nav_other">Khác</string>
-    <string name="nav_log">Nhật ký</string>
+    <string name="nav_search">Tìm kiếm</string>
     <string name="nav_setting">Cài đặt</string>
     <string name="fragment_source">Mã nguồn</string>
     <!-- Settings -->

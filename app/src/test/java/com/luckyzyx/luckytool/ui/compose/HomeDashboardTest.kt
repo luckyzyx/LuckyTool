@@ -40,7 +40,7 @@ import org.robolectric.annotation.Config
 import org.robolectric.annotation.GraphicsMode
 
 @RunWith(RobolectricTestRunner::class)
-@Config(sdk = [32], application = Application::class, qualifiers = "zh-rCN-w411dp-h880dp-xhdpi")
+@Config(sdk = [35], application = Application::class, qualifiers = "zh-rCN-w411dp-h880dp-xhdpi")
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
 class HomeDashboardTest {
     @Test
@@ -69,7 +69,7 @@ class HomeDashboardTest {
     @Test
     fun `home actions remain available and expansion survives theme changes and recreation`() {
         val saved: Bundle
-        HomeHost(UiMode.Miuix, ColorMode.LIGHT, update = true).use { h ->
+        HomeHost(UiMode.Coui, ColorMode.LIGHT, update = true).use { h ->
             h.ui.clickLabel(h.ui.activity.getString(R.string.menu_reboot))
             h.ui.clickLabel(h.ui.activity.getString(R.string.about_title))
             assertEquals(1, h.restart)
@@ -134,9 +134,9 @@ class HomeDashboardTest {
     }
 
     @Test
-    fun `Miuix active status stays readable with large text and dynamic colors`() {
+    fun `Coui active status stays readable with large text and dynamic colors`() {
         for (color in listOf(ColorMode.LIGHT, ColorMode.DARK, ColorMode.MONET_LIGHT, ColorMode.MONET_DARK)) {
-            HomeHost(UiMode.Miuix, color, width = 720, fontScale = 1.4f, rtl = true).use { h ->
+            HomeHost(UiMode.Coui, color, width = 720, fontScale = 1.4f, rtl = true).use { h ->
                 val version = "${h.ui.activity.getString(R.string.version)}: 1.3.5_beta (22848)"
                 val framework = "${h.ui.activity.getString(R.string.framework_version)} LSPosed v2.2.1 (7912)"
                 assertFalse(h.layout(version).hasVisualOverflow)
@@ -175,7 +175,7 @@ class HomeDashboardTest {
                     LocalDensity provides Density(2f, fontScale),
                     LocalLayoutDirection provides if (rtl) LayoutDirection.Rtl else LayoutDirection.Ltr,
                     LocalUiMode provides this.mode,
-                    LocalEnableFloatingBottomBar provides (this.mode == UiMode.Miuix),
+                    LocalEnableFloatingBottomBar provides (this.mode == UiMode.Material),
                     LocalFloatingBottomBarStyle provides FloatingBottomBarStyle.IosLike,
                 ) {
                     LuckyTheme(AppSettings(colorMode = color, dynamicColor = false), uiMode = this.mode) {

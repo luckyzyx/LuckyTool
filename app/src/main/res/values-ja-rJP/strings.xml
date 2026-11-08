@@ -6,7 +6,7 @@
     <string name="nav_function">機能</string>
     <string name="nav_home">ホーム</string>
     <string name="nav_other">その他</string>
-    <string name="nav_log">ログ</string>
+    <string name="nav_search">検索</string>
     <string name="nav_setting">設定</string>
     <string name="fragment_source">ソースコード</string>
     <!-- Settings -->

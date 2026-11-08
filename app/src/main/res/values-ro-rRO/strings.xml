@@ -6,7 +6,7 @@
     <string name="nav_function">Funcție</string>
     <string name="nav_home">Pagina principală</string>
     <string name="nav_other">Alte</string>
-    <string name="nav_log">Log-uri</string>
+    <string name="nav_search">Căutare</string>
     <string name="nav_setting">Setări</string>
     <string name="fragment_source">Cod sursă</string>
     <!-- Settings -->

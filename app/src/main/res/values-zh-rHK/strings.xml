@@ -8,7 +8,7 @@
     <string name="nav_function">功能</string>
     <string name="nav_home">主頁</string>
     <string name="nav_other">其他</string>
-    <string name="nav_log">日誌</string>
+    <string name="nav_search">搜尋</string>
     <string name="nav_setting">設定</string>
     <string name="fragment_source">原始碼</string>
     <!-- Settings -->
@@ -37,13 +37,9 @@
     <string name="settings_pager_gesture_native">預設</string>
     <string name="settings_pager_gesture_cross_axis">跨軸攔截</string>
     <string name="settings_pager_gesture_ios_like">iOS 風格</string>
-    <string name="settings_page_scale">介面縮放</string>
-    <string name="settings_page_scale_summary">調整介面顯示比例</string>
-    <string name="settings_module_description_max_lines">模組描述最大行數</string>
-    <string name="settings_module_description_max_lines_summary">超過此行數的介紹將自動折疊</string>
-    <string name="unit_lines">行</string>
     <string name="settings_ui_mode">介面風格</string>
     <string name="settings_ui_mode_summary">選擇應用的介面風格</string>
+    <string name="settings_ui_mode_coui_unavailable">需要 Android 14（API 34）或以上系統。</string>
     <string name="settings_theme">主題設定</string>
     <string name="settings_theme_mode_system">跟隨系統</string>
     <string name="settings_theme_mode_light">淺色</string>
@@ -1590,7 +1586,7 @@
     <string name="launcher_backup_tag_manual">手動</string>
     <string name="launcher_backup_tag_pre_restore">恢復前</string>
     <string name="settings_floating_bottom_bar_style">懸浮底欄樣式</string>
-    <string name="settings_floating_style_miuix">Miuix</string>
+    <string name="settings_floating_style_classic">經典</string>
     <string name="settings_floating_style_ios">iOS 風格（液態玻璃）</string>
     <string name="home_device_details_show">更多裝置資訊</string>
     <string name="home_device_details_hide">收起詳細資訊</string>

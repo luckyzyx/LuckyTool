@@ -8,7 +8,7 @@
     <string name="nav_function">İşlevler</string>
     <string name="nav_home">Ana Sayfa</string>
     <string name="nav_other">Diğer</string>
-    <string name="nav_log">Günlükler (Log)</string>
+    <string name="nav_search">Ara</string>
     <string name="nav_setting">Ayarlar</string>
     <string name="fragment_source">Kaynak Kod</string>
     <!-- Settings -->

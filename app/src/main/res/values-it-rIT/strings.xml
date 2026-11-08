@@ -6,7 +6,7 @@
     <string name="nav_function">Funzione</string>
     <string name="nav_home">Home</string>
     <string name="nav_other">Altro</string>
-    <string name="nav_log">Registri</string>
+    <string name="nav_search">Cerca</string>
     <string name="nav_setting">Impostazioni</string>
     <string name="fragment_source">Codice Sorgente</string>
     <!-- Settings -->
