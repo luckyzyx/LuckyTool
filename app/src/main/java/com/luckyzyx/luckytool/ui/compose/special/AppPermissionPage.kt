@@ -159,7 +159,7 @@ fun AppPermissionContent(
         )
     ) {
         // ===== Root / LSPosed：纯只读，整块放最上面（不参与门禁判定，无任何跳转）=====
-        SectionTitle(stringResource(R.string.app_permission_root_section))
+        SectionHeader(title = stringResource(R.string.app_permission_root_section))
         // Root / Xposed 状态合并成单行 "title: value"，不再用 title + summary 两行展示
         val rootStatus = stringResource(
             if (rootInfo?.rooted == true) R.string.app_permission_root_yes else R.string.app_permission_root_no
@@ -185,19 +185,17 @@ fun AppPermissionContent(
         }
 
         Spacer(Modifier.height(12.dp))
-        SectionTitle(
-            stringResource(
+        SectionHeader(
+            title = stringResource(
                 if (blocking) R.string.app_permission_blocked_title else R.string.app_permission
-            )
-        )
-        SectionBody(
-            stringResource(
+            ),
+            summary = stringResource(
                 if (blocking) {
                     R.string.app_permission_blocked_summary
                 } else {
                     R.string.app_permission_summary
                 }
-            )
+            ),
         )
         PrefGroup {
             AppPermission.entries.forEach { kind ->
@@ -270,53 +268,57 @@ fun AppPermissionContent(
     }
 }
 
-/** 小节标题：Material 线用 titleSmall + primary，COUI 线用分组标题字号 + accent */
+/**
+ * 小节标题 + 可选说明：标题与说明作为一个块渲染。
+ * 无说明时标题上下各 8dp 垂直居中；有说明时标题下沿收紧到 4dp 让说明贴紧标题，
+ * 说明底部再补 8dp，保证有无说明两种情况的块级上下留白都是 8dp。
+ */
 @Composable
-private fun SectionTitle(text: String) {
+private fun SectionHeader(title: String, summary: String? = null) {
     when (LocalUiMode.current) {
-        UiMode.Material -> Text(
-            text = text,
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(top = 12.dp, bottom = 4.dp),
-            style = MaterialTheme.typography.titleSmall,
-            color = MaterialTheme.colorScheme.primary,
-        )
+        UiMode.Material -> Column(modifier = Modifier.fillMaxWidth()) {
+            Text(
+                text = title,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 8.dp, bottom = if (summary == null) 8.dp else 4.dp),
+                style = MaterialTheme.typography.titleSmall,
+                color = MaterialTheme.colorScheme.primary,
+            )
+            if (summary != null) {
+                Text(
+                    text = summary,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 8.dp),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+        }
 
-        UiMode.Coui -> CouiText(
-            text = text,
-            kind = CouiTextKind.GroupTitle,
-            color = CouiTheme.colorScheme.accent,
-            modifier = Modifier
-                .fillMaxWidth()
-                // COUI 分类标题统一 32dp 水平内缩，与卡片内行文字（16+16）对齐
-                .padding(start = 32.dp, end = 32.dp, top = 12.dp, bottom = 4.dp),
-        )
-    }
-}
-
-/** 小节说明文字：两线都用弱化色正文，字号取各自的正文档位 */
-@Composable
-private fun SectionBody(text: String) {
-    when (LocalUiMode.current) {
-        UiMode.Material -> Text(
-            text = text,
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(bottom = 4.dp),
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-
-        UiMode.Coui -> CouiText(
-            text = text,
-            kind = CouiTextKind.Body,
-            color = CouiTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier
-                .fillMaxWidth()
-                // 与 COUI 小节标题保持同一水平起点
-                .padding(start = 32.dp, end = 32.dp, bottom = 4.dp),
-        )
+        UiMode.Coui -> Column(modifier = Modifier.fillMaxWidth()) {
+            CouiText(
+                text = title,
+                kind = CouiTextKind.GroupTitle,
+                color = CouiTheme.colorScheme.accent,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    // COUI 分类标题统一 32dp 水平内缩，与卡片内行文字（16+16）对齐
+                    .padding(start = 32.dp, end = 32.dp, top = 8.dp, bottom = if (summary == null) 8.dp else 4.dp),
+            )
+            if (summary != null) {
+                CouiText(
+                    text = summary,
+                    kind = CouiTextKind.Body,
+                    color = CouiTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        // 与标题同一水平起点，底部 8dp 与无说明的标题块底部一致
+                        .padding(start = 32.dp, end = 32.dp, bottom = 8.dp),
+                )
+            }
+        }
     }
 }
 
