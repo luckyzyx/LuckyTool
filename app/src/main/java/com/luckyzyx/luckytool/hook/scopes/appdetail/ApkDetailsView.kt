@@ -234,6 +234,7 @@ internal class ApkDetailsView(context: Context, private val moduleResources: Res
     }
 
     // meta-data 的值可能是数字也可能是字符串，统一转成文本后再判断有没有实际内容
+    @Suppress("DEPRECATION")
     private fun Bundle.metadataValue(key: String) =
         get(key)?.toString()?.trim()?.takeIf { it.isNotEmpty() }
 
