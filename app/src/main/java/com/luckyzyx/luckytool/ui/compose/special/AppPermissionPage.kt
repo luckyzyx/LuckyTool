@@ -160,18 +160,16 @@ fun AppPermissionContent(
     ) {
         // ===== Root / LSPosed：纯只读，整块放最上面（不参与门禁判定，无任何跳转）=====
         SectionTitle(stringResource(R.string.app_permission_root_section))
+        // Root / Xposed 状态合并成单行 "title: value"，不再用 title + summary 两行展示
+        val rootStatus = stringResource(
+            if (rootInfo?.rooted == true) R.string.app_permission_root_yes else R.string.app_permission_root_no
+        )
+        val moduleStatus = stringResource(
+            if (moduleActive) R.string.app_permission_module_active else R.string.app_permission_module_inactive
+        )
         PrefGroup {
             item {
-                PrefRow(
-                    title = stringResource(R.string.app_permission_root_status),
-                    summary = stringResource(
-                        if (rootInfo?.rooted == true) {
-                            R.string.app_permission_root_yes
-                        } else {
-                            R.string.app_permission_root_no
-                        }
-                    ),
-                )
+                PrefRow(title = "${stringResource(R.string.app_permission_root_status)}: $rootStatus")
             }
             val info = rootInfo
             // 顺序固定：Root 来源 → Xposed 状态 → 框架版本
@@ -179,16 +177,7 @@ fun AppPermissionContent(
                 item { PrefRow(title = info.rootVersion) }
             }
             item {
-                PrefRow(
-                    title = stringResource(R.string.app_permission_module_status),
-                    summary = stringResource(
-                        if (moduleActive) {
-                            R.string.app_permission_module_active
-                        } else {
-                            R.string.app_permission_module_inactive
-                        }
-                    ),
-                )
+                PrefRow(title = "${stringResource(R.string.app_permission_module_status)}: $moduleStatus")
             }
             if (info != null && info.frameworkVersion.isNotBlank()) {
                 item { PrefRow(title = info.frameworkVersion) }
