@@ -72,6 +72,23 @@ class AppNavigationTest {
     }
 
     @Test
+    fun `navigating to a different scope page pushes instead of replacing the top`() {
+        val host = createHost()
+        val category = ScopeRoute("statusbar", "状态栏相关")
+        val page = ScopeRoute("statusbar_icon", "状态栏图标")
+        host.nav.navigatePage(category)
+        host.nav.navigatePage(page)
+        drainFrames()
+        // 所有 ScopeRoute 共用一个目的地，singleTop 若只按目的地类判断会把分类页原地替换
+        assertEquals(listOf(MainRoute, category, page), host.nav.routes())
+
+        host.nav.popBackStack()
+        drainFrames()
+        // 返回应先回到分类页，而不是直接跳回主界面
+        assertEquals(listOf(MainRoute, category), host.nav.routes())
+    }
+
+    @Test
     fun `activity recreation returns to the same page with its arguments`() {
         val host = createHost()
         val target = ScopeRoute("statusbar", "状态栏", "clock_style", 12)

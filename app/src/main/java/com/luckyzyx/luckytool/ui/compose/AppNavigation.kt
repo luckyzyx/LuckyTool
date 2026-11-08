@@ -20,6 +20,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.LayoutDirection
+import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -64,7 +65,17 @@ data class ScopeRoute(
  * 同一个页面已经停在栈顶时只保留一份：连点图标或列表行不会叠出多层相同的返回。
  */
 internal fun NavHostController.navigatePage(route: AppRoute) {
-    navigate(route) { launchSingleTop = true }
+    val topEntry = currentBackStackEntry
+    val topDestination = topEntry?.destination
+    // singleTop 只对「同一个页面」生效：目的地类相同还不够（所有 ScopeRoute 共用一个目的地），
+    // 不同参数的功能页必须正常入栈，否则 A→B 会把 A 原地替换，返回时直接跳回主界面
+    val topIsSamePage = when (route) {
+        is MainRoute -> topDestination?.hasRoute<MainRoute>() == true
+        is ThemeRoute -> topDestination?.hasRoute<ThemeRoute>() == true
+        is ScopeRoute -> topDestination?.hasRoute<ScopeRoute>() == true &&
+            topEntry?.toRoute<ScopeRoute>() == route
+    }
+    navigate(route) { launchSingleTop = topIsSamePage }
 }
 
 /** 一次转场的时长：入栈与出栈共用，保持前进/后退手感一致。 */
