@@ -17,7 +17,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.requiredWidth
-import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
@@ -66,10 +65,10 @@ import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.luckyzyx.luckytool.ui.compose.MainTab
-import com.luckyzyx.luckytool.ui.compose.components.miuix.animation.MiuixDampedDragAnimation
+import com.luckyzyx.luckytool.ui.compose.components.ChromeInsets
+import com.luckyzyx.luckytool.ui.compose.components.animation.DampedDragAnimation
 import com.luckyzyx.luckytool.ui.theme.isInDarkTheme
 import com.luckyzyx.luckytool.ui.shell.FloatingBottomBarStyle
-import top.yukonga.miuix.kmp.basic.FloatingNavigationBarDefaults
 import kotlinx.coroutines.launch
 import kotlin.math.abs
 import kotlin.math.roundToInt
@@ -78,6 +77,10 @@ import top.yukonga.miuix.kmp.blur.LayerBackdrop
 import top.yukonga.miuix.kmp.blur.blur
 import top.yukonga.miuix.kmp.blur.drawBackdrop
 
+/** 悬浮胶囊的水平内外边距与 item 间距：只影响胶囊宽度，按底栏 item 高度比例取值。 */
+private val FloatingBarHorizontalPadding = 12.dp
+private val FloatingBarItemSpacing = 8.dp
+
 @Composable
 internal fun MaterialFloatingBottomBar(
     selectedIndex: Int,
@@ -85,13 +88,13 @@ internal fun MaterialFloatingBottomBar(
     showUpdateBadge: Boolean,
     modifier: Modifier = Modifier,
     backdrop: LayerBackdrop? = null,
-    floatingStyle: FloatingBottomBarStyle = FloatingBottomBarStyle.Miuix,
+    floatingStyle: FloatingBottomBarStyle = FloatingBottomBarStyle.Classic,
 ) {
     val iosLayout = floatingStyle == FloatingBottomBarStyle.IosLike
     val containerHeight = if (iosLayout) 56.dp else 52.dp
     val itemHeight = 48.dp
     val iconSize = if (iosLayout) 24.dp else 22.dp
-    val horizontalPadding = if (iosLayout) 4.dp else FloatingNavigationBarDefaults.HorizontalPadding / 2
+    val horizontalPadding = if (iosLayout) 4.dp else FloatingBarHorizontalPadding
     val navBarPadding = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
     val bottomGap = if (iosLayout) {
         if (navBarPadding > 0.dp) 8.dp else 28.dp
@@ -121,7 +124,7 @@ internal fun MaterialFloatingBottomBar(
     }
 
     val motion = remember(scope, density, isLtr, floatingStyle) {
-        MiuixDampedDragAnimation(
+        DampedDragAnimation(
             animationScope = scope,
             initialValue = currentIndex.toFloat(),
             valueRange = 0f..MainTab.entries.lastIndex.toFloat(),
@@ -176,11 +179,11 @@ internal fun MaterialFloatingBottomBar(
     BoxWithConstraints(
         modifier
             .fillMaxWidth()
-            .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Bottom + WindowInsetsSides.Horizontal))
+            .windowInsetsPadding(ChromeInsets.only(WindowInsetsSides.Bottom + WindowInsetsSides.Horizontal))
             .padding(bottom = bottomGap),
         contentAlignment = Alignment.Center,
     ) {
-        // 与当前 Miuix 悬浮样式共用宽度规则，外观切换时保持相同的布局。
+        // 悬浮底栏宽度规则在两条外观线间保持一致，切换外观时布局不变。
         val width = if (iosLayout) {
             val sidePadding = 60.dp.coerceAtMost(
                 ((maxWidth - itemHeight * MainTab.entries.size - 8.dp) / 2).coerceAtLeast(0.dp),
@@ -188,8 +191,8 @@ internal fun MaterialFloatingBottomBar(
             maxWidth - sidePadding * 2
         } else {
             (itemHeight * MainTab.entries.size +
-                FloatingNavigationBarDefaults.ItemSpacing * (MainTab.entries.size - 1) +
-                FloatingNavigationBarDefaults.HorizontalPadding * 2).coerceAtMost(maxWidth)
+                FloatingBarItemSpacing * (MainTab.entries.size - 1) +
+                FloatingBarHorizontalPadding * 2).coerceAtMost(maxWidth)
         }
         Box(
             Modifier.width(width),

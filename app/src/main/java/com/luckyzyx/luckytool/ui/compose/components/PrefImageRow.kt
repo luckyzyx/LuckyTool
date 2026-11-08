@@ -77,6 +77,9 @@ fun PrefImagePreview(
  *
  * 与颜色预览色块（[PrefColorPreview]）同一定位：`custom()` 逃生舱里的行渲染原语，只管「标题 + 预览 + 点击」；
  * 选图 / 裁剪这些依赖 Activity Result launcher 的逻辑留在页面侧，本文件不引入 activity 依赖。
+ *
+ * 行的标题、说明、行尾槽位与点击手势全部由 [PrefRowInset] / [PrefRow] 承载，两者内部已按
+ * LocalUiMode 分派（Material 走 M3 列表行、COUI 走 CouiItem），所以本行不需要再判线。
  */
 @Composable
 fun PrefImageRow(
@@ -181,6 +184,8 @@ fun PrefVideoPreview(
                 .background(Color.Black.copy(alpha = 0.32f)),
             contentAlignment = Alignment.Center,
         ) {
+            // 叠在遮罩上的播放标记：前景恒为白色、尺寸跟缩略图走，跟外观线无关，
+            // 因此直接用 material3 的 Icon（跨线共用的唯一 M3 组件），不从这里取主题色。
             Icon(
                 imageVector = Icons.Filled.PlayArrow,
                 contentDescription = null,
@@ -194,7 +199,8 @@ fun PrefVideoPreview(
 /**
  * 视频路径条目：整行可点，行尾是 [PrefVideoPreview] 首帧缩略图，摘要默认显示路径（空路径显示 `Null`）。
  *
- * 选文件依赖 Activity Result launcher，和 [PrefImageRow] 一样留在页面侧。
+ * 选文件依赖 Activity Result launcher，和 [PrefImageRow] 一样留在页面侧；
+ * 行结构同样交给 [PrefRowInset] / [PrefRow]，外观线分派在那两个接缝里完成。
  */
 @Composable
 fun PrefVideoRow(

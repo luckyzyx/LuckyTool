@@ -62,31 +62,30 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.core.graphics.createBitmap
+import com.itos.coui.checkbox.Checkbox as CouiCheckbox
+import com.itos.coui.dialog.CouiDialogAction
+import com.itos.coui.dialog.CouiDialogActionStyle
+import com.itos.coui.dialog.CouiDialogDefaults
+import com.itos.coui.layout.Divider as CouiDivider
+import com.itos.coui.text.CouiTextKind
+import com.itos.coui.text.Text as CouiText
+import com.itos.coui.theme.CouiTheme
 import com.luckyzyx.luckytool.R
 import com.luckyzyx.luckytool.data.AppInfo
-import com.luckyzyx.luckytool.ui.compose.components.material.MaterialItem
+import com.luckyzyx.luckytool.ui.compose.components.AppItem
+import com.luckyzyx.luckytool.ui.compose.components.coui.CouiAlertDialog
+import com.luckyzyx.luckytool.ui.compose.components.coui.CouiCircularProgressIndicator
+import com.luckyzyx.luckytool.ui.compose.components.coui.CouiFilterChip
+import com.luckyzyx.luckytool.ui.compose.components.coui.CouiIconButton
+import com.luckyzyx.luckytool.ui.compose.components.coui.CouiTextButton
+import com.luckyzyx.luckytool.ui.compose.components.coui.CouiTextField
 import com.luckyzyx.luckytool.ui.compose.components.material.MaterialItemContainer
-import com.luckyzyx.luckytool.ui.compose.components.miuix.MiuixDialogScrollBody
-import com.luckyzyx.luckytool.ui.compose.components.miuix.MiuixPrefItem
 import com.luckyzyx.luckytool.ui.theme.LocalUiMode
 import com.luckyzyx.luckytool.ui.theme.UiMode
 import com.luckyzyx.luckytool.utils.PackageUtils
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import top.yukonga.miuix.kmp.basic.BasicComponent
-import top.yukonga.miuix.kmp.basic.Button
-import top.yukonga.miuix.kmp.basic.ButtonDefaults
-import top.yukonga.miuix.kmp.overlay.OverlayDialog
-import top.yukonga.miuix.kmp.preference.CheckboxLocation
-import top.yukonga.miuix.kmp.preference.CheckboxPreference
-import top.yukonga.miuix.kmp.theme.MiuixTheme
 import kotlin.math.roundToInt
-import top.yukonga.miuix.kmp.basic.HorizontalDivider as MiuixHorizontalDivider
-import top.yukonga.miuix.kmp.basic.Icon as MiuixIcon
-import top.yukonga.miuix.kmp.basic.IconButton as MiuixIconButton
-import top.yukonga.miuix.kmp.basic.Text as MiuixText
-import top.yukonga.miuix.kmp.basic.TextButton as MiuixTextButton
-import top.yukonga.miuix.kmp.basic.TextField as MiuixTextField
 
 /** AppInfo 排序模式：名称 / 包名 / 大小 / 安装时间 / 最近更新 / 目标 SDK 六个排序维度 */
 enum class AppSortMode(@StringRes val labelRes: Int) {
@@ -101,7 +100,7 @@ enum class AppSortMode(@StringRes val labelRes: Int) {
 /** 对话框内应用列表的高度上限：两条线的弹层都不给内容加高度上限，由内容自己收敛 */
 private val PickerListMaxHeight: Dp = 420.dp
 
-/** 行内图标尺寸：Miuix 线 44dp，Material 线的紧凑行用 34dp */
+/** 行内图标尺寸：分段卡片行的紧凑图标用 34dp，44dp 供无图标时的校高占位 */
 private val AppIconSize: Dp = 44.dp
 private val MaterialAppIconSize: Dp = 34.dp
 
@@ -162,9 +161,8 @@ private class AppPickerUiState(
  *
  * 版式（重新设计）：顶部常驻搜索框（尾部漏斗入口展开内联「排序与筛选」面板）→
  * 「共 N 个应用 · 已选 M」状态行（多选模式带全选/取消全选）→ 分段卡片列表 →
- * 底部动作栏。两条线共用 [AppPickerUiState] 与过滤/排序，只在渲染体里分派到
- * Miuix / Material 原语；对外签名与调用点零改动。Miuix 弹层统一由根部 Miuix
- * Scaffold 的默认 popup host 承载，本组件不自装 host、不传 `renderInRootScaffold = false`。
+ * 底部动作栏。两条线与 [AppPickerUiState] 共用过滤/排序，只在渲染体里分派到
+ * Material / Coui 原语；对外签名与调用点零改动。
  */
 @Composable
 fun AppPickerDialog(
@@ -214,7 +212,7 @@ fun AppPickerDialog(
     val onSelectAll: () -> Unit = { state.toggleAll(filtered.map { it.packageName }) }
 
     when (LocalUiMode.current) {
-        UiMode.Miuix -> MiuixAppPickerDialog(
+        UiMode.Material -> MaterialAppPickerDialog(
             title = title,
             multiMode = multiMode,
             state = state,
@@ -227,7 +225,7 @@ fun AppPickerDialog(
             onConfirmSelected = onConfirmSelected,
         )
 
-        UiMode.Material -> MaterialAppPickerDialog(
+        UiMode.Coui -> CouiAppPickerDialog(
             title = title,
             multiMode = multiMode,
             state = state,
@@ -295,7 +293,7 @@ private fun MaterialAppPickerDialog(
                         verticalArrangement = Arrangement.spacedBy(2.dp),
                     ) {
                         itemsIndexed(filtered, key = { _, app -> app.packageName }) { index, app ->
-                            MaterialItem(index = index, count = filtered.size) {
+                            AppItem(index = index, count = filtered.size) {
                                 MaterialAppRow(
                                     app = app,
                                     multiMode = multiMode,
@@ -327,107 +325,6 @@ private fun MaterialAppPickerDialog(
             }
         },
     )
-}
-
-/**
- * Miuix 线：OverlayDialog（根部 popup host 承载）+ Miuix 行件。
- *
- * 内容列整体上限 520.dp：OverlayDialog 在小屏为底部贴合展示且不给内容加高度上限，
- * 由内容自己收敛高度；按钮行交给 [MiuixDialogScrollBody] 的 actions 槽，避免被
- * 可收缩的列表体挤到 0 高。
- */
-@Composable
-private fun MiuixAppPickerDialog(
-    title: String,
-    multiMode: Boolean,
-    state: AppPickerUiState,
-    filtered: List<AppInfo>,
-    loading: Boolean,
-    allVisibleSelected: Boolean,
-    onDismiss: () -> Unit,
-    onSelect: (AppInfo) -> Unit,
-    onSelectAll: () -> Unit,
-    onConfirmSelected: () -> Unit,
-) {
-    OverlayDialog(
-        show = true,
-        title = title,
-        onDismissRequest = onDismiss,
-    ) {
-        MiuixDialogScrollBody(
-            modifier = Modifier.heightIn(max = 520.dp),
-            // 列表本身可滚动（LazyColumn 不接受无界高度），正文只做有界收缩
-            scrollable = false,
-            actions = {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                ) {
-                    MiuixTextButton(
-                        text = stringResource(android.R.string.cancel),
-                        onClick = onDismiss,
-                        enabled = !loading,
-                        modifier = Modifier.weight(1f),
-                    )
-                    if (multiMode) {
-                        Spacer(Modifier.width(20.dp))
-                        MiuixTextButton(
-                            text = stringResource(android.R.string.ok),
-                            onClick = onConfirmSelected,
-                            enabled = !loading,
-                            modifier = Modifier.weight(1f),
-                            colors = ButtonDefaults.textButtonColorsPrimary(),
-                        )
-                    }
-                }
-            },
-        ) {
-            MiuixPickerSearchField(state = state, loading = loading)
-            AnimatedVisibility(visible = state.sortFilterOpen) {
-                MiuixPickerSortFilterPanel(state = state, loading = loading)
-            }
-            MiuixPickerStatusRow(
-                state = state,
-                multiMode = multiMode,
-                visibleCount = filtered.size,
-                loading = loading,
-                allVisibleSelected = allVisibleSelected,
-                onSelectAll = onSelectAll,
-            )
-            MiuixHorizontalDivider(Modifier.padding(top = 6.dp, bottom = 6.dp))
-            when {
-                loading -> PickerPlaceholder(minHeight = 240.dp) {
-                    CircularProgressIndicator(modifier = Modifier.size(28.dp), strokeWidth = 3.dp)
-                }
-
-                filtered.isEmpty() -> PickerPlaceholder {
-                    MiuixText(
-                        text = stringResource(R.string.appinfo_no_match),
-                        style = MiuixTheme.textStyles.body2,
-                        color = MiuixTheme.colorScheme.onBackgroundVariant,
-                    )
-                }
-
-                else -> LazyColumn(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .weight(1f, fill = false),
-                    verticalArrangement = Arrangement.spacedBy(2.dp),
-                ) {
-                    itemsIndexed(filtered, key = { _, app -> app.packageName }) { index, app ->
-                        MiuixPrefItem(index = index, count = filtered.size) {
-                            MiuixAppRow(
-                                app = app,
-                                multiMode = multiMode,
-                                checked = app.packageName in state.selected,
-                                onSelect = { onSelect(app) },
-                            )
-                        }
-                    }
-                }
-            }
-        }
-    }
 }
 
 /** 两条线共用的空态/加载态占位（有界高度，避免弹层塌成一条） */
@@ -485,49 +382,6 @@ private fun MaterialPickerSearchField(state: AppPickerUiState, loading: Boolean)
     )
 }
 
-/** Miuix 线搜索头：与 Material 线同版式，图标与行件换成 Miuix 原语 */
-@Composable
-private fun MiuixPickerSearchField(state: AppPickerUiState, loading: Boolean) {
-    MiuixTextField(
-        value = state.query,
-        onValueChange = { state.query = it },
-        modifier = Modifier.fillMaxWidth(),
-        label = stringResource(R.string.appinfo_search_hint),
-        useLabelAsPlaceholder = true,
-        singleLine = true,
-        enabled = !loading,
-        leadingIcon = {
-            // miuix TextField 把 leading/trailing 图标直接贴边（无内边距），手动补内边距
-            MiuixIcon(
-                painterResource(R.drawable.ic_baseline_search_24),
-                contentDescription = null,
-                modifier = Modifier.padding(start = 16.dp, end = 8.dp),
-            )
-        },
-        trailingIcon = {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                if (state.query.isNotEmpty()) {
-                    MiuixIconButton(onClick = { state.query = "" }) {
-                        MiuixIcon(
-                            painterResource(R.drawable.ic_baseline_close_24),
-                            contentDescription = stringResource(R.string.appinfo_clear_search),
-                        )
-                    }
-                }
-                MiuixIconButton(
-                    onClick = { state.sortFilterOpen = !state.sortFilterOpen },
-                    modifier = Modifier.padding(end = 8.dp),
-                ) {
-                    MiuixIcon(
-                        painterResource(R.drawable.baseline_filter_list_24),
-                        contentDescription = stringResource(R.string.appinfo_sort_and_filter),
-                    )
-                }
-            }
-        },
-    )
-}
-
 /** Material 线状态行：共 N 个应用 · 已选 M（多选），右侧全选/取消全选 */
 @Composable
 private fun MaterialPickerStatusRow(
@@ -565,43 +419,6 @@ private fun MaterialPickerStatusRow(
                     )
                 )
             }
-        }
-    }
-}
-
-/** Miuix 线状态行：与 Material 线同版式 */
-@Composable
-private fun MiuixPickerStatusRow(
-    state: AppPickerUiState,
-    multiMode: Boolean,
-    visibleCount: Int,
-    loading: Boolean,
-    allVisibleSelected: Boolean,
-    onSelectAll: () -> Unit,
-) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(top = 8.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        MiuixText(
-            text = stringResource(R.string.appinfo_app_count, visibleCount) +
-                if (multiMode) " · " + stringResource(R.string.appinfo_selected_count, state.selected.size) else "",
-            style = MiuixTheme.textStyles.body2,
-            color = MiuixTheme.colorScheme.onBackgroundVariant,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-            modifier = Modifier.weight(1f),
-        )
-        if (multiMode) {
-            MiuixTextButton(
-                text = stringResource(
-                    if (allVisibleSelected) R.string.appinfo_deselect_all else R.string.appinfo_select_all
-                ),
-                onClick = onSelectAll,
-                enabled = !loading && visibleCount > 0,
-            )
         }
     }
 }
@@ -662,91 +479,6 @@ private fun MaterialPanelLabel(text: String, modifier: Modifier = Modifier) {
         style = MaterialTheme.typography.labelLarge,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
     )
-}
-
-/** Miuix 线内联排序/筛选面板：与 Material 线同结构，chip 用同包 [MiuixToggleChip] */
-@OptIn(ExperimentalLayoutApi::class)
-@Composable
-private fun MiuixPickerSortFilterPanel(state: AppPickerUiState, loading: Boolean) {
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(top = 12.dp),
-    ) {
-        MiuixPanelLabel(stringResource(R.string.appinfo_sort_by))
-        FlowRow(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(top = 4.dp),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
-        ) {
-            AppSortMode.entries.forEach { mode ->
-                MiuixToggleChip(
-                    selected = state.sortMode == mode,
-                    onClick = { state.sortMode = mode },
-                    label = stringResource(mode.labelRes),
-                    enabled = !loading,
-                )
-            }
-            MiuixToggleChip(
-                selected = state.reverse,
-                onClick = { state.reverse = !state.reverse },
-                label = stringResource(R.string.appinfo_reverse),
-                enabled = !loading,
-            )
-        }
-        MiuixPanelLabel(stringResource(R.string.appinfo_filter), Modifier.padding(top = 10.dp))
-        FlowRow(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(top = 4.dp),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-        ) {
-            MiuixToggleChip(
-                selected = state.includeSystem,
-                onClick = { state.includeSystem = !state.includeSystem },
-                label = stringResource(R.string.appinfo_system_app),
-                enabled = !loading,
-            )
-        }
-    }
-}
-
-@Composable
-private fun MiuixPanelLabel(text: String, modifier: Modifier = Modifier) {
-    MiuixText(
-        text = text,
-        modifier = modifier,
-        style = MiuixTheme.textStyles.footnote1,
-        color = MiuixTheme.colorScheme.onBackgroundVariant,
-    )
-}
-
-/**
- * Miuix 筛选开关（等价 M3 FilterChip，选中态用 primary 实心按钮）。
- *
- * `internal` 以便同包的 [com.luckyzyx.luckytool.ui.compose.components.ColorPickerDialog]
- * 复用同一实现（取色模式切换行）。
- */
-@Composable
-internal fun MiuixToggleChip(
-    selected: Boolean,
-    onClick: () -> Unit,
-    label: String,
-    enabled: Boolean = true,
-) {
-    Button(
-        onClick = onClick,
-        enabled = enabled,
-        minWidth = 0.dp,
-        minHeight = 32.dp,
-        cornerRadius = 16.dp,
-        insideMargin = PaddingValues(horizontal = 12.dp, vertical = 6.dp),
-        colors = if (selected) ButtonDefaults.buttonColorsPrimary() else ButtonDefaults.buttonColors(),
-    ) {
-        MiuixText(text = label)
-    }
 }
 
 /** 应用图标：无图标时留同等占位，保证行高一致 */
@@ -833,31 +565,332 @@ private fun MaterialCheckIndicator(checked: Boolean) {
     }
 }
 
-/** Miuix 线条目：多选用 CheckboxPreference（勾选在尾部），单选用 BasicComponent，整行可点 */
+/**
+ * Coui 线弹窗：COUI 弹窗的按钮位与 M3 不同——确认位必填、取消只在取消位。
+ * 多选时「确定」是主操作；单选时点条目即返回，按钮位只留「取消」，
+ * 因此把取消放进必填的确认位并按次级样式渲染，而不是塞进取消位后空着主位。
+ */
 @Composable
-private fun MiuixAppRow(
+private fun CouiAppPickerDialog(
+    title: String,
+    multiMode: Boolean,
+    state: AppPickerUiState,
+    filtered: List<AppInfo>,
+    loading: Boolean,
+    allVisibleSelected: Boolean,
+    onDismiss: () -> Unit,
+    onSelect: (AppInfo) -> Unit,
+    onSelectAll: () -> Unit,
+    onConfirmSelected: () -> Unit,
+) {
+    CouiAlertDialog(
+        onDismissRequest = onDismiss,
+        title = title,
+        confirmAction = if (multiMode) {
+            CouiDialogAction(
+                text = stringResource(android.R.string.ok),
+                onClick = onConfirmSelected,
+                enabled = !loading,
+                style = CouiDialogActionStyle.Primary,
+                colors = CouiDialogDefaults.primaryActionColors(CouiTheme.colorScheme.accent),
+            )
+        } else {
+            CouiDialogAction(
+                text = stringResource(android.R.string.cancel),
+                onClick = onDismiss,
+                enabled = !loading,
+            )
+        },
+        dismissAction = if (multiMode) {
+            CouiDialogAction(
+                text = stringResource(android.R.string.cancel),
+                onClick = onDismiss,
+                enabled = !loading,
+            )
+        } else null,
+    ) {
+        CouiAppPickerBody(
+            state = state,
+            multiMode = multiMode,
+            filtered = filtered,
+            loading = loading,
+            allVisibleSelected = allVisibleSelected,
+            onSelect = onSelect,
+            onSelectAll = onSelectAll,
+        )
+    }
+}
+
+/**
+ * Coui 线正文：搜索头 → 可开合的排序筛选面板 → 状态行 → 分隔 → 列表。
+ * 正文槽自带滚动且按钮区在它之外，因此列表只约束自身高度上限，
+ * 不取权重（父级可滚动时高度无界，权重拿不到有效空间）。
+ */
+@Composable
+private fun CouiAppPickerBody(
+    state: AppPickerUiState,
+    multiMode: Boolean,
+    filtered: List<AppInfo>,
+    loading: Boolean,
+    allVisibleSelected: Boolean,
+    onSelect: (AppInfo) -> Unit,
+    onSelectAll: () -> Unit,
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            // 弹窗正文槽本身不带留白，左右与上下边距由调用方补齐
+            .padding(
+                start = CouiDialogDefaults.contentPadding,
+                end = CouiDialogDefaults.contentPadding,
+                top = 6.dp,
+                bottom = 16.dp,
+            ),
+    ) {
+        CouiPickerSearchField(state = state, loading = loading)
+        AnimatedVisibility(visible = state.sortFilterOpen) {
+            CouiPickerSortFilterPanel(state = state, loading = loading)
+        }
+        CouiPickerStatusRow(
+            state = state,
+            multiMode = multiMode,
+            visibleCount = filtered.size,
+            loading = loading,
+            allVisibleSelected = allVisibleSelected,
+            onSelectAll = onSelectAll,
+        )
+        CouiDivider(
+            modifier = Modifier.padding(top = 6.dp, bottom = 6.dp),
+            startIndent = 0.dp,
+            endIndent = 0.dp,
+        )
+        when {
+            loading -> PickerPlaceholder {
+                // 不传尺寸：控件内部已固定 32dp，外部再套 size 会互相打架
+                CouiCircularProgressIndicator()
+            }
+
+            filtered.isEmpty() -> PickerPlaceholder {
+                CouiText(
+                    text = stringResource(R.string.appinfo_no_match),
+                    kind = CouiTextKind.Body,
+                    color = CouiTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+
+            else -> LazyColumn(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .heightIn(max = PickerListMaxHeight),
+                verticalArrangement = Arrangement.spacedBy(2.dp),
+            ) {
+                itemsIndexed(filtered, key = { _, app -> app.packageName }) { index, app ->
+                    AppItem(index = index, count = filtered.size) {
+                        CouiAppRow(
+                            app = app,
+                            multiMode = multiMode,
+                            checked = app.packageName in state.selected,
+                            onSelect = { onSelect(app) },
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+/** Coui 线搜索头：搜索图标 + 清除 + 排序/筛选开关，开关激活时用强调色 */
+@Composable
+private fun CouiPickerSearchField(state: AppPickerUiState, loading: Boolean) {
+    val colors = CouiTheme.colorScheme
+    CouiTextField(
+        value = state.query,
+        onValueChange = { state.query = it },
+        modifier = Modifier.fillMaxWidth(),
+        enabled = !loading,
+        placeholder = stringResource(R.string.appinfo_search_hint),
+        singleLine = true,
+        leadingIcon = {
+            Icon(
+                painter = painterResource(R.drawable.ic_baseline_search_24),
+                contentDescription = null,
+                tint = colors.onSurfaceVariant,
+                modifier = Modifier.size(20.dp),
+            )
+        },
+        trailingIcon = {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                if (state.query.isNotEmpty()) {
+                    CouiIconButton(
+                        onClick = { state.query = "" },
+                        contentDescription = stringResource(R.string.appinfo_clear_search),
+                    ) {
+                        Icon(
+                            painter = painterResource(R.drawable.ic_baseline_close_24),
+                            contentDescription = null,
+                            tint = colors.onSurfaceVariant,
+                            modifier = Modifier.size(20.dp),
+                        )
+                    }
+                }
+                CouiIconButton(
+                    onClick = { state.sortFilterOpen = !state.sortFilterOpen },
+                    contentDescription = stringResource(R.string.appinfo_sort_and_filter),
+                ) {
+                    Icon(
+                        painter = painterResource(R.drawable.baseline_filter_list_24),
+                        contentDescription = null,
+                        tint = if (state.sortFilterOpen) colors.accent else colors.onSurfaceVariant,
+                        modifier = Modifier.size(20.dp),
+                    )
+                }
+            }
+        },
+    )
+}
+
+/** Coui 线状态行：共 N 个应用 · 已选 M（多选），右侧全选/取消全选 */
+@Composable
+private fun CouiPickerStatusRow(
+    state: AppPickerUiState,
+    multiMode: Boolean,
+    visibleCount: Int,
+    loading: Boolean,
+    allVisibleSelected: Boolean,
+    onSelectAll: () -> Unit,
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(top = 8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        CouiText(
+            text = stringResource(R.string.appinfo_app_count, visibleCount) +
+                if (multiMode) " · " + stringResource(R.string.appinfo_selected_count, state.selected.size) else "",
+            kind = CouiTextKind.PreferenceSummary,
+            color = CouiTheme.colorScheme.onSurfaceVariant,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            modifier = Modifier.weight(1f),
+        )
+        if (multiMode) {
+            CouiTextButton(
+                text = stringResource(
+                    if (allVisibleSelected) R.string.appinfo_deselect_all else R.string.appinfo_select_all
+                ),
+                onClick = onSelectAll,
+                enabled = !loading && visibleCount > 0,
+            )
+        }
+    }
+}
+
+/** Coui 线内联排序/筛选面板（由搜索头漏斗按钮开合） */
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun CouiPickerSortFilterPanel(state: AppPickerUiState, loading: Boolean) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(top = 12.dp),
+    ) {
+        CouiPanelLabel(stringResource(R.string.appinfo_sort_by))
+        FlowRow(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = 4.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            AppSortMode.entries.forEach { mode ->
+                CouiFilterChip(
+                    label = stringResource(mode.labelRes),
+                    selected = state.sortMode == mode,
+                    onClick = { state.sortMode = mode },
+                    enabled = !loading,
+                )
+            }
+            CouiFilterChip(
+                label = stringResource(R.string.appinfo_reverse),
+                selected = state.reverse,
+                onClick = { state.reverse = !state.reverse },
+                enabled = !loading,
+            )
+        }
+        CouiPanelLabel(
+            text = stringResource(R.string.appinfo_filter),
+            modifier = Modifier.padding(top = 10.dp),
+        )
+        FlowRow(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = 4.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            CouiFilterChip(
+                label = stringResource(R.string.appinfo_system_app),
+                selected = state.includeSystem,
+                onClick = { state.includeSystem = !state.includeSystem },
+                enabled = !loading,
+            )
+        }
+    }
+}
+
+/** 面板分组标题：字号取 COUI 的分组标题语义，颜色压到次要文字 */
+@Composable
+private fun CouiPanelLabel(text: String, modifier: Modifier = Modifier) {
+    CouiText(
+        text = text,
+        kind = CouiTextKind.GroupTitle,
+        color = CouiTheme.colorScheme.onSurfaceVariant,
+        modifier = modifier,
+    )
+}
+
+/** Coui 线条目：图标 + 名称/包名 + 勾选框；勾选由整行点击驱动，勾选框自身不装点击 */
+@Composable
+private fun CouiAppRow(
     app: AppInfo,
     multiMode: Boolean,
     checked: Boolean,
     onSelect: () -> Unit,
 ) {
-    val icon: @Composable () -> Unit = { AppIcon(app.icon) }
-    if (multiMode) {
-        CheckboxPreference(
-            title = app.name,
-            summary = app.packageName,
-            checked = checked,
-            onCheckedChange = { onSelect() },
-            startAction = icon,
-            checkboxLocation = CheckboxLocation.End,
-        )
-    } else {
-        BasicComponent(
-            title = app.name,
-            summary = app.packageName,
-            startAction = icon,
-            onClick = onSelect,
-        )
+    val colors = CouiTheme.colorScheme
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { onSelect() }
+            .padding(start = 12.dp, end = 10.dp, top = 7.dp, bottom = 7.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        AppIcon(app.icon)
+        Column(
+            modifier = Modifier
+                .weight(1f)
+                .padding(start = 10.dp),
+        ) {
+            CouiText(
+                text = app.name,
+                kind = CouiTextKind.PreferenceTitle,
+                color = colors.onSurface,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.fillMaxWidth(),
+            )
+            CouiText(
+                text = app.packageName,
+                kind = CouiTextKind.PreferenceSummary,
+                color = colors.onSurfaceVariant,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.fillMaxWidth(),
+            )
+        }
+        if (multiMode) {
+            Spacer(Modifier.width(8.dp))
+            CouiCheckbox(checked = checked)
+        }
     }
 }
 

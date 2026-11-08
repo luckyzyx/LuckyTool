@@ -1,7 +1,5 @@
 package com.luckyzyx.luckytool.ui.compose.components
 
-import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -11,6 +9,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.text.BasicText
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.ContentCopy
@@ -36,12 +35,22 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.itos.coui.dialog.CouiDialogAction
+import com.itos.coui.dialog.CouiDialogActionStyle
+import com.itos.coui.dialog.CouiDialogDefaults
+import com.itos.coui.text.CouiTextKind
+import com.itos.coui.text.Text as CouiText
+import com.itos.coui.text.rememberCouiTextStyle
+import com.itos.coui.theme.CouiTheme
 import com.luckyzyx.luckytool.IAdbDebugController
 import com.luckyzyx.luckytool.R
-import com.luckyzyx.luckytool.ui.compose.components.material.MaterialTonalCard
-import com.luckyzyx.luckytool.ui.compose.components.miuix.MiuixDialogScrollBody
-import com.luckyzyx.luckytool.ui.compose.components.miuix.MiuixSwitchItem
+import com.luckyzyx.luckytool.ui.compose.components.AppCard
+import com.luckyzyx.luckytool.ui.compose.components.coui.CouiAlertDialog
+import com.luckyzyx.luckytool.ui.compose.components.coui.CouiCircularProgressIndicator
+import com.luckyzyx.luckytool.ui.compose.components.coui.CouiIconButton
+import com.luckyzyx.luckytool.ui.compose.components.coui.CouiTextField
 import com.luckyzyx.luckytool.ui.theme.LocalUiMode
 import com.luckyzyx.luckytool.ui.theme.UiMode
 import com.luckyzyx.luckytool.utils.PrefState
@@ -50,16 +59,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import top.yukonga.miuix.kmp.basic.ButtonDefaults
-import top.yukonga.miuix.kmp.basic.Card as MiuixCard
-import top.yukonga.miuix.kmp.basic.Icon as MiuixIcon
-import top.yukonga.miuix.kmp.basic.IconButton as MiuixIconButton
-import top.yukonga.miuix.kmp.basic.Text as MiuixText
-import top.yukonga.miuix.kmp.basic.TextButton as MiuixTextButton
-import top.yukonga.miuix.kmp.basic.TextField as MiuixTextField
-import top.yukonga.miuix.kmp.basic.TextFieldDefaults as MiuixTextFieldDefaults
-import top.yukonga.miuix.kmp.overlay.OverlayDialog
-import top.yukonga.miuix.kmp.theme.MiuixTheme
 
 /** 上次使用的端口：与 [com.luckyzyx.luckytool.service.tiles.RemoteAdbTile] 共用同一个键 */
 private const val KEY_ADB_PORT = "adb_port"
@@ -176,12 +175,10 @@ private class AdbDebugDialogState(
 }
 
 /**
- * 远程 ADB 调试对话框（Material / Miuix 双线）。
+ * 远程 ADB 调试对话框。
  *
- * 只有一份状态：状态机与正文合一，两个壳（Miuix / material3）渲染同一个 [AdbDebugDialogState]，
- * 因此错误提示与连接命令不会互相覆盖。
- * Miuix 线走 `overlay.OverlayDialog`（由根部 Miuix Scaffold 的 popup host 承载，须组合在 MainShell 内），
- * Material 线走 material3 `AlertDialog`。
+ * 只有一份状态：两条渲染线共用 [AdbDebugDialogState]，因此错误提示与连接命令不会互相覆盖。
+ * Material 线走 material3 `AlertDialog`，Coui 线走 COUI 弹窗，差异只在视图层。
  *
  * @param otherPrefs 记录上次端口的 prefs 槽
  * @param controller 服务端控制器；为空时不渲染
@@ -197,30 +194,8 @@ fun AdbDebugDialog(
     val scope = rememberCoroutineScope()
     val state = remember(adb, otherPrefs) { AdbDebugDialogState(adb, otherPrefs, scope) }
     when (LocalUiMode.current) {
-        UiMode.Miuix -> MiuixAdbDebugDialog(state, onDismiss)
         UiMode.Material -> MaterialAdbDebugDialog(state, onDismiss)
-    }
-}
-
-@Composable
-private fun MiuixAdbDebugDialog(state: AdbDebugDialogState, onDismiss: () -> Unit) {
-    OverlayDialog(
-        show = true,
-        title = stringResource(R.string.remote_adb_debug_title),
-        onDismissRequest = onDismiss,
-    ) {
-        MiuixDialogScrollBody(
-            actions = {
-                MiuixTextButton(
-                    text = stringResource(android.R.string.ok),
-                    onClick = onDismiss,
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = ButtonDefaults.textButtonColorsPrimary(),
-                )
-            },
-        ) {
-            AdbDebugContent(state, isMiuix = true)
-        }
+        UiMode.Coui -> CouiAdbDebugDialog(state, onDismiss)
     }
 }
 
@@ -229,24 +204,24 @@ private fun MaterialAdbDebugDialog(state: AdbDebugDialogState, onDismiss: () -> 
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text(stringResource(R.string.remote_adb_debug_title)) },
-        text = { AdbDebugContent(state, isMiuix = false) },
+        text = { AdbDebugContent(state) },
         confirmButton = {
             TextButton(onClick = onDismiss) { Text(stringResource(android.R.string.ok)) }
         },
     )
 }
 
-/** 正文：开关 → 端口 → 错误提示 → 忙碌进度 → 连接命令卡 → 复制提示，两条线共用 */
+/** 正文：开关 → 端口 → 错误提示 → 忙碌进度 → 连接命令卡 → 复制提示 */
 @Composable
-private fun AdbDebugContent(state: AdbDebugDialogState, isMiuix: Boolean) {
+private fun AdbDebugContent(state: AdbDebugDialogState) {
     val context = LocalContext.current
     Column(modifier = Modifier.fillMaxWidth()) {
-        AdbEnableRow(state, isMiuix)
+        AdbEnableRow(state)
         Spacer(Modifier.height(12.dp))
-        AdbPortField(state, isMiuix)
+        AdbPortField(state)
         state.error?.let { error ->
             Spacer(Modifier.height(8.dp))
-            AdbErrorText(error, isMiuix)
+            AdbErrorText(error)
         }
         if (state.busy) {
             Spacer(Modifier.height(12.dp))
@@ -262,7 +237,6 @@ private fun AdbDebugContent(state: AdbDebugDialogState, isMiuix: Boolean) {
             AdbCommandCard(
                 command = command,
                 busy = state.busy,
-                isMiuix = isMiuix,
                 onCopy = { context.copyStr(command) },
             )
         }
@@ -270,135 +244,76 @@ private fun AdbDebugContent(state: AdbDebugDialogState, isMiuix: Boolean) {
 }
 
 @Composable
-private fun AdbEnableRow(state: AdbDebugDialogState, isMiuix: Boolean) {
+private fun AdbEnableRow(state: AdbDebugDialogState) {
     val title = stringResource(R.string.enable_remote_adb_debugging)
-    if (isMiuix) {
-        MiuixSwitchItem(
-            title = title,
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(title, modifier = Modifier.weight(1f))
+        AppSwitch(
             checked = state.enabled,
             onCheckedChange = state::toggle,
-            modifier = Modifier.fillMaxWidth(),
             enabled = !state.busy,
         )
-    } else {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Text(title, modifier = Modifier.weight(1f))
-            Switch(
-                checked = state.enabled,
-                onCheckedChange = state::toggle,
-                enabled = !state.busy,
-            )
-        }
     }
 }
 
-/** 端口输入：关闭时可编辑、开启后只读；非法态两条线各用原生方式着色 */
+/** 端口输入：关闭时可编辑、开启后只读；非法态用 M3 `isError` 着色 */
 @Composable
-private fun AdbPortField(state: AdbDebugDialogState, isMiuix: Boolean) {
+private fun AdbPortField(state: AdbDebugDialogState) {
     val label = stringResource(R.string.adb_port)
     val editable = !state.enabled && !state.busy
     val invalid = state.error == AdbDebugError.PortBlank || state.error == AdbDebugError.PortOutOfRange
-    if (isMiuix) {
-        MiuixTextField(
-            value = state.portText,
-            onValueChange = state::updatePortText,
-            enabled = editable,
-            label = label,
-            useLabelAsPlaceholder = true,
-            singleLine = true,
-            cornerRadius = 14.dp,
-            colors = if (invalid) {
-                MiuixTextFieldDefaults.textFieldColors(
-                    backgroundColor = MiuixTheme.colorScheme.errorContainer,
-                    labelColor = MiuixTheme.colorScheme.onErrorContainer,
-                    borderColor = MiuixTheme.colorScheme.error,
-                )
-            } else {
-                MiuixTextFieldDefaults.textFieldColors()
-            },
-            keyboardOptions = AdbPortKeyboardOptions,
-            modifier = Modifier.fillMaxWidth(),
-        )
-    } else {
-        OutlinedTextField(
-            value = state.portText,
-            onValueChange = state::updatePortText,
-            enabled = editable,
-            label = { Text(label) },
-            singleLine = true,
-            isError = invalid,
-            keyboardOptions = AdbPortKeyboardOptions,
-            modifier = Modifier.fillMaxWidth(),
-        )
-    }
+    OutlinedTextField(
+        value = state.portText,
+        onValueChange = state::updatePortText,
+        enabled = editable,
+        label = { Text(label) },
+        singleLine = true,
+        isError = invalid,
+        keyboardOptions = AdbPortKeyboardOptions,
+        modifier = Modifier.fillMaxWidth(),
+    )
 }
 
 /** 连接命令卡：整卡可点即复制，右侧另有显式复制按钮，长按同样复制 */
-@OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun AdbCommandCard(
     command: String,
     busy: Boolean,
-    isMiuix: Boolean,
     onCopy: () -> Unit,
 ) {
     val copy = { if (!busy) onCopy() }
     val contentPadding = PaddingValues(horizontal = 14.dp, vertical = 10.dp)
-    if (isMiuix) {
-        MiuixCard(
-            modifier = Modifier
-                .fillMaxWidth()
-                .combinedClickable(onClick = copy, onLongClick = copy),
-            insideMargin = contentPadding,
+    AppCard(
+        modifier = Modifier.fillMaxWidth(),
+        onClick = copy,
+        onLongClick = copy,
+    ) {
+        Row(
+            modifier = Modifier.padding(contentPadding),
+            verticalAlignment = Alignment.CenterVertically,
         ) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                MiuixText(
-                    text = command,
-                    style = MiuixTheme.textStyles.body2.copy(fontFamily = FontFamily.Monospace),
-                    modifier = Modifier.weight(1f),
+            Text(
+                text = command,
+                style = MaterialTheme.typography.bodyMedium.copy(
+                    fontFamily = FontFamily.Monospace,
+                ),
+                modifier = Modifier.weight(1f),
+            )
+            IconButton(onClick = copy) {
+                Icon(
+                    imageVector = Icons.Rounded.ContentCopy,
+                    contentDescription = stringResource(R.string.copy),
                 )
-                MiuixIconButton(onClick = copy) {
-                    MiuixIcon(
-                        imageVector = Icons.Rounded.ContentCopy,
-                        contentDescription = stringResource(R.string.copy),
-                        tint = MiuixTheme.colorScheme.onSurface,
-                    )
-                }
-            }
-        }
-    } else {
-        MaterialTonalCard(
-            modifier = Modifier.fillMaxWidth(),
-            onClick = copy,
-            onLongClick = copy,
-        ) {
-            Row(
-                modifier = Modifier.padding(contentPadding),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Text(
-                    text = command,
-                    style = MaterialTheme.typography.bodyMedium.copy(
-                        fontFamily = FontFamily.Monospace,
-                    ),
-                    modifier = Modifier.weight(1f),
-                )
-                IconButton(onClick = copy) {
-                    Icon(
-                        imageVector = Icons.Rounded.ContentCopy,
-                        contentDescription = stringResource(R.string.copy),
-                    )
-                }
             }
         }
     }
 }
 
 @Composable
-private fun AdbErrorText(error: AdbDebugError, isMiuix: Boolean) {
+private fun AdbErrorText(error: AdbDebugError) {
     val text = stringResource(
         when (error) {
             AdbDebugError.PortBlank -> R.string.adb_debug_port_cannot_null
@@ -406,19 +321,188 @@ private fun AdbErrorText(error: AdbDebugError, isMiuix: Boolean) {
             AdbDebugError.OperationFailed -> R.string.adb_debug_operation_failed
         }
     )
-    if (isMiuix) {
-        MiuixText(
-            text = text,
-            style = MiuixTheme.textStyles.footnote1,
-            color = MiuixTheme.colorScheme.error,
-            modifier = Modifier.fillMaxWidth(),
-        )
-    } else {
-        Text(
-            text = text,
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.error,
-            modifier = Modifier.fillMaxWidth(),
-        )
+    Text(
+        text = text,
+        style = MaterialTheme.typography.bodySmall,
+        color = MaterialTheme.colorScheme.error,
+        modifier = Modifier.fillMaxWidth(),
+    )
+}
+
+/**
+ * Coui 线弹窗：COUI 弹窗自带底部按钮区，确定按钮只有一处，与原行为一致。
+ */
+@Composable
+private fun CouiAdbDebugDialog(state: AdbDebugDialogState, onDismiss: () -> Unit) {
+    CouiAlertDialog(
+        onDismissRequest = onDismiss,
+        title = stringResource(R.string.remote_adb_debug_title),
+        confirmAction = CouiDialogAction(
+            text = stringResource(android.R.string.ok),
+            onClick = onDismiss,
+            style = CouiDialogActionStyle.Primary,
+            colors = CouiDialogDefaults.primaryActionColors(CouiTheme.colorScheme.accent),
+        ),
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                // 弹窗正文槽本身不带留白，左右与上下边距由调用方补齐
+                .padding(
+                    start = CouiDialogDefaults.contentPadding,
+                    end = CouiDialogDefaults.contentPadding,
+                    top = 6.dp,
+                    bottom = 16.dp,
+                ),
+        ) {
+            AdbDebugCouiContent(state)
+        }
     }
+}
+
+/**
+ * Coui 线正文：开关 → 端口 → 错误提示 → 忙碌进度 → 连接命令卡。
+ * 正文槽本身可滚动，内容变高时由弹窗滚动，按钮区保持固定。
+ */
+@Composable
+private fun AdbDebugCouiContent(state: AdbDebugDialogState) {
+    val context = LocalContext.current
+    val colors = CouiTheme.colorScheme
+    Column(modifier = Modifier.fillMaxWidth()) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            CouiText(
+                text = stringResource(R.string.enable_remote_adb_debugging),
+                kind = CouiTextKind.PreferenceTitle,
+                color = colors.onSurface,
+                modifier = Modifier.weight(1f),
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis,
+            )
+            AppSwitch(
+                checked = state.enabled,
+                onCheckedChange = state::toggle,
+                enabled = !state.busy,
+            )
+        }
+        Spacer(Modifier.height(12.dp))
+        CouiAdbPortField(state)
+        state.error?.let { error ->
+            Spacer(Modifier.height(8.dp))
+            CouiAdbErrorText(error)
+        }
+        if (state.busy) {
+            Spacer(Modifier.height(12.dp))
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.Center,
+            ) {
+                // 不传尺寸：控件内部已固定 32dp，外部再套 size 会互相打架
+                CouiCircularProgressIndicator()
+            }
+        }
+        state.command?.let { command ->
+            Spacer(Modifier.height(12.dp))
+            CouiAdbCommandCard(
+                command = command,
+                busy = state.busy,
+                onCopy = { context.copyStr(command) },
+            )
+        }
+    }
+}
+
+/**
+ * 端口输入：关闭时可编辑，开启后与忙碌时只读。
+ * 非法态交给输入框自己的描边表达，不额外加红字前缀。
+ */
+@Composable
+private fun CouiAdbPortField(state: AdbDebugDialogState) {
+    val invalid = state.error == AdbDebugError.PortBlank ||
+            state.error == AdbDebugError.PortOutOfRange
+    CouiTextField(
+        value = state.portText,
+        onValueChange = state::updatePortText,
+        modifier = Modifier.fillMaxWidth(),
+        enabled = !state.enabled && !state.busy,
+        label = stringResource(R.string.adb_port),
+        isError = invalid,
+        singleLine = true,
+        keyboardOptions = AdbPortKeyboardOptions,
+    )
+}
+
+/**
+ * 连接命令卡：整卡点击即复制，右侧另给显式复制按钮，长按同样复制。
+ * 卡壳复用 [AppCard]，它在两条线上各自取当前主题的卡片底色。
+ */
+@Composable
+private fun CouiAdbCommandCard(command: String, busy: Boolean, onCopy: () -> Unit) {
+    val colors = CouiTheme.colorScheme
+    val copy = { if (!busy) onCopy() }
+    AppCard(
+        modifier = Modifier.fillMaxWidth(),
+        onClick = copy,
+        onLongClick = copy,
+    ) {
+        Row(
+            modifier = Modifier.padding(
+                start = 14.dp,
+                end = 14.dp,
+                top = 10.dp,
+                bottom = 10.dp,
+            ),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            CouiAdbCommandText(text = command, modifier = Modifier.weight(1f))
+            CouiIconButton(
+                onClick = copy,
+                contentDescription = stringResource(R.string.copy),
+            ) {
+                Icon(
+                    imageVector = Icons.Rounded.ContentCopy,
+                    contentDescription = null,
+                    tint = colors.onSurface,
+                )
+            }
+        }
+    }
+}
+
+/**
+ * 连接命令文本：命令要等宽才对齐，而 COUI 的 Text 不开放字体族，
+ * 因此沿用 COUI 的字号语义、只把字体族换成等宽，用基础文本绘制。
+ */
+@Composable
+private fun CouiAdbCommandText(text: String, modifier: Modifier = Modifier) {
+    BasicText(
+        text = text,
+        modifier = modifier,
+        style = rememberCouiTextStyle(CouiTextKind.Body).copy(
+            color = CouiTheme.colorScheme.onSurface,
+            fontFamily = FontFamily.Monospace,
+        ),
+    )
+}
+
+/**
+ * 错误提示：COUI 色板没有 error 角色，用满强度 onSurface 与常态正文区分，
+ * 口径与输入框的非法描边保持一致。
+ */
+@Composable
+private fun CouiAdbErrorText(error: AdbDebugError) {
+    CouiText(
+        text = stringResource(
+            when (error) {
+                AdbDebugError.PortBlank -> R.string.adb_debug_port_cannot_null
+                AdbDebugError.PortOutOfRange -> R.string.adb_port_out_of_range
+                AdbDebugError.OperationFailed -> R.string.adb_debug_operation_failed
+            }
+        ),
+        kind = CouiTextKind.Description,
+        color = CouiTheme.colorScheme.onSurface,
+        modifier = Modifier.fillMaxWidth(),
+    )
 }

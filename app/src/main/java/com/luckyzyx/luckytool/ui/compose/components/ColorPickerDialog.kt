@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
@@ -52,17 +53,18 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.core.graphics.toColorInt
+import com.itos.coui.dialog.CouiDialogAction
+import com.itos.coui.dialog.CouiDialogActionStyle
+import com.itos.coui.dialog.CouiDialogDefaults
+import com.itos.coui.text.CouiTextKind
+import com.itos.coui.text.Text as CouiText
+import com.itos.coui.theme.CouiTheme
 import com.luckyzyx.luckytool.R
-import com.luckyzyx.luckytool.ui.compose.components.miuix.MiuixDialogScrollBody
+import com.luckyzyx.luckytool.ui.compose.components.coui.CouiAlertDialog
+import com.luckyzyx.luckytool.ui.compose.components.coui.CouiFilterChip
+import com.luckyzyx.luckytool.ui.compose.components.coui.CouiTextField
 import com.luckyzyx.luckytool.ui.theme.LocalUiMode
 import com.luckyzyx.luckytool.ui.theme.UiMode
-import top.yukonga.miuix.kmp.basic.ButtonDefaults
-import top.yukonga.miuix.kmp.overlay.OverlayDialog
-import top.yukonga.miuix.kmp.theme.MiuixTheme
-import top.yukonga.miuix.kmp.basic.Text as MiuixText
-import top.yukonga.miuix.kmp.basic.TextButton as MiuixTextButton
-import top.yukonga.miuix.kmp.basic.TextField as MiuixTextField
-import top.yukonga.miuix.kmp.basic.TextFieldDefaults as MiuixTextFieldDefaults
 import kotlin.math.roundToInt
 import kotlin.math.sqrt
 
@@ -92,7 +94,7 @@ private val HueColors = listOf(
     Color.Red, Color.Yellow, Color.Green, Color.Cyan, Color.Blue, Color.Magenta, Color.Red,
 )
 
-/** 透明棋盘格配色（与 Miuix drawCheckerboard 取值一致，避免两种外观线观感不一致） */
+/** 透明棋盘格的明暗两色（常见棋盘格配色的中灰对，深浅差足以看出透明度） */
 private val CheckerLight = Color(0xFFCCCCCC)
 private val CheckerDark = Color(0xFFAAAAAA)
 
@@ -152,7 +154,7 @@ private class ColorPickerUiState(initialColor: Int) {
     /** 透明度（0f..1f），供透明度条定位 */
     val alphaFraction: Float get() = channelFraction(ALPHA_SHIFT)
 
-    /** 输入文本能否解析为颜色；false 时两条线各用原生方式显示错误态 */
+    /** 输入文本能否解析为颜色；false 时输入框用 M3 `isError` 显示错误态 */
     val isHexValid: Boolean get() = parseHex(hexText) != null
 
     /** 单通道取值（0..255） */
@@ -222,10 +224,8 @@ private fun hsvOf(color: Int): FloatArray =
  * 颜色，切换不影响已选颜色。
  * 回调 onColorSelected(colorInt, hexString)，十六进制格式为 `#AARRGGBB`。
  *
- * 外观按 [LocalUiMode] 分派：Miuix 线走 Miuix 弹层，Material 线走 M3 AlertDialog；
- * SV 面板与两条渐变条两条线共用同一实现（自绘渐变 + 胶囊圆环滑块）。
- * Miuix 弹层统一由根部 Miuix Scaffold 的默认 popup host 承载，本组件不自装 host、
- * 不传 `renderInRootScaffold = false`。
+ * 弹层按 [LocalUiMode] 分线：Material 线用 material3 `AlertDialog`，COUI 线用 [CouiAlertDialog]；
+ * SV 面板与渐变条都是自绘实现（渐变 + 胶囊圆环滑块），两条线共用同一份绘制与状态。
  */
 @Composable
 fun ColorPickerDialog(
@@ -244,13 +244,13 @@ fun ColorPickerDialog(
     val state = remember { ColorPickerUiState(initialColor) }
 
     when (LocalUiMode.current) {
-        UiMode.Miuix -> MiuixColorPickerDialog(
+        UiMode.Material -> MaterialColorPickerDialog(
             state = state,
             onDismiss = onDismiss,
             onColorSelected = onColorSelected,
         )
 
-        UiMode.Material -> MaterialColorPickerDialog(
+        UiMode.Coui -> CouiColorPickerDialog(
             state = state,
             onDismiss = onDismiss,
             onColorSelected = onColorSelected,
@@ -258,7 +258,7 @@ fun ColorPickerDialog(
     }
 }
 
-/** Material 线：M3 AlertDialog（确认/取消走对话框按钮槽位） */
+/** Material 线：material3 `AlertDialog`，确认/取消走对话框按钮槽位 */
 @Composable
 private fun MaterialColorPickerDialog(
     state: ColorPickerUiState,
@@ -280,61 +280,54 @@ private fun MaterialColorPickerDialog(
     )
 }
 
-/** Miuix 线：OverlayDialog（根部 popup host 承载）+ Miuix 文本件 */
+/**
+ * COUI 线：弹窗外观交给 [CouiAlertDialog]，按钮走它的动作槽位。
+ *
+ * 确认键是主操作，用 Primary 样式时必须显式带上 [CouiDialogDefaults.primaryActionColors] 生成的配色，
+ * 否则 [CouiDialogAction] 构造时直接校验失败。取消键放 dismissAction：COUI 的中性位固定按警示色渲染，
+ * 与「只是关掉」的语义不符。
+ */
 @Composable
-private fun MiuixColorPickerDialog(
+private fun CouiColorPickerDialog(
     state: ColorPickerUiState,
     onDismiss: () -> Unit,
     onColorSelected: (Int, String) -> Unit,
 ) {
-    OverlayDialog(
-        show = true,
-        title = stringResource(R.string.select_color),
+    CouiAlertDialog(
         onDismissRequest = onDismiss,
+        title = stringResource(R.string.select_color),
+        confirmAction = CouiDialogAction(
+            text = stringResource(android.R.string.ok),
+            onClick = { onColorSelected(state.colorInt, formatHex(state.colorInt)) },
+            style = CouiDialogActionStyle.Primary,
+            colors = CouiDialogDefaults.primaryActionColors(CouiTheme.colorScheme.accent),
+        ),
+        dismissAction = CouiDialogAction(
+            text = stringResource(android.R.string.cancel),
+            onClick = onDismiss,
+        ),
     ) {
-        // 正文可滚动、按钮行固定：键盘弹出后可用高度被压缩，靠后的输入框与按钮行会被压成 0 高度
-        MiuixDialogScrollBody(
-            actions = {
-                Row(
-                    Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                ) {
-                    MiuixTextButton(
-                        text = stringResource(android.R.string.cancel),
-                        onClick = onDismiss,
-                        modifier = Modifier.weight(1f),
-                    )
-                    Spacer(Modifier.width(20.dp))
-                    MiuixTextButton(
-                        text = stringResource(android.R.string.ok),
-                        onClick = { onColorSelected(state.colorInt, formatHex(state.colorInt)) },
-                        modifier = Modifier.weight(1f),
-                        colors = ButtonDefaults.textButtonColorsPrimary(),
-                    )
-                }
-            },
-        ) {
+        // 正文槽没有内边距，左右留白由调用方补，否则自绘的 SV 面板会顶到弹窗边缘
+        Box(Modifier.padding(horizontal = CouiDialogDefaults.contentPadding)) {
             ColorPickerBody(state)
         }
     }
 }
 
 /**
- * 选择器主体（标题与按钮之外的全部内容），两条外观线共用，保证两线布局完全一致：
+ * 选择器主体（标题与按钮之外的全部内容）：
  * 模式切换 → SV 面板 + 色相条 + 透明度条（或 A/R/G/B 四通道滑杆）→ 预览色块 + 十六进制输入框。
  */
 @Composable
 private fun ColorPickerBody(state: ColorPickerUiState) {
-    val isMiuix = LocalUiMode.current == UiMode.Miuix
-
     Column(Modifier.fillMaxWidth()) {
-        PickerModeSwitch(state = state, isMiuix = isMiuix)
+        PickerModeSwitch(state = state)
 
         Spacer(Modifier.height(12.dp))
 
         when (state.mode) {
             PickerMode.Sv -> SvPickers(state = state)
-            PickerMode.Argb -> ArgbChannelBars(state = state, isMiuix = isMiuix)
+            PickerMode.Argb -> ArgbChannelBars(state = state)
         }
 
         Spacer(Modifier.height(16.dp))
@@ -351,7 +344,6 @@ private fun ColorPickerBody(state: ColorPickerUiState) {
             Spacer(Modifier.width(14.dp))
             HexField(
                 state = state,
-                isMiuix = isMiuix,
                 modifier = Modifier.weight(1f),
             )
         }
@@ -361,13 +353,43 @@ private fun ColorPickerBody(state: ColorPickerUiState) {
 /**
  * 取色模式切换：SV 面板与 ARGB 四通道滑杆二选一。
  *
- * 两条外观线各用各自的选择控件（Material 走 M3 `FilterChip`，Miuix 走 `MiuixToggleChip`），
- * 与 `AppPickerDialog` 的筛选行保持一致的观感与实现。
+ * 两个选项互斥且可反复切换，所以用筛选标签表达选中态；模式状态只有 [ColorPickerUiState.mode] 一份，
+ * 两条线只换标签外观。
  */
 @Composable
 private fun PickerModeSwitch(
     state: ColorPickerUiState,
-    isMiuix: Boolean,
+    modifier: Modifier = Modifier,
+) {
+    when (LocalUiMode.current) {
+        UiMode.Material -> Row(
+            modifier = modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.Center,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                PickerMode.entries.forEach { mode ->
+                    val selected = state.mode == mode
+                    val onClick = { state.mode = mode }
+                    val label = if (mode == PickerMode.Sv) MODE_SV_LABEL else MODE_ARGB_LABEL
+
+                    FilterChip(
+                        selected = selected,
+                        onClick = onClick,
+                        label = { Text(label) },
+                    )
+                }
+            }
+        }
+
+        UiMode.Coui -> CouiPickerModeSwitch(state = state, modifier = modifier)
+    }
+}
+
+/** COUI 线：同一组互斥标签改用 COUI 筛选标签，居中排布与 Material 线保持一致 */
+@Composable
+private fun CouiPickerModeSwitch(
+    state: ColorPickerUiState,
     modifier: Modifier = Modifier,
 ) {
     Row(
@@ -377,19 +399,11 @@ private fun PickerModeSwitch(
     ) {
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             PickerMode.entries.forEach { mode ->
-                val selected = state.mode == mode
-                val onClick = { state.mode = mode }
-                val label = if (mode == PickerMode.Sv) MODE_SV_LABEL else MODE_ARGB_LABEL
-
-                if (isMiuix) {
-                    MiuixToggleChip(selected = selected, onClick = onClick, label = label)
-                } else {
-                    FilterChip(
-                        selected = selected,
-                        onClick = onClick,
-                        label = { Text(label) },
-                    )
-                }
+                CouiFilterChip(
+                    label = if (mode == PickerMode.Sv) MODE_SV_LABEL else MODE_ARGB_LABEL,
+                    selected = state.mode == mode,
+                    onClick = { state.mode = mode },
+                )
             }
         }
     }
@@ -442,17 +456,16 @@ private fun SvPickers(state: ColorPickerUiState, modifier: Modifier = Modifier) 
 @Composable
 private fun ArgbChannelBars(
     state: ColorPickerUiState,
-    isMiuix: Boolean,
     modifier: Modifier = Modifier,
 ) {
     Column(
         modifier = modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        ChannelBar(state = state, isMiuix = isMiuix, label = "A", shift = ALPHA_SHIFT)
-        ChannelBar(state = state, isMiuix = isMiuix, label = "R", shift = RED_SHIFT)
-        ChannelBar(state = state, isMiuix = isMiuix, label = "G", shift = GREEN_SHIFT)
-        ChannelBar(state = state, isMiuix = isMiuix, label = "B", shift = BLUE_SHIFT)
+        ChannelBar(state = state, label = "A", shift = ALPHA_SHIFT)
+        ChannelBar(state = state, label = "R", shift = RED_SHIFT)
+        ChannelBar(state = state, label = "G", shift = GREEN_SHIFT)
+        ChannelBar(state = state, label = "B", shift = BLUE_SHIFT)
     }
 }
 
@@ -464,7 +477,6 @@ private fun ArgbChannelBars(
 @Composable
 private fun ChannelBar(
     state: ColorPickerUiState,
-    isMiuix: Boolean,
     label: String,
     shift: Int,
     modifier: Modifier = Modifier,
@@ -473,7 +485,7 @@ private fun ChannelBar(
         modifier = modifier.fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        ChannelText(text = label, isMiuix = isMiuix, modifier = Modifier.width(16.dp))
+        ChannelText(text = label, modifier = Modifier.width(16.dp))
 
         Spacer(Modifier.width(10.dp))
 
@@ -492,36 +504,59 @@ private fun ChannelBar(
 
         ChannelText(
             text = state.channel(shift).toString(),
-            isMiuix = isMiuix,
             modifier = Modifier.width(32.dp),
             textAlign = TextAlign.End,
         )
     }
 }
 
-/** 通道字母与数值文本：两条外观线各用自己的排版与前景色，等宽字体避免数值变化时抖动 */
+/**
+ * 通道字母与数值文本。
+ *
+ * 宽度由调用方用 modifier 固定，数值从 1 位变到 3 位时滑杆不会被挤动；
+ * Material 线额外用等宽字体，让位数变化时的字面宽度也一致。
+ */
 @Composable
 private fun ChannelText(
     text: String,
-    isMiuix: Boolean,
     modifier: Modifier = Modifier,
     textAlign: TextAlign = TextAlign.Start,
 ) {
-    if (isMiuix) {
-        MiuixText(
-            text = text,
-            modifier = modifier,
-            color = MiuixTheme.colorScheme.onBackground,
-            style = MiuixTheme.textStyles.body2.copy(fontFamily = FontFamily.Monospace),
-            textAlign = textAlign,
-            maxLines = 1,
-        )
-    } else {
-        Text(
+    when (LocalUiMode.current) {
+        UiMode.Material -> Text(
             text = text,
             modifier = modifier,
             style = MaterialTheme.typography.labelLarge.copy(fontFamily = FontFamily.Monospace),
             textAlign = textAlign,
+            maxLines = 1,
+        )
+
+        UiMode.Coui -> CouiChannelText(
+            text = text,
+            modifier = modifier,
+            textAlign = textAlign,
+        )
+    }
+}
+
+/**
+ * COUI 线：文本按 COUI 的排版规范绘制，对齐交给容器 ——
+ * 容器吃下调用方给的固定宽度，文本贴向 `textAlign` 指定的那一侧。
+ */
+@Composable
+private fun CouiChannelText(
+    text: String,
+    modifier: Modifier = Modifier,
+    textAlign: TextAlign = TextAlign.Start,
+) {
+    Box(
+        modifier = modifier,
+        contentAlignment = if (textAlign == TextAlign.End) Alignment.CenterEnd else Alignment.CenterStart,
+    ) {
+        CouiText(
+            text = text,
+            kind = CouiTextKind.PreferenceValue,
+            color = CouiTheme.colorScheme.onSurface,
             maxLines = 1,
         )
     }
@@ -529,53 +564,54 @@ private fun ChannelText(
 
 /**
  * 十六进制输入框：接受 `#RRGGBB` / `#AARRGGBB`（`#` 可省略，6 位按不透明处理），
- * 输入合法即刻同步颜色，非法时两条线各用原生方式提示（M3 `isError` / Miuix 错误色）。
+ * 输入合法即刻同步颜色，非法时输入框进入错误态；提示文案放输入框的占位位。
  *
- * 沿用 `AppListUi.AppSearchField` 的双线惯例：Miuix 线用 `MiuixTextField` 的 label 当占位符，
- * Material 线用 `OutlinedTextField` 的 placeholder。
+ * 两条线的错误态都只改描边颜色（各自配色体系里的错误表达不同），提示方式保持一致。
  */
 @Composable
 private fun HexField(
     state: ColorPickerUiState,
-    isMiuix: Boolean,
     modifier: Modifier = Modifier,
 ) {
-    if (isMiuix) {
-        MiuixTextField(
-            value = state.hexText,
-            onValueChange = state::onHexInput,
-            label = HEX_HINT,
-            useLabelAsPlaceholder = true,
-            singleLine = true,
-            cornerRadius = 14.dp,
-            colors = if (state.isHexValid) {
-                MiuixTextFieldDefaults.textFieldColors()
-            } else {
-                MiuixTextFieldDefaults.textFieldColors(
-                    backgroundColor = MiuixTheme.colorScheme.errorContainer,
-                    labelColor = MiuixTheme.colorScheme.onErrorContainer,
-                    borderColor = MiuixTheme.colorScheme.error,
-                )
-            },
-            textStyle = MiuixTheme.textStyles.main.copy(fontFamily = FontFamily.Monospace),
-            keyboardOptions = HexKeyboardOptions,
-            modifier = modifier,
-        )
-    } else {
-        val hexTextStyle =
-            MaterialTheme.typography.titleMedium.copy(fontFamily = FontFamily.Monospace)
+    when (LocalUiMode.current) {
+        UiMode.Material -> {
+            val hexTextStyle =
+                MaterialTheme.typography.titleMedium.copy(fontFamily = FontFamily.Monospace)
 
-        OutlinedTextField(
-            value = state.hexText,
-            onValueChange = state::onHexInput,
-            singleLine = true,
-            isError = !state.isHexValid,
-            placeholder = { Text(HEX_HINT, style = hexTextStyle) },
-            textStyle = hexTextStyle,
-            keyboardOptions = HexKeyboardOptions,
-            modifier = modifier,
-        )
+            OutlinedTextField(
+                value = state.hexText,
+                onValueChange = state::onHexInput,
+                singleLine = true,
+                isError = !state.isHexValid,
+                placeholder = { Text(HEX_HINT, style = hexTextStyle) },
+                textStyle = hexTextStyle,
+                keyboardOptions = HexKeyboardOptions,
+                modifier = modifier,
+            )
+        }
+
+        UiMode.Coui -> CouiHexField(state = state, modifier = modifier)
     }
+}
+
+/**
+ * COUI 线：输入框自绘，字号与字体由 [CouiTextField] 统一决定，这里拿不到等宽字体 ——
+ * 十六进制逐位对齐只在 Material 线保留，COUI 线按普通文本呈现。
+ */
+@Composable
+private fun CouiHexField(
+    state: ColorPickerUiState,
+    modifier: Modifier = Modifier,
+) {
+    CouiTextField(
+        value = state.hexText,
+        onValueChange = state::onHexInput,
+        modifier = modifier,
+        placeholder = HEX_HINT,
+        isError = !state.isHexValid,
+        singleLine = true,
+        keyboardOptions = HexKeyboardOptions,
+    )
 }
 
 /**
@@ -623,7 +659,7 @@ private fun SvPanel(
 /**
  * 渐变条：胶囊底 + 圆环滑块，用于色相与透明度；[checkerboard] 为真时先铺透明棋盘格。
  *
- * 渐变与滑块行程两端按轨道圆角半径（= 高度 / 2）内缩，与 Miuix ColorSlider 的 halfSliderHeight 对齐：
+ * 渐变与滑块行程两端按轨道圆角半径（= 高度 / 2）内缩：
  * 滑块圆心处取到的颜色即为当前值，且滑块最多只贴到轨道平直段的末端，
  * 因此左右两端时轨道圆角始终包在圆环外侧，不会被圆环遮掉。
  */
@@ -644,7 +680,7 @@ private fun GradientBar(
                     onFractionChange((position.x / w).coerceIn(0f, 1f))
                 }
         ) {
-            // 轨道胶囊的圆角半径；圆环的行程两端按它内缩（对齐 Miuix ColorSlider 的 halfSliderHeight），
+            // 轨道胶囊的圆角半径；圆环的行程两端按它内缩，
             // 让圆环始终落在轨道平直段内：左右两端时轨道圆角仍包在圆环外侧，而不是被圆环盖掉。
             val trackRadius = size.height / 2f
             val thumbRadius = (size.height - 8.dp.toPx()) / 2f
@@ -785,7 +821,7 @@ private fun clampCenterToRoundedRect(
     return Offset(x, y)
 }
 
-/** 透明棋盘格底（自实现，避免 Material 线耦合 Miuix）；溢出部分由父级 clip 负责裁掉 */
+/** 透明棋盘格底（自绘，不依赖任何外观线组件）；溢出部分由父级 clip 负责裁掉 */
 private fun DrawScope.drawCheckerboard(cellDp: Float = 4f) {
     val cell = cellDp.dp.toPx().coerceAtLeast(1f)
     drawRect(color = CheckerLight)

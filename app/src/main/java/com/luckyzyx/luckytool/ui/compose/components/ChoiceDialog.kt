@@ -1,16 +1,22 @@
 package com.luckyzyx.luckytool.ui.compose.components
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.selection.toggleable
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.MaterialTheme
@@ -24,30 +30,31 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.state.ToggleableState
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
+import com.itos.coui.checkbox.Checkbox as CouiCheckbox
+import com.itos.coui.dialog.CouiDialogAction
+import com.itos.coui.dialog.CouiDialogActionStyle
+import com.itos.coui.dialog.CouiDialogDefaults
+import com.itos.coui.dialog.Dialog as CouiDialog
+import com.itos.coui.radiobutton.RadioButton as CouiRadioButton
+import com.itos.coui.shape.CouiShape
+import com.itos.coui.text.CouiTextKind
+import com.itos.coui.text.Text as CouiText
+import com.itos.coui.theme.CouiTheme
 import com.luckyzyx.luckytool.R
-import com.luckyzyx.luckytool.ui.compose.components.material.MaterialItem
-import com.luckyzyx.luckytool.ui.compose.components.material.MaterialListItem
-import com.luckyzyx.luckytool.ui.compose.components.miuix.MiuixDialogScrollBody
-import com.luckyzyx.luckytool.ui.compose.components.miuix.MiuixListItem
-import com.luckyzyx.luckytool.ui.compose.components.miuix.MiuixPrefItem
+import com.luckyzyx.luckytool.ui.compose.components.AppItem
+import com.luckyzyx.luckytool.ui.compose.components.AppListItem
 import com.luckyzyx.luckytool.ui.theme.LocalUiMode
 import com.luckyzyx.luckytool.ui.theme.UiMode
-import top.yukonga.miuix.kmp.basic.ButtonDefaults
-import top.yukonga.miuix.kmp.icon.MiuixIcons
-import top.yukonga.miuix.kmp.icon.basic.Check
-import top.yukonga.miuix.kmp.overlay.OverlayDialog
-import top.yukonga.miuix.kmp.theme.MiuixTheme
-import top.yukonga.miuix.kmp.basic.Checkbox as MiuixCheckbox
-import top.yukonga.miuix.kmp.basic.Icon as MiuixIcon
-import top.yukonga.miuix.kmp.basic.Text as MiuixText
-import top.yukonga.miuix.kmp.basic.TextButton as MiuixTextButton
 
 /**
  * 选择对话框的一行。
@@ -64,13 +71,13 @@ data class ChoiceItem(
     val enabled: Boolean = true,
 )
 
-/** Material 线列表高度上限：两条线都由正文自己收敛，这里的常量只给 Material 线用 */
+/** Material 线列表高度上限：其余线的正文自己收敛高度，这个常量只给 Material 线用 */
 private val ChoiceListMaxHeight: Dp = 360.dp
 
 /** 空列表占位的最小高度，避免弹层塌成一条 */
 private val ChoicePlaceholderMinHeight: Dp = 160.dp
 
-/** 行尾指示器形态：两条线各自映射到本线原语 */
+/** 行尾指示器形态：各条线各自映射到本线原语 */
 private enum class ChoiceIndicator {
     /** 无指示器（动作列表） */
     None,
@@ -83,7 +90,7 @@ private enum class ChoiceIndicator {
 }
 
 /**
- * 一行的渲染模型：状态与数据加工在入口处完成一次，两条渲染线只读它。
+ * 一行的渲染模型：状态与数据加工在入口处完成一次，各条渲染线只读它。
  *
  * @param actions 行尾自定义动作槽（多选 Pin 之类），与勾选框同处行尾。
  */
@@ -268,7 +275,7 @@ fun ActionListDialog(
     )
 }
 
-/** 按当前外观线分派：状态、行模型与回调都在入口处算好，两条线只负责画 */
+/** 按当前外观线分派：状态、行模型与回调都在入口处算好，各条线只负责画 */
 @Composable
 private fun ChoiceDialogShell(
     title: String,
@@ -280,16 +287,6 @@ private fun ChoiceDialogShell(
     header: (@Composable () -> Unit)? = null,
 ) {
     when (LocalUiMode.current) {
-        UiMode.Miuix -> MiuixChoiceDialog(
-            title = title,
-            rows = rows,
-            onDismiss = onDismiss,
-            onRowClick = onRowClick,
-            buttons = buttons,
-            modifier = modifier,
-            header = header,
-        )
-
         UiMode.Material -> MaterialChoiceDialog(
             title = title,
             rows = rows,
@@ -299,132 +296,16 @@ private fun ChoiceDialogShell(
             modifier = modifier,
             header = header,
         )
-    }
-}
 
-/** Miuix 线：OverlayDialog（根部 popup host 承载）+ 分段卡片列表 + MiuixDialogScrollBody 按钮行 */
-@Composable
-private fun MiuixChoiceDialog(
-    title: String,
-    rows: List<ChoiceRowModel>,
-    onDismiss: () -> Unit,
-    onRowClick: (ChoiceItem) -> Unit,
-    buttons: ChoiceButtons,
-    modifier: Modifier,
-    header: (@Composable () -> Unit)? = null,
-) {
-    OverlayDialog(
-        show = true,
-        title = title,
-        onDismissRequest = onDismiss,
-    ) {
-        // showCancel = false（不可关闭场景）：整行动作区不画，而不是渲染一个点了没反应的「取消」按钮
-        val actions: (@Composable () -> Unit)? = if (buttons.showCancel) {
-            {
-                val onConfirm = buttons.onConfirm
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                ) {
-                    // 动作列表形态没有「确定」：单个「取消」也铺满整行，按内容宽度居中会显得又窄又飘
-                    MiuixTextButton(
-                        text = stringResource(android.R.string.cancel),
-                        onClick = buttons.onCancel,
-                        modifier = Modifier.weight(1f),
-                    )
-                    if (onConfirm != null) {
-                        Spacer(Modifier.width(20.dp))
-                        MiuixTextButton(
-                            text = stringResource(android.R.string.ok),
-                            onClick = onConfirm,
-                            enabled = buttons.confirmEnabled,
-                            modifier = Modifier.weight(1f),
-                            colors = ButtonDefaults.textButtonColorsPrimary(),
-                        )
-                    }
-                }
-            }
-        } else {
-            null
-        }
-        MiuixDialogScrollBody(
+        UiMode.Coui -> CouiChoiceDialog(
+            title = title,
+            rows = rows,
+            onDismiss = onDismiss,
+            onRowClick = onRowClick,
+            buttons = buttons,
             modifier = modifier,
-            // 列表本身是 LazyColumn，正文不能再套 verticalScroll
-            scrollable = false,
-            actions = actions,
-        ) {
-            header?.invoke()
-            if (rows.isEmpty()) {
-                ChoicePlaceholder {
-                    MiuixText(
-                        text = stringResource(R.string.choice_dialog_empty),
-                        style = MiuixTheme.textStyles.body2,
-                        color = MiuixTheme.colorScheme.onBackgroundVariant,
-                    )
-                }
-            } else {
-                LazyColumn(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .weight(1f, fill = false),
-                    verticalArrangement = Arrangement.spacedBy(2.dp),
-                ) {
-                    itemsIndexed(rows, key = { _, row -> row.item.key }) { index, row ->
-                        MiuixPrefItem(index = index, count = rows.size) {
-                            MiuixListItem(
-                                title = row.item.title,
-                                summary = row.item.summary,
-                                onClick = { onRowClick(row.item) },
-                                enabled = row.item.enabled,
-                                endActions = miuixEndActions(row),
-                            )
-                        }
-                    }
-                }
-            }
-        }
-    }
-}
-
-/**
- * Miuix 线行尾：多选为「自定义动作 + 勾选框」，单选为选中勾，动作列表为空。
- *
- * 库内 BasicComponent 把 endActions 包在一个默认顶对齐的 Row 里，而动作按钮的触控区有 40dp、
- * 勾选框只有 26dp，顶对齐会让图标比勾选态高出半行；所以这里统一用垂直居中的 Row 收口，
- * 动作与指示器共用同一条水平中轴。
- */
-@Composable
-private fun miuixEndActions(row: ChoiceRowModel): (@Composable RowScope.() -> Unit)? {
-    val actions = row.actions
-    val hasIndicator = when (row.indicator) {
-        ChoiceIndicator.None -> false
-        ChoiceIndicator.Selected -> row.checked
-        ChoiceIndicator.Checkbox -> true
-    }
-    if (actions == null && !hasIndicator) return null
-    return {
-        Row(
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            actions?.invoke()
-            when (row.indicator) {
-                ChoiceIndicator.None -> Unit
-                ChoiceIndicator.Selected -> if (row.checked) {
-                    MiuixIcon(
-                        imageVector = MiuixIcons.Basic.Check,
-                        contentDescription = null,
-                        tint = MiuixTheme.colorScheme.primary,
-                    )
-                }
-
-                ChoiceIndicator.Checkbox -> MiuixCheckbox(
-                    state = ToggleableState(row.checked),
-                    onClick = null,
-                    enabled = row.item.enabled,
-                )
-            }
-        }
+            header = header,
+        )
     }
 }
 
@@ -468,8 +349,8 @@ private fun MaterialChoiceDialog(
                                 if (summary != null) {
                                     { Text(summary, maxLines = 2, overflow = TextOverflow.Ellipsis) }
                                 } else null
-                            MaterialItem(index = index, count = rows.size) {
-                                MaterialListItem(
+                            AppItem(index = index, count = rows.size) {
+                                AppListItem(
                                     onClick = { onRowClick(row.item) },
                                     enabled = row.item.enabled,
                                     headlineContent = {
@@ -510,6 +391,205 @@ private fun MaterialChoiceDialog(
     )
 }
 
+/** Coui 线：COUI 弹窗自绘按钮行；正文槽本身可滚动，行用普通 Column 平铺而不是 LazyColumn */
+@Composable
+private fun CouiChoiceDialog(
+    title: String,
+    rows: List<ChoiceRowModel>,
+    onDismiss: () -> Unit,
+    onRowClick: (ChoiceItem) -> Unit,
+    buttons: ChoiceButtons,
+    modifier: Modifier,
+    header: (@Composable () -> Unit)? = null,
+) {
+    val onConfirm = buttons.onConfirm
+    // 动作区一个按钮都不画（showCancel = false 且没有确认位）：COUI 弹窗的确认位是必填项，
+    // 表达不了零按钮的弹层，改由裸 Dialog 承载一张 COUI 配色卡片
+    if (!buttons.showCancel && onConfirm == null) {
+        CouiButtonlessChoiceDialog(
+            title = title,
+            rows = rows,
+            onDismiss = onDismiss,
+            onRowClick = onRowClick,
+            modifier = modifier,
+            header = header,
+        )
+        return
+    }
+    CouiDialog(
+        modifier = modifier,
+        onDismissRequest = onDismiss,
+        title = title,
+        // 动作列表形态只剩一个「取消」：放进必填的确认位，呈次级样式，语义仍是取消
+        confirmAction = if (onConfirm == null) {
+            CouiDialogAction(
+                text = stringResource(android.R.string.cancel),
+                onClick = buttons.onCancel,
+            )
+        } else {
+            CouiDialogAction(
+                text = stringResource(android.R.string.ok),
+                onClick = onConfirm,
+                enabled = buttons.confirmEnabled,
+                style = CouiDialogActionStyle.Primary,
+                colors = CouiDialogDefaults.primaryActionColors(CouiTheme.colorScheme.accent),
+            )
+        },
+        // showCancel = false 时确认位之外不再有按钮；动作列表形态也只剩那一个「取消」
+        dismissAction = if (!buttons.showCancel || onConfirm == null) null else CouiDialogAction(
+            text = stringResource(android.R.string.cancel),
+            onClick = buttons.onCancel,
+        ),
+    ) {
+        CouiChoiceBody(header = header, rows = rows, onRowClick = onRowClick)
+    }
+}
+
+/**
+ * Coui 线：没有任何按钮的展示型弹层。
+ *
+ * COUI 弹窗的确认位必填，画不出「零按钮」，所以用裸 Dialog 承载一张 COUI 配色卡片：
+ * 标题在上，行列表平铺在下，不画按钮区；点弹层外部要不要关闭由 [onDismiss] 自己决定。
+ */
+@Composable
+private fun CouiButtonlessChoiceDialog(
+    title: String,
+    rows: List<ChoiceRowModel>,
+    onDismiss: () -> Unit,
+    onRowClick: (ChoiceItem) -> Unit,
+    modifier: Modifier,
+    header: (@Composable () -> Unit)? = null,
+) {
+    val scheme = CouiTheme.colorScheme
+    Dialog(
+        onDismissRequest = onDismiss,
+        properties = DialogProperties(usePlatformDefaultWidth = false),
+    ) {
+        Column(
+            modifier = modifier
+                .padding(horizontal = 24.dp)
+                .fillMaxWidth()
+                .clip(CouiShape(24.dp, 2f))
+                .background(scheme.container)
+                .padding(vertical = 24.dp),
+        ) {
+            CouiText(
+                text = title,
+                kind = CouiTextKind.PreferenceTitle,
+                color = scheme.onSurface,
+                modifier = Modifier.padding(horizontal = CouiDialogDefaults.contentPadding),
+            )
+            Spacer(Modifier.height(8.dp))
+            // 行数可能超过一屏：正文自己滚动，最后几行才够得到
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .verticalScroll(rememberScrollState()),
+            ) {
+                CouiChoiceBody(header = header, rows = rows, onRowClick = onRowClick)
+            }
+        }
+    }
+}
+
+/** Coui 线的弹层正文：调用方 header、空态或平铺的行列表；左右留白由 header 与行自己补 */
+@Composable
+private fun CouiChoiceBody(
+    header: (@Composable () -> Unit)?,
+    rows: List<ChoiceRowModel>,
+    onRowClick: (ChoiceItem) -> Unit,
+) {
+    // 正文槽没有内边距，标题与正文的左右留白由调用方自己补
+    if (header != null) {
+        Box(Modifier.padding(horizontal = CouiDialogDefaults.contentPadding)) { header() }
+    }
+    if (rows.isEmpty()) {
+        ChoicePlaceholder {
+            CouiText(
+                text = stringResource(R.string.choice_dialog_empty),
+                kind = CouiTextKind.Body,
+                color = CouiTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+    } else {
+        Column(Modifier.fillMaxWidth()) {
+            rows.forEach { row ->
+                CouiChoiceRow(row = row, onRowClick = onRowClick)
+            }
+        }
+    }
+}
+
+/**
+ * Coui 线的一行：整行可点，行为与其余线一致（点击只上报，不自行改状态）。
+ *
+ * 行首指示器沿用本文件其余线的位置：单选为单选钮、多选为勾选框，动作列表无指示器；
+ * 行尾放调用方的自定义动作。语义角色随指示器变化，读屏据此播报「单选 / 复选」。
+ */
+@Composable
+private fun CouiChoiceRow(
+    row: ChoiceRowModel,
+    onRowClick: (ChoiceItem) -> Unit,
+) {
+    val enabled = row.item.enabled
+    val scheme = CouiTheme.colorScheme
+    val onClick: () -> Unit = { onRowClick(row.item) }
+    val interaction = when (row.indicator) {
+        ChoiceIndicator.None -> Modifier.clickable(
+            enabled = enabled,
+            role = Role.Button,
+            onClick = onClick,
+        )
+
+        ChoiceIndicator.Selected -> Modifier.selectable(
+            selected = row.checked,
+            enabled = enabled,
+            role = Role.RadioButton,
+            onClick = onClick,
+        )
+
+        ChoiceIndicator.Checkbox -> Modifier.toggleable(
+            value = row.checked,
+            enabled = enabled,
+            role = Role.Checkbox,
+            onValueChange = { onClick() },
+        )
+    }
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .then(interaction)
+            .padding(horizontal = CouiDialogDefaults.contentPadding, vertical = 10.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        when (row.indicator) {
+            ChoiceIndicator.None -> Unit
+            ChoiceIndicator.Selected -> CouiRadioButton(selected = row.checked, enabled = enabled)
+            ChoiceIndicator.Checkbox -> CouiCheckbox(checked = row.checked, enabled = enabled)
+        }
+        Column(Modifier.weight(1f)) {
+            CouiText(
+                text = row.item.title,
+                kind = CouiTextKind.PreferenceTitle,
+                color = if (enabled) scheme.onSurface else scheme.onSurfaceVariant,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis,
+            )
+            row.item.summary?.let { summary ->
+                CouiText(
+                    text = summary,
+                    kind = CouiTextKind.PreferenceSummary,
+                    color = scheme.onSurfaceVariant,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            }
+        }
+        row.actions?.invoke()
+    }
+}
+
 /** Material 线行首：单选为单选钮、多选为勾选框，动作列表无行首指示器 */
 @Composable
 private fun materialLeading(row: ChoiceRowModel): (@Composable () -> Unit)? = when (row.indicator) {
@@ -543,31 +623,20 @@ private fun ChoiceSelectAllRow(
         verticalAlignment = Alignment.CenterVertically,
     ) {
         when (LocalUiMode.current) {
-            UiMode.Miuix -> MiuixText(
-                text = countText,
-                style = MiuixTheme.textStyles.body2,
-                color = MiuixTheme.colorScheme.onBackgroundVariant,
-            )
-
             UiMode.Material -> Text(
                 text = countText,
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
+
+            UiMode.Coui -> CouiText(
+                text = countText,
+                kind = CouiTextKind.PreferenceSummary,
+                color = CouiTheme.colorScheme.onSurfaceVariant,
+            )
         }
         Row {
             when (LocalUiMode.current) {
-                UiMode.Miuix -> {
-                    MiuixTextButton(
-                        text = stringResource(R.string.appinfo_select_all),
-                        onClick = onSelectAll,
-                    )
-                    MiuixTextButton(
-                        text = stringResource(R.string.appinfo_deselect_all),
-                        onClick = onClear,
-                    )
-                }
-
                 UiMode.Material -> {
                     TextButton(onClick = onSelectAll) {
                         Text(stringResource(R.string.appinfo_select_all))
@@ -576,12 +645,42 @@ private fun ChoiceSelectAllRow(
                         Text(stringResource(R.string.appinfo_deselect_all))
                     }
                 }
+
+                UiMode.Coui -> {
+                    CouiTextAction(
+                        text = stringResource(R.string.appinfo_select_all),
+                        onClick = onSelectAll,
+                    )
+                    CouiTextAction(
+                        text = stringResource(R.string.appinfo_deselect_all),
+                        onClick = onClear,
+                    )
+                }
             }
         }
     }
 }
 
-/** 两条线共用的空态占位（本文件私有，不与 AppPickerDialog 的 PickerPlaceholder 混用） */
+/**
+ * Coui 线的行内文字按钮：COUI 不提供公开的文字按钮，用可点文本承载同样的「点击即执行」语义。
+ * 触控高度按文字行高加纵向留白补到可点范围，读屏角色为按钮。
+ */
+@Composable
+private fun CouiTextAction(
+    text: String,
+    onClick: () -> Unit,
+) {
+    CouiText(
+        text = text,
+        kind = CouiTextKind.Body,
+        color = CouiTheme.colorScheme.accent,
+        modifier = Modifier
+            .clickable(role = Role.Button, onClick = onClick)
+            .padding(horizontal = 12.dp, vertical = 8.dp),
+    )
+}
+
+/** 各条线共用的空态占位（本文件私有，不与 AppPickerDialog 的 PickerPlaceholder 混用） */
 @Composable
 private fun ChoicePlaceholder(content: @Composable () -> Unit) {
     Box(

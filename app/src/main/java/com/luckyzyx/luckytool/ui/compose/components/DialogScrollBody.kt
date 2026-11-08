@@ -1,4 +1,4 @@
-package com.luckyzyx.luckytool.ui.compose.components.miuix
+package com.luckyzyx.luckytool.ui.compose.components
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
@@ -19,12 +19,9 @@ import androidx.compose.ui.unit.dp
 /**
  * 对话框正文容器：正文可滚动，底部操作行固定不参与压缩。
  *
- * 之所以需要它：应用所有弹层都走 miuix 的 OverlayDialog，它不是独立窗口，而是由根部 Scaffold 的
- * popup host 承载。miuix 的 DialogContentLayout 在手机上用 Alignment.BottomCenter 底对齐，外层链是
- * `.imePadding().navigationBarsPadding().captionBarPadding().fillMaxSize()`，正文 Column 的
- * `heightIn(max =)` 在非展开形态下是 Dp.Unspecified 且正文没有滚动。键盘一弹，外层被抬到键盘上方，
- * 可用高度只剩「屏幕 − 键盘」，Column 把所有固定高度的子项逐项压扁，靠后的子项（输入框、按钮行）
- * 直接被压成 0 高度，用户读不到也点不到。
+ * 弹层的正文高度由宿主给的约束决定，键盘弹出后又会被抬到键盘上方，
+ * 可用高度只剩「屏幕 − 键盘」。若正文与操作行都是固定高度子项，
+ * Column 会把它们逐项压扁，靠后的输入框和按钮行直接被压成 0 高度。
  *
  * 这里的做法：
  * - 正文用 `weight(1f, fill = false)`：有剩余高度时正文拿到「有界剩余高度」，fill = false 保证内容
@@ -32,9 +29,8 @@ import androidx.compose.ui.unit.dp
  * - actions 作为非加权子项放在正文之后：Column 先测量非加权子项，剩余高度才分给加权子项，
  *   所以压缩时按钮行优先保留，永远不会被压成 0。
  * - 正文额外加 `heightIn(max = 窗口高度 − 输入法高度 − 预留)`：weight 只在**父级约束有界**时才有
- *   高度可分，而 miuix 在手机态把正文的 `heightIn(max =)` 设成 Dp.Unspecified
- *   (DialogContentLayout.kt:351)，底对齐 + 无界约束下正文会按自然高度撑开，对话框顶部被顶出屏幕
- *   （键盘弹出后表现为「上部内容看不见」）。这里自己算一个上限，两种父级约束下都不会超出可见区域；
+ *   高度可分；无界约束下正文会按自然高度撑开，对话框顶部被顶出屏幕（键盘弹出后表现为「上部内容看不见」）。
+ *   这里自己算一个上限，两种父级约束下都不会超出可见区域；
  *   输入法高度取 WindowInsets.ime（edge-to-edge 下有效），非 edge-to-edge 时窗口本身已缩短，
  *   容器高度已经变小，两种情形都被覆盖。
  *
@@ -51,7 +47,7 @@ import androidx.compose.ui.unit.dp
  *   `weight` 子项 → 传 `false`；否则保持默认 `true`。
  */
 @Composable
-fun MiuixDialogScrollBody(
+fun DialogScrollBody(
     modifier: Modifier = Modifier,
     scrollable: Boolean = true,
     actions: (@Composable () -> Unit)? = null,

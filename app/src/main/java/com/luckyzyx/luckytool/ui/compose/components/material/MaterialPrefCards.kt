@@ -22,8 +22,8 @@ class MaterialPrefCardScope internal constructor(private val title: String = "")
     }
 
     @Composable
-    override fun render(preferMiuix: Boolean, modifier: Modifier) {
-        PrefCardGroupRenderer(collected.entries, preferMiuix, modifier, title)
+    override fun render(modifier: Modifier) {
+        PrefCardGroupRenderer(collected.entries, modifier, title)
     }
 }
 

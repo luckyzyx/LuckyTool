@@ -72,7 +72,14 @@ import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.round
 import androidx.compose.ui.zIndex
+import com.itos.coui.layout.CouiPageDefaults
+import com.itos.coui.text.CouiTextKind
+import com.itos.coui.text.Text as CouiText
+import com.itos.coui.theme.CouiTheme
+import com.luckyzyx.luckytool.ui.compose.components.coui.CouiTextField
 import com.luckyzyx.luckytool.ui.theme.DesignTokens
+import com.luckyzyx.luckytool.ui.theme.LocalUiMode
+import com.luckyzyx.luckytool.ui.theme.UiMode
 import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
 
@@ -138,8 +145,7 @@ fun materialGroupColors(
 )
 
 /**
- * 分组内条目形状：单条卡片保持原有整块圆角；分组内相邻边取 [SegmentedInnerRadius]
- * （0dp，与 Miuix 线 [com.luckyzyx.luckytool.ui.compose.components.miuix.MiuixPrefItemShape] 一致），
+ * 分组内条目形状：单条卡片保持原有整块圆角；分组内相邻边取 [SegmentedInnerRadius]（0dp），
  * 使同一分组的条目拼成一张连续卡片，而不是各自成卡。
  *
  * 六个状态统一为该形状、不走 material3 的形状动画（见 [StaticShape]）：内边 0dp 与 M3 的按压形状
@@ -561,13 +567,105 @@ fun MaterialTextField(
     onTextLayout: (TextLayoutResult) -> Unit = {},
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
     cursorBrush: Brush = SolidColor(colorScheme.primary),
-    placeholder: @Composable (() -> Unit)? = { Text("-") },
+    // 缺省占位文案跟随当前线：COUI 线取 COUI 字号与 onSurfaceVariant 字色，Material 线保持原样
+    placeholder: @Composable (() -> Unit)? = {
+        when (LocalUiMode.current) {
+            UiMode.Material -> Text("-")
+            UiMode.Coui -> CouiText(
+                text = "-",
+                kind = CouiTextKind.PreferenceSummary,
+                color = CouiTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+    },
     leadingContent: @Composable (() -> Unit)? = null,
     trailingContent: @Composable (() -> Unit)? = null,
     supportingContent: @Composable (() -> Unit)? = null,
     isError: Boolean = false,
     // 外部可注入焦点请求器（如搜索页进入即自动聚焦）；缺省内部自持，行为与原来一致
     focusRequester: FocusRequester = remember { FocusRequester() },
+) {
+    when (LocalUiMode.current) {
+        UiMode.Material -> MaterialTextRow(
+            modifier = modifier,
+            label = label,
+            value = value,
+            onValueChange = onValueChange,
+            enabled = enabled,
+            readOnly = readOnly,
+            colors = colors,
+            textStyle = textStyle,
+            keyboardOptions = keyboardOptions,
+            keyboardActions = keyboardActions,
+            singleLine = singleLine,
+            maxLines = maxLines,
+            minLines = minLines,
+            visualTransformation = visualTransformation,
+            onTextLayout = onTextLayout,
+            interactionSource = interactionSource,
+            cursorBrush = cursorBrush,
+            placeholder = placeholder,
+            leadingContent = leadingContent,
+            trailingContent = trailingContent,
+            supportingContent = supportingContent,
+            isError = isError,
+            focusRequester = focusRequester,
+        )
+
+        UiMode.Coui -> CouiTextRow(
+            modifier = modifier,
+            label = label,
+            value = value,
+            onValueChange = onValueChange,
+            enabled = enabled,
+            readOnly = readOnly,
+            keyboardOptions = keyboardOptions,
+            keyboardActions = keyboardActions,
+            singleLine = singleLine,
+            maxLines = maxLines,
+            visualTransformation = visualTransformation,
+            interactionSource = interactionSource,
+            placeholder = placeholder,
+            leadingContent = leadingContent,
+            trailingContent = trailingContent,
+            supportingContent = supportingContent,
+            isError = isError,
+            focusRequester = focusRequester,
+        )
+    }
+}
+
+/**
+ * Material 线的文本输入行：整行是 material3 的分段条目，条目本身给出卡片底色与点击聚焦；
+ * 内部用 [BasicTextField] 承载输入，占位文案只在输入为空时画在输入层下面。
+ *
+ * 只在 Material 线调用；[CouiTextRow] 是 COUI 线的对应实现。
+ */
+@Composable
+private fun MaterialTextRow(
+    modifier: Modifier,
+    label: String,
+    value: String,
+    onValueChange: (String) -> Unit,
+    enabled: Boolean,
+    readOnly: Boolean,
+    colors: ListItemColors,
+    textStyle: TextStyle,
+    keyboardOptions: KeyboardOptions,
+    keyboardActions: KeyboardActions,
+    singleLine: Boolean,
+    maxLines: Int,
+    minLines: Int,
+    visualTransformation: VisualTransformation,
+    onTextLayout: (TextLayoutResult) -> Unit,
+    interactionSource: MutableInteractionSource,
+    cursorBrush: Brush,
+    placeholder: @Composable (() -> Unit)?,
+    leadingContent: @Composable (() -> Unit)?,
+    trailingContent: @Composable (() -> Unit)?,
+    supportingContent: @Composable (() -> Unit)?,
+    isError: Boolean,
+    focusRequester: FocusRequester,
 ) {
     val bringIntoViewRequester = remember { BringIntoViewRequester() }
     val coroutineScope = rememberCoroutineScope()
@@ -634,3 +732,114 @@ fun MaterialTextField(
         }
     )
 }
+
+/**
+ * COUI 线的文本输入行。
+ *
+ * 内容直接铺在调用方的分组卡片里：COUI 线由外层卡片统一上卡片底色与圆角，
+ * 这里再画一层会叠出双层圆角，所以只补 COUI 的行内缩。
+ *
+ * 与 Material 行的差异：
+ * - 输入框用 [CouiTextField]，自带描边、胶囊形状与 48dp 最小高度；
+ * - COUI 没有 error 配色角色，[isError] 用 onSurface 满强度表达（标题与描边一起变）；
+ * - CouiTextField 没有只读、minLines、onTextLayout 参数：[readOnly] 用「吞掉编辑」实现，
+ *   另外两项是 Material 行专有的排版细节，COUI 行不参与。
+ */
+@Composable
+private fun CouiTextRow(
+    modifier: Modifier,
+    label: String,
+    value: String,
+    onValueChange: (String) -> Unit,
+    enabled: Boolean,
+    readOnly: Boolean,
+    keyboardOptions: KeyboardOptions,
+    keyboardActions: KeyboardActions,
+    singleLine: Boolean,
+    maxLines: Int,
+    visualTransformation: VisualTransformation,
+    interactionSource: MutableInteractionSource,
+    placeholder: @Composable (() -> Unit)?,
+    leadingContent: @Composable (() -> Unit)?,
+    trailingContent: @Composable (() -> Unit)?,
+    supportingContent: @Composable (() -> Unit)?,
+    isError: Boolean,
+    focusRequester: FocusRequester,
+) {
+    val colors = CouiTheme.colorScheme
+    val bringIntoViewRequester = remember { BringIntoViewRequester() }
+    val coroutineScope = rememberCoroutineScope()
+
+    Column(
+        modifier = modifier
+            .fillMaxWidth()
+            .bringIntoViewRequester(bringIntoViewRequester)
+            // 焦点落在内部输入框上，容器只观察「子树拿到焦点」并把它滚进可视区
+            .onFocusChanged {
+                if (it.hasFocus) {
+                    coroutineScope.launch { bringIntoViewRequester.bringIntoView() }
+                }
+            }
+            .padding(
+                horizontal = CouiPageDefaults.rowPadding,
+                vertical = CouiPageDefaults.contentPadding,
+            ),
+    ) {
+        if (label.isNotEmpty()) {
+            CouiText(
+                text = label,
+                kind = CouiTextKind.PreferenceSummary,
+                color = if (isError) colors.onSurface else colors.onSurfaceVariant,
+                modifier = Modifier.padding(start = 4.dp, bottom = 4.dp),
+                maxLines = 1,
+            )
+        }
+        Box(modifier = Modifier.fillMaxWidth()) {
+            CouiTextField(
+                value = value,
+                // 只读等价于吞掉编辑：CouiTextField 没有 readOnly 参数
+                onValueChange = { if (!readOnly) onValueChange(it) },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .focusRequester(focusRequester),
+                enabled = enabled,
+                isError = isError,
+                singleLine = singleLine,
+                maxLines = maxLines,
+                keyboardOptions = keyboardOptions,
+                keyboardActions = keyboardActions,
+                visualTransformation = visualTransformation,
+                leadingIcon = leadingContent,
+                trailingIcon = trailingContent,
+                interactionSource = interactionSource,
+            )
+            // 调用方给的是组合项，CouiTextField 的占位文案只收字符串：
+            // 按输入框内边距（水平 16dp + 前后图标槽各 32dp）把组合项叠在同一位置。
+            // 空值时输入层没有字形，叠上去不遮内容；这层 Box 不消费触摸，点击照常落到输入框。
+            if (value.isEmpty() && placeholder != null) {
+                CompositionLocalProvider(
+                    // 调用方可能传裸 material3 Text，进 COUI 行前先把它默认取的 contentColor 换成 COUI 次级字色
+                    LocalContentColor provides colors.onSurfaceVariant,
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .matchParentSize()
+                            .padding(
+                                start = if (leadingContent != null) 48.dp else 16.dp,
+                                end = if (trailingContent != null) 48.dp else 16.dp,
+                            ),
+                        contentAlignment = Alignment.CenterStart,
+                    ) {
+                        placeholder()
+                    }
+                }
+            }
+        }
+        if (supportingContent != null) {
+            Box(modifier = Modifier.padding(start = 4.dp, top = 4.dp)) {
+                supportingContent()
+            }
+        }
+    }
+}
+

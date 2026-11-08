@@ -1,7 +1,7 @@
 // Copyright 2026, compose-miuix-ui contributors
 // SPDX-License-Identifier: Apache-2.0
 
-package com.luckyzyx.luckytool.ui.compose.components.miuix.animation
+package com.luckyzyx.luckytool.ui.compose.components.animation
 
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.spring
@@ -31,7 +31,7 @@ import kotlinx.coroutines.launch
 import kotlin.math.abs
 import kotlin.time.TimeSource
 
-internal class MiuixDampedDragAnimation(
+internal class DampedDragAnimation(
     private val animationScope: CoroutineScope,
     val initialValue: Float,
     val valueRange: ClosedRange<Float>,
@@ -39,10 +39,10 @@ internal class MiuixDampedDragAnimation(
     val initialScale: Float,
     val pressedScale: Float,
     val canDrag: (Offset) -> Boolean = { true },
-    val onDragStarted: MiuixDampedDragAnimation.(position: Offset) -> Unit,
-    val onDragStopped: MiuixDampedDragAnimation.() -> Unit,
-    val onDragCancelled: MiuixDampedDragAnimation.() -> Unit = onDragStopped,
-    val onDrag: MiuixDampedDragAnimation.(size: IntSize, dragAmount: Offset) -> Unit,
+    val onDragStarted: DampedDragAnimation.(position: Offset) -> Unit,
+    val onDragStopped: DampedDragAnimation.() -> Unit,
+    val onDragCancelled: DampedDragAnimation.() -> Unit = onDragStopped,
+    val onDrag: DampedDragAnimation.(size: IntSize, dragAmount: Offset) -> Unit,
 ) {
 
     private val valueAnimationSpec = spring(1f, 1000f, visibilityThreshold)
