@@ -149,9 +149,10 @@ fun AppPermissionContent(
     }
     val moduleActive by XposedServiceBridge.isModuleActive.collectAsStateWithLifecycle()
 
-    // selfInset：阻塞态独立成屏、宿主列表不在场，行级水平内缩由本页补（否则内容贴边）；
-    // 设置页入口由宿主列表提供，保持不叠加
-    val lineInset = 16.dp
+    // selfInset：阻塞态独立成屏、宿主列表不在场时补行级水平内缩。
+    // COUI 线由 CouiScopeCard 自带头 16dp，本页再叠加会把卡片顶到 32dp，故只对 Material 线生效；
+    // 设置页入口 selfInset 恒为 false，仍由宿主列表提供，保持不叠加
+    val lineInset = if (LocalUiMode.current == UiMode.Coui) 0.dp else 16.dp
     Column(
         modifier = modifier.then(
             if (selfInset) Modifier.padding(horizontal = lineInset) else Modifier
@@ -299,7 +300,8 @@ private fun SectionTitle(text: String) {
             color = CouiTheme.colorScheme.accent,
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(top = 12.dp, bottom = 4.dp),
+                // COUI 分类标题统一 32dp 水平内缩，与卡片内行文字（16+16）对齐
+                .padding(start = 32.dp, end = 32.dp, top = 12.dp, bottom = 4.dp),
         )
     }
 }
@@ -323,7 +325,8 @@ private fun SectionBody(text: String) {
             color = CouiTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(bottom = 4.dp),
+                // 与 COUI 小节标题保持同一水平起点
+                .padding(start = 32.dp, end = 32.dp, bottom = 4.dp),
         )
     }
 }
