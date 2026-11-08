@@ -23,6 +23,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.Velocity
 import androidx.compose.ui.unit.dp
+import com.luckyzyx.luckytool.ui.compose.components.LocalTopBarCollapsedFraction
 import kotlin.math.roundToInt
 
 /** 触发刷新所需的下拉位移。 */
@@ -63,11 +64,14 @@ internal fun CouiPullToRefreshBox(
     val pull = remember { mutableFloatStateOf(0f) }
     val atTop = remember { mutableStateOf(true) }
     val currentOnRefresh = rememberUpdatedState(onRefresh)
+    // 顶栏还没完全展开时把手势让给顶栏，否则会顶住展开动作、误触发下拉动画。
+    val canPullDown = rememberUpdatedState(LocalTopBarCollapsedFraction.current <= 0f)
     val connection = remember(thresholdPx) {
         CouiPullToRefreshConnection(
             pull = pull,
             atTop = atTop,
             thresholdPx = thresholdPx,
+            canPullDown = canPullDown,
             onRefresh = currentOnRefresh,
         )
     }
@@ -99,6 +103,7 @@ private class CouiPullToRefreshConnection(
     private val pull: MutableFloatState,
     private val atTop: MutableState<Boolean>,
     private val thresholdPx: Float,
+    private val canPullDown: State<Boolean>,
     private val onRefresh: State<() -> Unit>,
 ) : NestedScrollConnection {
 
@@ -111,7 +116,7 @@ private class CouiPullToRefreshConnection(
             pull.floatValue -= consumed
             return Offset(0f, -consumed)
         }
-        if (available.y <= 0f || !atTop.value) return Offset.Zero
+        if (available.y <= 0f || !atTop.value || !canPullDown.value) return Offset.Zero
         pull.floatValue = (pull.floatValue + available.y * CouiPullDragCoefficient)
             .coerceAtMost(thresholdPx * CouiPullMaxFactor)
         return Offset(0f, available.y)
@@ -125,7 +130,7 @@ private class CouiPullToRefreshConnection(
     }
 
     override suspend fun onPreFling(available: Velocity): Velocity {
-        if (pull.floatValue >= thresholdPx) onRefresh.value()
+        if (pull.floatValue >= thresholdPx && canPullDown.value) onRefresh.value()
         pull.floatValue = 0f
         return Velocity.Zero
     }

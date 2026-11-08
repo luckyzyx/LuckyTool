@@ -1260,6 +1260,7 @@ fun ScopeScreen(
                     isRefreshing = refreshing,
                     onRefresh = triggerRefresh,
                     modifier = modifier,
+                    enabled = LocalTopBarCollapsedFraction.current <= 0f,
                 ) { list(Modifier.fillMaxSize()) }
             }
         } else {

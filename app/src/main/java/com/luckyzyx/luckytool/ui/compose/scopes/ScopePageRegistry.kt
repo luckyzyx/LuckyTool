@@ -26,6 +26,7 @@ import com.luckyzyx.luckytool.ui.compose.components.PrefScopeBuilder
 import com.luckyzyx.luckytool.ui.compose.components.ScopeScreen
 import com.luckyzyx.luckytool.ui.compose.components.ScrollTarget
 import com.luckyzyx.luckytool.ui.compose.components.coui.CouiPullToRefreshBox
+import com.luckyzyx.luckytool.ui.compose.components.LocalTopBarCollapsedFraction
 import com.luckyzyx.luckytool.ui.compose.scopes.apps.OplusAlarmClockPage
 import com.luckyzyx.luckytool.ui.compose.scopes.apps.OplusBatteryPage
 import com.luckyzyx.luckytool.ui.compose.scopes.apps.OplusBeaconLinkPage
@@ -352,6 +353,7 @@ internal fun ScopePageContent(
                 isRefreshing = refreshing,
                 onRefresh = refresh,
                 modifier = modifier,
+                enabled = LocalTopBarCollapsedFraction.current <= 0f,
             ) {
                 page(Modifier.fillMaxSize())
             }

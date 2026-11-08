@@ -55,6 +55,14 @@ import com.luckyzyx.luckytool.ui.theme.UiMode
 internal val LocalCouiTabsBarSlot = compositionLocalOf { false }
 
 /**
+ * 当前页顶栏的折叠比例（0 = 展开，1 = 完全收起）。
+ *
+ * 下拉刷新只在顶栏完全展开后接管下拉手势：列表到顶、顶栏还差一点没展开时，正向位移
+ * 会先被下拉组件吃掉，顶栏在 postScroll 里拿不到剩余量，就永远展不开、只剩一个下拉动画。
+ */
+internal val LocalTopBarCollapsedFraction = compositionLocalOf { 0f }
+
+/**
  * 系统栏与刘海的安全区，不含输入法。
  *
  * [WindowInsets.safeDrawing] 把输入法也算在安全区里：键盘一弹出，用到它的页面底部内边距
@@ -310,21 +318,29 @@ internal fun LuckyPageScaffold(
         materialState.contentOffset = pendingContentOffset
         pendingCollapsedFraction = null
     }
-    currentUiStyle().PageScaffold(
-        title = title,
-        modifier = modifier,
-        onBack = onBack,
-        actions = actions,
-        floatingActionButton = floatingActionButton,
-        bottomBar = bottomBar,
-        header = PageHeader(
-            materialState = materialState,
-            couiBehavior = couiBehavior,
-            restoreModifier = restoreModifier,
-            couiRestoreFraction = couiRestoreFraction,
-        ),
-        content = movableContent,
-    )
+    // 下拉刷新组件用这个值判断顶栏是否已完全展开，两条线都只在展开后才接管下拉手势
+    val topBarCollapsedFraction = if (uiMode == UiMode.Coui) {
+        couiBehavior.state.collapsedFraction
+    } else {
+        materialState.collapsedFraction
+    }
+    CompositionLocalProvider(LocalTopBarCollapsedFraction provides topBarCollapsedFraction) {
+        currentUiStyle().PageScaffold(
+            title = title,
+            modifier = modifier,
+            onBack = onBack,
+            actions = actions,
+            floatingActionButton = floatingActionButton,
+            bottomBar = bottomBar,
+            header = PageHeader(
+                materialState = materialState,
+                couiBehavior = couiBehavior,
+                restoreModifier = restoreModifier,
+                couiRestoreFraction = couiRestoreFraction,
+            ),
+            content = movableContent,
+        )
+    }
 }
 
 /** 根壳的统一入口：除页面骨架之外的最外层容器。 */
