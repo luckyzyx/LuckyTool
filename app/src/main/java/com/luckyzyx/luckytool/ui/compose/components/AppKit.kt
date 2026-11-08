@@ -268,6 +268,8 @@ fun AppListItem(
     supportingContent: @Composable (() -> Unit)? = null,
     leadingContent: @Composable (() -> Unit)? = null,
     trailingContent: @Composable (() -> Unit)? = null,
+    /** COUI 行首图标槽边长，默认与 CouiItem 一致；Material 线不使用 */
+    iconSize: Dp = CouiPageDefaults.iconSize,
 ) {
     if (!isCouiAppearance) {
         MaterialListItem(
@@ -303,11 +305,13 @@ fun AppListItem(
                 title = title,
                 summary = supportingContent,
                 trailing = trailingContent,
+                iconSize = iconSize,
             )
         } else {
             CouiItem(
                 modifier = modifier,
                 icon = leadingContent,
+                iconSize = iconSize,
                 title = title,
                 summary = supportingContent,
                 trailing = { trailingContent?.invoke() },
@@ -329,6 +333,7 @@ private fun CouiLongPressItem(
     title: @Composable () -> Unit,
     summary: (@Composable () -> Unit)?,
     trailing: (@Composable () -> Unit)?,
+    iconSize: Dp = CouiPageDefaults.iconSize,
 ) {
     val dark = CouiTheme.isDark
     val source = remember { MutableInteractionSource() }
@@ -349,7 +354,7 @@ private fun CouiLongPressItem(
     ) {
         if (leading != null) {
             Box(
-                modifier = Modifier.padding(end = CouiPageDefaults.iconSpacing).size(CouiPageDefaults.iconSize),
+                modifier = Modifier.padding(end = CouiPageDefaults.iconSpacing).size(iconSize),
                 contentAlignment = Alignment.Center,
             ) { leading() }
         }

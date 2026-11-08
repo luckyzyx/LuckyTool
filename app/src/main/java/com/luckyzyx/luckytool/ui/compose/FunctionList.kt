@@ -102,6 +102,7 @@ internal fun FunctionList(
             AppItem(index = index, count = rows.size) {
                 AppListItem(
                     onClick = onClick,
+                    iconSize = 48.dp,
                     headlineContent = {
                         // 行内排版按外观分派：COUI 线用 COUI 语义字体（PreferenceTitle/PreferenceSummary）
                         // 与页面配色，Material 线保持 M3 Text。
