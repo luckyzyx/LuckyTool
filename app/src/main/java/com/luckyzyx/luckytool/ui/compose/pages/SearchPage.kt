@@ -16,6 +16,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
@@ -32,6 +33,7 @@ import com.luckyzyx.luckytool.R
 import com.luckyzyx.luckytool.ui.compose.FunctionPageData
 import com.luckyzyx.luckytool.ui.compose.pageTitle
 import com.luckyzyx.luckytool.ui.compose.ScopeRoute
+import com.luckyzyx.luckytool.ui.compose.components.LocalScopeListState
 import com.luckyzyx.luckytool.ui.compose.components.LuckyPageScaffold
 import com.luckyzyx.luckytool.ui.compose.components.ScopeScreen
 import com.luckyzyx.luckytool.ui.compose.components.coui.CouiIconButton
@@ -139,6 +141,19 @@ fun SearchPage(isCurrentPage: Boolean, onOpen: (ScopeRoute) -> Unit) {
             ScopeScreen(state = settings, modifier = scopeModifier) {
                 // 搜索框不是「选项行」，独占一张卡片（否则会与紧随其后的结果行拼在一起）
                 custom(key = "search_field", standalone = true) {
+                    // 顶栏折叠/展开由列表滚动驱动：滚动一开始就清掉搜索框焦点并收键盘，
+                    // 否则仍聚焦的字段会在布局变化时被平台恢复输入法。
+                    val scopeListState = LocalScopeListState.current
+                    LaunchedEffect(scopeListState, searchFocusRequester, keyboardController) {
+                        if (scopeListState == null) return@LaunchedEffect
+                        snapshotFlow { scopeListState.isScrollInProgress }
+                            .collect { scrolling ->
+                                if (scrolling) {
+                                    searchFocusRequester.freeFocus()
+                                    keyboardController?.hide()
+                                }
+                            }
+                    }
                     MaterialTextField(
                         value = queryNow,
                         onValueChange = { query = it },
