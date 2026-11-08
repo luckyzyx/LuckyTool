@@ -49,6 +49,8 @@ import com.itos.coui.theme.CouiTheme
 import com.luckyzyx.luckytool.R
 import com.luckyzyx.luckytool.data.AppInfo
 import com.luckyzyx.luckytool.data.DarkModeInfo
+import com.luckyzyx.luckytool.ui.compose.components.AppSearchPlaceholder
+import com.luckyzyx.luckytool.ui.compose.components.AppSearchBar
 import com.luckyzyx.luckytool.ui.compose.components.AppSlider
 import com.luckyzyx.luckytool.ui.compose.components.PrefGroup
 import com.luckyzyx.luckytool.ui.compose.components.PrefScopeBuilder
@@ -233,14 +235,16 @@ internal fun LazyItemScope.DarkModeContent(builder: PrefScopeBuilder) {
         if (allAppInfos.isEmpty()) reload()
     }
 
-    Column(Modifier.fillParentMaxHeight()) {
-        Column(
-            modifier = Modifier.padding(
-                horizontal = 16.dp,
-            ),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
-        ) {
-            PrefGroup {
+    AppListLoadingContainer(
+        visible = loading,
+        modifier = Modifier.fillParentMaxHeight(),
+    ) {
+        Column(Modifier.fillParentMaxHeight()) {
+            // COUI 线的分组卡片自带 16dp 水平内缩（CouiScopeCard），页级 padding 只补给 Material 线，
+            // 否则开关卡左右各多缩 16dp，与搜索框 / 列表对不齐。
+            PrefGroup(
+                modifier = if (LocalUiMode.current == UiMode.Coui) Modifier else Modifier.padding(horizontal = 16.dp),
+            ) {
                 item {
                     PrefSwitchRow(
                         title = stringResource(R.string.enable_dark_mode_list),
@@ -252,31 +256,39 @@ internal fun LazyItemScope.DarkModeContent(builder: PrefScopeBuilder) {
                     )
                 }
             }
-            AppSearchField(
-                query = query,
-                enabled = !loading,
-                onQueryChange = { q ->
-                    query = q
-                    filterAppInfos = applyQuery(q)
-                },
-                onSortClick = { showSortSheet = true },
-            )
-        }
-        Spacer(Modifier.height(AppListContentGap))
-        LazyColumn(
-            modifier = Modifier.weight(1f),
-            contentPadding = PaddingValues(start = 16.dp, end = 16.dp, bottom = 16.dp),
-            verticalArrangement = Arrangement.spacedBy(DesignTokens.ItemGap),
-        ) {
-            itemsIndexed(filterAppInfos, key = { _, info -> info.packageName }) { index, info ->
-                AppItem(index = index, count = filterAppInfos.size) {
-                    DarkModeAppRow(
-                        info = info,
-                        enabled = allEnabledInfos.containsKey(info.packageName),
-                        curType = allEnabledInfos[info.packageName]?.curType ?: 0,
-                        onToggle = { v -> setEnabled(info.packageName, v) },
-                        onTypeChange = { t -> setType(info.packageName, t) },
-                    )
+            Spacer(Modifier.height(8.dp))
+            Column(
+                modifier = Modifier.padding(horizontal = 16.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                AppSearchBar(
+                    query = query,
+                    onQueryChange = { q ->
+                        query = q
+                        filterAppInfos = applyQuery(q)
+                    },
+                    placeholder = AppSearchPlaceholder,
+                    enabled = !loading,
+                    filterActive = showSortSheet,
+                    onFilterClick = { showSortSheet = true },
+                )
+            }
+            Spacer(Modifier.height(AppListContentGap))
+            LazyColumn(
+                modifier = Modifier.weight(1f),
+                contentPadding = PaddingValues(start = 16.dp, end = 16.dp, bottom = 16.dp),
+                verticalArrangement = Arrangement.spacedBy(DesignTokens.ItemGap),
+            ) {
+                itemsIndexed(filterAppInfos, key = { _, info -> info.packageName }) { index, info ->
+                    AppItem(index = index, count = filterAppInfos.size) {
+                        DarkModeAppRow(
+                            info = info,
+                            enabled = allEnabledInfos.containsKey(info.packageName),
+                            curType = allEnabledInfos[info.packageName]?.curType ?: 0,
+                            onToggle = { v -> setEnabled(info.packageName, v) },
+                            onTypeChange = { t -> setType(info.packageName, t) },
+                        )
+                    }
                 }
             }
         }

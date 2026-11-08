@@ -24,6 +24,8 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import com.luckyzyx.luckytool.R
 import com.luckyzyx.luckytool.data.AppInfo
+import com.luckyzyx.luckytool.ui.compose.components.AppSearchPlaceholder
+import com.luckyzyx.luckytool.ui.compose.components.AppSearchBar
 import com.luckyzyx.luckytool.ui.compose.components.AppItem
 import com.luckyzyx.luckytool.ui.compose.scopes.ScopePageAction
 import com.luckyzyx.luckytool.ui.compose.scopes.ScopePageSpec
@@ -181,27 +183,34 @@ internal fun LazyItemScope.MultiAppContent(builder: PrefScopeBuilder) {
         }
     }
 
-    Column(Modifier.fillParentMaxHeight()) {
-        Column(
-            modifier = Modifier.padding(horizontal = 16.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
-        ) {
-            AppSearchField(
-                query = query,
-                enabled = !loading,
-                onQueryChange = { q ->
-                    query = q
-                    filterAppInfos = applyQuery(q)
-                },
-                onSortClick = { showSortSheet = true },
-            )
+    AppListLoadingContainer(
+        visible = loading,
+        modifier = Modifier.fillParentMaxHeight(),
+    ) {
+        Column(Modifier.fillParentMaxHeight()) {
+            Column(
+                modifier = Modifier.padding(horizontal = 16.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                AppSearchBar(
+                    query = query,
+                    onQueryChange = { q ->
+                        query = q
+                        filterAppInfos = applyQuery(q)
+                    },
+                    placeholder = AppSearchPlaceholder,
+                    enabled = !loading,
+                    filterActive = showSortSheet,
+                    onFilterClick = { showSortSheet = true },
+                )
+            }
+            Spacer(Modifier.height(AppListContentGap))
+            LazyColumn(
+                modifier = Modifier.weight(1f),
+                contentPadding = PaddingValues(start = 16.dp, end = 16.dp, bottom = 16.dp),
+                verticalArrangement = Arrangement.spacedBy(DesignTokens.ItemGap),
+            ) { listItems() }
         }
-        Spacer(Modifier.height(AppListContentGap))
-        LazyColumn(
-            modifier = Modifier.weight(1f),
-            contentPadding = PaddingValues(start = 16.dp, end = 16.dp, bottom = 16.dp),
-            verticalArrangement = Arrangement.spacedBy(DesignTokens.ItemGap),
-        ) { listItems() }
     }
 
     if (showSortSheet) {

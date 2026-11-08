@@ -35,9 +35,7 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -56,7 +54,6 @@ import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
@@ -76,9 +73,7 @@ import com.luckyzyx.luckytool.ui.compose.components.AppItem
 import com.luckyzyx.luckytool.ui.compose.components.coui.CouiAlertDialog
 import com.luckyzyx.luckytool.ui.compose.components.coui.CouiCircularProgressIndicator
 import com.luckyzyx.luckytool.ui.compose.components.coui.CouiFilterChip
-import com.luckyzyx.luckytool.ui.compose.components.coui.CouiIconButton
 import com.luckyzyx.luckytool.ui.compose.components.coui.CouiTextButton
-import com.luckyzyx.luckytool.ui.compose.components.coui.CouiTextField
 import com.luckyzyx.luckytool.ui.compose.components.material.MaterialItemContainer
 import com.luckyzyx.luckytool.ui.theme.LocalUiMode
 import com.luckyzyx.luckytool.ui.theme.UiMode
@@ -259,7 +254,14 @@ private fun MaterialAppPickerDialog(
         title = { Text(title) },
         text = {
             Column(Modifier.fillMaxWidth()) {
-                MaterialPickerSearchField(state = state, loading = loading)
+                AppSearchBar(
+                    query = state.query,
+                    onQueryChange = { state.query = it },
+                    placeholder = stringResource(R.string.appinfo_search_hint),
+                    enabled = !loading,
+                    filterActive = state.sortFilterOpen,
+                    onFilterClick = { state.sortFilterOpen = !state.sortFilterOpen },
+                )
                 AnimatedVisibility(visible = state.sortFilterOpen) {
                     MaterialPickerSortFilterPanel(state = state, loading = loading)
                 }
@@ -341,45 +343,6 @@ private fun PickerPlaceholder(
     ) {
         content()
     }
-}
-
-/** Material 线搜索头：搜索图标 + 清除 + 排序/筛选开关 */
-@Composable
-private fun MaterialPickerSearchField(state: AppPickerUiState, loading: Boolean) {
-    OutlinedTextField(
-        value = state.query,
-        onValueChange = { state.query = it },
-        placeholder = { Text(stringResource(R.string.appinfo_search_hint)) },
-        singleLine = true,
-        enabled = !loading,
-        leadingIcon = {
-            Icon(painterResource(R.drawable.ic_baseline_search_24), contentDescription = null)
-        },
-        trailingIcon = {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                if (state.query.isNotEmpty()) {
-                    IconButton(onClick = { state.query = "" }) {
-                        Icon(
-                            painterResource(R.drawable.ic_baseline_close_24),
-                            contentDescription = stringResource(R.string.appinfo_clear_search),
-                        )
-                    }
-                }
-                IconButton(onClick = { state.sortFilterOpen = !state.sortFilterOpen }) {
-                    Icon(
-                        painterResource(R.drawable.baseline_filter_list_24),
-                        contentDescription = stringResource(R.string.appinfo_sort_and_filter),
-                        tint = if (state.sortFilterOpen) {
-                            MaterialTheme.colorScheme.primary
-                        } else {
-                            MaterialTheme.colorScheme.onSurfaceVariant
-                        },
-                    )
-                }
-            }
-        },
-        modifier = Modifier.fillMaxWidth(),
-    )
 }
 
 /** Material 线状态行：共 N 个应用 · 已选 M（多选），右侧全选/取消全选 */
@@ -647,7 +610,14 @@ private fun CouiAppPickerBody(
                 bottom = 16.dp,
             ),
     ) {
-        CouiPickerSearchField(state = state, loading = loading)
+        AppSearchBar(
+            query = state.query,
+            onQueryChange = { state.query = it },
+            placeholder = stringResource(R.string.appinfo_search_hint),
+            enabled = !loading,
+            filterActive = state.sortFilterOpen,
+            onFilterClick = { state.sortFilterOpen = !state.sortFilterOpen },
+        )
         AnimatedVisibility(visible = state.sortFilterOpen) {
             CouiPickerSortFilterPanel(state = state, loading = loading)
         }
@@ -697,56 +667,6 @@ private fun CouiAppPickerBody(
             }
         }
     }
-}
-
-/** Coui 线搜索头：搜索图标 + 清除 + 排序/筛选开关，开关激活时用强调色 */
-@Composable
-private fun CouiPickerSearchField(state: AppPickerUiState, loading: Boolean) {
-    val colors = CouiTheme.colorScheme
-    CouiTextField(
-        value = state.query,
-        onValueChange = { state.query = it },
-        modifier = Modifier.fillMaxWidth(),
-        enabled = !loading,
-        placeholder = stringResource(R.string.appinfo_search_hint),
-        singleLine = true,
-        leadingIcon = {
-            Icon(
-                painter = painterResource(R.drawable.ic_baseline_search_24),
-                contentDescription = null,
-                tint = colors.onSurfaceVariant,
-                modifier = Modifier.size(20.dp),
-            )
-        },
-        trailingIcon = {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                if (state.query.isNotEmpty()) {
-                    CouiIconButton(
-                        onClick = { state.query = "" },
-                        contentDescription = stringResource(R.string.appinfo_clear_search),
-                    ) {
-                        Icon(
-                            painter = painterResource(R.drawable.ic_baseline_close_24),
-                            contentDescription = null,
-                            tint = colors.onSurfaceVariant,
-                            modifier = Modifier.size(20.dp),
-                        )
-                    }
-                }
-                CouiIconButton(
-                    onClick = { state.sortFilterOpen = !state.sortFilterOpen },
-                    contentDescription = stringResource(R.string.appinfo_sort_and_filter),
-                ) {
-                    Icon(
-                        painter = painterResource(R.drawable.baseline_filter_list_24),
-                        contentDescription = null,
-                        tint = if (state.sortFilterOpen) colors.accent else colors.onSurfaceVariant,
-                        modifier = Modifier.size(20.dp),
-                    )
-                }
-            }
-        },
-    )
 }
 
 /** Coui 线状态行：共 N 个应用 · 已选 M（多选），右侧全选/取消全选 */

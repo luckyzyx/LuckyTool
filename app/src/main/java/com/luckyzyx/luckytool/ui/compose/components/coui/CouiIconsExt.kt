@@ -44,6 +44,15 @@ internal object CouiIconsExt {
         }
     }
 
+    /** 筛选入口：三条居中对齐、逐行变短的横线。 */
+    val FilterList: ImageVector by lazy {
+        outline("CouiExt.FilterList") {
+            stroke("M4,7H20")
+            stroke("M7,12H17")
+            stroke("M10,17H14")
+        }
+    }
+
     /** 置顶：圆头 + 针身。 */
     val Pin: ImageVector by lazy {
         outline("CouiExt.Pin") {

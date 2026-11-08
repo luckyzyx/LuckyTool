@@ -28,7 +28,6 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.SuggestionChip
@@ -54,7 +53,6 @@ import androidx.core.net.toUri
 import com.itos.coui.dialog.CouiDialogAction
 import com.itos.coui.dialog.CouiDialogActionStyle
 import com.itos.coui.dialog.CouiDialogDefaults
-import com.itos.coui.icons.CouiIcons
 import com.itos.coui.text.CouiTextKind
 import com.itos.coui.text.Text as CouiText
 import com.itos.coui.theme.CouiTheme
@@ -62,6 +60,8 @@ import com.luckyzyx.luckytool.R
 import com.luckyzyx.luckytool.data.AppInfo
 import com.luckyzyx.luckytool.data.AppIntentInfo
 import com.luckyzyx.luckytool.enums.IntentType
+import com.luckyzyx.luckytool.ui.compose.components.AppSearchBar
+import com.luckyzyx.luckytool.ui.compose.components.AppSearchPlaceholder
 import com.luckyzyx.luckytool.ui.compose.components.ChoiceItem
 import com.luckyzyx.luckytool.ui.compose.components.MultiChoiceDialog
 import com.luckyzyx.luckytool.ui.compose.components.PrefGroup
@@ -71,10 +71,8 @@ import com.luckyzyx.luckytool.ui.compose.components.material.MaterialItemContain
 import com.luckyzyx.luckytool.ui.compose.components.AppListItem
 import com.luckyzyx.luckytool.ui.compose.components.coui.CouiAlertDialog
 import com.luckyzyx.luckytool.ui.compose.components.coui.CouiFilterChip
-import com.luckyzyx.luckytool.ui.compose.components.coui.CouiIconButton
 import com.luckyzyx.luckytool.ui.compose.components.coui.CouiSuggestionChip
 import com.luckyzyx.luckytool.ui.compose.components.coui.CouiTextField
-import com.luckyzyx.luckytool.ui.compose.components.coui.CouiIconsExt
 import com.luckyzyx.luckytool.ui.compose.scopes.ScopePageAction
 import com.luckyzyx.luckytool.ui.compose.scopes.ScopePageSpec
 import com.luckyzyx.luckytool.ui.theme.DesignTokens
@@ -442,12 +440,16 @@ internal fun LazyItemScope.HideAppIntentContent() {
         filterAppInfos = applyQuery(q)
     }
 
-    Column(Modifier.fillParentMaxHeight()) {
-        Column(
-            modifier = Modifier.padding(horizontal = 16.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
-        ) {
-            PrefGroup {
+    AppListLoadingContainer(
+        visible = loading,
+        modifier = Modifier.fillParentMaxHeight(),
+    ) {
+        Column(Modifier.fillParentMaxHeight()) {
+            // COUI 线的分组卡片自带 16dp 水平内缩（CouiScopeCard），页级 padding 只补给 Material 线，
+            // 否则开关卡左右各多缩 16dp，与搜索框 / 列表对不齐。
+            PrefGroup(
+                modifier = if (LocalUiMode.current == UiMode.Coui) Modifier else Modifier.padding(horizontal = 16.dp),
+            ) {
                 item {
                     PrefSwitchRow(
                         title = stringResource(R.string.custom_config_app_intent_list),
@@ -459,40 +461,38 @@ internal fun LazyItemScope.HideAppIntentContent() {
                     )
                 }
             }
-            when (LocalUiMode.current) {
-                UiMode.Material -> AppSearchField(
+            Spacer(Modifier.height(8.dp))
+            Column(
+                modifier = Modifier.padding(horizontal = 16.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                AppSearchBar(
                     query = query,
-                    enabled = !loading,
                     onQueryChange = onQueryChange,
-                    onSortClick = { showSortSheet = true },
-                )
-
-                UiMode.Coui -> CouiIntentSearchField(
-                    query = query,
+                    placeholder = AppSearchPlaceholder,
                     enabled = !loading,
-                    onQueryChange = onQueryChange,
-                    onSortClick = { showSortSheet = true },
+                    filterActive = showSortSheet,
+                    onFilterClick = { showSortSheet = true },
                 )
             }
-        }
-        // 搜索框↔列表的间距：两者是同一 Column 的兄弟节点，不显式留白会直接贴在一起
-        Spacer(Modifier.height(AppListContentGap))
-        LazyColumn(
-            modifier = Modifier.weight(1f),
-            contentPadding = PaddingValues(start = 16.dp, end = 16.dp, bottom = 16.dp),
-            verticalArrangement = Arrangement.spacedBy(DesignTokens.ItemGap),
-        ) {
-            itemsIndexed(
-                filterAppInfos,
-                key = { _, info -> info.packageName },
-            ) { index, info ->
-                AppItem(index = index, count = filterAppInfos.size) {
-                    IntentAppRow(
-                        info = info,
-                        allIntentInfos = allIntentInfos,
-                        allEnabledInfos = allEnabledInfos,
-                        onOpenDialog = ::openSelectDialog,
-                    )
+            Spacer(Modifier.height(AppListContentGap))
+            LazyColumn(
+                modifier = Modifier.weight(1f),
+                contentPadding = PaddingValues(start = 16.dp, end = 16.dp, bottom = 16.dp),
+                verticalArrangement = Arrangement.spacedBy(DesignTokens.ItemGap),
+            ) {
+                itemsIndexed(
+                    filterAppInfos,
+                    key = { _, info -> info.packageName },
+                ) { index, info ->
+                    AppItem(index = index, count = filterAppInfos.size) {
+                        IntentAppRow(
+                            info = info,
+                            allIntentInfos = allIntentInfos,
+                            allEnabledInfos = allEnabledInfos,
+                            onOpenDialog = ::openSelectDialog,
+                        )
+                    }
                 }
             }
         }
@@ -914,49 +914,6 @@ private class FilterChipSpec(
     val selected: Boolean,
     val onClick: () -> Unit,
 )
-
-/**
- * COUI 线的页面搜索框：胶囊输入框 + 前置搜索图标 + 尾部排序筛选入口。
- * 尾部按钮只负责打开弹层，筛选状态由页面持有，控件自身不缓存任何东西。
- */
-@Composable
-private fun CouiIntentSearchField(
-    query: String,
-    enabled: Boolean,
-    onQueryChange: (String) -> Unit,
-    onSortClick: () -> Unit,
-) {
-    CouiTextField(
-        value = query,
-        onValueChange = onQueryChange,
-        enabled = enabled,
-        // 与 Material 线共用搜索框的提示语保持一致，避免两条线提示不同
-        placeholder = "Name / PackageName",
-        leadingIcon = {
-            Icon(
-                imageVector = CouiIcons.Search,
-                contentDescription = null,
-                modifier = Modifier.size(20.dp),
-                tint = CouiTheme.colorScheme.onSurfaceVariant,
-            )
-        },
-        trailingIcon = {
-            CouiIconButton(
-                onClick = onSortClick,
-                contentDescription = stringResource(R.string.appinfo_sort_and_filter),
-                enabled = enabled,
-            ) {
-                Icon(
-                    imageVector = CouiIconsExt.Tune,
-                    contentDescription = null,
-                    modifier = Modifier.size(20.dp),
-                    tint = CouiTheme.colorScheme.onSurface,
-                )
-            }
-        },
-        modifier = Modifier.fillMaxWidth(),
-    )
-}
 
 /**
  * COUI 线的清空确认弹窗：确认走主色位、取消走次级位。

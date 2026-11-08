@@ -8,12 +8,10 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.Icon
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -32,7 +30,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import com.drake.net.Get
-import com.itos.coui.icons.CouiIcons
 import com.itos.coui.layout.Divider as CouiDivider
 import com.itos.coui.switch.Switch as CouiSwitch
 import com.itos.coui.text.CouiTextKind
@@ -41,12 +38,10 @@ import com.itos.coui.theme.CouiTheme
 import com.luckyzyx.luckytool.R
 import com.luckyzyx.luckytool.data.DonateDetailInfo
 import com.luckyzyx.luckytool.data.DonateInfo
+import com.luckyzyx.luckytool.ui.compose.components.AppSearchBar
 import com.luckyzyx.luckytool.ui.compose.components.PrefScopeBuilder
 import com.luckyzyx.luckytool.ui.compose.components.coui.CouiFilterChip
-import com.luckyzyx.luckytool.ui.compose.components.coui.CouiIconButton
 import com.luckyzyx.luckytool.ui.compose.components.coui.CouiModalBottomSheet
-import com.luckyzyx.luckytool.ui.compose.components.coui.CouiTextField
-import com.luckyzyx.luckytool.ui.compose.components.coui.CouiIconsExt
 import com.luckyzyx.luckytool.ui.compose.components.material.MaterialSwitch
 import com.luckyzyx.luckytool.ui.compose.scopes.ScopePageSpec
 import com.luckyzyx.luckytool.ui.theme.LocalUiMode
@@ -382,24 +377,15 @@ internal fun PrefScopeBuilder.DonateBody(c: Context) {
     }
 
     Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp)) {
-        when (LocalUiMode.current) {
-            UiMode.Material -> AppSearchField(
-                query = filterString,
-                enabled = ready,
-                onQueryChange = onQueryChange,
-                onSortClick = { showSheet = true },
-                modifier = Modifier.padding(bottom = 8.dp),
-                label = "Name",
-            )
-
-            UiMode.Coui -> CouiDonateSearchField(
-                query = filterString,
-                enabled = ready,
-                onQueryChange = onQueryChange,
-                onSortClick = { showSheet = true },
-                modifier = Modifier.padding(bottom = 8.dp),
-            )
-        }
+        AppSearchBar(
+            query = filterString,
+            onQueryChange = onQueryChange,
+            placeholder = "Name",
+            modifier = Modifier.padding(bottom = 8.dp),
+            enabled = ready,
+            filterActive = showSheet,
+            onFilterClick = { showSheet = true },
+        )
 
         val markwon = remember {
             Markwon.builder(appContext).usePlugin(TablePlugin.create(appContext)).build()
@@ -478,50 +464,6 @@ private class DonateSortSheetModel(
     val onToggleDetail: () -> Unit,
     val onToggleOtherCurrency: () -> Unit,
 )
-
-/**
- * COUI 线的页面搜索框：胶囊输入框 + 前置放大镜 + 尾部排序筛选入口。
- * 尾部按钮只负责打开弹层，搜索词由页面持有。
- */
-@Composable
-private fun CouiDonateSearchField(
-    query: String,
-    enabled: Boolean,
-    onQueryChange: (String) -> Unit,
-    onSortClick: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    CouiTextField(
-        value = query,
-        onValueChange = onQueryChange,
-        enabled = enabled,
-        // 与 Material 线共用搜索框的提示语保持一致
-        placeholder = "Name",
-        leadingIcon = {
-            Icon(
-                imageVector = CouiIcons.Search,
-                contentDescription = null,
-                modifier = Modifier.size(20.dp),
-                tint = CouiTheme.colorScheme.onSurfaceVariant,
-            )
-        },
-        trailingIcon = {
-            CouiIconButton(
-                onClick = onSortClick,
-                contentDescription = stringResource(R.string.appinfo_sort_and_filter),
-                enabled = enabled,
-            ) {
-                Icon(
-                    imageVector = CouiIconsExt.Tune,
-                    contentDescription = null,
-                    modifier = Modifier.size(20.dp),
-                    tint = CouiTheme.colorScheme.onSurface,
-                )
-            }
-        },
-        modifier = modifier.fillMaxWidth(),
-    )
-}
 
 /** Material 线排序过滤弹层：底部面板 + M3 筛选片 */
 @Composable

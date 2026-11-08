@@ -2,20 +2,19 @@ package com.luckyzyx.luckytool.ui.compose.special
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.size
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalHapticFeedback
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.core.graphics.drawable.toBitmap
@@ -23,11 +22,9 @@ import com.itos.coui.switch.Switch as CouiSwitch
 import com.itos.coui.text.CouiTextKind
 import com.itos.coui.text.Text as CouiText
 import com.itos.coui.theme.CouiTheme
-import com.luckyzyx.luckytool.R
 import com.luckyzyx.luckytool.data.AppInfo
 import com.luckyzyx.luckytool.ui.compose.components.AppListItem
-import com.luckyzyx.luckytool.ui.compose.components.coui.CouiIconButton
-import com.luckyzyx.luckytool.ui.compose.components.coui.CouiTextField
+import com.luckyzyx.luckytool.ui.compose.components.coui.CouiCircularProgressIndicator
 import com.luckyzyx.luckytool.ui.compose.components.material.MaterialSwitch
 import com.luckyzyx.luckytool.ui.theme.LocalUiMode
 import com.luckyzyx.luckytool.ui.theme.UiMode
@@ -47,6 +44,31 @@ import com.luckyzyx.luckytool.ui.theme.UiMode
  * 取 12dp 而不用分节间距：搜索框与列表属于同一组内容，只需分开、不需要分成两组。
  */
 internal val AppListContentGap = 12.dp
+
+/**
+ * 整页加载罩：loading 时用居中的圆形进度条顶替页面内容，否则原样显示内容。
+ *
+ * 页面根容器都在 LazyItemScope 里用 `fillParentMaxHeight()` 取满视口高度，宽度
+ * 由罩子自己补满，进度条因此对齐页面中心；loading 期间内容不参与组合，陈旧的
+ * 行也不会再响应点击。两条线各用各的原生圆形进度条。
+ */
+@Composable
+internal fun AppListLoadingContainer(
+    visible: Boolean,
+    modifier: Modifier = Modifier,
+    content: @Composable () -> Unit,
+) {
+    if (visible) {
+        Box(modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+            when (LocalUiMode.current) {
+                UiMode.Material -> CircularProgressIndicator()
+                UiMode.Coui -> CouiCircularProgressIndicator()
+            }
+        }
+    } else {
+        content()
+    }
+}
 
 /**
  * 应用行：图标 + 应用名 + 包名 + 只读开关，整行点击切换（VirtualKey 触感 → [onToggle]）。
@@ -126,71 +148,4 @@ internal fun AppToggleRow(
             }
         },
     )
-}
-
-/**
- * 应用搜索框：受控输入 + 搜索图标 + 排序筛选按钮。
- *
- * Material 线用 material3 `OutlinedTextField` 承载 placeholder 语义；
- * COUI 线用 [CouiTextField]，placeholder 直接传文案，图标按钮换成 [CouiIconButton]。
- * 图标是 COUI 线唯一允许的 material3 组件，着色统一取 onSurface。
- */
-@Composable
-internal fun AppSearchField(
-    query: String,
-    enabled: Boolean,
-    onQueryChange: (String) -> Unit,
-    onSortClick: () -> Unit,
-    modifier: Modifier = Modifier,
-    label: String = "Name / PackageName",
-) {
-    when (LocalUiMode.current) {
-        UiMode.Material -> OutlinedTextField(
-            value = query,
-            onValueChange = onQueryChange,
-            enabled = enabled,
-            singleLine = true,
-            placeholder = { Text(label) },
-            leadingIcon = {
-                Icon(
-                    painterResource(R.drawable.ic_baseline_search_24),
-                    contentDescription = null,
-                )
-            },
-            trailingIcon = {
-                IconButton(onClick = onSortClick) {
-                    Icon(
-                        painterResource(R.drawable.baseline_filter_list_24),
-                        contentDescription = null,
-                    )
-                }
-            },
-            modifier = modifier.fillMaxWidth(),
-        )
-
-        UiMode.Coui -> CouiTextField(
-            value = query,
-            onValueChange = onQueryChange,
-            enabled = enabled,
-            singleLine = true,
-            placeholder = label,
-            leadingIcon = {
-                Icon(
-                    painterResource(R.drawable.ic_baseline_search_24),
-                    contentDescription = null,
-                    tint = CouiTheme.colorScheme.onSurface,
-                )
-            },
-            trailingIcon = {
-                CouiIconButton(onClick = onSortClick, contentDescription = null) {
-                    Icon(
-                        painterResource(R.drawable.baseline_filter_list_24),
-                        contentDescription = null,
-                        tint = CouiTheme.colorScheme.onSurface,
-                    )
-                }
-            },
-            modifier = modifier.fillMaxWidth(),
-        )
-    }
 }
