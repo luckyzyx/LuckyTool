@@ -24,14 +24,10 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import com.luckyzyx.luckytool.R
 import com.luckyzyx.luckytool.data.AppInfo
-import com.luckyzyx.luckytool.ui.compose.components.material.MaterialItem
-import com.luckyzyx.luckytool.ui.compose.components.material.materialBottomInset
-import com.luckyzyx.luckytool.ui.compose.components.miuix.MiuixPrefDefaults
-import com.luckyzyx.luckytool.ui.compose.components.miuix.MiuixPrefItem
+import com.luckyzyx.luckytool.ui.compose.components.AppItem
 import com.luckyzyx.luckytool.ui.compose.scopes.ScopePageSpec
 import com.luckyzyx.luckytool.ui.compose.components.PrefScopeBuilder
-import com.luckyzyx.luckytool.ui.theme.LocalUiMode
-import com.luckyzyx.luckytool.ui.theme.UiMode
+import com.luckyzyx.luckytool.ui.theme.DesignTokens
 import com.luckyzyx.luckytool.utils.ModulePrefs
 import com.luckyzyx.luckytool.utils.PackageUtils
 import com.luckyzyx.luckytool.utils.getStringSet
@@ -40,16 +36,12 @@ import com.luckyzyx.luckytool.utils.sendPrefsKey
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import top.yukonga.miuix.kmp.utils.overScrollVertical
-import top.yukonga.miuix.kmp.utils.scrollEndHaptic
 
 /**
  * P4 特殊页：自定义缩放窗口支持列表。
  *
- * 单文件双线：状态与数据加载逻辑只有一份，只在渲染缝按 [LocalUiMode] 分派
- * （搜索框 [AppSearchField]、LazyColumn 骨架、条目容器、应用行 [AppToggleRow]）。
- * 与 prefCard（`components/PrefCards.kt`）同一分派哲学：分派只发生在渲染体里，
- * 不为 Material / Miuix 各维护一份页面逻辑。
+ * 状态与数据加载逻辑只有一份，渲染统一走 material 件
+ * （搜索框 [AppSearchField]、LazyColumn 骨架、条目容器 [MaterialItem]、应用行 [AppToggleRow]）。
  */
 object ZoomWindowPage {
 
@@ -72,7 +64,6 @@ object ZoomWindowPage {
 
 @Composable
 internal fun LazyItemScope.ZoomWindowContent(builder: PrefScopeBuilder) {
-    val miuix = LocalUiMode.current == UiMode.Miuix
     val context = LocalContext.current
     val packageUtils = remember { PackageUtils(context.packageManager) }
     val scope = rememberCoroutineScope()
@@ -162,28 +153,17 @@ internal fun LazyItemScope.ZoomWindowContent(builder: PrefScopeBuilder) {
         if (allAppInfos.isEmpty()) reload()
     }
 
-    // 条目内容两线共享，只在容器上分派（同 ScopeScreen 的 listItems 范式）。
     val listItems: LazyListScope.() -> Unit = {
         itemsIndexed(filterAppInfos, key = { _, info -> info.packageName }) { index, info ->
             val enabled = allEnabledInfos.contains(info.packageName)
-            if (miuix) {
-                MiuixPrefItem(index = index, count = filterAppInfos.size) {
-                    AppToggleRow(info = info, enabled = enabled) { v -> toggle(info, v) }
-                }
-            } else {
-                MaterialItem(index = index, count = filterAppInfos.size) {
-                    AppToggleRow(info = info, enabled = enabled) { v -> toggle(info, v) }
-                }
+            AppItem(index = index, count = filterAppInfos.size) {
+                AppToggleRow(info = info, enabled = enabled) { v -> toggle(info, v) }
             }
         }
     }
 
     Column(Modifier.fillParentMaxHeight()) {
-        Column(
-            Modifier.padding(
-                horizontal = if (miuix) MiuixPrefDefaults.CardHorizontalInset else 16.dp
-            )
-        ) {
+        Column(Modifier.padding(horizontal = 16.dp)) {
             AppSearchField(
                 query = query,
                 enabled = !loading,
@@ -195,27 +175,11 @@ internal fun LazyItemScope.ZoomWindowContent(builder: PrefScopeBuilder) {
             )
         }
         Spacer(Modifier.height(AppListContentGap))
-        if (miuix) {
-            LazyColumn(
-                modifier = Modifier
-                    .weight(1f)
-                    .scrollEndHaptic()
-                    .overScrollVertical(),
-                contentPadding = PaddingValues(
-                    start = MiuixPrefDefaults.CardHorizontalInset,
-                    end = MiuixPrefDefaults.CardHorizontalInset,
-                    bottom = materialBottomInset(),
-                ),
-                verticalArrangement = Arrangement.spacedBy(MiuixPrefDefaults.ItemGap),
-                overscrollEffect = null,
-            ) { listItems() }
-        } else {
-            LazyColumn(
-                modifier = Modifier.weight(1f),
-                contentPadding = PaddingValues(start = 16.dp, end = 16.dp, bottom = 16.dp),
-                verticalArrangement = Arrangement.spacedBy(MiuixPrefDefaults.ItemGap),
-            ) { listItems() }
-        }
+        LazyColumn(
+            modifier = Modifier.weight(1f),
+            contentPadding = PaddingValues(start = 16.dp, end = 16.dp, bottom = 16.dp),
+            verticalArrangement = Arrangement.spacedBy(DesignTokens.ItemGap),
+        ) { listItems() }
     }
 
     if (showSortSheet) {

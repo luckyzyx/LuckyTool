@@ -6,11 +6,13 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Text
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.itos.coui.text.CouiTextKind
+import com.itos.coui.text.Text as CouiText
+import com.itos.coui.theme.CouiTheme
 import com.luckyzyx.luckytool.ui.compose.scopes.ScopePageSpec
 import com.luckyzyx.luckytool.ui.theme.LocalUiMode
 import com.luckyzyx.luckytool.ui.theme.UiMode
 import com.luckyzyx.luckytool.utils.SettingsPrefs
-import top.yukonga.miuix.kmp.basic.Text as MiuixText
 
 /**
  * BatteryInfo 页。
@@ -22,7 +24,7 @@ import top.yukonga.miuix.kmp.basic.Text as MiuixText
  * "android.intent.action.ADDITIONAL_BATTERY_CHANGED" 在本模块里没有可驱动的东西
  * （既不读电量、也没有要刷新的 UI），接进来只会多一条空转的 receiver。
  *
- * 文本按 [LocalUiMode] 分派：Miuix 线用 `MiuixText`，material 线保持 material3 `Text`。
+ * 文本按外观分派：COUI 线用 COUI 正文字号与页面前景色，Material 线仍用 material3 `Text`。
  */
 object BatteryInfoPage {
 
@@ -34,11 +36,17 @@ object BatteryInfoPage {
         restartEnabled = false,
     ) {
         custom(key = "battery_info_placeholder") {
+            val isCoui = LocalUiMode.current == UiMode.Coui
             Column(Modifier.fillMaxWidth().padding(16.dp)) {
                 // 本页唯一的可见内容：静态占位文本
-                when (LocalUiMode.current) {
-                    UiMode.Miuix -> MiuixText(text = "Test")
-                    UiMode.Material -> Text("Test")
+                if (isCoui) {
+                    CouiText(
+                        text = "Test",
+                        kind = CouiTextKind.Body,
+                        color = CouiTheme.colorScheme.onSurface,
+                    )
+                } else {
+                    Text("Test")
                 }
             }
         }

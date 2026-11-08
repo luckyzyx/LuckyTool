@@ -10,7 +10,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
@@ -42,6 +41,12 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.itos.coui.dialog.CouiDialogAction
+import com.itos.coui.dialog.CouiDialogActionStyle
+import com.itos.coui.dialog.CouiDialogDefaults
+import com.itos.coui.text.CouiTextKind
+import com.itos.coui.text.Text as CouiText
+import com.itos.coui.theme.CouiTheme
 import com.luckyzyx.luckytool.R
 import com.luckyzyx.luckytool.data.MemcConfigActivity
 import com.luckyzyx.luckytool.data.MemcConfigPackage
@@ -49,15 +54,14 @@ import com.luckyzyx.luckytool.ui.compose.components.ActionListDialog
 import com.luckyzyx.luckytool.ui.compose.components.AppPickerDialog
 import com.luckyzyx.luckytool.ui.compose.components.ChoiceItem
 import com.luckyzyx.luckytool.ui.compose.components.PrefCard
-import com.luckyzyx.luckytool.ui.compose.components.material.MaterialItem
-import com.luckyzyx.luckytool.ui.compose.components.material.MaterialListItem
-import com.luckyzyx.luckytool.ui.compose.components.material.materialBottomInset
-import com.luckyzyx.luckytool.ui.compose.components.miuix.MiuixDialogScrollBody
-import com.luckyzyx.luckytool.ui.compose.components.miuix.MiuixListItem
-import com.luckyzyx.luckytool.ui.compose.components.miuix.MiuixPrefDefaults
-import com.luckyzyx.luckytool.ui.compose.components.miuix.MiuixPrefItem
+import com.luckyzyx.luckytool.ui.compose.components.AppItem
+import com.luckyzyx.luckytool.ui.compose.components.AppListItem
+import com.luckyzyx.luckytool.ui.compose.components.coui.CouiAlertDialog
+import com.luckyzyx.luckytool.ui.compose.components.coui.CouiSegmentedTabs
+import com.luckyzyx.luckytool.ui.compose.components.coui.CouiTextField
 import com.luckyzyx.luckytool.ui.compose.scopes.ScopePageAction
 import com.luckyzyx.luckytool.ui.compose.scopes.ScopePageSpec
+import com.luckyzyx.luckytool.ui.theme.DesignTokens
 import com.luckyzyx.luckytool.ui.theme.LocalUiMode
 import com.luckyzyx.luckytool.ui.theme.UiMode
 import com.luckyzyx.luckytool.utils.CommandUtils
@@ -74,13 +78,6 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
 import java.io.InputStream
-import top.yukonga.miuix.kmp.basic.Icon as MiuixIcon
-import top.yukonga.miuix.kmp.basic.TabRow as MiuixTabRow
-import top.yukonga.miuix.kmp.basic.Text as MiuixText
-import top.yukonga.miuix.kmp.basic.TextButton as MiuixTextButton
-import top.yukonga.miuix.kmp.basic.TextField as MiuixTextField
-import top.yukonga.miuix.kmp.overlay.OverlayDialog
-import top.yukonga.miuix.kmp.theme.MiuixTheme
 
 internal var memcRefresh: (suspend () -> Unit)? = null
 private const val CONFIG_PACKAGE_LIST = GlobalKeyValue.memcConfigPackageList
@@ -90,10 +87,9 @@ private const val CONFIG_ACTIVITY_LIST = GlobalKeyValue.memcConfigActivityList
  * P4 特殊页：Memc 帧插入配置。
  * 双 Tab（Packages/Activitys）+ 搜索 + 下拉刷新 + Import Xml / Reset。
  *
- * 单文件承载：状态与写值逻辑只有一份 [MemcConfigState]，
- * 渲染差异集中在 [MemcConfigContent] 的 `if (miuix)` 分派上——Import Xml / Reset 通过
- * [ScopePageAction] 进顶栏溢出菜单（不设 `showAsAction`，只出现在溢出菜单里、不占页面空间），
- * 双面板与四个弹层按线分派。
+ * 单文件承载：状态与写值逻辑只有一份 [MemcConfigState]，渲染集中在 [MemcConfigContent]——Import Xml / Reset
+ * 通过 [ScopePageAction] 进顶栏溢出菜单（不设 `showAsAction`，只出现在溢出菜单里、不占页面空间），
+ * 正文是双面板与四个弹层。
  */
 object MemcConfigPage {
 
@@ -261,7 +257,7 @@ internal class MemcConfigState(private val context: Context) {
 }
 
 /**
- * 页面渲染体：状态/加载逻辑唯一一份，两条渲染线共用，渲染差异集中在此。
+ * 页面渲染体：状态/加载逻辑唯一一份。
  *
  * LazyItemScope 扩展：[ScopePageSpec.fullContent] 挂在 LazyColumn 的 item 内，item 的高度约束无界，
  * 根容器必须用 `fillParentMaxHeight()` 取列表视口高度，否则整列高度为 0（子项 weight 分不到空间）→ 白屏。
@@ -272,7 +268,6 @@ internal fun LazyItemScope.MemcConfigContent() {
     val scope = rememberCoroutineScope()
     val state = remember { MemcConfigState(context) }
     memcRefresh = { state.reload() }
-    val miuix = LocalUiMode.current == UiMode.Miuix
 
     var tabIndex by remember { mutableIntStateOf(0) }
 
@@ -309,41 +304,7 @@ internal fun LazyItemScope.MemcConfigContent() {
     }
 
     Column(Modifier.fillParentMaxHeight()) {
-        if (miuix) {
-            MiuixTabRow(
-                tabs = listOf("Packages", "Activitys"),
-                selectedTabIndex = tabIndex,
-                onTabSelected = { tabIndex = it },
-                modifier = Modifier.padding(
-                    horizontal = MiuixPrefDefaults.CardHorizontalInset,
-                    vertical = 8.dp,
-                ),
-            )
-        } else {
-            SecondaryTabRow(
-                tabIndex,
-                Modifier.padding(vertical = 8.dp),
-                TabRowDefaults.primaryContainerColor,
-                TabRowDefaults.primaryContentColor,
-                @Composable {
-                    TabRowDefaults.SecondaryIndicator(
-                        Modifier.tabIndicatorOffset(tabIndex)
-                    )
-                },
-                @Composable { HorizontalDivider() },
-                {
-                    Tab(
-                        selected = tabIndex == 0,
-                        onClick = { tabIndex = 0 },
-                        text = { Text("Packages") },
-                    )
-                    Tab(
-                        selected = tabIndex == 1,
-                        onClick = { tabIndex = 1 },
-                        text = { Text("Activitys") },
-                    )
-                })
-        }
+        MemcTabRow(selected = tabIndex, onSelect = { tabIndex = it })
         when (tabIndex) {
             0 -> MemcPackagePanel(
                 state = state,
@@ -398,41 +359,14 @@ internal fun LazyItemScope.MemcConfigContent() {
     }
 
     if (showResetConfirm) {
-        if (miuix) {
-            OverlayDialog(
-                show = true,
-                summary = stringResource(R.string.restore_frame_insertion_configuration_data),
-                onDismissRequest = { showResetConfirm = false },
-            ) {
-                DialogButtons(
-                    dismissText = stringResource(android.R.string.cancel),
-                    confirmText = stringResource(android.R.string.ok),
-                    onDismiss = { showResetConfirm = false },
-                    onConfirm = {
-                        showResetConfirm = false
-                        showVersionSheet = true
-                    },
-                )
-            }
-        } else {
-            AlertDialog(
-                onDismissRequest = { showResetConfirm = false },
-                text = { Text(stringResource(R.string.restore_frame_insertion_configuration_data)) },
-                confirmButton = {
-                    TextButton(
-                        onClick = {
-                            showResetConfirm = false
-                            showVersionSheet = true
-                        },
-                    ) { Text(stringResource(android.R.string.ok)) }
-                },
-                dismissButton = {
-                    TextButton(onClick = { showResetConfirm = false }) {
-                        Text(stringResource(android.R.string.cancel))
-                    }
-                },
-            )
-        }
+        MemcConfirmDialog(
+            message = stringResource(R.string.restore_frame_insertion_configuration_data),
+            onDismiss = { showResetConfirm = false },
+            onConfirm = {
+                showResetConfirm = false
+                showVersionSheet = true
+            },
+        )
     }
 
     if (showVersionSheet) {
@@ -449,29 +383,93 @@ internal fun LazyItemScope.MemcConfigContent() {
     }
 }
 
-/** Miuix 线弹层按钮行：与 Material `AlertDialog` 同序（左 dismiss / 右 confirm）。 */
+/**
+ * 顶部双 Tab：选中态由调用方持有，点击只回传下标。
+ *
+ * Material 线是带下划线的 SecondaryTabRow，Coui 线是等宽胶囊分段条；
+ * 两条线共用同一个下标语义，切换只改调用方的 [selected]。
+ */
 @Composable
-private fun DialogButtons(
-    dismissText: String,
-    confirmText: String,
-    onDismiss: () -> Unit,
-    onConfirm: () -> Unit,
-) {
-    Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-        MiuixTextButton(
-            text = dismissText,
-            onClick = onDismiss,
-            modifier = Modifier.weight(1f),
-        )
-        MiuixTextButton(
-            text = confirmText,
-            onClick = onConfirm,
-            modifier = Modifier.weight(1f),
+private fun MemcTabRow(selected: Int, onSelect: (Int) -> Unit) {
+    val labels = listOf("Packages", "Activitys")
+    when (LocalUiMode.current) {
+        UiMode.Material -> SecondaryTabRow(
+            selected,
+            Modifier.padding(vertical = 8.dp),
+            TabRowDefaults.primaryContainerColor,
+            TabRowDefaults.primaryContentColor,
+            @Composable {
+                TabRowDefaults.SecondaryIndicator(
+                    Modifier.tabIndicatorOffset(selected)
+                )
+            },
+            @Composable { HorizontalDivider() },
+            {
+                Tab(
+                    selected = selected == 0,
+                    onClick = { onSelect(0) },
+                    text = { Text("Packages") },
+                )
+                Tab(
+                    selected = selected == 1,
+                    onClick = { onSelect(1) },
+                    text = { Text("Activitys") },
+                )
+            })
+
+        UiMode.Coui -> CouiSegmentedTabs(
+            labels = labels,
+            selectedIndex = selected,
+            onSelect = onSelect,
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
         )
     }
 }
 
-/** 面板搜索框：仅搜索（无排序按钮），Miuix=TextField / Material=OutlinedTextField。 */
+/**
+ * 一句正文 + 确定/取消的确认弹窗。
+ *
+ * 正文由组件自己画，调用方只决定文案与两个动作；确定按钮是主操作，
+ * 取消贴在取消位（COUI 的中性位固定按警示色渲染，不适合「点它只是关掉」）。
+ */
+@Composable
+private fun MemcConfirmDialog(
+    message: String,
+    onDismiss: () -> Unit,
+    onConfirm: () -> Unit,
+) {
+    when (LocalUiMode.current) {
+        UiMode.Material -> AlertDialog(
+            onDismissRequest = onDismiss,
+            text = { Text(message) },
+            confirmButton = {
+                TextButton(onClick = onConfirm) { Text(stringResource(android.R.string.ok)) }
+            },
+            dismissButton = {
+                TextButton(onClick = onDismiss) {
+                    Text(stringResource(android.R.string.cancel))
+                }
+            },
+        )
+
+        UiMode.Coui -> CouiAlertDialog(
+            onDismissRequest = onDismiss,
+            message = message,
+            confirmAction = CouiDialogAction(
+                text = stringResource(android.R.string.ok),
+                onClick = onConfirm,
+                style = CouiDialogActionStyle.Primary,
+                colors = CouiDialogDefaults.primaryActionColors(CouiTheme.colorScheme.accent),
+            ),
+            dismissAction = CouiDialogAction(
+                text = stringResource(android.R.string.cancel),
+                onClick = onDismiss,
+            ),
+        )
+    }
+}
+
+/** 面板搜索框：仅搜索（无排序按钮）。 */
 @Composable
 private fun MemcSearchField(
     value: String,
@@ -479,20 +477,8 @@ private fun MemcSearchField(
     enabled: Boolean,
     placeholder: String,
 ) {
-    if (LocalUiMode.current == UiMode.Miuix) {
-        MiuixTextField(
-            value = value,
-            onValueChange = onValueChange,
-            enabled = enabled,
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = MiuixPrefDefaults.CardHorizontalInset),
-            label = placeholder,
-            useLabelAsPlaceholder = true,
-            singleLine = true,
-        )
-    } else {
-        OutlinedTextField(
+    when (LocalUiMode.current) {
+        UiMode.Material -> OutlinedTextField(
             value = value,
             onValueChange = onValueChange,
             enabled = enabled,
@@ -502,16 +488,43 @@ private fun MemcSearchField(
                 .fillMaxWidth()
                 .padding(horizontal = 16.dp),
         )
+
+        UiMode.Coui -> CouiTextField(
+            value = value,
+            onValueChange = onValueChange,
+            enabled = enabled,
+            singleLine = true,
+            placeholder = placeholder,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp),
+        )
     }
 }
 
+/**
+ * 包名前缀面板：搜索 + 新增卡 + 列表。
+ *
+ * 两条线共用同一份 [state] 与回调，只有行内文字、空态文字与列表骨架用各自线的原语。
+ */
 @Composable
 internal fun MemcPackagePanel(
     state: MemcConfigState,
     modifier: Modifier = Modifier,
     onEdit: (MemcConfigPackage?) -> Unit,
 ) {
-    val miuix = LocalUiMode.current == UiMode.Miuix
+    when (LocalUiMode.current) {
+        UiMode.Material -> MaterialMemcPackagePanel(state, modifier, onEdit)
+        UiMode.Coui -> CouiMemcPackagePanel(state, modifier, onEdit)
+    }
+}
+
+@Composable
+private fun MaterialMemcPackagePanel(
+    state: MemcConfigState,
+    modifier: Modifier,
+    onEdit: (MemcConfigPackage?) -> Unit,
+) {
     Column(
         modifier = modifier,
         verticalArrangement = Arrangement.spacedBy(8.dp),
@@ -522,21 +535,11 @@ internal fun MemcPackagePanel(
             enabled = !state.pkgLoading,
             placeholder = "PackageName",
         )
-        if (miuix) {
-            MiuixPrefItem(
-                index = 0,
-                count = 1,
-                modifier = Modifier.padding(horizontal = MiuixPrefDefaults.CardHorizontalInset),
-            ) {
-                MiuixListItem(title = "＋ Add", onClick = { onEdit(null) })
-            }
-        } else {
-            PrefCard(
-                title = "＋ Add",
-                onClick = { onEdit(null) },
-                modifier = Modifier.padding(horizontal = 16.dp),
-            )
-        }
+        PrefCard(
+            title = "＋ Add",
+            onClick = { onEdit(null) },
+            modifier = Modifier.padding(horizontal = 16.dp),
+        )
         if (state.pkgFilter.isEmpty() && !state.pkgLoading) {
             Box(
                 Modifier
@@ -544,55 +547,29 @@ internal fun MemcPackagePanel(
                     .weight(1f),
                 contentAlignment = Alignment.Center,
             ) {
-                if (miuix) MiuixText(stringResource(R.string.no_memc_data))
-                else Text(stringResource(R.string.no_memc_data))
+                Text(stringResource(R.string.no_memc_data))
             }
         } else {
-            if (miuix) {
-                LazyColumn(
-                    modifier = Modifier.weight(1f),
-                    contentPadding = PaddingValues(
-                        start = MiuixPrefDefaults.CardHorizontalInset,
-                        end = MiuixPrefDefaults.CardHorizontalInset,
-                        bottom = materialBottomInset(),
-                    ),
-                    verticalArrangement = Arrangement.spacedBy(MiuixPrefDefaults.ItemGap),
-                ) {
-                    itemsIndexed(
-                        state.pkgFilter,
-                        key = { _, info -> "${info.packName}|${info.rate}|${info.type}" },
-                    ) { index, info ->
-                        MiuixPrefItem(index = index, count = state.pkgFilter.size) {
-                            MiuixListItem(
-                                title = info.packName,
-                                summary = "Rate: ${info.rate}\nType: ${info.type}",
-                                onClick = { onEdit(info) },
-                            )
-                        }
-                    }
-                }
-            } else {
-                LazyColumn(
-                    modifier = Modifier.weight(1f),
-                    contentPadding = PaddingValues(start = 16.dp, end = 16.dp, bottom = 16.dp),
-                    verticalArrangement = Arrangement.spacedBy(MiuixPrefDefaults.ItemGap),
-                ) {
-                    itemsIndexed(
-                        state.pkgFilter,
-                        key = { _, info -> "${info.packName}|${info.rate}|${info.type}" },
-                    ) { index, info ->
-                        MaterialItem(index = index, count = state.pkgFilter.size) {
-                            MaterialListItem(
-                                onClick = { onEdit(info) },
-                                headlineContent = { Text(info.packName) },
-                                supportingContent = {
-                                    Column {
-                                        Text("Rate: ${info.rate}")
-                                        Text("Type: ${info.type}")
-                                    }
-                                },
-                            )
-                        }
+            LazyColumn(
+                modifier = Modifier.weight(1f),
+                contentPadding = PaddingValues(start = 16.dp, end = 16.dp, bottom = 16.dp),
+                verticalArrangement = Arrangement.spacedBy(DesignTokens.ItemGap),
+            ) {
+                itemsIndexed(
+                    state.pkgFilter,
+                    key = { _, info -> "${info.packName}|${info.rate}|${info.type}" },
+                ) { index, info ->
+                    AppItem(index = index, count = state.pkgFilter.size) {
+                        AppListItem(
+                            onClick = { onEdit(info) },
+                            headlineContent = { Text(info.packName) },
+                            supportingContent = {
+                                Column {
+                                    Text("Rate: ${info.rate}")
+                                    Text("Type: ${info.type}")
+                                }
+                            },
+                        )
                     }
                 }
             }
@@ -601,12 +578,105 @@ internal fun MemcPackagePanel(
 }
 
 @Composable
+private fun CouiMemcPackagePanel(
+    state: MemcConfigState,
+    modifier: Modifier,
+    onEdit: (MemcConfigPackage?) -> Unit,
+) {
+    val colors = CouiTheme.colorScheme
+    Column(
+        modifier = modifier,
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        MemcSearchField(
+            value = state.pkgQuery,
+            onValueChange = { state.applyPkgQuery(it) },
+            enabled = !state.pkgLoading,
+            placeholder = "PackageName",
+        )
+        PrefCard(
+            title = "＋ Add",
+            onClick = { onEdit(null) },
+            modifier = Modifier.padding(horizontal = 16.dp),
+        )
+        if (state.pkgFilter.isEmpty() && !state.pkgLoading) {
+            Box(
+                Modifier
+                    .fillMaxWidth()
+                    .weight(1f),
+                contentAlignment = Alignment.Center,
+            ) {
+                CouiText(
+                    text = stringResource(R.string.no_memc_data),
+                    kind = CouiTextKind.Body,
+                    color = colors.onSurfaceVariant,
+                )
+            }
+        } else {
+            LazyColumn(
+                modifier = Modifier.weight(1f),
+                contentPadding = PaddingValues(start = 16.dp, end = 16.dp, bottom = 16.dp),
+                verticalArrangement = Arrangement.spacedBy(DesignTokens.ItemGap),
+            ) {
+                itemsIndexed(
+                    state.pkgFilter,
+                    key = { _, info -> "${info.packName}|${info.rate}|${info.type}" },
+                ) { index, info ->
+                    AppItem(index = index, count = state.pkgFilter.size) {
+                        AppListItem(
+                            onClick = { onEdit(info) },
+                            headlineContent = {
+                                CouiText(
+                                    text = info.packName,
+                                    kind = CouiTextKind.PreferenceTitle,
+                                    color = colors.onSurface,
+                                )
+                            },
+                            supportingContent = {
+                                Column {
+                                    CouiText(
+                                        text = "Rate: ${info.rate}",
+                                        kind = CouiTextKind.PreferenceSummary,
+                                        color = colors.onSurfaceVariant,
+                                    )
+                                    CouiText(
+                                        text = "Type: ${info.type}",
+                                        kind = CouiTextKind.PreferenceSummary,
+                                        color = colors.onSurfaceVariant,
+                                    )
+                                }
+                            },
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+/**
+ * 精确 Activity 面板：搜索 + 新增卡 + 列表。
+ *
+ * 与包名面板同样只换渲染原语，[state] 的过滤与加载状态两条线共用。
+ */
+@Composable
 internal fun MemcActivityPanel(
     state: MemcConfigState,
     modifier: Modifier = Modifier,
     onEdit: (MemcConfigActivity?) -> Unit,
 ) {
-    val miuix = LocalUiMode.current == UiMode.Miuix
+    when (LocalUiMode.current) {
+        UiMode.Material -> MaterialMemcActivityPanel(state, modifier, onEdit)
+        UiMode.Coui -> CouiMemcActivityPanel(state, modifier, onEdit)
+    }
+}
+
+@Composable
+private fun MaterialMemcActivityPanel(
+    state: MemcConfigState,
+    modifier: Modifier,
+    onEdit: (MemcConfigActivity?) -> Unit,
+) {
     Column(
         modifier = modifier,
         verticalArrangement = Arrangement.spacedBy(8.dp),
@@ -617,21 +687,11 @@ internal fun MemcActivityPanel(
             enabled = !state.actLoading,
             placeholder = "PackageName / ActivityName",
         )
-        if (miuix) {
-            MiuixPrefItem(
-                index = 0,
-                count = 1,
-                modifier = Modifier.padding(horizontal = MiuixPrefDefaults.CardHorizontalInset),
-            ) {
-                MiuixListItem(title = "＋ Add", onClick = { onEdit(null) })
-            }
-        } else {
-            PrefCard(
-                title = "＋ Add",
-                onClick = { onEdit(null) },
-                modifier = Modifier.padding(horizontal = 16.dp),
-            )
-        }
+        PrefCard(
+            title = "＋ Add",
+            onClick = { onEdit(null) },
+            modifier = Modifier.padding(horizontal = 16.dp),
+        )
         if (state.actFilter.isEmpty() && !state.actLoading) {
             Box(
                 Modifier
@@ -639,59 +699,112 @@ internal fun MemcActivityPanel(
                     .weight(1f),
                 contentAlignment = Alignment.Center,
             ) {
-                if (miuix) MiuixText(stringResource(R.string.no_memc_data))
-                else Text(stringResource(R.string.no_memc_data))
+                Text(stringResource(R.string.no_memc_data))
             }
         } else {
-            if (miuix) {
-                LazyColumn(
-                    modifier = Modifier.weight(1f),
-                    contentPadding = PaddingValues(
-                        start = MiuixPrefDefaults.CardHorizontalInset,
-                        end = MiuixPrefDefaults.CardHorizontalInset,
-                        bottom = materialBottomInset(),
-                    ),
-                    verticalArrangement = Arrangement.spacedBy(MiuixPrefDefaults.ItemGap),
-                ) {
-                    itemsIndexed(
-                        state.actFilter,
-                        key = { _, info -> "${info.packName}|${info.activity}|${info.type}" },
-                    ) { index, info ->
-                        MiuixPrefItem(index = index, count = state.actFilter.size) {
-                            MiuixListItem(
-                                title = info.packName,
-                                summary = "${info.activity}\nType: ${info.type}",
-                                onClick = { onEdit(info) },
-                            )
-                        }
+            LazyColumn(
+                modifier = Modifier.weight(1f),
+                contentPadding = PaddingValues(start = 16.dp, end = 16.dp, bottom = 16.dp),
+                verticalArrangement = Arrangement.spacedBy(DesignTokens.ItemGap),
+            ) {
+                itemsIndexed(
+                    state.actFilter,
+                    key = { _, info -> "${info.packName}|${info.activity}|${info.type}" },
+                ) { index, info ->
+                    AppItem(index = index, count = state.actFilter.size) {
+                        AppListItem(
+                            onClick = { onEdit(info) },
+                            headlineContent = { Text(info.packName) },
+                            supportingContent = {
+                                Column {
+                                    Text(
+                                        info.activity,
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis,
+                                    )
+                                    Text("Type: ${info.type}")
+                                }
+                            },
+                        )
                     }
                 }
-            } else {
-                LazyColumn(
-                    modifier = Modifier.weight(1f),
-                    contentPadding = PaddingValues(start = 16.dp, end = 16.dp, bottom = 16.dp),
-                    verticalArrangement = Arrangement.spacedBy(MiuixPrefDefaults.ItemGap),
-                ) {
-                    itemsIndexed(
-                        state.actFilter,
-                        key = { _, info -> "${info.packName}|${info.activity}|${info.type}" },
-                    ) { index, info ->
-                        MaterialItem(index = index, count = state.actFilter.size) {
-                            MaterialListItem(
-                                onClick = { onEdit(info) },
-                                headlineContent = { Text(info.packName) },
-                                supportingContent = {
-                                    Column {
-                                        Text(
-                                            info.activity,
-                                            maxLines = 1,
-                                            overflow = TextOverflow.Ellipsis,
-                                        )
-                                        Text("Type: ${info.type}")
-                                    }
-                                },
-                            )
-                        }
+            }
+        }
+    }
+}
+
+@Composable
+private fun CouiMemcActivityPanel(
+    state: MemcConfigState,
+    modifier: Modifier,
+    onEdit: (MemcConfigActivity?) -> Unit,
+) {
+    val colors = CouiTheme.colorScheme
+    Column(
+        modifier = modifier,
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        MemcSearchField(
+            value = state.actQuery,
+            onValueChange = { state.applyActQuery(it) },
+            enabled = !state.actLoading,
+            placeholder = "PackageName / ActivityName",
+        )
+        PrefCard(
+            title = "＋ Add",
+            onClick = { onEdit(null) },
+            modifier = Modifier.padding(horizontal = 16.dp),
+        )
+        if (state.actFilter.isEmpty() && !state.actLoading) {
+            Box(
+                Modifier
+                    .fillMaxWidth()
+                    .weight(1f),
+                contentAlignment = Alignment.Center,
+            ) {
+                CouiText(
+                    text = stringResource(R.string.no_memc_data),
+                    kind = CouiTextKind.Body,
+                    color = colors.onSurfaceVariant,
+                )
+            }
+        } else {
+            LazyColumn(
+                modifier = Modifier.weight(1f),
+                contentPadding = PaddingValues(start = 16.dp, end = 16.dp, bottom = 16.dp),
+                verticalArrangement = Arrangement.spacedBy(DesignTokens.ItemGap),
+            ) {
+                itemsIndexed(
+                    state.actFilter,
+                    key = { _, info -> "${info.packName}|${info.activity}|${info.type}" },
+                ) { index, info ->
+                    AppItem(index = index, count = state.actFilter.size) {
+                        AppListItem(
+                            onClick = { onEdit(info) },
+                            headlineContent = {
+                                CouiText(
+                                    text = info.packName,
+                                    kind = CouiTextKind.PreferenceTitle,
+                                    color = colors.onSurface,
+                                )
+                            },
+                            supportingContent = {
+                                Column {
+                                    CouiText(
+                                        text = info.activity,
+                                        kind = CouiTextKind.PreferenceSummary,
+                                        color = colors.onSurfaceVariant,
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis,
+                                    )
+                                    CouiText(
+                                        text = "Type: ${info.type}",
+                                        kind = CouiTextKind.PreferenceSummary,
+                                        color = colors.onSurfaceVariant,
+                                    )
+                                }
+                            },
+                        )
                     }
                 }
             }
@@ -727,132 +840,54 @@ internal fun MemcPackageDialog(
     onSave: (MemcConfigPackage) -> Unit,
     onDelete: (MemcConfigPackage) -> Unit,
 ) {
-    val miuix = LocalUiMode.current == UiMode.Miuix
     var packName by remember(initial) { mutableStateOf(initial?.packName ?: "") }
     var rate by remember(initial) { mutableStateOf(initial?.rate ?: "") }
     var type by remember(initial) { mutableStateOf(initial?.type ?: "") }
     var showAppPicker by remember { mutableStateOf(false) }
     var showDeleteConfirm by remember { mutableStateOf(false) }
 
-    if (miuix) {
-        OverlayDialog(
-            show = true,
-            onDismissRequest = onDismiss,
-        ) {
-            MiuixDialogScrollBody(
-                actions = {
-                    DialogButtons(
-                        dismissText = if (initial != null) stringResource(R.string.remove)
-                        else stringResource(android.R.string.cancel),
-                        confirmText = stringResource(android.R.string.ok),
-                        onDismiss = { if (initial != null) showDeleteConfirm = true else onDismiss() },
-                        onConfirm = {
-                            if (packName.isBlank() || rate.isBlank() || type.isBlank()) {
-                                context.showToast("Data is incomplete!")
-                            } else {
-                                onSave(MemcConfigPackage(packName, rate, type))
-                            }
-                        },
-                    )
-                },
-            ) {
-                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    PickerField(onClick = { showAppPicker = true }) {
-                        MiuixTextField(
-                            value = packName,
-                            onValueChange = {},
-                            readOnly = true,
-                            singleLine = true,
-                            label = "PackageName",
-                            modifier = Modifier.fillMaxWidth(),
-                        )
-                    }
-                    MiuixTextField(
-                        value = rate,
-                        onValueChange = { rate = it },
-                        singleLine = true,
-                        label = "ScreenRate",
-                        modifier = Modifier.fillMaxWidth(),
-                    )
-                    MiuixTextField(
-                        value = type,
-                        onValueChange = { type = it },
-                        singleLine = true,
-                        label = "Type",
-                        modifier = Modifier.fillMaxWidth(),
-                    )
-                    MiuixText(
-                        stringResource(
-                            R.string.edit_memc_configuration_tips,
-                            CommandUtils.memcHdrConfigHelp,
-                        ),
-                        style = MiuixTheme.textStyles.footnote1,
-                        color = MiuixTheme.colorScheme.onBackgroundVariant,
-                    )
-                }
-            }
+    val tips = stringResource(
+        R.string.edit_memc_configuration_tips,
+        CommandUtils.memcHdrConfigHelp,
+    )
+    // 校验与落盘只写一处：两条线共用同一个确认回调，只有按钮皮肤不同
+    val confirm: () -> Unit = {
+        if (packName.isBlank() || rate.isBlank() || type.isBlank()) {
+            context.showToast("Data is incomplete!")
+        } else {
+            onSave(MemcConfigPackage(packName, rate, type))
         }
-    } else {
-        AlertDialog(
-            onDismissRequest = onDismiss,
-            text = {
-                Column {
-                    PickerField(onClick = { showAppPicker = true }) {
-                        OutlinedTextField(
-                            value = packName,
-                            onValueChange = { packName = it },
-                            readOnly = true,
-                            singleLine = true,
-                            label = { Text("PackageName") },
-                            modifier = Modifier.fillMaxWidth(),
-                        )
-                    }
-                    OutlinedTextField(
-                        value = rate,
-                        onValueChange = { rate = it },
-                        singleLine = true,
-                        label = { Text("ScreenRate") },
-                        modifier = Modifier.fillMaxWidth(),
-                    )
-                    OutlinedTextField(
-                        value = type,
-                        onValueChange = { type = it },
-                        singleLine = true,
-                        label = { Text("Type") },
-                        modifier = Modifier.fillMaxWidth(),
-                    )
-                    Text(
-                        stringResource(
-                            R.string.edit_memc_configuration_tips,
-                            CommandUtils.memcHdrConfigHelp,
-                        ),
-                        style = MaterialTheme.typography.bodySmall,
-                        modifier = Modifier.padding(top = 8.dp),
-                    )
-                }
-            },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        if (packName.isBlank() || rate.isBlank() || type.isBlank()) {
-                            context.showToast("Data is incomplete!")
-                        } else {
-                            onSave(MemcConfigPackage(packName, rate, type))
-                        }
-                    },
-                ) { Text(stringResource(android.R.string.ok)) }
-            },
-            dismissButton = {
-                if (initial != null) {
-                    TextButton(onClick = { showDeleteConfirm = true }) {
-                        Text(stringResource(R.string.remove))
-                    }
-                } else {
-                    TextButton(onClick = onDismiss) {
-                        Text(stringResource(android.R.string.cancel))
-                    }
-                }
-            },
+    }
+
+    when (LocalUiMode.current) {
+        UiMode.Material -> MaterialMemcPackageDialog(
+            packName = packName,
+            onPackNameChange = { packName = it },
+            rate = rate,
+            onRateChange = { rate = it },
+            type = type,
+            onTypeChange = { type = it },
+            canRemove = initial != null,
+            tips = tips,
+            onPickPackage = { showAppPicker = true },
+            onDismiss = onDismiss,
+            onConfirm = confirm,
+            onRemove = { showDeleteConfirm = true },
+        )
+
+        UiMode.Coui -> CouiMemcPackageDialog(
+            packName = packName,
+            onPackNameChange = { packName = it },
+            rate = rate,
+            onRateChange = { rate = it },
+            type = type,
+            onTypeChange = { type = it },
+            canRemove = initial != null,
+            tips = tips,
+            onPickPackage = { showAppPicker = true },
+            onDismiss = onDismiss,
+            onConfirm = confirm,
+            onRemove = { showDeleteConfirm = true },
         )
     }
 
@@ -869,49 +904,158 @@ internal fun MemcPackageDialog(
     }
 
     if (showDeleteConfirm && initial != null) {
-        if (miuix) {
-            OverlayDialog(
-                show = true,
-                summary = stringResource(
-                    R.string.confirm_to_delete_this_configuration,
-                    initial.packName,
-                ),
-                onDismissRequest = { showDeleteConfirm = false },
-            ) {
-                DialogButtons(
-                    dismissText = stringResource(android.R.string.cancel),
-                    confirmText = stringResource(android.R.string.ok),
-                    onDismiss = { showDeleteConfirm = false },
-                    onConfirm = {
-                        showDeleteConfirm = false
-                        onDelete(initial)
-                    },
+        MemcConfirmDialog(
+            message = stringResource(
+                R.string.confirm_to_delete_this_configuration,
+                initial.packName,
+            ),
+            onDismiss = { showDeleteConfirm = false },
+            onConfirm = {
+                showDeleteConfirm = false
+                onDelete(initial)
+            },
+        )
+    }
+}
+
+/**
+ * 包名配置弹窗的 Material 皮肤：三个字段 + 提示 + 确认/移除（无初始值时为取消）。
+ *
+ * 只负责渲染与回调透传，校验与落盘由调用方统一持有，避免两条线各写一份。
+ */
+@Composable
+private fun MaterialMemcPackageDialog(
+    packName: String,
+    onPackNameChange: (String) -> Unit,
+    rate: String,
+    onRateChange: (String) -> Unit,
+    type: String,
+    onTypeChange: (String) -> Unit,
+    canRemove: Boolean,
+    tips: String,
+    onPickPackage: () -> Unit,
+    onDismiss: () -> Unit,
+    onConfirm: () -> Unit,
+    onRemove: () -> Unit,
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        text = {
+            Column {
+                PickerField(onClick = onPickPackage) {
+                    OutlinedTextField(
+                        value = packName,
+                        onValueChange = onPackNameChange,
+                        readOnly = true,
+                        singleLine = true,
+                        label = { Text("PackageName") },
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                }
+                OutlinedTextField(
+                    value = rate,
+                    onValueChange = onRateChange,
+                    singleLine = true,
+                    label = { Text("ScreenRate") },
+                    modifier = Modifier.fillMaxWidth(),
+                )
+                OutlinedTextField(
+                    value = type,
+                    onValueChange = onTypeChange,
+                    singleLine = true,
+                    label = { Text("Type") },
+                    modifier = Modifier.fillMaxWidth(),
+                )
+                Text(
+                    tips,
+                    style = MaterialTheme.typography.bodySmall,
+                    modifier = Modifier.padding(top = 8.dp),
                 )
             }
-        } else {
-            AlertDialog(
-                onDismissRequest = { showDeleteConfirm = false },
-                text = {
-                    Text(
-                        stringResource(
-                            R.string.confirm_to_delete_this_configuration,
-                            initial.packName,
-                        )
-                    )
-                },
-                confirmButton = {
-                    TextButton(
-                        onClick = {
-                            showDeleteConfirm = false
-                            onDelete(initial)
-                        },
-                    ) { Text(stringResource(android.R.string.ok)) }
-                },
-                dismissButton = {
-                    TextButton(onClick = { showDeleteConfirm = false }) {
-                        Text(stringResource(android.R.string.cancel))
-                    }
-                },
+        },
+        confirmButton = {
+            TextButton(onClick = onConfirm) { Text(stringResource(android.R.string.ok)) }
+        },
+        dismissButton = {
+            if (canRemove) {
+                TextButton(onClick = onRemove) { Text(stringResource(R.string.remove)) }
+            } else {
+                TextButton(onClick = onDismiss) { Text(stringResource(android.R.string.cancel)) }
+            }
+        },
+    )
+}
+
+/**
+ * 包名配置弹窗的 Coui 皮肤。
+ *
+ * 包名格只用于展示选中的应用，空白浮层接住点击后打开选择器（输入框自己会吞掉按下/抬起），
+ * 因此这里不向输入框透传任何可编辑语义，值只能由选择器写入。
+ */
+@Composable
+private fun CouiMemcPackageDialog(
+    packName: String,
+    onPackNameChange: (String) -> Unit,
+    rate: String,
+    onRateChange: (String) -> Unit,
+    type: String,
+    onTypeChange: (String) -> Unit,
+    canRemove: Boolean,
+    tips: String,
+    onPickPackage: () -> Unit,
+    onDismiss: () -> Unit,
+    onConfirm: () -> Unit,
+    onRemove: () -> Unit,
+) {
+    val colors = CouiTheme.colorScheme
+    CouiAlertDialog(
+        onDismissRequest = onDismiss,
+        confirmAction = CouiDialogAction(
+            text = stringResource(android.R.string.ok),
+            onClick = onConfirm,
+            style = CouiDialogActionStyle.Primary,
+            colors = CouiDialogDefaults.primaryActionColors(colors.accent),
+        ),
+        dismissAction = CouiDialogAction(
+            text = stringResource(if (canRemove) R.string.remove else android.R.string.cancel),
+            onClick = if (canRemove) onRemove else onDismiss,
+        ),
+    ) {
+        // 内容槽自身没有内边距，左右留白在这里补
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = CouiDialogDefaults.contentPadding),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            PickerField(onClick = onPickPackage) {
+                CouiTextField(
+                    value = packName,
+                    onValueChange = onPackNameChange,
+                    singleLine = true,
+                    label = "PackageName",
+                    modifier = Modifier.fillMaxWidth(),
+                )
+            }
+            CouiTextField(
+                value = rate,
+                onValueChange = onRateChange,
+                singleLine = true,
+                label = "ScreenRate",
+                modifier = Modifier.fillMaxWidth(),
+            )
+            CouiTextField(
+                value = type,
+                onValueChange = onTypeChange,
+                singleLine = true,
+                label = "Type",
+                modifier = Modifier.fillMaxWidth(),
+            )
+            CouiText(
+                text = tips,
+                kind = CouiTextKind.PreferenceSummary,
+                color = colors.onSurfaceVariant,
+                modifier = Modifier.padding(top = 8.dp),
             )
         }
     }
@@ -939,7 +1083,7 @@ internal fun filterMemcActivityOptions(
  * Activity 选择弹层：搜索框 + 列表（标题=label / 副标题=类名）。
  *
  * 行渲染、按钮行与空态统一交给 [ActionListDialog]：这里只留过滤与 key→选项的还原。
- * 两条渲染线合并后行首图标不再渲染（ChoiceItem 没有行首槽），显示信息由标题/副标题承担。
+ * 行首图标不渲染（ChoiceItem 没有行首槽），显示信息由标题/副标题承担。
  */
 @Composable
 private fun MemcActivityPickerDialog(
@@ -963,28 +1107,13 @@ private fun MemcActivityPickerDialog(
 }
 
 /**
- * 弹层内搜索框：MiuixTextField 与 OutlinedTextField 没有统一封装（页面级的 MemcSearchField
- * 带水平内边距语义，不适用于弹层正文），只在这一处按 UI 线分派，放大镜图标保持原样。
+ * 弹层内搜索框：页面级的 [MemcSearchField] 带水平内边距语义、不适用于弹层正文，
+ * 所以这里单独定义；放大镜图标作为 leadingIcon。
  */
 @Composable
 private fun MemcActivityQueryField(query: String, onQueryChange: (String) -> Unit) {
-    if (LocalUiMode.current == UiMode.Miuix) {
-        MiuixTextField(
-            value = query,
-            onValueChange = onQueryChange,
-            singleLine = true,
-            label = stringResource(R.string.activity_search_hint),
-            useLabelAsPlaceholder = true,
-            leadingIcon = {
-                MiuixIcon(
-                    painterResource(R.drawable.ic_baseline_search_24),
-                    contentDescription = null,
-                )
-            },
-            modifier = Modifier.fillMaxWidth(),
-        )
-    } else {
-        OutlinedTextField(
+    when (LocalUiMode.current) {
+        UiMode.Material -> OutlinedTextField(
             value = query,
             onValueChange = onQueryChange,
             singleLine = true,
@@ -993,6 +1122,22 @@ private fun MemcActivityQueryField(query: String, onQueryChange: (String) -> Uni
                 Icon(
                     painterResource(R.drawable.ic_baseline_search_24),
                     contentDescription = null,
+                )
+            },
+            modifier = Modifier.fillMaxWidth(),
+        )
+
+        // 图标沿用 M3 的 Icon（COUI 没有等价图标原语），tint 显式取自 Coui 配色
+        UiMode.Coui -> CouiTextField(
+            value = query,
+            onValueChange = onQueryChange,
+            singleLine = true,
+            placeholder = stringResource(R.string.activity_search_hint),
+            leadingIcon = {
+                Icon(
+                    painterResource(R.drawable.ic_baseline_search_24),
+                    contentDescription = null,
+                    tint = CouiTheme.colorScheme.onSurface,
                 )
             },
             modifier = Modifier.fillMaxWidth(),
@@ -1008,7 +1153,6 @@ internal fun MemcActivityDialog(
     onSave: (MemcConfigActivity) -> Unit,
     onDelete: (MemcConfigActivity) -> Unit,
 ) {
-    val miuix = LocalUiMode.current == UiMode.Miuix
     var packName by remember(initial) { mutableStateOf(initial?.packName ?: "") }
     var activity by remember(initial) { mutableStateOf(initial?.activity ?: "") }
     var type by remember(initial) { mutableStateOf(initial?.type ?: "") }
@@ -1018,7 +1162,7 @@ internal fun MemcActivityDialog(
     var showDeleteConfirm by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
 
-    // 两条 UI 线共用的 Activity 选择：先校验包名，再拉取 Activity 列表
+    // Activity 选择：先校验包名，再拉取 Activity 列表
     // label 在这里一次算好（loadLabel 会回落 labelRes → 应用名 → 包名），列表渲染不再逐行查 PackageManager
     val openActivityPicker: () -> Unit = {
         if (packName.isBlank()) {
@@ -1046,131 +1190,49 @@ internal fun MemcActivityDialog(
         }
     }
 
-    if (miuix) {
-        OverlayDialog(
-            show = true,
-            onDismissRequest = onDismiss,
-        ) {
-            MiuixDialogScrollBody(
-                actions = {
-                    DialogButtons(
-                        dismissText = if (initial != null) stringResource(R.string.remove)
-                        else stringResource(android.R.string.cancel),
-                        confirmText = stringResource(android.R.string.ok),
-                        onDismiss = { if (initial != null) showDeleteConfirm = true else onDismiss() },
-                        onConfirm = {
-                            if (packName.isBlank() || activity.isBlank() || type.isBlank()) {
-                                context.showToast("Data is incomplete!")
-                            } else {
-                                onSave(MemcConfigActivity(packName, activity, type))
-                            }
-                        },
-                    )
-                },
-            ) {
-                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    PickerField(onClick = { showAppPicker = true }) {
-                        MiuixTextField(
-                            value = packName,
-                            onValueChange = {},
-                            readOnly = true,
-                            singleLine = true,
-                            label = "PackageName",
-                            modifier = Modifier.fillMaxWidth(),
-                        )
-                    }
-                    PickerField(onClick = openActivityPicker) {
-                        MiuixTextField(
-                            value = activity,
-                            onValueChange = {},
-                            readOnly = true,
-                            singleLine = true,
-                            label = "ActivityName",
-                            modifier = Modifier.fillMaxWidth(),
-                        )
-                    }
-                    MiuixTextField(
-                        value = type,
-                        onValueChange = { type = it },
-                        singleLine = true,
-                        label = "Type",
-                        modifier = Modifier.fillMaxWidth(),
-                    )
-                    MiuixText(
-                        stringResource(
-                            R.string.edit_memc_configuration_tips,
-                            CommandUtils.memcConfigHelp,
-                        ),
-                        style = MiuixTheme.textStyles.footnote1,
-                        color = MiuixTheme.colorScheme.onBackgroundVariant,
-                    )
-                }
-            }
+    val tips = stringResource(
+        R.string.edit_memc_configuration_tips,
+        CommandUtils.memcConfigHelp,
+    )
+    val confirm: () -> Unit = {
+        if (packName.isBlank() || activity.isBlank() || type.isBlank()) {
+            context.showToast("Data is incomplete!")
+        } else {
+            onSave(MemcConfigActivity(packName, activity, type))
         }
-    } else {
-        AlertDialog(
-            onDismissRequest = onDismiss,
-            text = {
-                Column {
-                    PickerField(onClick = { showAppPicker = true }) {
-                        OutlinedTextField(
-                            value = packName,
-                            onValueChange = { packName = it },
-                            readOnly = true,
-                            singleLine = true,
-                            label = { Text("PackageName") },
-                            modifier = Modifier.fillMaxWidth(),
-                        )
-                    }
-                    PickerField(onClick = openActivityPicker) {
-                        OutlinedTextField(
-                            value = activity,
-                            onValueChange = { activity = it },
-                            readOnly = true,
-                            singleLine = true,
-                            label = { Text("ActivityName") },
-                            modifier = Modifier.fillMaxWidth(),
-                        )
-                    }
-                    OutlinedTextField(
-                        value = type,
-                        onValueChange = { type = it },
-                        singleLine = true,
-                        label = { Text("Type") },
-                        modifier = Modifier.fillMaxWidth(),
-                    )
-                    Text(
-                        stringResource(
-                            R.string.edit_memc_configuration_tips,
-                            CommandUtils.memcConfigHelp,
-                        ),
-                        style = MaterialTheme.typography.bodySmall,
-                        modifier = Modifier.padding(top = 8.dp),
-                    )
-                }
-            },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        if (packName.isBlank() || activity.isBlank() || type.isBlank()) {
-                            context.showToast("Data is incomplete!")
-                        } else {
-                            onSave(MemcConfigActivity(packName, activity, type))
-                        }
-                    },
-                ) { Text(stringResource(android.R.string.ok)) }
-            },
-            dismissButton = {
-                if (initial != null) {
-                    TextButton(onClick = { showDeleteConfirm = true }) {
-                        Text(stringResource(R.string.remove))
-                    }
-                } else {
-                    TextButton(onClick = onDismiss) {
-                        Text(stringResource(android.R.string.cancel))
-                    }
-                }
-            },
+    }
+
+    when (LocalUiMode.current) {
+        UiMode.Material -> MaterialMemcActivityDialog(
+            packName = packName,
+            onPackNameChange = { packName = it },
+            activity = activity,
+            onActivityChange = { activity = it },
+            type = type,
+            onTypeChange = { type = it },
+            canRemove = initial != null,
+            tips = tips,
+            onPickPackage = { showAppPicker = true },
+            onPickActivity = openActivityPicker,
+            onDismiss = onDismiss,
+            onConfirm = confirm,
+            onRemove = { showDeleteConfirm = true },
+        )
+
+        UiMode.Coui -> CouiMemcActivityDialog(
+            packName = packName,
+            onPackNameChange = { packName = it },
+            activity = activity,
+            onActivityChange = { activity = it },
+            type = type,
+            onTypeChange = { type = it },
+            canRemove = initial != null,
+            tips = tips,
+            onPickPackage = { showAppPicker = true },
+            onPickActivity = openActivityPicker,
+            onDismiss = onDismiss,
+            onConfirm = confirm,
+            onRemove = { showDeleteConfirm = true },
         )
     }
 
@@ -1198,49 +1260,163 @@ internal fun MemcActivityDialog(
     }
 
     if (showDeleteConfirm && initial != null) {
-        if (miuix) {
-            OverlayDialog(
-                show = true,
-                summary = stringResource(
-                    R.string.confirm_to_delete_this_configuration,
-                    initial.activity,
-                ),
-                onDismissRequest = { showDeleteConfirm = false },
-            ) {
-                DialogButtons(
-                    dismissText = stringResource(android.R.string.cancel),
-                    confirmText = stringResource(android.R.string.ok),
-                    onDismiss = { showDeleteConfirm = false },
-                    onConfirm = {
-                        showDeleteConfirm = false
-                        onDelete(initial)
-                    },
+        MemcConfirmDialog(
+            message = stringResource(
+                R.string.confirm_to_delete_this_configuration,
+                initial.activity,
+            ),
+            onDismiss = { showDeleteConfirm = false },
+            onConfirm = {
+                showDeleteConfirm = false
+                onDelete(initial)
+            },
+        )
+    }
+}
+
+/**
+ * Activity 配置弹窗的 Material 皮肤：包名/ActivityName 两个只读格由 [PickerField] 转点击，
+ * 类型可编辑，沿用原来的确认/移除（无初始值时为取消）按钮语义。
+ */
+@Composable
+private fun MaterialMemcActivityDialog(
+    packName: String,
+    onPackNameChange: (String) -> Unit,
+    activity: String,
+    onActivityChange: (String) -> Unit,
+    type: String,
+    onTypeChange: (String) -> Unit,
+    canRemove: Boolean,
+    tips: String,
+    onPickPackage: () -> Unit,
+    onPickActivity: () -> Unit,
+    onDismiss: () -> Unit,
+    onConfirm: () -> Unit,
+    onRemove: () -> Unit,
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        text = {
+            Column {
+                PickerField(onClick = onPickPackage) {
+                    OutlinedTextField(
+                        value = packName,
+                        onValueChange = onPackNameChange,
+                        readOnly = true,
+                        singleLine = true,
+                        label = { Text("PackageName") },
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                }
+                PickerField(onClick = onPickActivity) {
+                    OutlinedTextField(
+                        value = activity,
+                        onValueChange = onActivityChange,
+                        readOnly = true,
+                        singleLine = true,
+                        label = { Text("ActivityName") },
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                }
+                OutlinedTextField(
+                    value = type,
+                    onValueChange = onTypeChange,
+                    singleLine = true,
+                    label = { Text("Type") },
+                    modifier = Modifier.fillMaxWidth(),
+                )
+                Text(
+                    tips,
+                    style = MaterialTheme.typography.bodySmall,
+                    modifier = Modifier.padding(top = 8.dp),
                 )
             }
-        } else {
-            AlertDialog(
-                onDismissRequest = { showDeleteConfirm = false },
-                text = {
-                    Text(
-                        stringResource(
-                            R.string.confirm_to_delete_this_configuration,
-                            initial.activity,
-                        )
-                    )
-                },
-                confirmButton = {
-                    TextButton(
-                        onClick = {
-                            showDeleteConfirm = false
-                            onDelete(initial)
-                        },
-                    ) { Text(stringResource(android.R.string.ok)) }
-                },
-                dismissButton = {
-                    TextButton(onClick = { showDeleteConfirm = false }) {
-                        Text(stringResource(android.R.string.cancel))
-                    }
-                },
+        },
+        confirmButton = {
+            TextButton(onClick = onConfirm) { Text(stringResource(android.R.string.ok)) }
+        },
+        dismissButton = {
+            if (canRemove) {
+                TextButton(onClick = onRemove) { Text(stringResource(R.string.remove)) }
+            } else {
+                TextButton(onClick = onDismiss) { Text(stringResource(android.R.string.cancel)) }
+            }
+        },
+    )
+}
+
+/**
+ * Activity 配置弹窗的 Coui 皮肤。
+ *
+ * 包名与 ActivityName 都是选择结果、只能由选择器写入，所以两格只用空白浮层接点击；
+ * ActivityName 在未选包名时会由 [onPickActivity] 先弹提示，这里不重复校验。
+ */
+@Composable
+private fun CouiMemcActivityDialog(
+    packName: String,
+    onPackNameChange: (String) -> Unit,
+    activity: String,
+    onActivityChange: (String) -> Unit,
+    type: String,
+    onTypeChange: (String) -> Unit,
+    canRemove: Boolean,
+    tips: String,
+    onPickPackage: () -> Unit,
+    onPickActivity: () -> Unit,
+    onDismiss: () -> Unit,
+    onConfirm: () -> Unit,
+    onRemove: () -> Unit,
+) {
+    val colors = CouiTheme.colorScheme
+    CouiAlertDialog(
+        onDismissRequest = onDismiss,
+        confirmAction = CouiDialogAction(
+            text = stringResource(android.R.string.ok),
+            onClick = onConfirm,
+            style = CouiDialogActionStyle.Primary,
+            colors = CouiDialogDefaults.primaryActionColors(colors.accent),
+        ),
+        dismissAction = CouiDialogAction(
+            text = stringResource(if (canRemove) R.string.remove else android.R.string.cancel),
+            onClick = if (canRemove) onRemove else onDismiss,
+        ),
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = CouiDialogDefaults.contentPadding),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            PickerField(onClick = onPickPackage) {
+                CouiTextField(
+                    value = packName,
+                    onValueChange = onPackNameChange,
+                    singleLine = true,
+                    label = "PackageName",
+                    modifier = Modifier.fillMaxWidth(),
+                )
+            }
+            PickerField(onClick = onPickActivity) {
+                CouiTextField(
+                    value = activity,
+                    onValueChange = onActivityChange,
+                    singleLine = true,
+                    label = "ActivityName",
+                    modifier = Modifier.fillMaxWidth(),
+                )
+            }
+            CouiTextField(
+                value = type,
+                onValueChange = onTypeChange,
+                singleLine = true,
+                label = "Type",
+                modifier = Modifier.fillMaxWidth(),
+            )
+            CouiText(
+                text = tips,
+                kind = CouiTextKind.PreferenceSummary,
+                color = colors.onSurfaceVariant,
+                modifier = Modifier.padding(top = 8.dp),
             )
         }
     }

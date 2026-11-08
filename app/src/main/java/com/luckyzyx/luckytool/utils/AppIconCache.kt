@@ -19,7 +19,7 @@ import kotlinx.coroutines.withContext
  * 功能列表的进程级图标缓存。IPC、尺寸归一化与阴影都在后台完成；
  * 行滑出后继续加载，回到页面直接复用位图，不在滚动时重新绘制。
  *
- * 对外接口只在主线程调用，位图尺寸来自 Compose 密度，避免自定义界面缩放导致模糊。
+ * 对外接口只在主线程调用，位图尺寸来自 Compose 密度，避免绘制时被放大而模糊。
  */
 object AppIconCache {
     private class Entry {

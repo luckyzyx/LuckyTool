@@ -3,8 +3,6 @@ package com.luckyzyx.luckytool.ui.compose.scopes.related
 import android.content.Context
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.AlertDialog
@@ -19,11 +17,15 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.itos.coui.dialog.CouiDialogAction
+import com.itos.coui.dialog.CouiDialogActionStyle
+import com.itos.coui.dialog.CouiDialogDefaults
+import com.itos.coui.theme.CouiTheme
 import com.luckyzyx.luckytool.R
+import com.luckyzyx.luckytool.ui.compose.components.coui.CouiAlertDialog
+import com.luckyzyx.luckytool.ui.compose.components.coui.CouiIconButton
 import com.luckyzyx.luckytool.ui.compose.scopes.ScopePageSpec
 import com.luckyzyx.luckytool.ui.theme.LocalUiMode
 import com.luckyzyx.luckytool.ui.theme.UiMode
@@ -39,11 +41,6 @@ import com.luckyzyx.luckytool.utils.ModulePrefs
 import com.luckyzyx.luckytool.utils.formatFileSize
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
-import top.yukonga.miuix.kmp.basic.ButtonDefaults
-import top.yukonga.miuix.kmp.basic.Text as MiuixText
-import top.yukonga.miuix.kmp.basic.TextButton as MiuixTextButton
-import top.yukonga.miuix.kmp.overlay.OverlayDialog
-import top.yukonga.miuix.kmp.theme.MiuixTheme
 import java.io.File
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -388,24 +385,33 @@ object LauncherBackupPage {
     }
 }
 
-/** 快照行尾的删除按钮：Material 与 Miuix 两套行的 trailing 槽共用，各取各主题的 error 色 */
+/** 快照行尾的删除按钮：危险动作在两条线上都用最强的前景/错误色 */
 @Composable
 private fun SnapshotDeleteAction(enabled: Boolean, onClick: () -> Unit) {
-    val tint = if (LocalUiMode.current == UiMode.Miuix) {
-        MiuixTheme.colorScheme.error
-    } else {
-        MaterialTheme.colorScheme.error
-    }
-    IconButton(onClick = onClick, enabled = enabled) {
-        Icon(
-            imageVector = Icons.Filled.Delete,
+    when (LocalUiMode.current) {
+        UiMode.Material -> IconButton(onClick = onClick, enabled = enabled) {
+            Icon(
+                imageVector = Icons.Filled.Delete,
+                contentDescription = stringResource(R.string.launcher_backup_delete),
+                tint = MaterialTheme.colorScheme.error,
+            )
+        }
+        // COUI 没有 error 角色：危险动作靠满强度前景色表达，描述挂在按钮点击面上，图标不再重复声明
+        UiMode.Coui -> CouiIconButton(
+            onClick = onClick,
             contentDescription = stringResource(R.string.launcher_backup_delete),
-            tint = tint,
-        )
+            enabled = enabled,
+        ) {
+            Icon(
+                imageVector = Icons.Filled.Delete,
+                contentDescription = null,
+                tint = CouiTheme.colorScheme.onSurface,
+            )
+        }
     }
 }
 
-/** 二次确认对话框：Miuix OverlayDialog 与 Material AlertDialog 两套壳子，恢复与删除共用 */
+/** 二次确认对话框：恢复与删除共用，按外观线分派到 M3 弹窗或 COUI 弹窗 */
 @Composable
 private fun SnapshotConfirmDialog(
     title: String,
@@ -415,24 +421,6 @@ private fun SnapshotConfirmDialog(
     onDismiss: () -> Unit,
 ) {
     when (LocalUiMode.current) {
-        // Miuix 的 OverlayDialog 没有标题区（原文案自带你做的事），保持只有正文 + 两个按钮
-        UiMode.Miuix -> OverlayDialog(show = true, onDismissRequest = onDismiss) {
-            MiuixText(text = message, modifier = Modifier.fillMaxWidth())
-            MiuixTextButton(
-                text = confirmText,
-                onClick = onConfirm,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 12.dp),
-                colors = ButtonDefaults.textButtonColorsPrimary(),
-            )
-            MiuixTextButton(
-                text = stringResource(R.string.launcher_backup_cancel),
-                onClick = onDismiss,
-                modifier = Modifier.fillMaxWidth(),
-            )
-        }
-
         UiMode.Material -> AlertDialog(
             onDismissRequest = onDismiss,
             title = { Text(title) },
@@ -443,6 +431,22 @@ private fun SnapshotConfirmDialog(
                     Text(stringResource(R.string.launcher_backup_cancel))
                 }
             },
+        )
+        // COUI 线：确认是主操作，Primary 样式必须显式给配色；取消放取消位，不占中性位
+        UiMode.Coui -> CouiAlertDialog(
+            onDismissRequest = onDismiss,
+            title = title,
+            message = message,
+            confirmAction = CouiDialogAction(
+                text = confirmText,
+                onClick = onConfirm,
+                style = CouiDialogActionStyle.Primary,
+                colors = CouiDialogDefaults.primaryActionColors(CouiTheme.colorScheme.accent),
+            ),
+            dismissAction = CouiDialogAction(
+                text = stringResource(R.string.launcher_backup_cancel),
+                onClick = onDismiss,
+            ),
         )
     }
 }

@@ -21,7 +21,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyItemScope
 import androidx.compose.foundation.lazy.items
@@ -29,6 +28,7 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.SuggestionChip
@@ -51,6 +51,13 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.core.graphics.drawable.toBitmap
 import androidx.core.net.toUri
+import com.itos.coui.dialog.CouiDialogAction
+import com.itos.coui.dialog.CouiDialogActionStyle
+import com.itos.coui.dialog.CouiDialogDefaults
+import com.itos.coui.icons.CouiIcons
+import com.itos.coui.text.CouiTextKind
+import com.itos.coui.text.Text as CouiText
+import com.itos.coui.theme.CouiTheme
 import com.luckyzyx.luckytool.R
 import com.luckyzyx.luckytool.data.AppInfo
 import com.luckyzyx.luckytool.data.AppIntentInfo
@@ -59,17 +66,18 @@ import com.luckyzyx.luckytool.ui.compose.components.ChoiceItem
 import com.luckyzyx.luckytool.ui.compose.components.MultiChoiceDialog
 import com.luckyzyx.luckytool.ui.compose.components.PrefGroup
 import com.luckyzyx.luckytool.ui.compose.components.PrefSwitchRow
-import com.luckyzyx.luckytool.ui.compose.components.material.MaterialItem
+import com.luckyzyx.luckytool.ui.compose.components.AppItem
 import com.luckyzyx.luckytool.ui.compose.components.material.MaterialItemContainer
-import com.luckyzyx.luckytool.ui.compose.components.material.MaterialListItem
-import com.luckyzyx.luckytool.ui.compose.components.material.materialBottomInset
-import com.luckyzyx.luckytool.ui.compose.components.miuix.MiuixCheckboxItem
-import com.luckyzyx.luckytool.ui.compose.components.miuix.MiuixListItem
-import com.luckyzyx.luckytool.ui.compose.components.miuix.MiuixPrefDefaults
-import com.luckyzyx.luckytool.ui.compose.components.miuix.MiuixPrefItem
-import com.luckyzyx.luckytool.ui.compose.components.miuix.MiuixSwitchItem
+import com.luckyzyx.luckytool.ui.compose.components.AppListItem
+import com.luckyzyx.luckytool.ui.compose.components.coui.CouiAlertDialog
+import com.luckyzyx.luckytool.ui.compose.components.coui.CouiFilterChip
+import com.luckyzyx.luckytool.ui.compose.components.coui.CouiIconButton
+import com.luckyzyx.luckytool.ui.compose.components.coui.CouiSuggestionChip
+import com.luckyzyx.luckytool.ui.compose.components.coui.CouiTextField
+import com.luckyzyx.luckytool.ui.compose.components.coui.LuckyCouiIcons
 import com.luckyzyx.luckytool.ui.compose.scopes.ScopePageAction
 import com.luckyzyx.luckytool.ui.compose.scopes.ScopePageSpec
+import com.luckyzyx.luckytool.ui.theme.DesignTokens
 import com.luckyzyx.luckytool.ui.theme.LocalUiMode
 import com.luckyzyx.luckytool.ui.theme.UiMode
 import com.luckyzyx.luckytool.utils.IntentPrefs
@@ -87,20 +95,14 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
-import top.yukonga.miuix.kmp.overlay.OverlayDialog
-import top.yukonga.miuix.kmp.utils.overScrollVertical
-import top.yukonga.miuix.kmp.utils.scrollEndHaptic
-import top.yukonga.miuix.kmp.basic.TextButton as MiuixTextButton
-import top.yukonga.miuix.kmp.basic.TextField as MiuixTextField
 
 /**
  * P4 特殊页：隐藏应用 Intent。
  * 使用 ScopeScreen 的 fullContent 全屏自定义渲染 + onRefresh 下拉刷新。
  *
- * 单文件承载：状态/加载/写值逻辑只有一份，渲染差异集中在
- * [HideAppIntentContent] 的 `if (miuix)` 分派上——开关独占一张卡（[PrefGroup] 内
- * [PrefSwitchRow]）、搜索框复用 [AppSearchField]、
- * 应用行 [IntentAppRow] 与多选对话框 [IntentInfoSelectDialog] 按线分派。
+ * 单文件承载：状态/加载/写值逻辑只有一份，渲染集中在 [HideAppIntentContent]——开关独占一张卡
+ * （[PrefGroup] 内 [PrefSwitchRow]）、搜索框复用 [AppSearchField]、
+ * 应用行 [IntentAppRow] 与多选对话框 [IntentInfoSelectDialog]。
  * 批量操作（按 Intent 类型分别全选、清空全部）声明为 [ScopePageAction] 进顶栏溢出菜单：
  * 它们作用于整份数据而非某一项，放进正文选项行会与单个开关混排。
  */
@@ -162,10 +164,9 @@ internal fun intentTypeLabel(type: IntentType): String = stringResource(
 )
 
 /**
- * 页面渲染体：状态/加载逻辑唯一一份，两条渲染线共用，渲染差异集中在此：
+ * 页面渲染体：状态/加载逻辑唯一一份，渲染集中在此：
  * 顶部开关独占一张卡（[PrefGroup] 内 [PrefSwitchRow]，批量操作已移回顶栏溢出菜单）、
- * 搜索框 [AppSearchField]，
- * 列表容器与行、清空对话框、多选对话框、排序过滤弹层均按 `if (miuix)` 分派。
+ * 搜索框 [AppSearchField]，列表容器与行、清空对话框、多选对话框、排序过滤弹层。
  */
 @Composable
 internal fun LazyItemScope.HideAppIntentContent() {
@@ -173,7 +174,6 @@ internal fun LazyItemScope.HideAppIntentContent() {
     val pm = context.packageManager
     val packageUtils = remember { PackageUtils(pm) }
     val scope = rememberCoroutineScope()
-    val miuix = LocalUiMode.current == UiMode.Miuix
 
     var isReverse by remember { mutableStateOf(false) }
     var sortMode by remember { mutableIntStateOf(0) }
@@ -436,6 +436,12 @@ internal fun LazyItemScope.HideAppIntentContent() {
         if (allAppInfos.isEmpty() || allIntentInfos.isEmpty()) reload()
     }
 
+    // 两条线共用的搜索回调：搜索词与列表同源，渲染分支里各写一份会分叉
+    val onQueryChange: (String) -> Unit = { q ->
+        query = q
+        filterAppInfos = applyQuery(q)
+    }
+
     Column(Modifier.fillParentMaxHeight()) {
         Column(
             modifier = Modifier.padding(horizontal = 16.dp),
@@ -453,108 +459,70 @@ internal fun LazyItemScope.HideAppIntentContent() {
                     )
                 }
             }
-            AppSearchField(
-                query = query,
-                enabled = !loading,
-                onQueryChange = { q ->
-                    query = q
-                    filterAppInfos = applyQuery(q)
-                },
-                onSortClick = { showSortSheet = true },
-            )
+            when (LocalUiMode.current) {
+                UiMode.Material -> AppSearchField(
+                    query = query,
+                    enabled = !loading,
+                    onQueryChange = onQueryChange,
+                    onSortClick = { showSortSheet = true },
+                )
+
+                UiMode.Coui -> CouiIntentSearchField(
+                    query = query,
+                    enabled = !loading,
+                    onQueryChange = onQueryChange,
+                    onSortClick = { showSortSheet = true },
+                )
+            }
         }
         // 搜索框↔列表的间距：两者是同一 Column 的兄弟节点，不显式留白会直接贴在一起
         Spacer(Modifier.height(AppListContentGap))
-        if (miuix) {
-            LazyColumn(
-                modifier = Modifier
-                    .weight(1f)
-                    .scrollEndHaptic()
-                    .overScrollVertical(),
-                contentPadding = PaddingValues(
-                    start = MiuixPrefDefaults.CardHorizontalInset,
-                    end = MiuixPrefDefaults.CardHorizontalInset,
-                    bottom = materialBottomInset(),
-                ),
-                verticalArrangement = Arrangement.spacedBy(MiuixPrefDefaults.ItemGap),
-                overscrollEffect = null,
-            ) {
-                itemsIndexed(
-                    filterAppInfos,
-                    key = { _, info -> info.packageName },
-                ) { index, info ->
-                    MiuixPrefItem(index = index, count = filterAppInfos.size) {
-                        IntentAppRow(
-                            info = info,
-                            allIntentInfos = allIntentInfos,
-                            allEnabledInfos = allEnabledInfos,
-                            onOpenDialog = ::openSelectDialog,
-                        )
-                    }
-                }
-            }
-        } else {
-            LazyColumn(
-                modifier = Modifier.weight(1f),
-                contentPadding = PaddingValues(start = 16.dp, end = 16.dp, bottom = 16.dp),
-                verticalArrangement = Arrangement.spacedBy(MiuixPrefDefaults.ItemGap),
-            ) {
-                itemsIndexed(
-                    filterAppInfos,
-                    key = { _, info -> info.packageName },
-                ) { index, info ->
-                    MaterialItem(index = index, count = filterAppInfos.size) {
-                        IntentAppRow(
-                            info = info,
-                            allIntentInfos = allIntentInfos,
-                            allEnabledInfos = allEnabledInfos,
-                            onOpenDialog = ::openSelectDialog,
-                        )
-                    }
+        LazyColumn(
+            modifier = Modifier.weight(1f),
+            contentPadding = PaddingValues(start = 16.dp, end = 16.dp, bottom = 16.dp),
+            verticalArrangement = Arrangement.spacedBy(DesignTokens.ItemGap),
+        ) {
+            itemsIndexed(
+                filterAppInfos,
+                key = { _, info -> info.packageName },
+            ) { index, info ->
+                AppItem(index = index, count = filterAppInfos.size) {
+                    IntentAppRow(
+                        info = info,
+                        allIntentInfos = allIntentInfos,
+                        allEnabledInfos = allEnabledInfos,
+                        onOpenDialog = ::openSelectDialog,
+                    )
                 }
             }
         }
     }
 
     if (showClearDialog) {
-        if (miuix) {
-            OverlayDialog(
-                show = true,
-                onDismissRequest = { showClearDialog = false },
-            ) {
-                Row(Modifier.fillMaxWidth()) {
-                    MiuixTextButton(
-                        text = stringResource(android.R.string.cancel),
-                        onClick = { showClearDialog = false },
-                        modifier = Modifier.weight(1f),
-                    )
-                    Spacer(Modifier.width(8.dp))
-                    MiuixTextButton(
-                        text = stringResource(android.R.string.ok),
-                        onClick = {
-                            showClearDialog = false
-                            context.clearPrefs(IntentPrefs)
-                            scope.launch { reload() }
-                        },
-                        modifier = Modifier.weight(1f),
-                    )
-                }
-            }
-        } else {
-            AlertDialog(
+        // 清空是整页批量操作，两条线的确认弹窗都只放按钮、不带标题正文
+        val onConfirm: () -> Unit = {
+            showClearDialog = false
+            context.clearPrefs(IntentPrefs)
+            scope.launch { reload() }
+        }
+        when (LocalUiMode.current) {
+            UiMode.Material -> AlertDialog(
                 onDismissRequest = { showClearDialog = false },
                 confirmButton = {
-                    TextButton(onClick = {
-                        showClearDialog = false
-                        context.clearPrefs(IntentPrefs)
-                        scope.launch { reload() }
-                    }) { Text(stringResource(android.R.string.ok)) }
+                    TextButton(onClick = onConfirm) {
+                        Text(stringResource(android.R.string.ok))
+                    }
                 },
                 dismissButton = {
                     TextButton(onClick = { showClearDialog = false }) {
                         Text(stringResource(android.R.string.cancel))
                     }
                 },
+            )
+
+            UiMode.Coui -> CouiIntentClearDialog(
+                onDismiss = { showClearDialog = false },
+                onConfirm = onConfirm,
             )
         }
     }
@@ -588,107 +556,77 @@ internal fun LazyItemScope.HideAppIntentContent() {
                 scope.launch { reload() }
             },
             filterContent = {
-                if (miuix) {
-                    Column {
-                        MiuixSwitchItem(
-                            title = stringResource(R.string.appinfo_system_app),
-                            checked = showSystemApps,
-                            onCheckedChange = {
-                                showSystemApps = !showSystemApps
-                                scope.launch { reload() }
-                            },
-                        )
-                        MiuixCheckboxItem(
-                            title = stringResource(R.string.intent_share),
-                            checked = intentFilter.contains(IntentType.SINGLE_SHARE),
-                            onCheckedChange = {
-                                setFilterTypes(
-                                    arrayOf(IntentType.SINGLE_SHARE, IntentType.MULTI_SHARE),
-                                    !intentFilter.contains(IntentType.SINGLE_SHARE),
-                                )
-                            },
-                        )
-                        MiuixCheckboxItem(
-                            title = stringResource(R.string.intent_text),
-                            checked = intentFilter.contains(IntentType.PROCESS_TEXT),
-                            onCheckedChange = {
-                                setFilterTypes(
-                                    arrayOf(IntentType.PROCESS_TEXT),
-                                    !intentFilter.contains(IntentType.PROCESS_TEXT),
-                                )
-                            },
-                        )
-                        MiuixCheckboxItem(
-                            title = stringResource(R.string.intent_open),
-                            checked = intentFilter.contains(IntentType.CONTENT),
-                            onCheckedChange = {
-                                setFilterTypes(
-                                    arrayOf(IntentType.CONTENT, IntentType.FILE),
-                                    !intentFilter.contains(IntentType.CONTENT),
-                                )
-                            },
-                        )
-                        MiuixCheckboxItem(
-                            title = stringResource(R.string.intent_browser),
-                            checked = intentFilter.contains(IntentType.HTTP_LINK),
-                            onCheckedChange = {
-                                setFilterTypes(
-                                    arrayOf(IntentType.HTTP_LINK, IntentType.HTTPS_LINK),
-                                    !intentFilter.contains(IntentType.HTTP_LINK),
-                                )
-                            },
-                        )
+                // 弹层本身已分线，但筛选项的标签由调用方提供，必须跟着渲染线换控件：
+                // 两份标签算一遍（状态与回调只建一次），再各按线渲染。
+                val chips = listOf(
+                    FilterChipSpec(
+                        label = stringResource(R.string.appinfo_system_app),
+                        selected = showSystemApps,
+                        onClick = {
+                            showSystemApps = !showSystemApps
+                            scope.launch { reload() }
+                        },
+                    ),
+                    FilterChipSpec(
+                        label = stringResource(R.string.intent_share),
+                        selected = intentFilter.contains(IntentType.SINGLE_SHARE),
+                        onClick = {
+                            setFilterTypes(
+                                arrayOf(IntentType.SINGLE_SHARE, IntentType.MULTI_SHARE),
+                                !intentFilter.contains(IntentType.SINGLE_SHARE),
+                            )
+                        },
+                    ),
+                    FilterChipSpec(
+                        label = stringResource(R.string.intent_text),
+                        selected = intentFilter.contains(IntentType.PROCESS_TEXT),
+                        onClick = {
+                            setFilterTypes(
+                                arrayOf(IntentType.PROCESS_TEXT),
+                                !intentFilter.contains(IntentType.PROCESS_TEXT),
+                            )
+                        },
+                    ),
+                    FilterChipSpec(
+                        label = stringResource(R.string.intent_open),
+                        selected = intentFilter.contains(IntentType.CONTENT),
+                        onClick = {
+                            setFilterTypes(
+                                arrayOf(IntentType.CONTENT, IntentType.FILE),
+                                !intentFilter.contains(IntentType.CONTENT),
+                            )
+                        },
+                    ),
+                    FilterChipSpec(
+                        label = stringResource(R.string.intent_browser),
+                        selected = intentFilter.contains(IntentType.HTTP_LINK),
+                        onClick = {
+                            setFilterTypes(
+                                arrayOf(IntentType.HTTP_LINK, IntentType.HTTPS_LINK),
+                                !intentFilter.contains(IntentType.HTTP_LINK),
+                            )
+                        },
+                    ),
+                )
+                when (LocalUiMode.current) {
+                    UiMode.Material -> FlowRow {
+                        chips.forEach { chip ->
+                            FilterChip(
+                                selected = chip.selected,
+                                onClick = chip.onClick,
+                                label = { Text(chip.label) },
+                            )
+                        }
                     }
-                } else {
-                    FlowRow {
-                        FilterChip(
-                            selected = showSystemApps,
-                            onClick = {
-                                showSystemApps = !showSystemApps
-                                scope.launch { reload() }
-                            },
-                            label = { Text(stringResource(R.string.appinfo_system_app)) },
-                        )
-                        FilterChip(
-                            selected = intentFilter.contains(IntentType.SINGLE_SHARE),
-                            onClick = {
-                                setFilterTypes(
-                                    arrayOf(IntentType.SINGLE_SHARE, IntentType.MULTI_SHARE),
-                                    !intentFilter.contains(IntentType.SINGLE_SHARE),
-                                )
-                            },
-                            label = { Text(stringResource(R.string.intent_share)) },
-                        )
-                        FilterChip(
-                            selected = intentFilter.contains(IntentType.PROCESS_TEXT),
-                            onClick = {
-                                setFilterTypes(
-                                    arrayOf(IntentType.PROCESS_TEXT),
-                                    !intentFilter.contains(IntentType.PROCESS_TEXT),
-                                )
-                            },
-                            label = { Text(stringResource(R.string.intent_text)) },
-                        )
-                        FilterChip(
-                            selected = intentFilter.contains(IntentType.CONTENT),
-                            onClick = {
-                                setFilterTypes(
-                                    arrayOf(IntentType.CONTENT, IntentType.FILE),
-                                    !intentFilter.contains(IntentType.CONTENT),
-                                )
-                            },
-                            label = { Text(stringResource(R.string.intent_open)) },
-                        )
-                        FilterChip(
-                            selected = intentFilter.contains(IntentType.HTTP_LINK),
-                            onClick = {
-                                setFilterTypes(
-                                    arrayOf(IntentType.HTTP_LINK, IntentType.HTTPS_LINK),
-                                    !intentFilter.contains(IntentType.HTTP_LINK),
-                                )
-                            },
-                            label = { Text(stringResource(R.string.intent_browser)) },
-                        )
+
+                    UiMode.Coui -> FlowRow {
+                        chips.forEach { chip ->
+                            CouiFilterChip(
+                                label = chip.label,
+                                selected = chip.selected,
+                                onClick = chip.onClick,
+                            )
+                        }
                     }
                 }
             },
@@ -699,9 +637,8 @@ internal fun LazyItemScope.HideAppIntentContent() {
 
 /**
  * 应用行：图标 + 应用名 + 包名 + 四组类型计数按钮。
- * 两条渲染线行为一致：每组类型 (share/text/open/browser) 各自回调
- * `(packName, 全部条目, 已启用条目, 类型组)`；容器分派在调用点（`MiuixPrefItem`/`MaterialItem`），
- * 行内 ListItem 与计数按钮在此按线分派。
+ * 每组类型 (share/text/open/browser) 各自回调
+ * `(packName, 全部条目, 已启用条目, 类型组)`；外层卡片容器由调用点提供（`MaterialItem`）。
  */
 @Composable
 internal fun IntentAppRow(
@@ -713,12 +650,38 @@ internal fun IntentAppRow(
     val intentInfo = allIntentInfos.filter { it.packName == info.packageName }
     val enabledInfo = allEnabledInfos.filter { it.packName == info.packageName }
 
-    if (LocalUiMode.current == UiMode.Miuix) {
+    when (LocalUiMode.current) {
+        UiMode.Material -> IntentAppRowMaterial(info, intentInfo, enabledInfo, onOpenDialog)
+        UiMode.Coui -> IntentAppRowCoui(info, intentInfo, enabledInfo, onOpenDialog)
+    }
+}
+
+/** Material 线：整行自己套卡片容器，行标题走 M3 文本 */
+@Composable
+private fun IntentAppRowMaterial(
+    info: AppInfo,
+    intentInfo: List<AppIntentInfo>,
+    enabledInfo: List<AppIntentInfo>,
+    onOpenDialog: (String, List<AppIntentInfo>, List<AppIntentInfo>, Array<IntentType>) -> Unit,
+) {
+    MaterialItemContainer {
         Column {
-            MiuixListItem(
-                title = info.name,
-                summary = info.packageName,
-                startAction = {
+            AppListItem(
+                headlineContent = {
+                    Text(
+                        info.name,
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                },
+                supportingContent = {
+                    Text(
+                        info.packageName,
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                },
+                leadingContent = {
                     info.icon?.let { d ->
                         Image(
                             remember(info) { d.toBitmap().asImageBitmap() },
@@ -737,48 +700,61 @@ internal fun IntentAppRow(
                 IntentTypeChips(intentInfo, enabledInfo, onOpenDialog, info.packageName)
             }
         }
-    } else {
-        MaterialItemContainer {
-            Column {
-                MaterialListItem(
-                    headlineContent = {
-                        Text(
-                            info.name,
-                            maxLines = 2,
-                            overflow = TextOverflow.Ellipsis,
-                        )
-                    },
-                    supportingContent = {
-                        Text(
-                            info.packageName,
-                            maxLines = 2,
-                            overflow = TextOverflow.Ellipsis,
-                        )
-                    },
-                    leadingContent = {
-                        info.icon?.let { d ->
-                            Image(
-                                remember(info) { d.toBitmap().asImageBitmap() },
-                                contentDescription = null,
-                                contentScale = ContentScale.Crop,
-                                modifier = Modifier.size(48.dp),
-                            )
-                        }
-                    },
+    }
+}
+
+/**
+ * COUI 线：卡片本体由外层 [AppItem] 的 COUI 分支绘制，这里再套一层容器会变成双层圆角，
+ * 所以只排版「图标行 + 四组计数行」。
+ */
+@Composable
+private fun IntentAppRowCoui(
+    info: AppInfo,
+    intentInfo: List<AppIntentInfo>,
+    enabledInfo: List<AppIntentInfo>,
+    onOpenDialog: (String, List<AppIntentInfo>, List<AppIntentInfo>, Array<IntentType>) -> Unit,
+) {
+    Column {
+        AppListItem(
+            headlineContent = {
+                CouiText(
+                    text = info.name,
+                    kind = CouiTextKind.Body,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
                 )
-                Row(
-                    Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 12.dp, vertical = 4.dp),
-                ) {
-                    IntentTypeChips(intentInfo, enabledInfo, onOpenDialog, info.packageName)
+            },
+            supportingContent = {
+                CouiText(
+                    text = info.packageName,
+                    kind = CouiTextKind.PreferenceSummary,
+                    color = CouiTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            },
+            leadingContent = {
+                info.icon?.let { d ->
+                    Image(
+                        remember(info) { d.toBitmap().asImageBitmap() },
+                        contentDescription = null,
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier.size(48.dp),
+                    )
                 }
-            }
+            },
+        )
+        Row(
+            Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 12.dp, vertical = 4.dp),
+        ) {
+            IntentTypeChips(intentInfo, enabledInfo, onOpenDialog, info.packageName)
         }
     }
 }
 
-/** 行内四组类型计数按钮（share/text/open/browser），逻辑两线一致 */
+/** 行内四组类型计数按钮（share/text/open/browser） */
 @Composable
 private fun RowScope.IntentTypeChips(
     intentInfo: List<AppIntentInfo>,
@@ -816,31 +792,33 @@ private fun RowScope.IntentTypeChips(
     }
 }
 
-/** 行内计数按钮：text = 已启用/全部，无条目时不可点（Material=SuggestionChip / Miuix=TextButton） */
+/** 行内计数按钮：text = 已启用/全部，无条目时不可点 */
 @Composable
 private fun RowScope.IntentCountChip(
     allIntent: List<AppIntentInfo>,
     enabled: List<AppIntentInfo>,
     onClick: () -> Unit,
 ) {
-    if (LocalUiMode.current == UiMode.Miuix) {
-        MiuixTextButton(
-            text = "${enabled.size}/${allIntent.size}",
-            onClick = onClick,
-            enabled = allIntent.isNotEmpty(),
-            modifier = Modifier.weight(1f),
-        )
-    } else {
-        SuggestionChip(
+    // 两条线的计数文案一致，只有承载控件不同
+    val countText = "${enabled.size}/${allIntent.size}"
+    when (LocalUiMode.current) {
+        UiMode.Material -> SuggestionChip(
             onClick = onClick,
             enabled = allIntent.isNotEmpty(),
             label = {
                 Text(
-                    "${enabled.size}/${allIntent.size}",
+                    countText,
                     style = MaterialTheme.typography.labelMedium,
                     maxLines = 1,
                 )
             },
+            modifier = Modifier.weight(1f),
+        )
+
+        UiMode.Coui -> CouiSuggestionChip(
+            label = countText,
+            onClick = onClick,
+            enabled = allIntent.isNotEmpty(),
             modifier = Modifier.weight(1f),
         )
     }
@@ -850,8 +828,8 @@ private fun RowScope.IntentCountChip(
  * 多选 Intent 对话框：已启用项置顶预选、按 label/activity 过滤、全选/清空，
  * confirm 回传 ArrayList(selected)（对话框内临时态，取消不落盘）。
  *
- * 行渲染、全选/计数行与按钮行统一交给 MultiChoiceDialog；两条渲染线共用同一套行布局，
- * 行首不再单独渲染 32dp 应用图标，信息由 title/summary 承担。
+ * 行渲染、全选/计数行与按钮行统一交给 MultiChoiceDialog，
+ * 行首不单独渲染应用图标，信息由 title/summary 承担。
  */
 @Composable
 internal fun IntentInfoSelectDialog(
@@ -905,28 +883,102 @@ internal fun IntentInfoSelectDialog(
 /** 行 key（也是 confirm 回传时还原对象的索引）：沿用旧的 action|type|activity 组合 */
 private fun AppIntentInfo.choiceKey(): String = "$action|$type|$activity"
 
-/**
- * 对话框内搜索框：MiuixTextField 与 OutlinedTextField 来自不同库、没有统一封装，
- * 只在这一处按 UI 线分派，调用点的 header 里仍然只有一次调用。
- */
+/** 对话框内搜索框：调用点的 header 里只保留这一次调用。 */
 @Composable
 private fun IntentQueryField(query: String, onQueryChange: (String) -> Unit) {
-    if (LocalUiMode.current == UiMode.Miuix) {
-        MiuixTextField(
-            value = query,
-            onValueChange = onQueryChange,
-            singleLine = true,
-            label = stringResource(R.string.activity_search_hint),
-            useLabelAsPlaceholder = true,
-            modifier = Modifier.fillMaxWidth(),
-        )
-    } else {
-        OutlinedTextField(
+    when (LocalUiMode.current) {
+        UiMode.Material -> OutlinedTextField(
             value = query,
             onValueChange = onQueryChange,
             singleLine = true,
             placeholder = { Text(stringResource(R.string.activity_search_hint)) },
             modifier = Modifier.fillMaxWidth(),
         )
+
+        UiMode.Coui -> CouiTextField(
+            value = query,
+            onValueChange = onQueryChange,
+            singleLine = true,
+            placeholder = stringResource(R.string.activity_search_hint),
+            modifier = Modifier.fillMaxWidth(),
+        )
     }
+}
+
+/**
+ * 排序过滤弹层里的一个筛选项：文案在这里算好，选中态与回调由调用方持有，
+ * 两条线只按渲染线换承载控件（M3 FilterChip / COUI 胶囊标签）。
+ */
+private class FilterChipSpec(
+    val label: String,
+    val selected: Boolean,
+    val onClick: () -> Unit,
+)
+
+/**
+ * COUI 线的页面搜索框：胶囊输入框 + 前置搜索图标 + 尾部排序筛选入口。
+ * 尾部按钮只负责打开弹层，筛选状态由页面持有，控件自身不缓存任何东西。
+ */
+@Composable
+private fun CouiIntentSearchField(
+    query: String,
+    enabled: Boolean,
+    onQueryChange: (String) -> Unit,
+    onSortClick: () -> Unit,
+) {
+    CouiTextField(
+        value = query,
+        onValueChange = onQueryChange,
+        enabled = enabled,
+        // 与 Material 线共用搜索框的提示语保持一致，避免两条线提示不同
+        placeholder = "Name / PackageName",
+        leadingIcon = {
+            Icon(
+                imageVector = CouiIcons.Search,
+                contentDescription = null,
+                modifier = Modifier.size(20.dp),
+                tint = CouiTheme.colorScheme.onSurfaceVariant,
+            )
+        },
+        trailingIcon = {
+            CouiIconButton(
+                onClick = onSortClick,
+                contentDescription = stringResource(R.string.appinfo_sort_and_filter),
+                enabled = enabled,
+            ) {
+                Icon(
+                    imageVector = LuckyCouiIcons.Tune,
+                    contentDescription = null,
+                    modifier = Modifier.size(20.dp),
+                    tint = CouiTheme.colorScheme.onSurface,
+                )
+            }
+        },
+        modifier = Modifier.fillMaxWidth(),
+    )
+}
+
+/**
+ * COUI 线的清空确认弹窗：确认走主色位、取消走次级位。
+ * 原对话框没有标题与正文，这里同样只画按钮，避免凭空多出一句文案。
+ */
+@Composable
+private fun CouiIntentClearDialog(
+    onDismiss: () -> Unit,
+    onConfirm: () -> Unit,
+) {
+    CouiAlertDialog(
+        onDismissRequest = onDismiss,
+        confirmAction = CouiDialogAction(
+            text = stringResource(android.R.string.ok),
+            onClick = onConfirm,
+            style = CouiDialogActionStyle.Primary,
+            // 主色动作必须显式给配色：CouiDialogAction 的 init 会校验，缺了直接抛异常
+            colors = CouiDialogDefaults.primaryActionColors(CouiTheme.colorScheme.accent),
+        ),
+        dismissAction = CouiDialogAction(
+            text = stringResource(android.R.string.cancel),
+            onClick = onDismiss,
+        ),
+    )
 }

@@ -7,8 +7,6 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.MaterialTheme
@@ -19,21 +17,22 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import com.itos.coui.text.CouiTextKind
+import com.itos.coui.text.Text as CouiText
+import com.itos.coui.theme.CouiTheme
 import com.luckyzyx.luckytool.R
-import com.luckyzyx.luckytool.ui.compose.components.miuix.MiuixPrefCategoryHeader
-import com.luckyzyx.luckytool.ui.compose.components.miuix.MiuixRadioItem
-import com.luckyzyx.luckytool.ui.compose.components.miuix.MiuixSwitchItem
+import com.luckyzyx.luckytool.ui.compose.components.coui.CouiFilterChip
+import com.luckyzyx.luckytool.ui.compose.components.coui.CouiModalBottomSheet
 import com.luckyzyx.luckytool.ui.theme.LocalUiMode
 import com.luckyzyx.luckytool.ui.theme.UiMode
-import top.yukonga.miuix.kmp.overlay.OverlayBottomSheet
 
 /**
  * 排序/筛选底部弹层。
  *
  * DarkModePage / HideAppIntentPage / MultiAppPage / ZoomWindowPage 共用这一份入口：
- * 四个调用点传同一组参数，主题差异只在唯一的 `when (LocalUiMode.current)` 缝上分派：
- * - Material 线 → [SortFilterSheetMaterial]（material3 `ModalBottomSheet` + `FilterChip`）；
- * - Miuix 线 → [SortFilterSheetMiuix]（同包 SortFilterSheetMiuix.kt，根部 host 的 OverlayBottomSheet）。
+ * 四个调用点传同一组参数，具体呈现按 [LocalUiMode] 分线 ——
+ * Material 线是 [SortFilterSheetMaterial]，COUI 线是 [CouiSortFilterSheet]。
+ * 两条线的反向开关与排序选中态都由调用方持有，这里只上报点击。
  */
 @Composable
 internal fun SortFilterSheet(
@@ -46,7 +45,7 @@ internal fun SortFilterSheet(
     onDismiss: () -> Unit,
 ) {
     when (LocalUiMode.current) {
-        UiMode.Miuix -> SortFilterSheetMiuix(
+        UiMode.Material -> SortFilterSheetMaterial(
             reverse = reverse,
             sortMode = sortMode,
             sortLabels = sortLabels,
@@ -56,7 +55,7 @@ internal fun SortFilterSheet(
             onDismiss = onDismiss,
         )
 
-        UiMode.Material -> SortFilterSheetMaterial(
+        UiMode.Coui -> CouiSortFilterSheet(
             reverse = reverse,
             sortMode = sortMode,
             sortLabels = sortLabels,
@@ -68,7 +67,7 @@ internal fun SortFilterSheet(
     }
 }
 
-/** Material 线：material3 `ModalBottomSheet` + `FilterChip` 的排序/筛选弹层，承载内容与 [SortFilterSheetMiuix] 相同，只是控件换成 material3 原语。 */
+/** Material 线：material3 `ModalBottomSheet` + `FilterChip` 的排序/筛选弹层。 */
 @Suppress("DEPRECATION") // rememberModalBottomSheetState() 自 material3 1.5 起弃用（改用 rememberBottomSheetState + 显式 enabledValues）；Material 线沿用旧重载，以免改动半展开状态的既有组合
 @OptIn(ExperimentalLayoutApi::class, ExperimentalMaterial3Api::class)
 @Composable
@@ -126,22 +125,15 @@ internal fun SortFilterSheetMaterial(
 }
 
 /**
- * 排序/筛选底部弹层的 Miuix 线呈现（调用方都在 `if (show) { … }` 里条件组合，故 `show = true`）。
+ * COUI 线：面板由 [CouiModalBottomSheet] 承载，标签用 COUI 筛选标签。
  *
- * 映射说明（与 Material 线逐条等价）：
- * - `ModalBottomSheet` → 根部 host 承载的 `OverlayBottomSheet`（`renderInRootScaffold` 保持默认 true）；
- * - 标题/小节标题 → `OverlayBottomSheet(title = …)` + `MiuixPrefCategoryHeader`；
- * - reverse 的 `FilterChip` → `MiuixSwitchItem`（单一开关语义：点击即取反，等价于 `onReverseChange()`）；
- * - 排序 `FilterChip` 组 → `MiuixRadioItem`（单选语义：`sortMode == index` 选中，点击回调同 `onSortChange(index)`）；
- * - `filterContent` 槽位原样透传（由调用方按线提供各自的过滤控件），非空时才显示「筛选」小节标题。
- * 库无 Chip 组件，故用 preference 行件表达，属已登记的主题级差异。
- *
- * 内容必须可滚动：库的 `BottomSheetColumn` 只是 `heightIn(max = 窗口高 - topInset)` 的普通 Column，
- * 行数多到超过窗口高度时，末尾行会被父 Column 按剩余高度压扁——`BasicComponent` 的 16dp 内边距会先
- * 吃掉标题的高度（标题先整体消失），固定尺寸的复选框稍后才被裁掉，看上去就是「只剩勾选框、没有文字」。
+ * 关闭行为与 Material 线一致：点遮罩或按返回键都走 [onDismiss]；面板本身已经带了
+ * 最大高度与竖向滚动，内容再多也只滚面板内部，不会把整块内容顶出屏幕。
+ * 左右留白在这里补，弹层自带的上下留白与导航栏内边距不再重复叠加。
  */
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
-internal fun SortFilterSheetMiuix(
+private fun CouiSortFilterSheet(
     reverse: Boolean,
     sortMode: Int,
     sortLabels: List<String>,
@@ -150,32 +142,47 @@ internal fun SortFilterSheetMiuix(
     filterContent: (@Composable () -> Unit)? = null,
     onDismiss: () -> Unit,
 ) {
-    OverlayBottomSheet(
-        show = true,
-        title = stringResource(R.string.appinfo_sort_and_filter),
-        onDismissRequest = onDismiss,
-    ) {
+    val colors = CouiTheme.colorScheme
+    CouiModalBottomSheet(onDismissRequest = onDismiss) {
         Column(
             Modifier
                 .fillMaxWidth()
-                .verticalScroll(rememberScrollState())
-                .padding(start = 16.dp, end = 16.dp, bottom = 32.dp)
+                .padding(horizontal = 16.dp)
         ) {
-            MiuixPrefCategoryHeader(stringResource(R.string.appinfo_sort_by))
-            MiuixSwitchItem(
-                title = stringResource(R.string.appinfo_reverse),
-                checked = reverse,
-                onCheckedChange = { onReverseChange() },
+            CouiText(
+                text = stringResource(R.string.appinfo_sort_and_filter),
+                kind = CouiTextKind.GroupTitle,
+                color = colors.onSurface,
             )
-            sortLabels.forEachIndexed { index, label ->
-                MiuixRadioItem(
-                    title = label,
-                    selected = sortMode == index,
-                    onClick = { onSortChange(index) },
-                )
+            Spacer(Modifier.size(8.dp))
+            CouiText(
+                text = stringResource(R.string.appinfo_sort_by),
+                kind = CouiTextKind.PreferenceTitle,
+                color = colors.onSurfaceVariant,
+            )
+            Spacer(Modifier.size(4.dp))
+            CouiFilterChip(
+                label = stringResource(R.string.appinfo_reverse),
+                selected = reverse,
+                onClick = onReverseChange,
+            )
+            FlowRow {
+                sortLabels.forEachIndexed { index, label ->
+                    CouiFilterChip(
+                        label = label,
+                        selected = sortMode == index,
+                        onClick = { onSortChange(index) },
+                    )
+                }
             }
             if (filterContent != null) {
-                MiuixPrefCategoryHeader(stringResource(R.string.appinfo_filter))
+                Spacer(Modifier.size(12.dp))
+                CouiText(
+                    text = stringResource(R.string.appinfo_filter),
+                    kind = CouiTextKind.PreferenceTitle,
+                    color = colors.onSurfaceVariant,
+                )
+                Spacer(Modifier.size(4.dp))
                 filterContent()
             }
         }

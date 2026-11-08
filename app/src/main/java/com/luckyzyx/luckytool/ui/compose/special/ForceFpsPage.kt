@@ -3,7 +3,6 @@ package com.luckyzyx.luckytool.ui.compose.special
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
 import androidx.compose.material3.Text
@@ -21,15 +20,18 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
+import com.itos.coui.layout.CouiPageDefaults
+import com.itos.coui.text.CouiTextKind
+import com.itos.coui.text.Text as CouiText
+import com.itos.coui.theme.CouiTheme
 import com.luckyzyx.luckytool.IRefreshRateController
 import com.luckyzyx.luckytool.R
 import com.luckyzyx.luckytool.data.DisplayMode
 import com.luckyzyx.luckytool.service.RefreshRateService
 import com.luckyzyx.luckytool.ui.compose.components.PrefGroup
 import com.luckyzyx.luckytool.ui.compose.components.PrefSwitchRow
-import com.luckyzyx.luckytool.ui.compose.components.material.MaterialRadioItem
-import com.luckyzyx.luckytool.ui.compose.components.miuix.MiuixPrefDefaults
-import com.luckyzyx.luckytool.ui.compose.components.miuix.MiuixRadioItem
+import com.luckyzyx.luckytool.ui.compose.components.AppRadioItem
+import com.luckyzyx.luckytool.ui.compose.components.coui.CouiFilledButton
 import com.luckyzyx.luckytool.ui.compose.scopes.ScopePageSpec
 import com.luckyzyx.luckytool.ui.theme.LocalUiMode
 import com.luckyzyx.luckytool.ui.theme.UiMode
@@ -41,8 +43,6 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
-import top.yukonga.miuix.kmp.basic.Button as MiuixButton
-import top.yukonga.miuix.kmp.basic.Text as MiuixText
 
 /**
  * 强制刷新率页：列出 SurfaceFlinger 支持的模式，设置当前刷新率、显示刷新率开关与开机自启。
@@ -81,12 +81,10 @@ import top.yukonga.miuix.kmp.basic.Text as MiuixText
  * 3. 设置卡：自启（`keyFpsAutoStart`）+ 显示刷新率合并为一张卡片；
  * 4. 恢复默认刷新率按钮 + 底部提示文案。
  *
- * 水平内缩：body 走 `custom(bare = true)`（整页无卡片容器），但 `bare` 的 Miuix 缝偏移是给分类标题的，
- * 这里必须用 `offset(+CardHorizontalInset)` 回正，否则左右间距不对称（详见 body 处的注释）。
- *
- * 线分派：行呈现（`PrefGroup` / `PrefSwitchRow`）由共享层按 [LocalUiMode] 自行分派，
- * 页面只分派自己写死的 material 件 —— 文字（`MiuixText`）、重置按钮（miuix `Button`）、
- * 模式单选项（`MiuixRadioItem`，material 线仍为 `MaterialRadioItem`）。
+ * 水平内缩：body 走 `custom(bare = true)`（整页无卡片容器），
+ * 水平 16dp 由 body 外层 Column 的 padding 提供；行呈现（`PrefGroup` / `PrefSwitchRow`）
+ * 与页面自绘的文字、按钮按外观分派（COUI 线用 COUI 语义文字与胶囊按钮，Material 线用 material3 件）；
+ * 模式单选项走 `AppRadioItem`，它本身已双线。
  */
 object ForceFpsPage {
 
@@ -106,6 +104,7 @@ object ForceFpsPage {
     ) {
         val c = requireNotNull(context) { "ScopeScreen 未注入 Context" }
         custom(key = "force_fps_body", bare = true) {
+            val isCoui = LocalUiMode.current == UiMode.Coui
             // 进程级缓存做种子：进入子页不重新绑定，直接用 RefreshRateService 已缓存的存活控制器
             var controller by remember { mutableStateOf(RefreshRateService.getCachedController()) }
             // 每次 load 读一次的 root IPC 快照（不在组合期反复读）
@@ -154,19 +153,10 @@ object ForceFpsPage {
             val fpsCur = state.getInt(keyFpsCur, -1)
             val fpsAutostart = state.getBoolean(keyFpsAutoStart, false)
 
-            // 行呈现由共享层分派；这里只分派页面写死的 material 件
-            val miuix = LocalUiMode.current == UiMode.Miuix
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    // Miuix 线：bare 条目在渲染缝里被统一 offset(-CardHorizontalInset)（供自带 16dp 内距的
-                    // 分类标题抵消列表级 12dp 内缩）。整页 body 不是分类标题：该偏移只平移不改变宽度，
-                    // 会把内容整体左推 12dp，实测左 16dp / 右 40dp 不对称；用等量正向 offset 回正后
-                    // 左右各 12dp，与其余页面（列表级 12dp 内缩的卡片）对齐。material 线无此偏移。
-                    .offset(x = if (miuix) MiuixPrefDefaults.CardHorizontalInset else 0.dp)
-                    // Miuix 线：水平 12dp 已由上面的回正 + 列表级 contentPadding 单一提供，
-                    // 再叠一层会二次内缩；material 线列表无水平 contentPadding，卡片需自带 16dp。
-                    .padding(horizontal = if (miuix) 0.dp else 16.dp, vertical = 8.dp),
+                    .padding(horizontal = 16.dp, vertical = 8.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 // FPS 数据卡：displayMode 模式列表置顶，独立一张卡片
@@ -183,20 +173,11 @@ object ForceFpsPage {
                                     controller?.setRefreshRateMode(index)
                                     state.set(keyFpsCur, index)
                                 }
-                                if (miuix) {
-                                    // Miuix 线等价件（库内 RadioButtonPreference）
-                                    MiuixRadioItem(
-                                        title = title,
-                                        selected = index == fpsCur,
-                                        onClick = onSelect,
-                                    )
-                                } else {
-                                    MaterialRadioItem(
-                                        title = title,
-                                        selected = index == fpsCur,
-                                        onClick = onSelect,
-                                    )
-                                }
+                                AppRadioItem(
+                                    title = title,
+                                    selected = index == fpsCur,
+                                    onClick = onSelect,
+                                )
                             }
                         }
                     }
@@ -209,9 +190,12 @@ object ForceFpsPage {
                 }
                 if (hint != null) {
                     val text = stringResource(hint)
-                    if (miuix) {
-                        MiuixText(
+                    // 空态提示按外观分派：COUI 线取说明色正文，Material 线保持 M3 Text
+                    if (isCoui) {
+                        CouiText(
                             text = text,
+                            kind = CouiTextKind.Body,
+                            color = CouiPageDefaults.themeColors(CouiTheme.isDark).summary,
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .padding(vertical = 24.dp),
@@ -250,15 +234,17 @@ object ForceFpsPage {
                     }
                 }
                 // fpsRecover：持久化 -1 + 重置模式；开关可用性随 fpsCur==-1 自动失效
-                if (miuix) {
-                    MiuixButton(
+                // COUI 线是 accent 填充胶囊，Material 线保持 M3 Button
+                if (isCoui) {
+                    CouiFilledButton(
+                        text = stringResource(R.string.restore_default_refresh_rate),
                         onClick = {
                             controller?.resetRefreshRateMode()
                             state.set(keyFpsCur, -1)
                         },
-                        enabled = controller != null,
                         modifier = Modifier.fillMaxWidth(),
-                    ) { MiuixText(text = stringResource(R.string.restore_default_refresh_rate)) }
+                        enabled = controller != null,
+                    )
                 } else {
                     Button(
                         onClick = {
@@ -269,9 +255,11 @@ object ForceFpsPage {
                         modifier = Modifier.fillMaxWidth(),
                     ) { Text(stringResource(R.string.restore_default_refresh_rate)) }
                 }
-                if (miuix) {
-                    MiuixText(
+                if (isCoui) {
+                    CouiText(
                         text = stringResource(R.string.fps_tips),
+                        kind = CouiTextKind.Body,
+                        color = CouiPageDefaults.themeColors(CouiTheme.isDark).summary,
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(top = 10.dp),

@@ -5,12 +5,12 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberSliderState
+import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.SideEffect
@@ -26,13 +26,18 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
+import com.itos.coui.layout.CouiPageDefaults
+import com.itos.coui.slider.CouiSliderDefaults
+import com.itos.coui.slider.Slider as CouiSlider
+import com.itos.coui.text.CouiTextKind
+import com.itos.coui.text.Text as CouiText
+import com.itos.coui.theme.CouiTheme
 import com.luckyzyx.luckytool.R
+import com.luckyzyx.luckytool.ui.compose.components.AppSlider
 import com.luckyzyx.luckytool.ui.compose.components.PrefGroup
 import com.luckyzyx.luckytool.ui.compose.components.PrefRow
 import com.luckyzyx.luckytool.ui.compose.components.PrefSwitchRow
 import com.luckyzyx.luckytool.ui.compose.components.material.MaterialItemContainer
-import com.luckyzyx.luckytool.ui.compose.components.miuix.MiuixPrefDefaults
-import com.luckyzyx.luckytool.ui.compose.components.miuix.MiuixSliderRow
 import com.luckyzyx.luckytool.ui.compose.scopes.ScopePageSpec
 import com.luckyzyx.luckytool.ui.theme.LocalUiMode
 import com.luckyzyx.luckytool.ui.theme.UiMode
@@ -44,7 +49,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlin.math.roundToInt
-import top.yukonga.miuix.kmp.basic.Text as MiuixText
 
 /**
  * 极暗模式页：直接读写框架监听的那三个 Settings.Secure 键，绕开系统设置页。
@@ -68,9 +72,7 @@ import top.yukonga.miuix.kmp.basic.Text as MiuixText
  * 2. 回到前台：`LifecycleEventEffect(ON_RESUME)` —— 系统设置或磁贴可能改过同样的键；
  * 3. 下拉刷新：`spec.onRefresh` → [reloader]。
  *
- * 水平内缩与线分派同其余整页 `custom(bare = true)` 的页面：bare 条目在渲染缝里被统一
- * offset(-CardHorizontalInset)，这里用等量正向 offset 回正；滑条按 [LocalUiMode] 分派
- * miuix（`MiuixSliderRow`）/ material（`Slider` + 自绘卡片）。
+ * 水平内缩由外层 Column 的 16dp padding 提供；滑条用 material3 `Slider` 包在自绘卡片里。
  */
 object ExtraDimPage {
 
@@ -122,7 +124,6 @@ object ExtraDimPage {
             val scope = rememberCoroutineScope()
             LifecycleEventEffect(Lifecycle.Event.ON_RESUME) { scope.launch { load() } }
 
-            val miuix = LocalUiMode.current == UiMode.Miuix
             // 系统页可解析才给入口：极暗页在部分 ROM 上是空白页，这里只作为兜底
             val systemPageAvailable = remember(c) {
                 c.checkResolveActivity(
@@ -134,13 +135,7 @@ object ExtraDimPage {
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    // Miuix 线：bare 条目在渲染缝里被统一 offset(-CardHorizontalInset)（供自带 16dp 内距的
-                    // 分类标题抵消列表级 12dp 内缩）。整页 body 不是分类标题，用等量正向 offset 回正；
-                    // material 线无此偏移。
-                    .offset(x = if (miuix) MiuixPrefDefaults.CardHorizontalInset else 0.dp)
-                    // Miuix 线的水平内缩已由回正 + 列表级 contentPadding 提供；material 线列表无水平
-                    // contentPadding，卡片需自带 16dp。
-                    .padding(horizontal = if (miuix) 0.dp else 16.dp, vertical = 8.dp),
+                    .padding(horizontal = 16.dp, vertical = 8.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 PrefGroup {
@@ -171,32 +166,15 @@ object ExtraDimPage {
                 }
 
                 // 强度：拖动结束才写键（每帧写 shell 会卡手势）；键缺失时显示 0 且不写
-                if (miuix) {
-                    var dragging by remember { mutableStateOf(false) }
-                    var dragValue by remember { mutableFloatStateOf(0f) }
-                    val shown = if (dragging) dragValue else (level ?: ExtraDimUtils.MIN_LEVEL).toFloat()
-                    MiuixSliderRow(
-                        value = shown,
-                        onValueChange = {
-                            dragging = true
-                            dragValue = it
-                        },
-                        title = stringResource(R.string.extra_dim_level),
-                        summary = if (level == null) {
-                            stringResource(R.string.extra_dim_level_follow_min)
-                        } else {
-                            null
-                        },
-                        valueText = shown.roundToInt().toString(),
-                        enabled = supported,
-                        valueRange = ExtraDimUtils.MIN_LEVEL.toFloat()..ExtraDimUtils.MAX_LEVEL.toFloat(),
-                        steps = (ExtraDimUtils.MAX_LEVEL - ExtraDimUtils.MIN_LEVEL - 1).coerceAtLeast(0),
-                        onValueChangeFinished = {
-                            val stepped = dragValue.roundToInt()
-                                .coerceIn(ExtraDimUtils.MIN_LEVEL, ExtraDimUtils.MAX_LEVEL)
-                            dragging = false
+                if (LocalUiMode.current == UiMode.Coui) {
+                    CouiLevelCard(
+                        level = level,
+                        supported = supported,
+                        onCommit = { stepped ->
                             level = stepped
-                            scope.launch { writeAndReload { ExtraDimUtils.writeLevel(stepped) } }
+                            scope.launch {
+                                writeAndReload { ExtraDimUtils.writeLevel(stepped) }
+                            }
                         },
                     )
                 } else {
@@ -240,8 +218,10 @@ object ExtraDimPage {
                                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                                     )
                                 }
-                                Slider(
+                                AppSlider(
                                     state = sliderState,
+                                    valueRange = ExtraDimUtils.MIN_LEVEL.toFloat()..ExtraDimUtils.MAX_LEVEL.toFloat(),
+                                    steps = (ExtraDimUtils.MAX_LEVEL - ExtraDimUtils.MIN_LEVEL - 1).coerceAtLeast(0),
                                     onValueChange = { sliderState.value = it },
                                     onValueChangeFinished = {
                                         val stepped = sliderState.value.roundToInt()
@@ -262,8 +242,14 @@ object ExtraDimPage {
                 if (!loading && !supported) {
                     val hint = stringResource(R.string.extra_dim_unsupported)
                     val hintModifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp)
-                    if (miuix) {
-                        MiuixText(text = hint, modifier = hintModifier)
+                    // 提示挂在卡片之外：COUI 线用说明字重与中性前景色，语气与 PrefRow 的 summary 一致
+                    if (LocalUiMode.current == UiMode.Coui) {
+                        CouiText(
+                            text = hint,
+                            modifier = hintModifier,
+                            kind = CouiTextKind.PreferenceSummary,
+                            color = CouiTheme.colorScheme.onSurfaceVariant,
+                        )
                     } else {
                         Text(
                             text = hint,
@@ -273,7 +259,6 @@ object ExtraDimPage {
                         )
                     }
                 }
-
                 if (systemPageAvailable) {
                     PrefGroup {
                         item {
@@ -284,6 +269,70 @@ object ExtraDimPage {
                         }
                     }
                 }
+            }
+        }
+    }
+}
+
+/**
+ * 极暗强度卡片（COUI 线）：标题行给「强度 + 当前值」，滑条独占下一行。
+ *
+ * COUI 滑条按像素连续取值、不吸附刻度，因此手势期间的值只留在页内，松手才按
+ * [ExtraDimUtils.MIN_LEVEL]..[ExtraDimUtils.MAX_LEVEL] 取整并交给 [onCommit] 写键。
+ * 键被其他入口改过时回读的 level 会变，[LaunchedEffect] 再把页内值拉回真实值；
+ * 拖动期间 level 不变，因此同步不会覆盖用户手势。
+ */
+@Composable
+private fun CouiLevelCard(
+    level: Int?,
+    supported: Boolean,
+    onCommit: (Int) -> Unit,
+) {
+    val dark = CouiTheme.isDark
+    val colors = CouiPageDefaults.themeColors()
+    val min = ExtraDimUtils.MIN_LEVEL
+    val max = ExtraDimUtils.MAX_LEVEL
+    val steps = (max - min - 1).coerceAtLeast(0)
+    var dragValue by remember { mutableFloatStateOf((level ?: min).toFloat()) }
+    LaunchedEffect(level) { dragValue = (level ?: min).toFloat() }
+    PrefGroup {
+        item {
+            Column(modifier = Modifier.fillMaxWidth()) {
+                PrefRow(
+                    title = stringResource(R.string.extra_dim_level),
+                    summary = if (level == null) {
+                        stringResource(R.string.extra_dim_level_follow_min)
+                    } else null,
+                    enabled = supported,
+                    trailing = {
+                        CouiText(
+                            text = dragValue.roundToInt().toString(),
+                            kind = CouiTextKind.PreferenceValue,
+                            color = CouiTheme.colorScheme.accent,
+                        )
+                    },
+                )
+                CouiSlider(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(
+                            start = CouiPageDefaults.rowPadding,
+                            end = CouiPageDefaults.rowPadding,
+                            bottom = 8.dp,
+                        ),
+                    value = dragValue,
+                    onValueChange = { dragValue = it },
+                    valueRange = min.toFloat()..max.toFloat(),
+                    steps = steps,
+                    enabled = supported,
+                    colors = CouiSliderDefaults.colors(colors.accent, dark, supported),
+                    dark = dark,
+                    onValueChangeFinished = {
+                        val stepped = dragValue.roundToInt().coerceIn(min, max)
+                        dragValue = stepped.toFloat()
+                        onCommit(stepped)
+                    },
+                )
             }
         }
     }

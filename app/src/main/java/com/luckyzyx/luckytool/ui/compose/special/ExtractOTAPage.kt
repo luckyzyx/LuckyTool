@@ -17,7 +17,12 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.core.database.getStringOrNull
+import com.itos.coui.layout.CouiPageDefaults
+import com.itos.coui.text.CouiTextKind
+import com.itos.coui.text.Text as CouiText
+import com.itos.coui.theme.CouiTheme
 import com.luckyzyx.luckytool.R
+import com.luckyzyx.luckytool.ui.compose.components.coui.CouiFilledButton
 import com.luckyzyx.luckytool.ui.compose.scopes.ScopePageSpec
 import com.luckyzyx.luckytool.ui.theme.LocalUiMode
 import com.luckyzyx.luckytool.ui.theme.UiMode
@@ -39,14 +44,12 @@ import com.luckyzyx.luckytool.utils.safeOfNull
 import com.topjohnwu.superuser.ShellUtils
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import top.yukonga.miuix.kmp.basic.Button as MiuixButton
-import top.yukonga.miuix.kmp.basic.Text as MiuixText
 
 /**
  * ExtractOTA 页：读出系统 OTA 数据库（ota.db 的 pkgList 表）里各应用包的 OTA 信息并列出。
  * 无 Xposed 作用域（packName="" / scopes=arrayOf()），数据仅本地读取展示。
  * 下拉刷新（onRefresh）重跑加载流程。
- * 页内文字与按钮按 [LocalUiMode] 分派：Miuix 线 `MiuixText` / miuix `Button`，material 线不变。
+ * 页内文字与按钮按外观分派：COUI 线用 COUI 语义文字与胶囊按钮，Material 线用 material3 的 `Text` / `Button`。
  */
 @SuppressLint("SdCardPath")
 object ExtractOTAPage {
@@ -64,6 +67,7 @@ object ExtractOTAPage {
     ) {
         val c = requireNotNull(context) { "ScopeScreen 未注入 Context" }
         custom(key = "extract_ota_body") {
+            val isCoui = LocalUiMode.current == UiMode.Coui
             var dataList by remember { mutableStateOf<List<String>>(emptyList()) }
 
             suspend fun load(): List<String> = withContext(Dispatchers.IO) {
@@ -135,13 +139,14 @@ object ExtractOTAPage {
             val tipsText = if (isZh(c)) "使用此功能时,禁止删除与遗漏数据" else ""
             val fullText = if (dataList.isNotEmpty()) formatStringAuto(dataList, "\n") else ""
 
-            // 本页自有呈现按主题分派：Miuix 线用 miuix 件，material 线保持原 material3 件（逐行等价）
-            val miuix = LocalUiMode.current == UiMode.Miuix
             Column(Modifier.fillMaxWidth().padding(16.dp)) {
+                // 页内文字按外观分派：COUI 线取 COUI 正文字号与页面配色，Material 线保持 M3 Text
                 if (tipsText.isNotBlank()) {
-                    if (miuix) {
-                        MiuixText(
+                    if (isCoui) {
+                        CouiText(
                             text = tipsText,
+                            kind = CouiTextKind.Body,
+                            color = CouiPageDefaults.themeColors(CouiTheme.isDark).summary,
                             modifier = Modifier.fillMaxWidth(),
                             textAlign = TextAlign.Center,
                         )
@@ -154,9 +159,11 @@ object ExtractOTAPage {
                     }
                 }
                 if (fullText.isNotBlank()) {
-                    if (miuix) {
-                        MiuixText(
+                    if (isCoui) {
+                        CouiText(
                             text = fullText,
+                            kind = CouiTextKind.Body,
+                            color = CouiTheme.colorScheme.onSurface,
                             modifier = Modifier.fillMaxWidth().padding(vertical = 16.dp),
                         )
                     } else {
@@ -166,9 +173,11 @@ object ExtractOTAPage {
                         )
                     }
                 } else {
-                    if (miuix) {
-                        MiuixText(
+                    if (isCoui) {
+                        CouiText(
                             text = noDataText,
+                            kind = CouiTextKind.Body,
+                            color = CouiPageDefaults.themeColors(CouiTheme.isDark).summary,
                             modifier = Modifier.fillMaxWidth().padding(vertical = 24.dp),
                             textAlign = TextAlign.Center,
                         )
@@ -180,12 +189,14 @@ object ExtractOTAPage {
                         )
                     }
                 }
-                if (miuix) {
-                    MiuixButton(
+                // 复制动作：COUI 线是 accent 填充胶囊，Material 线保持 M3 Button
+                if (isCoui) {
+                    CouiFilledButton(
+                        text = copyText,
                         onClick = { c.copyStr(fullText) },
-                        enabled = fullText.isNotBlank(),
                         modifier = Modifier.fillMaxWidth(),
-                    ) { MiuixText(text = copyText) }
+                        enabled = fullText.isNotBlank(),
+                    )
                 } else {
                     Button(
                         onClick = { c.copyStr(fullText) },

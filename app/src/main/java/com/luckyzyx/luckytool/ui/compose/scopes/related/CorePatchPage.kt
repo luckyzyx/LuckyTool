@@ -1,6 +1,5 @@
 package com.luckyzyx.luckytool.ui.compose.scopes.related
 
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Text
@@ -13,18 +12,19 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.itos.coui.dialog.CouiDialogAction
+import com.itos.coui.dialog.CouiDialogActionStyle
+import com.itos.coui.dialog.CouiDialogDefaults
+import com.itos.coui.theme.CouiTheme
 import com.luckyzyx.luckytool.R
 import com.luckyzyx.luckytool.ui.compose.components.PrefCard
 import com.luckyzyx.luckytool.ui.compose.components.PrefRowInset
 import com.luckyzyx.luckytool.ui.compose.components.PrefSwitchRow
+import com.luckyzyx.luckytool.ui.compose.components.coui.CouiAlertDialog
 import com.luckyzyx.luckytool.ui.compose.scopes.ScopePageSpec
 import com.luckyzyx.luckytool.ui.theme.LocalUiMode
 import com.luckyzyx.luckytool.ui.theme.UiMode
 import com.luckyzyx.luckytool.utils.ModulePrefs
-import top.yukonga.miuix.kmp.basic.ButtonDefaults
-import top.yukonga.miuix.kmp.overlay.OverlayDialog
-import top.yukonga.miuix.kmp.basic.Text as MiuixText
-import top.yukonga.miuix.kmp.basic.TextButton as MiuixTextButton
 
 /**
  * CorePatch 页：核心破解各开关的列表。
@@ -50,11 +50,8 @@ object CorePatchPage {
         ) {
             PrefCard(
                 title = stringResource(R.string.ColorOSCorePatchTip),
-                // Miuix 线：12dp 水平内缩由列表级 contentPadding 单一提供，卡片不再自带 padding；
-                // material 线：列表无水平内缩，卡片自带 16dp（与 switch/list 通行内缩一致）。
-                modifier = Modifier.padding(
-                    horizontal = if (LocalUiMode.current == UiMode.Miuix) 0.dp else 16.dp,
-                ),
+                // 列表无水平内缩，卡片自带 16dp（与 switch/list 通行内缩一致）
+                modifier = Modifier.padding(horizontal = 16.dp),
             )
         }
         category(c.getString(R.string.corepatch))
@@ -105,24 +102,6 @@ object CorePatchPage {
             }
             if (showWarning) {
                 when (LocalUiMode.current) {
-                    UiMode.Miuix -> OverlayDialog(
-                        show = true,
-                        onDismissRequest = { showWarning = false },
-                    ) {
-                        MiuixText(
-                            text = stringResource(R.string.use_previous_signatures_warning),
-                            modifier = Modifier.fillMaxWidth(),
-                        )
-                        MiuixTextButton(
-                            text = stringResource(android.R.string.ok),
-                            onClick = { showWarning = false },
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(top = 12.dp),
-                            colors = ButtonDefaults.textButtonColorsPrimary(),
-                        )
-                    }
-
                     UiMode.Material -> AlertDialog(
                         onDismissRequest = { showWarning = false },
                         text = { Text(stringResource(R.string.use_previous_signatures_warning)) },
@@ -131,6 +110,17 @@ object CorePatchPage {
                                 Text(stringResource(android.R.string.ok))
                             }
                         },
+                    )
+                    // COUI 线：正文交给 COUI 弹窗绘制；主操作是 Primary 样式，必须显式给按钮配色
+                    UiMode.Coui -> CouiAlertDialog(
+                        onDismissRequest = { showWarning = false },
+                        message = stringResource(R.string.use_previous_signatures_warning),
+                        confirmAction = CouiDialogAction(
+                            text = stringResource(android.R.string.ok),
+                            onClick = { showWarning = false },
+                            style = CouiDialogActionStyle.Primary,
+                            colors = CouiDialogDefaults.primaryActionColors(CouiTheme.colorScheme.accent),
+                        ),
                     )
                 }
             }

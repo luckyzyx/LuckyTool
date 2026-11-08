@@ -40,22 +40,26 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.core.graphics.drawable.toBitmap
+import com.itos.coui.slider.CouiSliderDefaults
+import com.itos.coui.slider.Slider as CouiSlider
+import com.itos.coui.switch.Switch as CouiSwitch
+import com.itos.coui.text.CouiTextKind
+import com.itos.coui.text.Text as CouiText
+import com.itos.coui.theme.CouiTheme
 import com.luckyzyx.luckytool.R
 import com.luckyzyx.luckytool.data.AppInfo
 import com.luckyzyx.luckytool.data.DarkModeInfo
+import com.luckyzyx.luckytool.ui.compose.components.AppSlider
 import com.luckyzyx.luckytool.ui.compose.components.PrefGroup
 import com.luckyzyx.luckytool.ui.compose.components.PrefScopeBuilder
 import com.luckyzyx.luckytool.ui.compose.components.PrefSwitchRow
-import com.luckyzyx.luckytool.ui.compose.components.material.MaterialItem
+import com.luckyzyx.luckytool.ui.compose.components.AppItem
 import com.luckyzyx.luckytool.ui.compose.components.material.MaterialItemContainer
-import com.luckyzyx.luckytool.ui.compose.components.material.MaterialListItem
+import com.luckyzyx.luckytool.ui.compose.components.AppListItem
 import com.luckyzyx.luckytool.ui.compose.components.material.MaterialSwitch
-import com.luckyzyx.luckytool.ui.compose.components.material.materialBottomInset
-import com.luckyzyx.luckytool.ui.compose.components.miuix.MiuixListItem
-import com.luckyzyx.luckytool.ui.compose.components.miuix.MiuixPrefDefaults
-import com.luckyzyx.luckytool.ui.compose.components.miuix.MiuixPrefItem
 import com.luckyzyx.luckytool.ui.compose.scopes.ScopePageAction
 import com.luckyzyx.luckytool.ui.compose.scopes.ScopePageSpec
+import com.luckyzyx.luckytool.ui.theme.DesignTokens
 import com.luckyzyx.luckytool.ui.theme.LocalUiMode
 import com.luckyzyx.luckytool.ui.theme.UiMode
 import com.luckyzyx.luckytool.utils.IntentUtils
@@ -72,19 +76,13 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
-import top.yukonga.miuix.kmp.theme.MiuixTheme
-import top.yukonga.miuix.kmp.utils.overScrollVertical
-import top.yukonga.miuix.kmp.utils.scrollEndHaptic
-import top.yukonga.miuix.kmp.basic.Slider as MiuixSlider
-import top.yukonga.miuix.kmp.basic.Switch as MiuixSwitch
-import top.yukonga.miuix.kmp.basic.Text as MiuixText
 
 /**
  * P4 特殊页：暗色模式应用列表。
  * 使用 ScopeScreen 的 fullContent 全屏自定义渲染 + onRefresh 下拉刷新。
  *
- * 单文件承载：状态/加载/写值逻辑只有一份，渲染差异集中在
- * [DarkModeContent] 的 `if (miuix)` 分派与双线 [DarkModeAppRow] 上。
+ * 单文件承载：状态/加载/写值逻辑只有一份，列表容器由 [DarkModeContent] 渲染、单行由
+ * [DarkModeAppRow] 渲染，两处统一使用 Material 组件。
  *
  * 「打开暗色模式设置」是对整页数据的一次性动作，声明为 [ScopePageAction] 由页面宿主渲染进顶栏
  * （不占页面正文的卡片）；「重启作用域」由 `restartEnabled` 提供。
@@ -122,7 +120,6 @@ object DarkModePage {
 
 @Composable
 internal fun LazyItemScope.DarkModeContent(builder: PrefScopeBuilder) {
-    val miuix = LocalUiMode.current == UiMode.Miuix
     val context = LocalContext.current
     val packageUtils = remember { PackageUtils(context.packageManager) }
     val scope = rememberCoroutineScope()
@@ -239,7 +236,7 @@ internal fun LazyItemScope.DarkModeContent(builder: PrefScopeBuilder) {
     Column(Modifier.fillParentMaxHeight()) {
         Column(
             modifier = Modifier.padding(
-                horizontal = if (miuix) MiuixPrefDefaults.CardHorizontalInset else 16.dp,
+                horizontal = 16.dp,
             ),
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
@@ -266,48 +263,20 @@ internal fun LazyItemScope.DarkModeContent(builder: PrefScopeBuilder) {
             )
         }
         Spacer(Modifier.height(AppListContentGap))
-        if (miuix) {
-            LazyColumn(
-                modifier = Modifier
-                    .weight(1f)
-                    .scrollEndHaptic()
-                    .overScrollVertical(),
-                contentPadding = PaddingValues(
-                    start = MiuixPrefDefaults.CardHorizontalInset,
-                    end = MiuixPrefDefaults.CardHorizontalInset,
-                    bottom = materialBottomInset(),
-                ),
-                verticalArrangement = Arrangement.spacedBy(MiuixPrefDefaults.ItemGap),
-                overscrollEffect = null,
-            ) {
-                itemsIndexed(filterAppInfos, key = { _, info -> info.packageName }) { index, info ->
-                    MiuixPrefItem(index = index, count = filterAppInfos.size) {
-                        DarkModeAppRow(
-                            info = info,
-                            enabled = allEnabledInfos.containsKey(info.packageName),
-                            curType = allEnabledInfos[info.packageName]?.curType ?: 0,
-                            onToggle = { v -> setEnabled(info.packageName, v) },
-                            onTypeChange = { t -> setType(info.packageName, t) },
-                        )
-                    }
-                }
-            }
-        } else {
-            LazyColumn(
-                modifier = Modifier.weight(1f),
-                contentPadding = PaddingValues(start = 16.dp, end = 16.dp, bottom = 16.dp),
-                verticalArrangement = Arrangement.spacedBy(MiuixPrefDefaults.ItemGap),
-            ) {
-                itemsIndexed(filterAppInfos, key = { _, info -> info.packageName }) { index, info ->
-                    MaterialItem(index = index, count = filterAppInfos.size) {
-                        DarkModeAppRow(
-                            info = info,
-                            enabled = allEnabledInfos.containsKey(info.packageName),
-                            curType = allEnabledInfos[info.packageName]?.curType ?: 0,
-                            onToggle = { v -> setEnabled(info.packageName, v) },
-                            onTypeChange = { t -> setType(info.packageName, t) },
-                        )
-                    }
+        LazyColumn(
+            modifier = Modifier.weight(1f),
+            contentPadding = PaddingValues(start = 16.dp, end = 16.dp, bottom = 16.dp),
+            verticalArrangement = Arrangement.spacedBy(DesignTokens.ItemGap),
+        ) {
+            itemsIndexed(filterAppInfos, key = { _, info -> info.packageName }) { index, info ->
+                AppItem(index = index, count = filterAppInfos.size) {
+                    DarkModeAppRow(
+                        info = info,
+                        enabled = allEnabledInfos.containsKey(info.packageName),
+                        curType = allEnabledInfos[info.packageName]?.curType ?: 0,
+                        onToggle = { v -> setEnabled(info.packageName, v) },
+                        onTypeChange = { t -> setType(info.packageName, t) },
+                    )
                 }
             }
         }
@@ -335,7 +304,11 @@ internal fun LazyItemScope.DarkModeContent(builder: PrefScopeBuilder) {
 
 /**
  * 暗色模式应用行：图标 + 应用名 + 包名 + 只读开关，整行点击切换；启用后在本卡片内追加
- * `Slider(valueRange = 0f..4f, steps = 3)` 与数值文本（两线同卡片布局、同落盘时机）。
+ * 滑条（0..4 五档）与数值文本。
+ *
+ * 两条线只差最外层的卡片载体与行内文字原语：COUI 线的卡片由调用点的 AppItem 分段卡片提供，
+ * 这里只做纵向排布；Material 线由 MaterialItemContainer 绘制卡片。行内容只写一份，
+ * 避免两处排版各自漂移。
  */
 @Composable
 internal fun DarkModeAppRow(
@@ -346,16 +319,51 @@ internal fun DarkModeAppRow(
     onTypeChange: (Int) -> Unit,
 ) {
     val haptic = LocalHapticFeedback.current
-    if (LocalUiMode.current == UiMode.Miuix) {
+    val interactionSource = remember { MutableInteractionSource() }
+    val coui = LocalUiMode.current == UiMode.Coui
+    val body: @Composable () -> Unit = {
         Column {
-            MiuixListItem(
-                title = info.name,
-                summary = info.packageName,
+            AppListItem(
                 onClick = {
                     haptic.performHapticFeedback(HapticFeedbackType.VirtualKey)
                     onToggle(!enabled)
                 },
-                startAction = {
+                interactionSource = interactionSource,
+                headlineContent = {
+                    if (coui) {
+                        CouiText(
+                            text = info.name,
+                            kind = CouiTextKind.PreferenceTitle,
+                            color = CouiTheme.colorScheme.onSurface,
+                            maxLines = 2,
+                            overflow = TextOverflow.Ellipsis,
+                        )
+                    } else {
+                        Text(
+                            info.name,
+                            maxLines = 2,
+                            overflow = TextOverflow.Ellipsis,
+                        )
+                    }
+                },
+                supportingContent = {
+                    if (coui) {
+                        CouiText(
+                            text = info.packageName,
+                            kind = CouiTextKind.PreferenceSummary,
+                            color = CouiTheme.colorScheme.onSurfaceVariant,
+                            maxLines = 2,
+                            overflow = TextOverflow.Ellipsis,
+                        )
+                    } else {
+                        Text(
+                            info.packageName,
+                            maxLines = 2,
+                            overflow = TextOverflow.Ellipsis,
+                        )
+                    }
+                },
+                leadingContent = {
                     info.icon?.let { d ->
                         Image(
                             remember(info) { d.toBitmap().asImageBitmap() },
@@ -365,8 +373,23 @@ internal fun DarkModeAppRow(
                         )
                     }
                 },
-                endActions = {
-                    MiuixSwitch(checked = enabled, onCheckedChange = null)
+                trailingContent = {
+                    // 两条线都只显示状态、不接手势：点击与触感由整行统一处理
+                    if (coui) {
+                        CouiSwitch(
+                            checked = enabled,
+                            onCheckedChange = null,
+                            enabled = true,
+                            interactionSource = interactionSource,
+                            dark = CouiTheme.isDark,
+                        )
+                    } else {
+                        MaterialSwitch(
+                            checked = enabled,
+                            onCheckedChange = null,
+                            interactionSource = interactionSource,
+                        )
+                    }
                 },
             )
             if (enabled) {
@@ -376,95 +399,66 @@ internal fun DarkModeAppRow(
                         .padding(horizontal = 16.dp, vertical = 8.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    var sliderValue by remember(info) { mutableStateOf(curType.toFloat()) }
-                    MiuixSlider(
-                        value = sliderValue,
-                        onValueChange = { sliderValue = it },
-                        onValueChangeFinished = { onTypeChange(sliderValue.toInt()) },
-                        valueRange = 0f..4f,
-                        steps = 3,
-                        modifier = Modifier.weight(1f),
-                    )
-                    MiuixText(curType.toString(), style = MiuixTheme.textStyles.body2)
-                }
-            }
-        }
-    } else {
-        val interactionSource = remember { MutableInteractionSource() }
-        MaterialItemContainer {
-            Column {
-                MaterialListItem(
-                    onClick = {
-                        haptic.performHapticFeedback(HapticFeedbackType.VirtualKey)
-                        onToggle(!enabled)
-                    },
-                    interactionSource = interactionSource,
-                    headlineContent = {
-                        Text(
-                            info.name,
-                            maxLines = 2,
-                            overflow = TextOverflow.Ellipsis,
-                        )
-                    },
-                    supportingContent = {
-                        Text(
-                            info.packageName,
-                            maxLines = 2,
-                            overflow = TextOverflow.Ellipsis,
-                        )
-                    },
-                    leadingContent = {
-                        info.icon?.let { d ->
-                            Image(
-                                remember(info) { d.toBitmap().asImageBitmap() },
-                                contentDescription = null,
-                                contentScale = ContentScale.Crop,
-                                modifier = Modifier.size(48.dp),
+                    when (LocalUiMode.current) {
+                        UiMode.Material -> {
+                            var sliderValue by remember(info) { mutableFloatStateOf(curType.toFloat()) }
+                            // material3 的 SliderState 是非受控语义，值必须由调用方写回
+                            val sliderState = rememberSliderState(
+                                value = curType.toFloat(),
+                                steps = 3,
+                                trackRange = 0f..4f,
+                            )
+                            // 列表复用行时把滑条同步到当前应用的类型
+                            LaunchedEffect(info.packageName) {
+                                sliderState.value = curType.toFloat()
+                            }
+                            AppSlider(
+                                state = sliderState,
+                                valueRange = 0f..4f,
+                                steps = 3,
+                                onValueChange = {
+                                    sliderValue = it
+                                    sliderState.value = it
+                                },
+                                modifier = Modifier.weight(1f),
+                                onValueChangeFinished = { onTypeChange(sliderValue.toInt()) },
+                            )
+                            Text(
+                                curType.toString(),
+                                style = MaterialTheme.typography.bodyMedium,
                             )
                         }
-                    },
-                    trailingContent = {
-                        MaterialSwitch(
-                            checked = enabled,
-                            onCheckedChange = null,
-                            interactionSource = interactionSource,
-                        )
-                    },
-                )
-                if (enabled) {
-                    Row(
-                        Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 16.dp, vertical = 8.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        var sliderValue by remember(info) { mutableFloatStateOf(curType.toFloat()) }
-                        // material3 的 SliderState 是非受控语义，值必须由调用方写回
-                        val sliderState = rememberSliderState(
-                            value = curType.toFloat(),
-                            steps = 3,
-                            trackRange = 0f..4f,
-                        )
-                        // 列表复用行时把滑条同步到当前应用的类型
-                        LaunchedEffect(info.packageName) {
-                            sliderState.value = curType.toFloat()
+
+                        UiMode.Coui -> {
+                            // COUI 滑条是值式受控：手势期间的值只留在页内，松手才把类型写回
+                            var sliderValue by remember(info) { mutableFloatStateOf(curType.toFloat()) }
+                            LaunchedEffect(info.packageName) { sliderValue = curType.toFloat() }
+                            val dark = CouiTheme.isDark
+                            CouiSlider(
+                                modifier = Modifier.weight(1f),
+                                value = sliderValue,
+                                onValueChange = { sliderValue = it },
+                                valueRange = 0f..4f,
+                                steps = 3,
+                                enabled = true,
+                                colors = CouiSliderDefaults.colors(CouiTheme.colorScheme.accent, dark, true),
+                                dark = dark,
+                                onValueChangeFinished = { onTypeChange(sliderValue.toInt()) },
+                            )
+                            CouiText(
+                                text = curType.toString(),
+                                kind = CouiTextKind.PreferenceValue,
+                                color = CouiTheme.colorScheme.onSurface,
+                            )
                         }
-                        Slider(
-                            state = sliderState,
-                            onValueChange = {
-                                sliderValue = it
-                                sliderState.value = it
-                            },
-                            modifier = Modifier.weight(1f),
-                            onValueChangeFinished = { onTypeChange(sliderValue.toInt()) },
-                        )
-                        Text(
-                            curType.toString(),
-                            style = MaterialTheme.typography.bodyMedium,
-                        )
                     }
                 }
             }
         }
+    }
+    if (coui) {
+        Column(modifier = Modifier.fillMaxWidth()) { body() }
+    } else {
+        MaterialItemContainer { body() }
     }
 }

@@ -3,8 +3,8 @@ package com.luckyzyx.luckytool.utils
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -16,14 +16,17 @@ import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import com.itos.coui.dialog.CouiDialogAction
+import com.itos.coui.dialog.CouiDialogActionStyle
+import com.itos.coui.dialog.CouiDialogDefaults
+import com.itos.coui.text.CouiTextKind
+import com.itos.coui.text.Text as CouiText
+import com.itos.coui.theme.CouiTheme
 import com.luckyzyx.luckytool.R
+import com.luckyzyx.luckytool.ui.compose.components.coui.CouiAlertDialog
 import com.luckyzyx.luckytool.ui.theme.LocalUiMode
 import com.luckyzyx.luckytool.ui.theme.UiMode
 import org.lsposed.lsparanoid.Obfuscate
-import top.yukonga.miuix.kmp.basic.ButtonDefaults
-import top.yukonga.miuix.kmp.basic.Text as MiuixText
-import top.yukonga.miuix.kmp.basic.TextButton as MiuixTextButton
-import top.yukonga.miuix.kmp.overlay.OverlayDialog
 
 /**
  * 捐赠二维码 Compose 对话框
@@ -47,54 +50,69 @@ object DonateUtils {
         }
         val bitmap = remember(type) { base64Str?.let { base64ToBitmap(it) }?.asImageBitmap() }
         when (LocalUiMode.current) {
-            UiMode.Miuix -> MiuixDonateQRDialog(title, bitmap, onDismiss)
-            UiMode.Material -> AlertDialog(
-                onDismissRequest = onDismiss,
-                title = { Text(title) },
-                text = {
-                    Column(
-                        Modifier.fillMaxWidth(),
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.spacedBy(16.dp)
-                    ) {
-                        bitmap?.let { Image(it, contentDescription = title) }
-                        Text(stringResource(R.string.donate_message))
-                    }
-                },
-                confirmButton = {
-                    TextButton(onClick = onDismiss) { Text(stringResource(android.R.string.ok)) }
-                }
-            )
+            UiMode.Material -> MaterialDonateQRDialog(title, bitmap, onDismiss)
+            UiMode.Coui -> CouiDonateQRDialog(title, bitmap, onDismiss)
         }
     }
-}
 
-/**
- * 捐赠二维码对话框（Miuix 线）。
- *
- * 弹层走 `overlay.OverlayDialog`，由根部 Miuix Scaffold 的 popup host 承载
- * （`renderInRootScaffold` 保持默认 true，不自装 host）。
- */
-@Composable
-private fun MiuixDonateQRDialog(title: String, bitmap: ImageBitmap?, onDismiss: () -> Unit) {
-    OverlayDialog(
-        show = true,
-        title = title,
-        onDismissRequest = onDismiss,
+    /** Material 线：material3 弹窗，标题 + 二维码 + 说明，单个确定按钮 */
+    @Composable
+    private fun MaterialDonateQRDialog(
+        title: String, bitmap: ImageBitmap?, onDismiss: () -> Unit
     ) {
-        Column(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(16.dp),
+        AlertDialog(
+            onDismissRequest = onDismiss,
+            title = { Text(title) },
+            text = {
+                Column(
+                    Modifier.fillMaxWidth(),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    bitmap?.let { Image(it, contentDescription = title) }
+                    Text(stringResource(R.string.donate_message))
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = onDismiss) { Text(stringResource(android.R.string.ok)) }
+            }
+        )
+    }
+
+    /**
+     * Coui 线：COUI 弹窗。
+     *
+     * 二维码与说明都放进正文槽（内容槽排在 message 之后，用 message 传说明会把二维码挤到文字下面），
+     * 正文槽不带内边距，左右留白由这里补；它自身已是纵向滚动容器，不再套 verticalScroll。
+     * 标题为空时（type 不在 0..2）不传标题，避免画出一条空白标题。
+     */
+    @Composable
+    private fun CouiDonateQRDialog(
+        title: String, bitmap: ImageBitmap?, onDismiss: () -> Unit
+    ) {
+        val colors = CouiTheme.colorScheme
+        CouiAlertDialog(
+            onDismissRequest = onDismiss,
+            title = title.takeIf { it.isNotEmpty() },
+            confirmAction = CouiDialogAction(
+                text = stringResource(android.R.string.ok),
+                onClick = onDismiss,
+                style = CouiDialogActionStyle.Primary,
+                colors = CouiDialogDefaults.primaryActionColors(colors.accent),
+            ),
         ) {
-            bitmap?.let { Image(it, contentDescription = title) }
-            MiuixText(text = stringResource(R.string.donate_message))
-            Row(modifier = Modifier.fillMaxWidth()) {
-                MiuixTextButton(
-                    text = stringResource(android.R.string.ok),
-                    onClick = onDismiss,
-                    modifier = Modifier.weight(1f),
-                    colors = ButtonDefaults.textButtonColorsPrimary(),
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = CouiDialogDefaults.contentPadding, vertical = 16.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(16.dp),
+            ) {
+                bitmap?.let { Image(it, contentDescription = title) }
+                CouiText(
+                    text = stringResource(R.string.donate_message),
+                    kind = CouiTextKind.Body,
+                    color = colors.onSurfaceVariant,
                 )
             }
         }

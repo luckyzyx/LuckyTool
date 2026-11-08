@@ -7,7 +7,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -23,19 +22,21 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.itos.coui.text.CouiTextKind
+import com.itos.coui.text.Text as CouiText
+import com.itos.coui.theme.CouiTheme
 import com.luckyzyx.luckytool.R
 import com.luckyzyx.luckytool.ui.activity.MainActivity
 import com.luckyzyx.luckytool.ui.compose.components.PrefCard
 import com.luckyzyx.luckytool.ui.compose.components.PrefGroup
 import com.luckyzyx.luckytool.ui.compose.components.PrefRow
 import com.luckyzyx.luckytool.ui.compose.components.PrefRowInset
-import com.luckyzyx.luckytool.ui.compose.components.miuix.MiuixPrefDefaults
+import com.luckyzyx.luckytool.ui.compose.components.coui.CouiTextButton
 import com.luckyzyx.luckytool.ui.compose.scopes.ScopePageSpec
 import com.luckyzyx.luckytool.ui.service.XposedServiceBridge
 import com.luckyzyx.luckytool.ui.theme.LocalUiMode
@@ -46,9 +47,6 @@ import com.luckyzyx.luckytool.utils.PermissionUtils
 import com.luckyzyx.luckytool.utils.SettingsPrefs
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import top.yukonga.miuix.kmp.basic.ButtonDefaults
-import top.yukonga.miuix.kmp.basic.Text as MiuixText
-import top.yukonga.miuix.kmp.basic.TextButton as MiuixTextButton
 
 /**
  * 应用权限页（pageKey = `app_permission`）。
@@ -67,22 +65,11 @@ object AppPermissionPage {
         restartEnabled = false,
     ) {
         custom(key = "app_permission_content", bare = true) {
-            // Miuix 线：bare 条目在渲染缝里被统一 offset(-CardHorizontalInset)，那是给「自带 16dp
-            // 内距的裸分类标题」抵消列表级 12dp 用的；本页内容是要跟随卡片 12dp 内缩的卡片，故必须
-            // 等量回正，否则卡片会贴到屏幕边缘 —— 与 HomePage 的 status_card（bare + 卡片内容，
-            // pages/HomePage.kt:215-229）、ForceFpsPage、CorePatchPage 同一惯例。
-            // 该 seam 只作用于设置页入口这条 bare 缝；冷启动阻塞页不经列表，左右留白由 selfInset 自补
-            val bareAlign = if (LocalUiMode.current == UiMode.Miuix) {
-                Modifier.offset(x = MiuixPrefDefaults.CardHorizontalInset)
-            } else {
-                Modifier
-            }
-            // custom() 逃生舱：material 线行内容需自带 16dp 内缩（Miuix 行由 insideMargin 处理）
+            // custom() 逃生舱：行内容需自带 16dp 内缩
             PrefRowInset {
                 AppPermissionContent(
                     activity = LocalContext.current.findMainActivity(),
                     blocking = false,
-                    modifier = bareAlign,
                 )
             }
         }
@@ -164,7 +151,7 @@ fun AppPermissionContent(
 
     // selfInset：阻塞态独立成屏、宿主列表不在场，行级水平内缩由本页补（否则内容贴边）；
     // 设置页入口由宿主列表提供，保持不叠加
-    val lineInset = lineHorizontalInset()
+    val lineInset = 16.dp
     Column(
         modifier = modifier.then(
             if (selfInset) Modifier.padding(horizontal = lineInset) else Modifier
@@ -293,69 +280,63 @@ fun AppPermissionContent(
     }
 }
 
-/**
- * 行级水平内缩基准（与宿主列表一致）：Miuix 由列表级提供 12dp（行内容再靠行内置 16dp 到 28dp，
- * 见 MiuixPrefList 注释）；material 由 PrefRowInset 提供基准 16dp。注意 material 线的行文字还会
- * 叠加 M3 列表行自带的 ListTokens.ItemLeadingSpace(16dp)，实际落在 32dp —— 即 material 三组为
- * 标题 16 / 卡片 16 / 行文字 32（该 32dp 不来自本函数，本函数只给与卡片对齐的 16dp 基准）。
- */
-@Composable
-private fun lineHorizontalInset(): Dp =
-    if (LocalUiMode.current == UiMode.Miuix) MiuixPrefDefaults.CardHorizontalInset else 16.dp
-
-/** 分类标题相对容器的额外内缩：两条线的标题基准都是 16dp —— Miuix 补 4dp，material 不补 */
-@Composable
-private fun titleHorizontalInset(): Dp =
-    if (LocalUiMode.current == UiMode.Miuix) 16.dp - MiuixPrefDefaults.CardHorizontalInset else 0.dp
-
-/** 小节标题（双线） */
+/** 小节标题：Material 线用 titleSmall + primary，COUI 线用分组标题字号 + accent */
 @Composable
 private fun SectionTitle(text: String) {
-    val extra = titleHorizontalInset()
-    val modifier = Modifier
-        .fillMaxWidth()
-        .padding(start = extra, end = extra, top = 12.dp, bottom = 4.dp)
     when (LocalUiMode.current) {
-        UiMode.Miuix -> MiuixText(text = text, modifier = modifier)
         UiMode.Material -> Text(
             text = text,
-            modifier = modifier,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = 12.dp, bottom = 4.dp),
             style = MaterialTheme.typography.titleSmall,
             color = MaterialTheme.colorScheme.primary,
         )
+
+        UiMode.Coui -> CouiText(
+            text = text,
+            kind = CouiTextKind.GroupTitle,
+            color = CouiTheme.colorScheme.accent,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = 12.dp, bottom = 4.dp),
+        )
     }
 }
 
-/** 小节说明文字（双线） */
+/** 小节说明文字：两线都用弱化色正文，字号取各自的正文档位 */
 @Composable
 private fun SectionBody(text: String) {
-    val extra = titleHorizontalInset()
-    val modifier = Modifier
-        .fillMaxWidth()
-        .padding(start = extra, end = extra, bottom = 4.dp)
     when (LocalUiMode.current) {
-        UiMode.Miuix -> MiuixText(text = text, modifier = modifier)
         UiMode.Material -> Text(
             text = text,
-            modifier = modifier,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = 4.dp),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
+
+        UiMode.Coui -> CouiText(
+            text = text,
+            kind = CouiTextKind.Body,
+            color = CouiTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = 4.dp),
+        )
     }
 }
 
-/** 双线动作按钮：Miuix TextButton / material3 TextButton；[enabled] = false 走各自禁用弱化样式 */
+/**
+ * 动作按钮：Material 线用 material3 `TextButton`，COUI 线用 [CouiTextButton]；
+ * [enabled] = false 走禁用弱化样式（COUI 侧把文字降到 onSurfaceVariant 低透明度）。
+ */
 @Composable
 private fun ActionButton(text: String, onClick: () -> Unit, enabled: Boolean = true) {
     when (LocalUiMode.current) {
-        UiMode.Miuix -> MiuixTextButton(
-            text = text,
-            onClick = onClick,
-            enabled = enabled,
-            colors = ButtonDefaults.textButtonColorsPrimary(),
-        )
-
         UiMode.Material -> TextButton(onClick = onClick, enabled = enabled) { Text(text) }
+        UiMode.Coui -> CouiTextButton(text = text, onClick = onClick, enabled = enabled)
     }
 }
 

@@ -12,10 +12,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.itos.coui.layout.CouiPageDefaults
+import com.itos.coui.text.CouiTextKind
+import com.itos.coui.text.Text as CouiText
+import com.itos.coui.theme.CouiTheme
 import com.luckyzyx.luckytool.R
 import com.luckyzyx.luckytool.ui.compose.components.AppPickerDialog
-import com.luckyzyx.luckytool.ui.compose.components.material.MaterialListItem
-import com.luckyzyx.luckytool.ui.compose.components.miuix.MiuixListItem
+import com.luckyzyx.luckytool.ui.compose.components.AppListItem
 import com.luckyzyx.luckytool.ui.theme.LocalUiMode
 import com.luckyzyx.luckytool.ui.theme.UiMode
 import com.luckyzyx.luckytool.utils.A13
@@ -98,25 +101,34 @@ object StatusBarRelatedPage {
                         .collectAsStateWithLifecycle()
                     val enabled = !state.getBoolean("disable_music_fluid_cloud_display")
                     var showPicker by remember { mutableStateOf(false) }
-                    if (LocalUiMode.current == UiMode.Miuix) {
-                        MiuixListItem(
-                            title = stringResource(R.string.set_custom_music_fluid_cloud_whitelist),
-                            summary = whitelist.toString(),
+                    Box(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
+                        AppListItem(
                             onClick = { if (enabled) showPicker = true },
+                            supportingContent = {
+                                // 槽位文字由调用方绘制：COUI 线改用 COUI 说明排版与页面配色，Material 线保持 M3 文本
+                                if (LocalUiMode.current == UiMode.Coui) {
+                                    CouiText(
+                                        text = whitelist.toString(),
+                                        kind = CouiTextKind.PreferenceSummary,
+                                        color = CouiPageDefaults.themeColors(CouiTheme.isDark).summary,
+                                    )
+                                } else {
+                                    Text(whitelist.toString())
+                                }
+                            },
                             enabled = enabled,
-                        )
-                    } else {
-                        Box(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
-                            MaterialListItem(
-                                onClick = { if (enabled) showPicker = true },
-                                supportingContent = { Text(whitelist.toString()) },
-                                enabled = enabled,
-                                colors = itemColors(slot),
-                                headlineContent = {
+                            colors = itemColors(slot),
+                            headlineContent = {
+                                if (LocalUiMode.current == UiMode.Coui) {
+                                    CouiText(
+                                        text = stringResource(R.string.set_custom_music_fluid_cloud_whitelist),
+                                        kind = CouiTextKind.PreferenceTitle,
+                                    )
+                                } else {
                                     Text(stringResource(R.string.set_custom_music_fluid_cloud_whitelist))
-                                },
-                            )
-                        }
+                                }
+                            },
+                        )
                     }
                     if (showPicker) {
                         AppPickerDialog(

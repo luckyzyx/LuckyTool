@@ -12,13 +12,15 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.itos.coui.layout.CouiPageDefaults
+import com.itos.coui.text.CouiTextKind
+import com.itos.coui.text.Text as CouiText
+import com.itos.coui.theme.CouiTheme
 import com.luckyzyx.luckytool.R
 import com.luckyzyx.luckytool.hook.scopes.android.InstallerRoutingPolicy
 import com.luckyzyx.luckytool.ui.compose.components.AppPickerDialog
-import com.luckyzyx.luckytool.ui.compose.components.material.MaterialListItem
-import com.luckyzyx.luckytool.ui.compose.components.material.MaterialSwitchItem
-import com.luckyzyx.luckytool.ui.compose.components.miuix.MiuixListItem
-import com.luckyzyx.luckytool.ui.compose.components.miuix.MiuixSwitchItem
+import com.luckyzyx.luckytool.ui.compose.components.AppListItem
+import com.luckyzyx.luckytool.ui.compose.components.AppSwitchItem
 import com.luckyzyx.luckytool.ui.compose.scopes.ScopePageSpec
 import com.luckyzyx.luckytool.ui.theme.LocalUiMode
 import com.luckyzyx.luckytool.ui.theme.UiMode
@@ -297,31 +299,18 @@ object ApplicationRelatedPage {
                 summary = c.getString(R.string.disable_app_archiving_summary),
             ) { slot ->
                 val checked by state.booleanFlow(archivingKey, true).collectAsStateWithLifecycle()
-                if (LocalUiMode.current == UiMode.Miuix) {
-                    MiuixSwitchItem(
+                Box(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
+                    AppSwitchItem(
                         title = stringResource(R.string.disable_app_archiving),
+                        summary = stringResource(R.string.disable_app_archiving_summary),
                         checked = checked,
+                        colors = itemColors(slot),
                         onCheckedChange = { v ->
                             state.set(archivingKey, v)
                             c.sendPrefsValue("system", archivingKey, v)
                             c.sendPrefsValue("com.android.settings", archivingKey, v)
                         },
-                        summary = stringResource(R.string.disable_app_archiving_summary),
                     )
-                } else {
-                    Box(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
-                        MaterialSwitchItem(
-                            title = stringResource(R.string.disable_app_archiving),
-                            summary = stringResource(R.string.disable_app_archiving_summary),
-                            checked = checked,
-                            colors = itemColors(slot),
-                            onCheckedChange = { v ->
-                                state.set(archivingKey, v)
-                                c.sendPrefsValue("system", archivingKey, v)
-                                c.sendPrefsValue("com.android.settings", archivingKey, v)
-                            },
-                        )
-                    }
                 }
             }
         }
@@ -349,21 +338,30 @@ object ApplicationRelatedPage {
         custom(key = key, title = title) { slot ->
             var showPicker by remember { mutableStateOf(false) }
             val current = state.getStringSet(key).toString()
-            if (LocalUiMode.current == UiMode.Miuix) {
-                MiuixListItem(
-                    title = title,
-                    summary = current,
+            Box(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
+                AppListItem(
                     onClick = { showPicker = true },
+                    supportingContent = {
+                        // 槽位文字由调用方绘制：COUI 线改用 COUI 说明排版与页面配色，Material 线保持 M3 文本
+                        if (LocalUiMode.current == UiMode.Coui) {
+                            CouiText(
+                                text = current,
+                                kind = CouiTextKind.PreferenceSummary,
+                                color = CouiPageDefaults.themeColors(CouiTheme.isDark).summary,
+                            )
+                        } else {
+                            Text(current)
+                        }
+                    },
+                    colors = itemColors(slot),
+                    headlineContent = {
+                        if (LocalUiMode.current == UiMode.Coui) {
+                            CouiText(text = title, kind = CouiTextKind.PreferenceTitle)
+                        } else {
+                            Text(title)
+                        }
+                    },
                 )
-            } else {
-                Box(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
-                    MaterialListItem(
-                        onClick = { showPicker = true },
-                        supportingContent = { Text(current) },
-                        colors = itemColors(slot),
-                        headlineContent = { Text(title) },
-                    )
-                }
             }
             if (showPicker) {
                 AppPickerDialog(

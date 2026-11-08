@@ -4,12 +4,8 @@ import android.content.Context
 import android.content.Intent
 import android.provider.Settings
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
@@ -33,19 +29,20 @@ import com.drake.net.interfaces.ProgressListener
 import com.drake.net.scope.NetCoroutineScope
 import com.drake.net.utils.scopeNet
 import com.highcapable.betterandroid.ui.extension.view.toast
+import com.itos.coui.dialog.CouiDialogAction
+import com.itos.coui.dialog.CouiDialogActionStyle
+import com.itos.coui.dialog.CouiDialogDefaults
+import com.itos.coui.theme.CouiTheme
 import com.luckyzyx.luckytool.R
 import com.luckyzyx.luckytool.ui.compose.components.ActionListDialog
 import com.luckyzyx.luckytool.ui.compose.components.ChoiceItem
+import com.luckyzyx.luckytool.ui.compose.components.coui.CouiAlertDialog
 import com.luckyzyx.luckytool.ui.theme.LocalUiMode
 import com.luckyzyx.luckytool.ui.theme.UiMode
 import io.noties.markwon.Markwon
 import org.json.JSONArray
 import org.json.JSONObject
 import org.lsposed.lsparanoid.Obfuscate
-import top.yukonga.miuix.kmp.basic.ButtonDefaults
-import top.yukonga.miuix.kmp.basic.Text as MiuixText
-import top.yukonga.miuix.kmp.basic.TextButton as MiuixTextButton
-import top.yukonga.miuix.kmp.overlay.OverlayDialog
 import java.io.File
 
 @Obfuscate
@@ -156,62 +153,104 @@ fun UpdateChangelogDialog(
     val finalText =
         "# LuckyTool v${info.name}\n- $version\n- $count\n- $size\n- $time\n${info.changeLog}"
     val markwon = remember(context) { Markwon.create(context) }
+    // 两个按钮由两条线共用：Material 线放进 dismissButton，Coui 线放进取消位
+    val onOpenDownloadPage = {
+        context.startActivity(Intent(Intent.ACTION_VIEW, info.downloadPage.toUri()))
+    }
     when (LocalUiMode.current) {
-        UiMode.Miuix -> OverlayDialog(
-            show = true,
-            title = stringResource(R.string.check_update_hint),
-            onDismissRequest = { if (isDev) onDismiss() },
-        ) {
+        UiMode.Material -> MaterialUpdateChangelogDialog(
+            finalText = finalText,
+            markwon = markwon,
+            isDev = isDev,
+            onDismiss = onDismiss,
+            onDownload = onDownload,
+            onOpenDownloadPage = onOpenDownloadPage,
+        )
+
+        UiMode.Coui -> CouiUpdateChangelogDialog(
+            finalText = finalText,
+            markwon = markwon,
+            isDev = isDev,
+            onDismiss = onDismiss,
+            onDownload = onDownload,
+            onOpenDownloadPage = onOpenDownloadPage,
+        )
+    }
+}
+
+/** Material 线：material3 弹窗，正文是 Markwon 渲染的更新日志，可滚动可选词 */
+@Composable
+private fun MaterialUpdateChangelogDialog(
+    finalText: String,
+    markwon: Markwon,
+    isDev: Boolean,
+    onDismiss: () -> Unit,
+    onDownload: () -> Unit,
+    onOpenDownloadPage: () -> Unit,
+) {
+    AlertDialog(
+        onDismissRequest = { if (isDev) onDismiss() },
+        title = { Text(stringResource(R.string.check_update_hint)) },
+        text = {
             AndroidView(
                 factory = { ctx -> android.widget.TextView(ctx) },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .heightIn(max = 360.dp)
-                    .verticalScroll(rememberScrollState()),
+                modifier = Modifier.fillMaxWidth().verticalScroll(rememberScrollState()),
                 update = { tv ->
                     tv.setTextIsSelectable(true)
                     markwon.setMarkdown(tv, finalText)
                 },
             )
-            Row(modifier = Modifier.padding(top = 12.dp)) {
-                MiuixTextButton(
-                    text = stringResource(R.string.go_download_page),
-                    onClick = {
-                        context.startActivity(Intent(Intent.ACTION_VIEW, info.downloadPage.toUri()))
-                    },
-                    modifier = Modifier.weight(1f),
-                )
-                Spacer(Modifier.width(20.dp))
-                MiuixTextButton(
-                    text = stringResource(R.string.direct_update),
-                    onClick = onDownload,
-                    modifier = Modifier.weight(1f),
-                    colors = ButtonDefaults.textButtonColorsPrimary(),
-                )
+        },
+        confirmButton = {
+            TextButton(onClick = onDownload) { Text(stringResource(R.string.direct_update)) }
+        },
+        dismissButton = {
+            TextButton(onClick = onOpenDownloadPage) {
+                Text(stringResource(R.string.go_download_page))
             }
         }
+    )
+}
 
-        UiMode.Material -> AlertDialog(
-            onDismissRequest = { if (isDev) onDismiss() },
-            title = { Text(stringResource(R.string.check_update_hint)) },
-            text = {
-                AndroidView(
-                    factory = { ctx -> android.widget.TextView(ctx) },
-                    modifier = Modifier.fillMaxWidth().verticalScroll(rememberScrollState()),
-                    update = { tv ->
-                        tv.setTextIsSelectable(true)
-                        markwon.setMarkdown(tv, finalText)
-                    },
-                )
+/**
+ * Coui 线：COUI 弹窗。
+ *
+ * 更新日志交给同一个 Markwon 渲染的 TextView，横向留白由这里补足（内容槽自己不带内边距）；
+ * 内容槽本身已是纵向滚动容器，不再套 verticalScroll。
+ */
+@Composable
+private fun CouiUpdateChangelogDialog(
+    finalText: String,
+    markwon: Markwon,
+    isDev: Boolean,
+    onDismiss: () -> Unit,
+    onDownload: () -> Unit,
+    onOpenDownloadPage: () -> Unit,
+) {
+    val colors = CouiTheme.colorScheme
+    CouiAlertDialog(
+        onDismissRequest = { if (isDev) onDismiss() },
+        title = stringResource(R.string.check_update_hint),
+        confirmAction = CouiDialogAction(
+            text = stringResource(R.string.direct_update),
+            onClick = onDownload,
+            style = CouiDialogActionStyle.Primary,
+            colors = CouiDialogDefaults.primaryActionColors(colors.accent),
+        ),
+        dismissAction = CouiDialogAction(
+            text = stringResource(R.string.go_download_page),
+            onClick = onOpenDownloadPage,
+        ),
+    ) {
+        AndroidView(
+            factory = { ctx -> android.widget.TextView(ctx) },
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = CouiDialogDefaults.contentPadding, vertical = 12.dp),
+            update = { tv ->
+                tv.setTextIsSelectable(true)
+                markwon.setMarkdown(tv, finalText)
             },
-            confirmButton = {
-                TextButton(onClick = onDownload) { Text(stringResource(R.string.direct_update)) }
-            },
-            dismissButton = {
-                TextButton(onClick = {
-                    context.startActivity(Intent(Intent.ACTION_VIEW, info.downloadPage.toUri()))
-                }) { Text(stringResource(R.string.go_download_page)) }
-            }
         )
     }
 }
@@ -257,46 +296,75 @@ fun UpdateDownloadedDialog(
     onInstall: () -> Unit
 ) {
     val size = formatFileSize(FileUtils.getFileSize(apkFile).toFloat())
+    val detail = "${apkFile.name}\n$size"
     when (LocalUiMode.current) {
-        UiMode.Miuix -> OverlayDialog(
-            show = true,
-            title = stringResource(R.string.downloaded),
-            onDismissRequest = { if (isDev) onDismiss() },
-        ) {
-            MiuixText(
-                text = "${apkFile.name}\n$size",
-                modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp),
-            )
-            Row {
-                MiuixTextButton(
-                    text = stringResource(R.string.download_again),
-                    onClick = onDownloadAgain,
-                    modifier = Modifier.weight(1f),
-                )
-                Spacer(Modifier.width(20.dp))
-                MiuixTextButton(
-                    text = stringResource(R.string.install),
-                    onClick = onInstall,
-                    modifier = Modifier.weight(1f),
-                    colors = ButtonDefaults.textButtonColorsPrimary(),
-                )
-            }
-        }
+        UiMode.Material -> MaterialUpdateDownloadedDialog(
+            detail = detail,
+            isDev = isDev,
+            onDismiss = onDismiss,
+            onDownloadAgain = onDownloadAgain,
+            onInstall = onInstall,
+        )
 
-        UiMode.Material -> AlertDialog(
-            onDismissRequest = { if (isDev) onDismiss() },
-            title = { Text(stringResource(R.string.downloaded)) },
-            text = { Text("${apkFile.name}\n$size") },
-            confirmButton = {
-                TextButton(onClick = onInstall) { Text(stringResource(R.string.install)) }
-            },
-            dismissButton = {
-                TextButton(onClick = onDownloadAgain) {
-                    Text(stringResource(R.string.download_again))
-                }
-            }
+        UiMode.Coui -> CouiUpdateDownloadedDialog(
+            detail = detail,
+            isDev = isDev,
+            onDismiss = onDismiss,
+            onDownloadAgain = onDownloadAgain,
+            onInstall = onInstall,
         )
     }
+}
+
+/** Material 线：material3 弹窗，标题 + 文件名与大小，安装 / 重新下载 */
+@Composable
+private fun MaterialUpdateDownloadedDialog(
+    detail: String,
+    isDev: Boolean,
+    onDismiss: () -> Unit,
+    onDownloadAgain: () -> Unit,
+    onInstall: () -> Unit,
+) {
+    AlertDialog(
+        onDismissRequest = { if (isDev) onDismiss() },
+        title = { Text(stringResource(R.string.downloaded)) },
+        text = { Text(detail) },
+        confirmButton = {
+            TextButton(onClick = onInstall) { Text(stringResource(R.string.install)) }
+        },
+        dismissButton = {
+            TextButton(onClick = onDownloadAgain) {
+                Text(stringResource(R.string.download_again))
+            }
+        }
+    )
+}
+
+/** Coui 线：COUI 弹窗，安装是主操作，重新下载放取消位 */
+@Composable
+private fun CouiUpdateDownloadedDialog(
+    detail: String,
+    isDev: Boolean,
+    onDismiss: () -> Unit,
+    onDownloadAgain: () -> Unit,
+    onInstall: () -> Unit,
+) {
+    val colors = CouiTheme.colorScheme
+    CouiAlertDialog(
+        onDismissRequest = { if (isDev) onDismiss() },
+        title = stringResource(R.string.downloaded),
+        message = detail,
+        confirmAction = CouiDialogAction(
+            text = stringResource(R.string.install),
+            onClick = onInstall,
+            style = CouiDialogActionStyle.Primary,
+            colors = CouiDialogDefaults.primaryActionColors(colors.accent),
+        ),
+        dismissAction = CouiDialogAction(
+            text = stringResource(R.string.download_again),
+            onClick = onDownloadAgain,
+        ),
+    )
 }
 
 /**
@@ -346,39 +414,58 @@ fun UpdateDownloadProgressDialog(
             onDismiss()
         }
     }
-    when (LocalUiMode.current) {
-        UiMode.Miuix -> OverlayDialog(
-            show = true,
-            title = stringResource(R.string.downloading),
-            onDismissRequest = {},
-        ) {
-            Column {
-                MiuixText(text = progressText)
-                MiuixTextButton(
-                    text = stringResource(R.string.cancel_button),
-                    onClick = {
-                        downloadScope?.cancel()
-                        apkFile.delete()
-                        onDismiss()
-                    },
-                )
-            }
-        }
-
-        UiMode.Material -> AlertDialog(
-            onDismissRequest = {},
-            title = { Text(stringResource(R.string.downloading)) },
-            text = {
-                Column {
-                    Text(progressText)
-                    TextButton(onClick = {
-                        downloadScope?.cancel()
-                        apkFile.delete()
-                        onDismiss()
-                    }) { Text(stringResource(R.string.cancel_button)) }
-                }
-            },
-            confirmButton = {}
-        )
+    // 取消动作两条线共用：Material 线画在正文下方，Coui 线放弹窗的按钮行
+    val cancelDownload = {
+        downloadScope?.cancel()
+        apkFile.delete()
+        onDismiss()
     }
+    when (LocalUiMode.current) {
+        UiMode.Material -> MaterialUpdateDownloadProgressDialog(progressText, cancelDownload)
+        UiMode.Coui -> CouiUpdateDownloadProgressDialog(progressText, cancelDownload)
+    }
+}
+
+/** Material 线：material3 弹窗，正文是实时进度，取消按钮画在正文下方 */
+@Composable
+private fun MaterialUpdateDownloadProgressDialog(
+    progressText: String,
+    onCancel: () -> Unit,
+) {
+    AlertDialog(
+        onDismissRequest = {},
+        title = { Text(stringResource(R.string.downloading)) },
+        text = {
+            Column {
+                Text(progressText)
+                TextButton(onClick = onCancel) {
+                    Text(stringResource(R.string.cancel_button))
+                }
+            }
+        },
+        confirmButton = {}
+    )
+}
+
+/**
+ * Coui 线：COUI 弹窗。
+ *
+ * 进度数字一直在变，交给 message 槽跟着重组，不必再套一层自定义内容；
+ * 这一步只有「取消」一个动作，而 COUI 弹窗的确认位必填，就把它放在确认位并保持次级样式
+ * （不传 style 时库按次级样式绘制），取消位留空。进度还没出来时不传 message，避免留一块空正文。
+ */
+@Composable
+private fun CouiUpdateDownloadProgressDialog(
+    progressText: String,
+    onCancel: () -> Unit,
+) {
+    CouiAlertDialog(
+        onDismissRequest = {},
+        title = stringResource(R.string.downloading),
+        message = progressText.ifEmpty { null },
+        confirmAction = CouiDialogAction(
+            text = stringResource(R.string.cancel_button),
+            onClick = onCancel,
+        ),
+    )
 }

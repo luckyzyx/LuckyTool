@@ -50,15 +50,16 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
+import com.itos.coui.layout.CouiPageDefaults
+import com.itos.coui.layout.Divider as CouiDivider
+import com.itos.coui.text.CouiTextKind
+import com.itos.coui.text.Text as CouiText
+import com.itos.coui.theme.CouiTheme
 import com.luckyzyx.luckytool.R
 import com.luckyzyx.luckytool.ui.compose.components.LocalScopeListState
 import com.luckyzyx.luckytool.ui.theme.LocalUiMode
 import com.luckyzyx.luckytool.ui.theme.UiMode
 import kotlinx.coroutines.isActive
-import top.yukonga.miuix.kmp.theme.MiuixTheme
-import top.yukonga.miuix.kmp.basic.HorizontalDivider as MiuixHorizontalDivider
-import top.yukonga.miuix.kmp.basic.Icon as MiuixIcon
-import top.yukonga.miuix.kmp.basic.Text as MiuixText
 
 /** 右区顺序偏好键（宿主 `statusIcons` 容器内的图标顺序，逗号分隔槽位名；空 = 宿主默认顺序） */
 const val STATUS_BAR_ICON_ORDER_RIGHT_KEY = "statusbar_icon_order_right"
@@ -610,22 +611,6 @@ private fun OrderResetRow(onReset: () -> Unit) {
         verticalAlignment = Alignment.CenterVertically,
     ) {
         when (LocalUiMode.current) {
-            UiMode.Miuix -> {
-                Column(modifier = Modifier.weight(1f)) {
-                    MiuixText(text = title, style = MiuixTheme.textStyles.main)
-                    MiuixText(
-                        text = summary,
-                        color = MiuixTheme.colorScheme.onBackgroundVariant,
-                        style = MiuixTheme.textStyles.footnote1,
-                    )
-                }
-                MiuixIcon(
-                    imageVector = Icons.Filled.RestartAlt,
-                    contentDescription = null,
-                    tint = MiuixTheme.colorScheme.onBackgroundVariant,
-                )
-            }
-
             UiMode.Material -> {
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
@@ -645,6 +630,27 @@ private fun OrderResetRow(onReset: () -> Unit) {
                     tint = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
+            // COUI 线：标题/说明取自页面配色，尾随图标的色调跟随前景色
+            UiMode.Coui -> {
+                val colors = CouiPageDefaults.themeColors()
+                Column(modifier = Modifier.weight(1f)) {
+                    CouiText(
+                        text = title,
+                        kind = CouiTextKind.PreferenceTitle,
+                        color = colors.title,
+                    )
+                    CouiText(
+                        text = summary,
+                        kind = CouiTextKind.PreferenceSummary,
+                        color = colors.summary,
+                    )
+                }
+                Icon(
+                    imageVector = Icons.Filled.RestartAlt,
+                    contentDescription = null,
+                    tint = CouiTheme.colorScheme.onSurface,
+                )
+            }
         }
     }
 }
@@ -655,19 +661,19 @@ private fun ZoneHeader(text: String, topPadding: Dp) {
     val modifier = Modifier
         .fillMaxWidth()
         .padding(start = 16.dp, end = 16.dp, top = topPadding, bottom = 4.dp)
-    if (LocalUiMode.current == UiMode.Miuix) {
-        MiuixText(
-            text = text,
-            modifier = modifier,
-            color = MiuixTheme.colorScheme.onBackgroundVariant,
-            style = MiuixTheme.textStyles.footnote1,
-        )
-    } else {
-        Text(
+    when (LocalUiMode.current) {
+        UiMode.Material -> Text(
             text = text,
             modifier = modifier,
             style = MaterialTheme.typography.labelLarge,
             color = MaterialTheme.colorScheme.primary,
+        )
+        // COUI 线：分区标题用强调色，字号与间距沿用调用点传入的修饰符
+        UiMode.Coui -> CouiText(
+            text = text,
+            modifier = modifier,
+            kind = CouiTextKind.GroupTitle,
+            color = CouiPageDefaults.themeColors().accent,
         )
     }
 }
@@ -675,10 +681,10 @@ private fun ZoneHeader(text: String, topPadding: Dp) {
 /** 区界分隔线（列表内的分组线，两侧留 16dp 内缩） */
 @Composable
 private fun ZoneDivider(modifier: Modifier = Modifier) {
-    if (LocalUiMode.current == UiMode.Miuix) {
-        MiuixHorizontalDivider(modifier)
-    } else {
-        HorizontalDivider(modifier)
+    when (LocalUiMode.current) {
+        UiMode.Material -> HorizontalDivider(modifier)
+        // COUI 线用库内分隔线，两端内缩仍由调用点的修饰符决定
+        UiMode.Coui -> CouiDivider(modifier = modifier, startIndent = 0.dp, endIndent = 0.dp)
     }
 }
 
@@ -692,29 +698,6 @@ private fun ZoneDivider(modifier: Modifier = Modifier) {
 private fun LeftZoneEmptyRow(modifier: Modifier, highlighted: Boolean) {
     val text = stringResource(R.string.statusbar_icon_order_left_empty)
     when (LocalUiMode.current) {
-        UiMode.Miuix -> Row(
-            modifier = Modifier
-                .then(modifier)
-                .fillMaxWidth()
-                .height(OrderItemHeight)
-                .then(
-                    if (highlighted) {
-                        Modifier.background(MiuixTheme.colorScheme.primary.copy(alpha = 0.08f))
-                    } else {
-                        Modifier
-                    }
-                )
-                .padding(horizontal = 16.dp),
-            horizontalArrangement = Arrangement.Center,
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            MiuixText(
-                text = text,
-                color = MiuixTheme.colorScheme.onBackgroundVariant,
-                style = MiuixTheme.textStyles.footnote1,
-            )
-        }
-
         UiMode.Material -> Row(
             modifier = Modifier
                 .then(modifier)
@@ -735,6 +718,29 @@ private fun LeftZoneEmptyRow(modifier: Modifier, highlighted: Boolean) {
                 text = text,
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+        // COUI 线：落位高亮铺强调色的低透明度底，与普通行的落位槽同源
+        UiMode.Coui -> Row(
+            modifier = Modifier
+                .then(modifier)
+                .fillMaxWidth()
+                .height(OrderItemHeight)
+                .then(
+                    if (highlighted) {
+                        Modifier.background(CouiTheme.colorScheme.accent.copy(alpha = 0.10f))
+                    } else {
+                        Modifier
+                    }
+                )
+                .padding(horizontal = 16.dp),
+            horizontalArrangement = Arrangement.Center,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            CouiText(
+                text = text,
+                kind = CouiTextKind.PreferenceSummary,
+                color = CouiPageDefaults.themeColors().summary,
             )
         }
     }
@@ -759,17 +765,6 @@ private fun OrderItemRow(
     handleDragModifier: Modifier,
 ) {
     when (LocalUiMode.current) {
-        UiMode.Miuix -> MiuixOrderItemRow(
-            number,
-            label,
-            slot,
-            dragging,
-            highlighted,
-            rowOffset,
-            rowDragModifier,
-            handleDragModifier
-        )
-
         UiMode.Material -> MaterialOrderItemRow(
             number,
             label,
@@ -780,63 +775,16 @@ private fun OrderItemRow(
             rowDragModifier,
             handleDragModifier
         )
-    }
-}
-
-@Composable
-private fun MiuixOrderItemRow(
-    number: Int,
-    label: String,
-    slot: String,
-    dragging: Boolean,
-    highlighted: Boolean,
-    rowOffset: () -> Float,
-    rowDragModifier: Modifier,
-    handleDragModifier: Modifier,
-) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(OrderItemHeight)
-            .zIndex(if (dragging) 1f else 0f)
-            .graphicsLayer { translationY = rowOffset() }
-            .then(
-                when {
-                    dragging -> Modifier.background(MiuixTheme.colorScheme.onBackground.copy(alpha = 0.06f))
-                    highlighted -> Modifier.background(MiuixTheme.colorScheme.primary.copy(alpha = 0.08f))
-                    else -> Modifier
-                }
-            )
-            .then(rowDragModifier)
-            .padding(horizontal = 16.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        MiuixText(
-            text = number.toString(),
-            modifier = Modifier.width(28.dp),
-            color = MiuixTheme.colorScheme.onBackgroundVariant,
-            style = MiuixTheme.textStyles.body2,
+        UiMode.Coui -> CouiOrderItemRow(
+            number,
+            label,
+            slot,
+            dragging,
+            highlighted,
+            rowOffset,
+            rowDragModifier,
+            handleDragModifier
         )
-        Column(modifier = Modifier.weight(1f)) {
-            MiuixText(text = label, style = MiuixTheme.textStyles.main)
-            MiuixText(
-                text = slot,
-                color = MiuixTheme.colorScheme.onBackgroundVariant,
-                style = MiuixTheme.textStyles.footnote1,
-            )
-        }
-        Box(
-            modifier = Modifier
-                .size(48.dp)
-                .then(handleDragModifier),
-            contentAlignment = Alignment.Center,
-        ) {
-            MiuixIcon(
-                imageVector = Icons.Filled.Menu,
-                contentDescription = null,
-                tint = MiuixTheme.colorScheme.onBackgroundVariant,
-            )
-        }
     }
 }
 
@@ -896,6 +844,69 @@ private fun MaterialOrderItemRow(
                 imageVector = Icons.Filled.Menu,
                 contentDescription = null,
                 tint = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+    }
+}
+
+/** COUI 线的条目行：排版与尺寸同 Material 线，取色改走页面配色与强调色 */
+@Composable
+private fun CouiOrderItemRow(
+    number: Int,
+    label: String,
+    slot: String,
+    dragging: Boolean,
+    highlighted: Boolean,
+    rowOffset: () -> Float,
+    rowDragModifier: Modifier,
+    handleDragModifier: Modifier,
+) {
+    val colors = CouiPageDefaults.themeColors()
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(OrderItemHeight)
+            .zIndex(if (dragging) 1f else 0f)
+            .graphicsLayer { translationY = rowOffset() }
+            .then(
+                when {
+                    dragging -> Modifier.background(CouiTheme.colorScheme.container)
+                    highlighted -> Modifier.background(CouiTheme.colorScheme.accent.copy(alpha = 0.10f))
+                    else -> Modifier
+                }
+            )
+            .then(rowDragModifier)
+            .padding(horizontal = 16.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        CouiText(
+            text = number.toString(),
+            modifier = Modifier.width(28.dp),
+            kind = CouiTextKind.PreferenceSummary,
+            color = colors.summary,
+        )
+        Column(modifier = Modifier.weight(1f)) {
+            CouiText(
+                text = label,
+                kind = CouiTextKind.PreferenceTitle,
+                color = colors.title,
+            )
+            CouiText(
+                text = slot,
+                kind = CouiTextKind.PreferenceSummary,
+                color = colors.summary,
+            )
+        }
+        Box(
+            modifier = Modifier
+                .size(48.dp)
+                .then(handleDragModifier),
+            contentAlignment = Alignment.Center,
+        ) {
+            Icon(
+                imageVector = Icons.Filled.Menu,
+                contentDescription = null,
+                tint = CouiTheme.colorScheme.onSurface,
             )
         }
     }
