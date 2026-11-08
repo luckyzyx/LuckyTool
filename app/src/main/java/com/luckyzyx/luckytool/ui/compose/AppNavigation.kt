@@ -73,7 +73,7 @@ internal fun NavHostController.navigatePage(route: AppRoute) {
         is MainRoute -> topDestination?.hasRoute<MainRoute>() == true
         is ThemeRoute -> topDestination?.hasRoute<ThemeRoute>() == true
         is ScopeRoute -> topDestination?.hasRoute<ScopeRoute>() == true &&
-            topEntry?.toRoute<ScopeRoute>() == route
+            topEntry.toRoute<ScopeRoute>() == route
     }
     navigate(route) { launchSingleTop = topIsSamePage }
 }
