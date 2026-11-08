@@ -17,9 +17,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalView
-import androidx.compose.ui.unit.Density
 import androidx.core.view.WindowCompat
 import com.luckyzyx.luckytool.ui.shell.LocalEnableBlur
 import com.luckyzyx.luckytool.ui.shell.LocalEnableFloatingBottomBar
@@ -27,7 +25,6 @@ import com.luckyzyx.luckytool.ui.shell.LocalFloatingBottomBarStyle
 import com.luckyzyx.luckytool.ui.shell.LocalCategoryBadgeColors
 import com.luckyzyx.luckytool.ui.shell.LocalEnableNavigationBadge
 import com.luckyzyx.luckytool.ui.shell.LocalEnableSwipeDismiss
-import com.luckyzyx.luckytool.ui.shell.LocalModuleDescriptionMaxLines
 import com.luckyzyx.luckytool.ui.shell.LocalPagerInterceptionMode
 import com.luckyzyx.luckytool.ui.shell.ShellSettingsController
 
@@ -103,7 +100,7 @@ fun MaterialLuckyTheme(
             colorScheme = animatedColorScheme,
             motionScheme = MotionScheme.expressive(),
         ) {
-            // 与 Miuix 线同理：material3 只有在 Surface / Scaffold / TopAppBar / Button 这些组件里
+            // material3 只有在 Surface / Scaffold / TopAppBar / Button 这些组件里
             // 才下发 LocalContentColor，未被它们包裹的内容（自绘弹层、对话框、顶栏 actions 等）
             // 会退回 material3 默认的黑，深色模式下不可见。这里在主题根部兜底一份 onBackground。
             CompositionLocalProvider(
@@ -115,7 +112,10 @@ fun MaterialLuckyTheme(
 }
 
 /**
- * 主题分发：按 [uiMode] 选择 Miuix 或 Material 外观线。
+ * 主题分发：按 [uiMode] 选择 COUI 或 Material 外观线。
+ *
+ * [UiMode.Coui] 只在 Android 14+ 可用；调用方传入的值应已通过 [UiMode.coerceAvailable] 归一，
+ * 这里仍按同一规则兜底一次，避免低版本设备组合出 COUI 主题。
  */
 @Composable
 fun LuckyTheme(
@@ -129,8 +129,8 @@ fun LuckyTheme(
     // content 通过 rememberUpdatedState 间接化，避免把首次组合的 lambda 实例永久固化。
     val currentContent = rememberUpdatedState(content)
     val movableContent = remember { movableContentOf { currentContent.value() } }
-    when (uiMode) {
-        UiMode.Miuix -> MiuixLuckyTheme(appSettings = appSettings, content = movableContent)
+    when (uiMode.coerceAvailable()) {
+        UiMode.Coui -> CouiLuckyTheme(appSettings = appSettings, content = movableContent)
         UiMode.Material -> MaterialLuckyTheme(appSettings = appSettings, content = movableContent)
     }
 }
@@ -158,8 +158,6 @@ internal fun themeWindowAppearance(darkTheme: Boolean) {
  * 全应用配色与外壳行为均无需 recreate Activity 即时生效；明暗模式另外要经
  * `ThemeUtils.initTheme(context)` 同步平台 DayNight 主题（AppCompat 在明暗实际变化时
  * 会重建 Activity），否则矢量图的 `?attr/colorControlNormal` 仍按旧明暗解析而不可见。
- *
- * 界面缩放（page_scale）：覆盖 [LocalDensity]，只缩放 density，fontScale 原样透传。
  */
 @Composable
 fun LuckyAppTheme(content: @Composable () -> Unit) {
@@ -170,13 +168,7 @@ fun LuckyAppTheme(content: @Composable () -> Unit) {
     val shellSettings = remember(context, revision) { ShellSettingsController.get(context) }
     val uiMode = remember(context, revision) { ThemeController.getUiMode(context) }
 
-    val systemDensity = LocalDensity.current
-    val density = remember(systemDensity, shellSettings.pageScale) {
-        Density(systemDensity.density * shellSettings.pageScale, systemDensity.fontScale)
-    }
-
     CompositionLocalProvider(
-        LocalDensity provides density,
         LocalUiMode provides uiMode,
         LocalEnableNavigationBadge provides shellSettings.navigationBadge,
         LocalEnableBlur provides shellSettings.enableBlur,
@@ -184,7 +176,6 @@ fun LuckyAppTheme(content: @Composable () -> Unit) {
         LocalFloatingBottomBarStyle provides shellSettings.floatingBottomBarStyle,
         LocalEnableSwipeDismiss provides shellSettings.swipeDismiss,
         LocalPagerInterceptionMode provides shellSettings.pagerInterceptionMode,
-        LocalModuleDescriptionMaxLines provides shellSettings.moduleDescriptionMaxLines,
         LocalCategoryBadgeColors provides shellSettings.categoryBadgeColors,
     ) {
         LuckyTheme(appSettings = appSettings, uiMode = uiMode, content = content)

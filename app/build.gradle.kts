@@ -133,6 +133,10 @@ dependencies {
     implementation(libs.androidx.lifecycle.runtime.compose)
     implementation(libs.androidx.lifecycle.viewmodel.compose)
     implementation(libs.androidx.activity.compose)
+    //返回事件分发：自建页面栈与一级分页共用的返回手势入口
+    implementation(libs.androidx.navigationevent.compose)
+    //页面导航：NavHost 承载一级标签与二级页面
+    implementation(libs.androidx.navigation.compose)
 
     //Compose (BOM 统一版本)
     platform(libs.androidx.compose.bom)
@@ -142,12 +146,10 @@ dependencies {
     implementation(libs.androidx.compose.material3)
     implementation(libs.material.kolor)
     implementation(libs.androidx.compose.material.icons.extended)
-    //Miuix
-    implementation(libs.miuix.ui)
-    implementation(libs.miuix.icons)
-    implementation(libs.miuix.nav)
-    implementation(libs.miuix.preference)
+    //Miuix（只留模糊采样，界面组件全部来自 COUI）
     implementation(libs.miuix.blur)
+    //COUI（组件与材质外观线）
+    implementation(libs.coui.material3)
     //Markdown
     implementation(libs.markwon.core)
     implementation(libs.markwon.html)

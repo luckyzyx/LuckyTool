@@ -35,8 +35,9 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
 
-    <!--Miuix blur 的 minSdk 为 33、高于本模块的 30，放行 manifest 合并-->
-    <uses-sdk tools:overrideLibrary="top.yukonga.miuix.kmp.blur" />
+    <!--miuix-blur 的 minSdk 为 33、coui 的 minSdk 为 31，都高于本模块的 30，放行 manifest 合并；
+        运行期由 Build.VERSION 决定是否启用对应外观线-->
+    <uses-sdk tools:overrideLibrary="top.yukonga.miuix.kmp.blur, com.itos.coui, com.itos.coui.material3" />
 
     <!--预测性返回：Android 15 及更早版本必须显式声明该 flag，系统才会为应用提供官方预测性返回动画
         （返回桌面 / 跨 Activity / 跨任务；Android 16 起 targetSdk 36+ 默认开启）。运行期由
@@ -55,8 +56,8 @@
             android:hasFragileUserData="true"
             android:enableOnBackInvokedCallback="true">
         <!--输入法弹出时不让系统缩短/平移窗口：窗口被缩短后 Compose 的 WindowInsets.ime 仍按整块键盘高度
-            上报，miuix 的 .imePadding() 会再抬一次（双重扣减），底部对齐的弹层会被顶到屏幕上方、顶部
-            内容被裁。adjustNothing 只让 inset 派发，弹层位置交给 miuix 自己摆到键盘正上方。-->
+            上报，与已缩短的窗口叠加会造成双重扣减，底部对齐的弹层会被顶到屏幕上方、顶部内容被裁。
+            adjustNothing 只让 inset 派发，弹层位置由自身按 ime inset 摆放。-->
         <activity
                 android:name=".ui.activity.MainActivity"
                 android:exported="true"
