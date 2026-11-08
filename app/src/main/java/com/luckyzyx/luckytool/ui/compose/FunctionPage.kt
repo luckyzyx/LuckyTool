@@ -1,12 +1,8 @@
 package com.luckyzyx.luckytool.ui.compose
 
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.calculateEndPadding
-import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
@@ -22,7 +18,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -37,7 +32,6 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringArrayResource
@@ -46,16 +40,23 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.itos.coui.dialog.CouiDialogAction
+import com.itos.coui.dialog.CouiDialogActionStyle
+import com.itos.coui.dialog.CouiDialogDefaults
+import com.itos.coui.text.CouiTextKind
+import com.itos.coui.text.Text as CouiText
+import com.itos.coui.theme.CouiTheme
 import com.luckyzyx.luckytool.R
 import com.luckyzyx.luckytool.ui.activity.MainActivity
 import com.luckyzyx.luckytool.ui.compose.components.FunctionTopBarActions
-import com.luckyzyx.luckytool.ui.compose.components.LocalScopeTopInset
 import com.luckyzyx.luckytool.ui.compose.components.ScopeScreen
 import com.luckyzyx.luckytool.ui.compose.components.ScrollTarget
 import com.luckyzyx.luckytool.ui.compose.components.TopBarActionButton
 import com.luckyzyx.luckytool.ui.compose.components.TopBarOverflowItem
 import com.luckyzyx.luckytool.ui.compose.components.TopBarOverflowMenu
-import com.luckyzyx.luckytool.ui.compose.components.material.MaterialPageScaffold
+import com.luckyzyx.luckytool.ui.compose.components.coui.CouiAlertDialog
+import com.luckyzyx.luckytool.ui.compose.components.coui.CouiIconButton
+import com.luckyzyx.luckytool.ui.compose.components.LuckyPageScaffold
 import com.luckyzyx.luckytool.ui.compose.components.material.MaterialTextField
 import com.luckyzyx.luckytool.ui.compose.scopes.ScopePageContent
 import com.luckyzyx.luckytool.ui.compose.scopes.ScopePageRegistry
@@ -72,19 +73,13 @@ import io.noties.markwon.Markwon
 import io.noties.markwon.ext.tables.TablePlugin
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import top.yukonga.miuix.kmp.basic.ButtonDefaults
-import top.yukonga.miuix.kmp.icon.MiuixIcons
-import top.yukonga.miuix.kmp.icon.extended.Close2
-import top.yukonga.miuix.kmp.overlay.OverlayDialog
 import java.util.Arrays
-import top.yukonga.miuix.kmp.basic.TextButton as MiuixTextButton
 
-/** 功能标签页只展示功能树；搜索和作用域页由应用的同一个导航栈管理。 */
+/** 功能标签页只展示功能树；搜索是独立的一级标签页，作用域页由同一个导航栈管理。 */
 @Composable
 fun FunctionPage(
     activity: MainActivity,
     onOpenPage: (pageKey: String, title: String) -> Unit,
-    onOpenSearch: () -> Unit,
 ) {
     var showVersionInfo by remember { mutableStateOf(false) }
     var showRestartMenu by remember { mutableStateOf(false) }
@@ -99,7 +94,6 @@ fun FunctionPage(
 
     FunctionTreeScreen(
         onOpenPage = onOpenPage,
-        onOpenSearch = onOpenSearch,
         onShowVersionInfo = { showVersionInfo = true },
         onShowRestartMenu = { showRestartMenu = true },
     )
@@ -110,7 +104,6 @@ fun FunctionPage(
 @Composable
 private fun FunctionTreeScreen(
     onOpenPage: (pageKey: String, title: String) -> Unit,
-    onOpenSearch: () -> Unit,
     onShowVersionInfo: () -> Unit,
     onShowRestartMenu: () -> Unit,
 ) {
@@ -140,11 +133,10 @@ private fun FunctionTreeScreen(
         }
     }
 
-    MaterialPageScaffold(
+    LuckyPageScaffold(
         title = stringResource(R.string.nav_function),
         actions = {
             FunctionTopBarActions(
-                onSearch = onOpenSearch,
                 onRestart = onShowRestartMenu,
                 onVersionInfo = onShowVersionInfo,
             )
@@ -155,159 +147,6 @@ private fun FunctionTreeScreen(
             padding = padding,
             onOpenPage = onOpenPage,
         )
-    }
-}
-
-/** 全屏搜索：索引 = 全部已注册页 headless 构建，spec 手动不可见与单 App 作用域未安装页不入索引；过滤按 key/title/summary 与页标题做不区分大小写的包含匹配 */
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-internal fun FunctionSearchScreen(onBack: () -> Unit, onOpen: (ScopeRoute) -> Unit) {
-    val context = LocalContext.current
-    var query by rememberSaveable { mutableStateOf("") }
-
-    // 进入搜索页即聚焦输入框并拉起输入法：打开就能直接打字，不必先点一下搜索框。
-    // 焦点请求只在这里发一次（搜索框被 LazyColumn 回收重建时不会重复抢焦点/弹输入法）。
-    val searchFocusRequester = remember { FocusRequester() }
-    val keyboardController = LocalSoftwareKeyboardController.current
-    LaunchedEffect(Unit) {
-        // 等首帧布局完成（focus 节点挂载）后再请求焦点：节点未挂载时 requestFocus 会抛未初始化
-        withFrameNanos { }
-        searchFocusRequester.requestFocus()
-        // 个别 ROM 上 requestFocus 不会自动弹出输入法，这里显式再请求一次
-        keyboardController?.show()
-    }
-
-    // 索引与功能树同一份预取快照（FunctionPageData），进搜索页即有结果，不再现场构建
-    val snapshot by FunctionPageData.snapshot.collectAsStateWithLifecycle()
-    val entries = snapshot?.searchEntries.orEmpty()
-    // 图标预热尺寸必须与功能树读取时一致（AppIconCache 的键含 size，不一致会白热一份）
-    val iconSize = with(LocalDensity.current) { 48.dp.roundToPx() }
-    LaunchedEffect(context, iconSize) { FunctionPageData.revalidate(context, iconSize) }
-
-    // 过滤规则：key/title/summary 做 contains(ignoreCase)，并补充页标题匹配
-    val filtered = remember(entries, query) {
-        val q = query.trim()
-        if (q.isEmpty()) emptyList() else entries.filter { entry ->
-            entry.item.key.contains(q, ignoreCase = true) ||
-                entry.item.title?.contains(q, ignoreCase = true) == true ||
-                entry.item.summary?.contains(q, ignoreCase = true) == true ||
-                entry.pageTitle.contains(q, ignoreCase = true)
-        }
-    }
-
-    MaterialPageScaffold(
-        title = stringResource(R.string.menu_search),
-        onBack = onBack,
-    ) { padding ->
-        val layoutDirection = LocalLayoutDirection.current
-        val uiMode = LocalUiMode.current
-        val settings = remember { PrefState.of(context, SettingsPrefs) }
-        val scopeModifier = if (uiMode == UiMode.Miuix) {
-            Modifier
-                .fillMaxSize()
-                .padding(
-                    start = padding.calculateStartPadding(layoutDirection),
-                    end = padding.calculateEndPadding(layoutDirection),
-                    bottom = padding.calculateBottomPadding(),
-                )
-        } else {
-            Modifier.fillMaxSize().padding(padding)
-        }
-        val scopeContent: @Composable () -> Unit = {
-            // 页面级状态在 @Composable 作用域内先读取：只在 ScopeScreen 的 content lambda 内
-            // 读取不会被列表追踪，后果是搜索结果不随输入刷新
-            val queryNow = query
-            val entriesNow = entries
-            val filteredNow = filtered
-            // 行参数在非 Composable 的构建 lambda 内求值（那里没有 Composer），字符串先在这里取一次
-            val searchIndexLoadingText = stringResource(R.string.search_index_loading)
-            val searchNoResultsText = stringResource(R.string.search_no_results)
-            ScopeScreen(state = settings, modifier = scopeModifier) {
-                // 搜索框不是「选项行」，独占一张卡片（否则会与紧随其后的结果行拼在一起）
-                custom(key = "search_field", standalone = true) {
-                    MaterialTextField(
-                        value = queryNow,
-                        onValueChange = { query = it },
-                        placeholder = { Text(stringResource(R.string.menu_search)) },
-                        singleLine = true,
-                        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
-                        focusRequester = searchFocusRequester,
-                        leadingContent = {
-                            Icon(
-                                painterResource(R.drawable.ic_baseline_search_24),
-                                contentDescription = null,
-                            )
-                        },
-                        trailingContent = if (queryNow.isNotEmpty()) {
-                            {
-                                IconButton(onClick = { query = "" }) {
-                                    Icon(
-                                        painterResource(R.drawable.ic_baseline_close_24),
-                                        contentDescription = stringResource(R.string.clear),
-                                    )
-                                }
-                            }
-                        } else {
-                            null
-                        },
-                    )
-                }
-                if (queryNow.isNotBlank() && entriesNow.isEmpty()) {
-                    click(title = searchIndexLoadingText)
-                }
-                if (queryNow.isNotBlank() && entriesNow.isNotEmpty() && filteredNow.isEmpty()) {
-                    click(title = searchNoResultsText)
-                }
-                filteredNow.forEach { entry ->
-                    click(
-                        title = entry.item.title ?: entry.item.key,
-                        summary = buildString {
-                            if (!entry.item.summary.isNullOrBlank()) {
-                                append(entry.item.summary)
-                                append('\n')
-                            }
-                            append(entry.pageTitle)
-                        },
-                        trailing = {
-                            Icon(
-                                Icons.AutoMirrored.Rounded.KeyboardArrowRight,
-                                contentDescription = null,
-                            )
-                        },
-                        onClick = {
-                            // page DSL 命中 → 跳目标页；普通偏好命中 → 本页滚动定位
-                            val targetSpec = entry.item.pageTarget
-                                ?.let { ScopePageRegistry.pageTargetMap[it] }
-                                ?.let { ScopePageRegistry[it] }
-                            if (targetSpec != null) {
-                                onOpen(
-                                    ScopeRoute(
-                                        targetSpec.pageKey,
-                                        pageTitle(context, targetSpec)
-                                    )
-                                )
-                            } else {
-                                onOpen(
-                                    ScopeRoute(
-                                        entry.pageKey,
-                                        entry.pageTitle,
-                                        entry.item.key,
-                                        entry.item.slot,
-                                    )
-                                )
-                            }
-                        },
-                    )
-                }
-            }
-        }
-        if (uiMode == UiMode.Miuix) {
-            CompositionLocalProvider(LocalScopeTopInset provides padding.calculateTopPadding()) {
-                scopeContent()
-            }
-        } else {
-            scopeContent()
-        }
     }
 }
 
@@ -328,7 +167,7 @@ internal fun ScopePageHost(
     val topActions = spec?.topActions.orEmpty()
     val overflowActions = topActions.filter { !(it.showAsAction && it.icon != 0) }
 
-    MaterialPageScaffold(
+    LuckyPageScaffold(
         title = route.title.ifBlank { spec?.let { pageTitle(context, it) } ?: route.pageKey },
         onBack = onBack,
         actions = {
@@ -337,7 +176,6 @@ internal fun ScopePageHost(
                     onClick = { showRestartScope = true },
                     contentDescription = stringResource(R.string.menu_reboot),
                     materialIcon = Icons.Filled.PowerSettingsNew,
-                    miuixIcon = MiuixIcons.Close2,
                 )
             }
             topActions.forEach { action ->
@@ -369,11 +207,23 @@ internal fun ScopePageHost(
                     .padding(padding),
                 contentAlignment = Alignment.Center,
             ) {
-                Text("Unknown page: ${route.pageKey}", color = MaterialTheme.colorScheme.error)
+                when (LocalUiMode.current) {
+                    UiMode.Material -> Text(
+                        "Unknown page: ${route.pageKey}",
+                        color = MaterialTheme.colorScheme.error,
+                    )
+
+                    // COUI 的色板没有 error 角色：错误态用 onSurface 满强度表达，
+                    // 整屏只有这一行字，用常态正文色也不会被误读成普通提示
+                    UiMode.Coui -> CouiText(
+                        text = "Unknown page: ${route.pageKey}",
+                        kind = CouiTextKind.Body,
+                        color = CouiTheme.colorScheme.onSurface,
+                    )
+                }
             }
         } else {
             val state = remember(spec) { PrefState.of(context.applicationContext, spec.prefsName) }
-            val uiMode = LocalUiMode.current
             val sendPrefsValue: (key: String, value: Any) -> Unit = { key, value ->
                 context.sendPrefsValue(spec.packName, key, value)
             }
@@ -389,31 +239,16 @@ internal fun ScopePageHost(
             // 不再向页面注入 onRestart，也不再重建 Activity；需要重启作用域时用顶栏菜单。
             //
             // 页面内容分派（唯一分派点见 ScopePageContent）：
-            // 页面为当前主题线提供了槽位（contentMiuix/contentMaterial）时由页面自有布局渲染整页，
+            // 页面为当前主题线提供了内容槽位时由页面自有布局渲染整页，
             // 否则逐字回落到共享渲染层 ScopeScreen —— ScopeScreen 自带 LazyColumn 并渲染全部条目，
             // 直接作为页面内容：不能再包一层 ExpressiveList（同向嵌套 LazyColumn 会以无限高度约束测量而崩溃）。
-            // 水平内边距此处不叠加（material 线由作用域内容自带，Miuix 线由列表级 12dp contentPadding 提供）。
+            // 水平内边距此处不叠加（由作用域内容自带）。
             //
-            // 骨架内边距传递：
-            // - Material 线：innerPadding 整块交给内容，包含大标题折叠后的实际顶栏高度。
-            // - Miuix 线：骨架给的是真实 innerPadding，其中 top = 顶栏高度；top 经 LocalScopeTopInset 交给
-            //   列表充当 contentPadding.top（内容滚动到模糊顶栏之下），这里只保留
-            //   start/end/bottom 外置 padding（横屏 displayCutout 水平内缩与底部 inset 不能丢）。
-            // 两条外观线的默认折叠行为均由页面骨架统一连接，内容不重复接入同一条滚动连接。
-            val pageContentModifier = if (uiMode == UiMode.Miuix) {
-                val layoutDirection = LocalLayoutDirection.current
-                Modifier
-                    .fillMaxSize()
-                    .padding(
-                        start = padding.calculateStartPadding(layoutDirection),
-                        end = padding.calculateEndPadding(layoutDirection),
-                        bottom = padding.calculateBottomPadding(),
-                    )
-            } else {
-                Modifier
-                    .fillMaxSize()
-                    .padding(padding)
-            }
+            // 骨架内边距传递：innerPadding 整块交给内容，包含大标题折叠后的实际顶栏高度；
+            // 默认折叠行为由页面骨架统一连接，内容不重复接入同一条滚动连接。
+            val pageContentModifier = Modifier
+                .fillMaxSize()
+                .padding(padding)
             val pageContent: @Composable () -> Unit = {
                 ScopePageContent(
                     spec = spec,
@@ -424,13 +259,7 @@ internal fun ScopePageHost(
                     onNavigate = navigatePage,
                 )
             }
-            if (uiMode == UiMode.Miuix) {
-                CompositionLocalProvider(LocalScopeTopInset provides padding.calculateTopPadding()) {
-                    pageContent()
-                }
-            } else {
-                pageContent()
-            }
+            pageContent()
         }
     }
 
@@ -464,32 +293,6 @@ private fun VersionInfoDialog(onDismiss: () -> Unit) {
         Markwon.builder(context).usePlugin(TablePlugin.create(context)).build()
     }
     when (LocalUiMode.current) {
-        UiMode.Miuix -> OverlayDialog(
-            show = true,
-            title = stringResource(R.string.menu_versioninfo),
-            onDismissRequest = onDismiss,
-        ) {
-            AndroidView(
-                factory = { ctx -> android.widget.TextView(ctx) },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .heightIn(max = 360.dp)
-                    .verticalScroll(rememberScrollState()),
-                update = { tv ->
-                    tv.setTextIsSelectable(true)
-                    markwon.setMarkdown(tv, markdown)
-                },
-            )
-            Row(modifier = Modifier.padding(top = 12.dp)) {
-                MiuixTextButton(
-                    text = stringResource(android.R.string.ok),
-                    onClick = onDismiss,
-                    modifier = Modifier.weight(1f),
-                    colors = ButtonDefaults.textButtonColorsPrimary(),
-                )
-            }
-        }
-
         UiMode.Material -> AlertDialog(
             onDismissRequest = onDismiss,
             title = { Text(stringResource(R.string.menu_versioninfo)) },
@@ -505,6 +308,32 @@ private fun VersionInfoDialog(onDismiss: () -> Unit) {
             },
             confirmButton = {
                 TextButton(onClick = onDismiss) { Text(stringResource(android.R.string.ok)) }
+            },
+        )
+
+        UiMode.Coui -> CouiAlertDialog(
+            onDismissRequest = onDismiss,
+            title = stringResource(R.string.menu_versioninfo),
+            confirmAction = CouiDialogAction(
+                text = stringResource(android.R.string.ok),
+                onClick = onDismiss,
+                style = CouiDialogActionStyle.Primary,
+                // Primary 样式必须显式给按钮配色，缺 colors 构造即抛异常
+                colors = CouiDialogDefaults.primaryActionColors(CouiTheme.colorScheme.accent),
+            ),
+            content = {
+                // 正文槽本身已经是纵向滚动容器，这里不再套 verticalScroll：
+                // 两层同向滚动会先被内层吃掉手势，长表格滚不到底
+                AndroidView(
+                    factory = { ctx -> android.widget.TextView(ctx) },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = CouiDialogDefaults.contentPadding),
+                    update = { tv ->
+                        tv.setTextIsSelectable(true)
+                        markwon.setMarkdown(tv, markdown)
+                    },
+                )
             },
         )
     }

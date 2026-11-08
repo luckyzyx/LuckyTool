@@ -2,21 +2,17 @@ package com.luckyzyx.luckytool.ui.compose.pages
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.calculateEndPadding
-import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
@@ -49,7 +45,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.heading
@@ -59,36 +54,22 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDirection
-import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.itos.coui.layout.CouiPageDefaults
+import com.itos.coui.scroll.rememberCouiOverscrollEffect
+import com.itos.coui.text.CouiTextKind
+import com.itos.coui.text.Text as CouiText
+import com.itos.coui.theme.CouiTheme
 import com.luckyzyx.luckytool.R
 import com.luckyzyx.luckytool.ui.compose.components.HomeTopBarActions
-import com.luckyzyx.luckytool.ui.compose.components.material.MaterialPageScaffold
-import com.luckyzyx.luckytool.ui.compose.components.material.MaterialTonalCard
+import com.luckyzyx.luckytool.ui.compose.components.LuckyPageScaffold
+import com.luckyzyx.luckytool.ui.compose.components.AppCard
 import com.luckyzyx.luckytool.ui.compose.components.material.materialBottomInset
 import com.luckyzyx.luckytool.ui.theme.LocalUiMode
 import com.luckyzyx.luckytool.ui.theme.UiMode
 import com.luckyzyx.luckytool.utils.DeviceInfoEntry
-import top.yukonga.miuix.kmp.icon.MiuixIcons
-import top.yukonga.miuix.kmp.icon.extended.ChevronBackward
-import top.yukonga.miuix.kmp.icon.extended.ChevronForward
-import top.yukonga.miuix.kmp.icon.extended.Favorites
-import top.yukonga.miuix.kmp.icon.extended.Info
-import top.yukonga.miuix.kmp.icon.extended.Layers
-import top.yukonga.miuix.kmp.icon.extended.Ok
-import top.yukonga.miuix.kmp.icon.extended.Report
-import top.yukonga.miuix.kmp.icon.extended.Settings
-import top.yukonga.miuix.kmp.icon.extended.Update
-import top.yukonga.miuix.kmp.theme.ColorSchemeMode
-import top.yukonga.miuix.kmp.theme.MiuixTheme
-import top.yukonga.miuix.kmp.utils.overScrollVertical
-import top.yukonga.miuix.kmp.utils.scrollEndHaptic
-import top.yukonga.miuix.kmp.basic.Card as MiuixCard
-import top.yukonga.miuix.kmp.basic.CardDefaults as MiuixCardDefaults
-import top.yukonga.miuix.kmp.basic.Icon as MiuixIcon
-import top.yukonga.miuix.kmp.basic.Text as MiuixText
 
 @Immutable
 internal data class HomeDashboardState(
@@ -114,39 +95,31 @@ internal fun HomeDashboard(
     onDonateMethods: () -> Unit,
     onOpenNotice: () -> Unit,
 ) {
-    val miuix = LocalUiMode.current == UiMode.Miuix
     val listState = rememberLazyListState()
     var detailsExpanded by rememberSaveable { mutableStateOf(false) }
-    val colors = homeColors()
+    val isCoui = LocalUiMode.current == UiMode.Coui
+    val colors = if (isCoui) couiHomeColors() else homeColors()
     val bottomPadding = materialBottomInset(24.dp)
-    MaterialPageScaffold(
+    LuckyPageScaffold(
         title = stringResource(R.string.app_name),
         actions = { HomeTopBarActions(onRestart = onRestart, onAbout = onAbout) },
     ) { padding ->
-        val direction = LocalLayoutDirection.current
-        // Miuix 内容在顶栏下滚动；Material 内容从实际顶栏下方开始。
-        val outsidePadding = if (miuix) PaddingValues(
-            start = padding.calculateStartPadding(direction),
-            end = padding.calculateEndPadding(direction),
-            bottom = padding.calculateBottomPadding(),
-        ) else padding
         Box(
-            Modifier.fillMaxSize().padding(outsidePadding).consumeWindowInsets(outsidePadding),
+            Modifier.fillMaxSize().padding(padding).consumeWindowInsets(padding),
             contentAlignment = Alignment.TopCenter,
         ) {
             LazyColumn(
                 state = listState,
-                modifier = Modifier.widthIn(max = 720.dp).fillMaxSize().then(
-                    if (miuix) Modifier.scrollEndHaptic().overScrollVertical() else Modifier,
-                ),
+                modifier = Modifier.widthIn(max = 720.dp).fillMaxSize(),
                 contentPadding = PaddingValues(
-                    start = if (miuix) 12.dp else 16.dp,
-                    end = if (miuix) 12.dp else 16.dp,
-                    top = (if (miuix) padding.calculateTopPadding() else 0.dp) + 12.dp,
+                    start = 16.dp,
+                    end = 16.dp,
+                    top = 12.dp,
                     bottom = bottomPadding,
                 ),
                 verticalArrangement = Arrangement.spacedBy(12.dp),
-                overscrollEffect = if (miuix) null else rememberOverscrollEffect(),
+                // COUI 线用跟手回弹，Material 线保持平台默认的拉伸效果。
+                overscrollEffect = if (isCoui) rememberCouiOverscrollEffect() else rememberOverscrollEffect(),
             ) {
                 item(key = "status") {
                     HomeStatusCard(state, colors, onStatusLongClick)
@@ -202,18 +175,25 @@ internal fun HomeDashboard(
 
 @Composable
 private fun HomeStatusCard(state: HomeDashboardState, colors: HomeColors, onLongClick: (() -> Unit)?) {
-    val miuix = LocalUiMode.current == UiMode.Miuix
-    if (miuix && state.moduleActive) {
-        MiuixActiveStatusCard(state, onLongClick)
-        return
-    }
+    val isCoui = LocalUiMode.current == UiMode.Coui
     val tonal = state.moduleActive
-    val foreground = if (tonal) MaterialTheme.colorScheme.onPrimaryContainer else colors.foreground
-    val secondary = if (tonal) foreground else colors.secondary
-    val statusStyle = homeStatusTextStyle(headline = true)
-    val lineStyle = homeStatusTextStyle()
+    // COUI 语义色没有容器阶：启用态改用强调色标题，底色仍是卡片色。
+    val accentForeground = if (tonal) colors.accent else colors.foreground
+    val foreground = if (isCoui) {
+        accentForeground
+    } else {
+        if (tonal) MaterialTheme.colorScheme.onPrimaryContainer else colors.foreground
+    }
+    // COUI 启用态只提亮标题，正文行仍然用摘要色。
+    val secondary = if (tonal && !isCoui) foreground else colors.secondary
+    // COUI 的字号来自 CouiTextKind，不叠加 Material 侧的字号覆盖。
+    val statusStyle = if (isCoui) null else homeStatusTextStyle(headline = true)
+    val lineStyle = if (isCoui) null else homeStatusTextStyle()
+    // 版本查询返回「标题：值」，这里只保留值，标题由字符串资源统一给出。
+    val root = state.rootVersion?.let(::runtimeInfoValue)?.takeUnless { it.isBlank() || it == "—" } ?: "—"
+    val framework = state.frameworkVersion?.let(::runtimeInfoValue)?.takeUnless { it.isBlank() || it == "—" } ?: "Xposed"
     HomeCard(
-        background = if (tonal) MaterialTheme.colorScheme.primaryContainer else colors.card,
+        background = if (isCoui) colors.card else if (tonal) MaterialTheme.colorScheme.primaryContainer else colors.card,
         foreground = foreground,
         onLongClick = onLongClick,
     ) {
@@ -233,7 +213,12 @@ private fun HomeStatusCard(state: HomeDashboardState, colors: HomeColors, onLong
                 )
             }
             Spacer(Modifier.height(2.dp))
-            HomeText(state.moduleVersion, HomeTextRole.Body, secondary, style = lineStyle)
+            HomeText(
+                "${stringResource(R.string.version)}: ${state.moduleVersion}",
+                HomeTextRole.Body,
+                secondary,
+                style = lineStyle,
+            )
             if (!state.moduleActive) {
                 Spacer(Modifier.height(2.dp))
                 HomeText(
@@ -245,94 +230,18 @@ private fun HomeStatusCard(state: HomeDashboardState, colors: HomeColors, onLong
             }
             Spacer(Modifier.height(2.dp))
             HomeText(
-                state.rootVersion ?: stringResource(R.string.loading),
+                "${stringResource(R.string.root_source)} $root",
                 HomeTextRole.Body,
                 secondary,
                 style = lineStyle,
             )
-            state.frameworkVersion?.let {
-                Spacer(Modifier.height(2.dp))
-                HomeText(it, HomeTextRole.Body, secondary, style = lineStyle)
-            }
-        }
-    }
-}
-
-/** 已激活状态以独立背景和装饰图标呈现，Root 来源与框架版本在卡片内展示。 */
-@Composable
-private fun MiuixActiveStatusCard(state: HomeDashboardState, onLongClick: (() -> Unit)?) {
-    val dynamicColor = MiuixTheme.isDynamicColor
-    val dark = when (MiuixTheme.colorSchemeMode) {
-        ColorSchemeMode.Dark, ColorSchemeMode.MonetDark -> true
-        ColorSchemeMode.Light, ColorSchemeMode.MonetLight -> false
-        else -> isSystemInDarkTheme()
-    }
-    val background = when {
-        dynamicColor -> MiuixTheme.colorScheme.secondaryContainer
-        dark -> Color(0xFF1A3825)
-        else -> Color(0xFFDFFAE4)
-    }
-    val foreground = MiuixTheme.colorScheme.onSurfaceContainer
-    val root = state.rootVersion?.let(::runtimeInfoValue)?.takeUnless { it.isBlank() || it == "—" } ?: "—"
-    val framework = state.frameworkVersion?.let(::runtimeInfoValue)
-        ?.takeUnless { it.isBlank() || it == "—" }
-        ?: "Xposed"
-    val textStyle = MiuixTheme.textStyles.main.copy(textDirection = TextDirection.ContentOrLtr)
-    MiuixCard(
-        modifier = Modifier.fillMaxWidth(),
-        colors = MiuixCardDefaults.defaultColors(color = background, contentColor = foreground),
-        onLongPress = onLongClick,
-        showIndication = onLongClick != null,
-    ) {
-        Box(Modifier.fillMaxWidth()) {
-            Box(
-                modifier = Modifier.matchParentSize().offset(x = 27.dp, y = 31.dp),
-                contentAlignment = Alignment.BottomEnd,
-            ) {
-                MiuixIcon(
-                    imageVector = Icons.Rounded.CheckCircleOutline,
-                    contentDescription = null,
-                    modifier = Modifier.size(110.dp),
-                    tint = if (dynamicColor) MiuixTheme.colorScheme.primary.copy(alpha = 0.8f)
-                        else Color(0xFF36D167),
-                )
-            }
-            Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 14.dp)) {
-                MiuixText(
-                    text = stringResource(R.string.module_isactivated),
-                    modifier = Modifier.fillMaxWidth().padding(end = 80.dp).semantics { heading() },
-                    style = textStyle,
-                    fontSize = StatusHeadlineSize,
-                    fontWeight = FontWeight.SemiBold,
-                    color = foreground,
-                )
-                Spacer(Modifier.height(2.dp))
-                MiuixText(
-                    text = "${stringResource(R.string.version)}: ${state.moduleVersion}",
-                    modifier = Modifier.fillMaxWidth().padding(end = 80.dp),
-                    style = textStyle,
-                    fontSize = StatusLineSize,
-                    color = foreground,
-                )
-                Spacer(Modifier.height(2.dp))
-                MiuixText(
-                    text = "${stringResource(R.string.root_source)} $root",
-                    modifier = Modifier.fillMaxWidth().padding(end = 80.dp),
-                    style = textStyle,
-                    fontSize = StatusLineSize,
-                    fontWeight = FontWeight.Medium,
-                    color = foreground,
-                )
-                Spacer(Modifier.height(2.dp))
-                MiuixText(
-                    text = "${stringResource(R.string.framework_version)} $framework",
-                    modifier = Modifier.fillMaxWidth().padding(end = 80.dp),
-                    style = textStyle,
-                    fontSize = StatusLineSize,
-                    fontWeight = FontWeight.Medium,
-                    color = foreground,
-                )
-            }
+            Spacer(Modifier.height(2.dp))
+            HomeText(
+                "${stringResource(R.string.framework_version)} $framework",
+                HomeTextRole.Body,
+                secondary,
+                style = lineStyle,
+            )
         }
     }
 }
@@ -404,7 +313,7 @@ private fun HomeDeviceRow(entry: DeviceInfoEntry, colors: HomeColors) {
         Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
             val label = stringResource(entry.labelRes)
             HomeText(
-                if (LocalUiMode.current == UiMode.Miuix) label.trimEnd(':', '：') else label,
+                label,
                 HomeTextRole.Title,
                 colors.foreground,
             )
@@ -447,58 +356,66 @@ private fun HomeCard(
     onLongClick: (() -> Unit)? = null,
     content: @Composable () -> Unit,
 ) {
-    if (LocalUiMode.current == UiMode.Miuix) {
-        MiuixCard(
-            modifier = Modifier.fillMaxWidth(),
-            colors = MiuixCardDefaults.defaultColors(color = background, contentColor = foreground),
-            showIndication = onClick != null || onLongClick != null,
-            onClick = onClick,
-            onLongPress = onLongClick,
-        ) { content() }
-    } else {
-        MaterialTonalCard(
-            modifier = Modifier.fillMaxWidth(),
-            containerColor = background,
-            contentColor = foreground,
-            onClick = onClick,
-            onLongClick = onLongClick,
-            content = content,
-        )
-    }
+    AppCard(
+        modifier = Modifier.fillMaxWidth(),
+        containerColor = background,
+        contentColor = foreground,
+        // COUI 外观下的卡片由 AppCard 的 COUI 分支用 clip + card 色背景绘制，这里只钉住形状来源。
+        shape = if (LocalUiMode.current == UiMode.Coui) CouiPageDefaults.shape else null,
+        onClick = onClick,
+        onLongClick = onLongClick,
+        content = content,
+    )
 }
 
 private data class HomeColors(val card: Color, val foreground: Color, val secondary: Color, val accent: Color, val error: Color)
 
+/** Material 线的取色入口，只在 [LocalUiMode] 为 Material 时调用；COUI 线走 [couiHomeColors]。 */
 @Composable
-private fun homeColors(): HomeColors = if (LocalUiMode.current == UiMode.Miuix) {
-    with(MiuixTheme.colorScheme) { HomeColors(surfaceContainer, onSurfaceContainer, onSurfaceVariantSummary, primary, error) }
-} else {
+private fun homeColors(): HomeColors =
     with(MaterialTheme.colorScheme) { HomeColors(surfaceBright, onSurface, onSurfaceVariant, primary, error) }
+
+/**
+ * COUI 语义色：卡片、标题、摘要与强调色都取 [CouiPageDefaults]；
+ * 页面底色由 COUI 页面骨架绘制，这里不重复上色。
+ *
+ * COUI 色板没有 error 角色，警示态改用 onSurface 满强度表达：满强度前景色是这套色板里
+ * 能表达「需要注意」的最高层级，不用 accent 是因为强调色在本页已经用来标可点项（更新卡、
+ * 启用态标题），混用会让失效态看着仍像可点。当前色板下 onSurface 与 page.title 同值，
+ * 所以失效卡片只看图标颜色分辨不出异常，状态语义由同卡的标题文案承担。
+ */
+@Composable
+private fun couiHomeColors(): HomeColors {
+    val page = CouiPageDefaults.themeColors()
+    return HomeColors(page.card, page.title, page.summary, page.accent, CouiTheme.colorScheme.onSurface)
 }
 
 private enum class HomeTextRole { Status, Title, Body, Caption }
 
+/** COUI 排版按现有层级对应：卡片标题走 PreferenceTitle，正文走 Body，页脚提示走 Description。 */
+private val HomeTextRole.couiKind: CouiTextKind
+    get() = when (this) {
+        HomeTextRole.Status -> CouiTextKind.PreferenceTitle
+        HomeTextRole.Title -> CouiTextKind.PreferenceTitle
+        HomeTextRole.Body -> CouiTextKind.Body
+        HomeTextRole.Caption -> CouiTextKind.Description
+    }
+
 private val StatusHeadlineSize = 22.sp
 private val StatusLineSize = 15.sp
 
+/**
+ * Material 线的排版映射，只在 Material 分支调用。
+ * COUI 线的字号与行高由 [HomeTextRole.couiKind] 交给 CouiText，不经这里，
+ * 所以 COUI 渲染路径上不会读到 MaterialTheme 的排版。
+ */
 @Composable
-private fun homeTextStyle(role: HomeTextRole): TextStyle = if (LocalUiMode.current == UiMode.Miuix) {
-    with(MiuixTheme.textStyles) {
-        when (role) {
-            HomeTextRole.Status -> title3.copy(fontWeight = FontWeight.Medium)
-            HomeTextRole.Title -> headline1.copy(fontWeight = FontWeight.Medium)
-            HomeTextRole.Body -> body2.copy(fontWeight = FontWeight.Normal)
-            HomeTextRole.Caption -> footnote1.copy(fontWeight = FontWeight.Normal)
-        }
-    }
-} else {
-    with(MaterialTheme.typography) {
-        when (role) {
-            HomeTextRole.Status -> titleLarge
-            HomeTextRole.Title -> titleMedium
-            HomeTextRole.Body -> bodyMedium.copy(fontWeight = FontWeight.Normal)
-            HomeTextRole.Caption -> bodySmall
-        }
+private fun homeTextStyle(role: HomeTextRole): TextStyle = with(MaterialTheme.typography) {
+    when (role) {
+        HomeTextRole.Status -> titleLarge
+        HomeTextRole.Title -> titleMedium
+        HomeTextRole.Body -> bodyMedium.copy(fontWeight = FontWeight.Normal)
+        HomeTextRole.Caption -> bodySmall
     }
 }
 
@@ -511,15 +428,22 @@ private fun HomeText(
     textAlign: TextAlign? = null,
     style: TextStyle? = null,
 ) {
-    val resolved = (style ?: homeTextStyle(role)).copy(textDirection = TextDirection.ContentOrLtr)
-    if (LocalUiMode.current == UiMode.Miuix) {
-        MiuixText(text = text, style = resolved, color = color, modifier = modifier.fillMaxWidth(), textAlign = textAlign)
-    } else {
-        Text(text = text, style = resolved, color = color, modifier = modifier.fillMaxWidth(), textAlign = textAlign)
+    // COUI 线用 CouiText 绘制，style 只服务 Material 线。
+    if (LocalUiMode.current == UiMode.Coui) {
+        CouiText(
+            modifier = modifier.fillMaxWidth(),
+            text = text,
+            kind = role.couiKind,
+            color = color,
+            textAlign = textAlign,
+        )
+        return
     }
+    val resolved = (style ?: homeTextStyle(role)).copy(textDirection = TextDirection.ContentOrLtr)
+    Text(text = text, style = resolved, color = color, modifier = modifier.fillMaxWidth(), textAlign = textAlign)
 }
 
-/** 状态卡片的文字与 Miuix 已激活卡片共用同一排版节奏：无额外字距、自然行高。 */
+/** 状态卡片的文字排版：无额外字距、自然行高，与卡片内其他文案保持同一节奏。 */
 @Composable
 private fun homeStatusTextStyle(headline: Boolean = false): TextStyle =
     homeTextStyle(if (headline) HomeTextRole.Status else HomeTextRole.Body).copy(
@@ -532,38 +456,19 @@ private enum class HomeSymbol { Active, Inactive, Phone, System, Version, Hardwa
 
 @Composable
 private fun HomeIcon(symbol: HomeSymbol, tint: Color, modifier: Modifier) {
-    val miuix = LocalUiMode.current == UiMode.Miuix
-    val vector: ImageVector = if (miuix) {
-        when (symbol) {
-            HomeSymbol.Active -> MiuixIcons.Ok
-            HomeSymbol.Inactive -> MiuixIcons.Report
-            HomeSymbol.Phone -> Icons.Rounded.PhoneAndroid
-            HomeSymbol.System -> MiuixIcons.Settings
-            HomeSymbol.Version, HomeSymbol.Update -> MiuixIcons.Update
-            HomeSymbol.Hardware -> MiuixIcons.Layers
-            HomeSymbol.Info -> MiuixIcons.Info
-            HomeSymbol.Support -> MiuixIcons.Favorites
-            HomeSymbol.Forward -> if (LocalLayoutDirection.current == LayoutDirection.Rtl)
-                MiuixIcons.ChevronBackward else MiuixIcons.ChevronForward
-            HomeSymbol.Expand -> Icons.Rounded.ExpandMore
-            HomeSymbol.Collapse -> Icons.Rounded.ExpandLess
-        }
-    } else {
-        when (symbol) {
-            HomeSymbol.Active -> Icons.Rounded.CheckCircleOutline
-            HomeSymbol.Inactive -> Icons.Rounded.WarningAmber
-            HomeSymbol.Phone -> Icons.Rounded.PhoneAndroid
-            HomeSymbol.System -> Icons.Rounded.Settings
-            HomeSymbol.Version -> Icons.Rounded.Update
-            HomeSymbol.Hardware -> Icons.Rounded.Memory
-            HomeSymbol.Info -> Icons.Rounded.Info
-            HomeSymbol.Support -> Icons.Rounded.FavoriteBorder
-            HomeSymbol.Update -> Icons.Rounded.SystemUpdateAlt
-            HomeSymbol.Forward -> Icons.AutoMirrored.Rounded.KeyboardArrowRight
-            HomeSymbol.Expand -> Icons.Rounded.ExpandMore
-            HomeSymbol.Collapse -> Icons.Rounded.ExpandLess
-        }
+    val vector: ImageVector = when (symbol) {
+        HomeSymbol.Active -> Icons.Rounded.CheckCircleOutline
+        HomeSymbol.Inactive -> Icons.Rounded.WarningAmber
+        HomeSymbol.Phone -> Icons.Rounded.PhoneAndroid
+        HomeSymbol.System -> Icons.Rounded.Settings
+        HomeSymbol.Version -> Icons.Rounded.Update
+        HomeSymbol.Hardware -> Icons.Rounded.Memory
+        HomeSymbol.Info -> Icons.Rounded.Info
+        HomeSymbol.Support -> Icons.Rounded.FavoriteBorder
+        HomeSymbol.Update -> Icons.Rounded.SystemUpdateAlt
+        HomeSymbol.Forward -> Icons.AutoMirrored.Rounded.KeyboardArrowRight
+        HomeSymbol.Expand -> Icons.Rounded.ExpandMore
+        HomeSymbol.Collapse -> Icons.Rounded.ExpandLess
     }
-    if (miuix) MiuixIcon(vector, contentDescription = null, tint = tint, modifier = modifier)
-    else Icon(vector, contentDescription = null, tint = tint, modifier = modifier)
+    Icon(vector, contentDescription = null, tint = tint, modifier = modifier)
 }

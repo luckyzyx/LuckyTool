@@ -11,14 +11,8 @@ import android.provider.OpenableColumns
 import android.util.ArraySet
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContract
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.calculateEndPadding
-import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowRight
 import androidx.compose.material.icons.rounded.AdminPanelSettings
@@ -40,7 +34,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -48,17 +41,19 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.unit.dp
+import com.itos.coui.dialog.CouiDialogAction
+import com.itos.coui.dialog.CouiDialogActionStyle
+import com.itos.coui.dialog.CouiDialogDefaults
+import com.itos.coui.theme.CouiTheme
 import com.luckyzyx.luckytool.R
 import com.luckyzyx.luckytool.ui.activity.MainActivity
 import com.luckyzyx.luckytool.ui.compose.components.ActionListDialog
 import com.luckyzyx.luckytool.ui.compose.components.ChoiceItem
-import com.luckyzyx.luckytool.ui.compose.components.LocalScopeTopInset
 import com.luckyzyx.luckytool.ui.compose.components.ScopeScreen
 import com.luckyzyx.luckytool.ui.compose.components.PrefIcon
-import com.luckyzyx.luckytool.ui.compose.components.material.MaterialPageScaffold
+import com.luckyzyx.luckytool.ui.compose.components.coui.CouiAlertDialog
+import com.luckyzyx.luckytool.ui.compose.components.LuckyPageScaffold
 import com.luckyzyx.luckytool.ui.theme.LocalUiMode
 import com.luckyzyx.luckytool.ui.theme.ThemeController
 import com.luckyzyx.luckytool.ui.theme.ThemePrefs
@@ -90,11 +85,7 @@ import com.luckyzyx.luckytool.utils.recordedTarget
 import com.luckyzyx.luckytool.utils.showToast
 import org.json.JSONArray
 import org.json.JSONObject
-import top.yukonga.miuix.kmp.basic.ButtonDefaults
-import top.yukonga.miuix.kmp.overlay.OverlayDialog
 import kotlin.system.exitProcess
-import top.yukonga.miuix.kmp.basic.Text as MiuixText
-import top.yukonga.miuix.kmp.basic.TextButton as MiuixTextButton
 
 /**
  * 设置页。
@@ -140,30 +131,18 @@ fun SettingPage(activity: MainActivity, onOpenTheme: () -> Unit = {}) {
     var showClearDialog by remember { mutableStateOf(false) }
     var showFeedbackDialog by remember { mutableStateOf(false) }
 
-    MaterialPageScaffold(
+    LuckyPageScaffold(
         title = stringResource(R.string.nav_setting),
     ) { padding ->
-        val layoutDirection = LocalLayoutDirection.current
-        val uiMode = LocalUiMode.current
-        // 作用域内容列表自带 LazyColumn（不能再套 ExpressiveList）；Miuix 线只保留 start/end/bottom
-        // 外置 padding（top 归 0，顶栏高度经 LocalScopeTopInset 交给列表做 contentPadding.top）。
-        val scopeModifier = if (uiMode == UiMode.Miuix) {
-            Modifier
-                .fillMaxSize()
-                .padding(
-                    start = padding.calculateStartPadding(layoutDirection),
-                    end = padding.calculateEndPadding(layoutDirection),
-                    bottom = padding.calculateBottomPadding(),
-                )
-        } else {
-            Modifier
-                .fillMaxSize()
-                .padding(padding)
-        }
+        // 作用域内容列表自带 LazyColumn（不能再套 ExpressiveList），外层内边距整块交给它。
+        val scopeModifier = Modifier
+            .fillMaxSize()
+            .padding(padding)
         val scopeContent: @Composable () -> Unit = {
             // 行参数在非 Composable 的构建 lambda 内求值（那里没有 Composer），字符串先在这里取一次
             val settingsUiModeTitle = stringResource(R.string.settings_ui_mode)
             val settingsUiModeSummary = stringResource(R.string.settings_ui_mode_summary)
+            val settingsUiModeCouiUnavailable = stringResource(R.string.settings_ui_mode_coui_unavailable)
             val themePaletteTitle = stringResource(R.string.theme_palette)
             val themePaletteSummary = stringResource(R.string.theme_palette_summary)
             val autoCheckUpdateTitle = stringResource(R.string.auto_check_update)
@@ -193,18 +172,33 @@ fun SettingPage(activity: MainActivity, onOpenTheme: () -> Unit = {}) {
                 // ---------------- 主题 ----------------
                 // 主题模式 / 主题色 / 调色风格 / 色彩规格 / 动态取色 全部迁至独立主题页
                 group()
-                // 界面风格切换（Material / Miuix）：放在设置页而不是主题页，
-                // 保证切到 Miuix 后仍能在这里切回 Material。界面风格在上，主题入口在下。
+                // 界面风格切换（Material / COUI）：放在设置页而不是主题页，界面风格在上，主题入口在下。
+                // COUI 的顶栏 / 底栏 / 悬浮按钮依赖 API 34 的材质采样，低版本不给切换，
+                // 但仍保留一行禁用的说明，避免用户以为这条外观线不存在。
+                val couiAvailable = UiMode.Coui.isAvailable
+                val selectableUiModes = if (couiAvailable) {
+                    UiMode.entries
+                } else {
+                    UiMode.entries.filter { it != UiMode.Coui }
+                }
                 list(
                     key = ThemeController.KEY_UI_MODE,
                     title = settingsUiModeTitle,
-                    entries = UiMode.entries.map { it.name }.toTypedArray(),
-                    entryValues = UiMode.entries.map { it.value }.toTypedArray(),
+                    entries = selectableUiModes.map { it.name }.toTypedArray(),
+                    entryValues = selectableUiModes.map { it.value }.toTypedArray(),
                     default = UiMode.DEFAULT_VALUE,
                     summary = settingsUiModeSummary,
                     leading = { PrefIcon(Icons.Rounded.DisplaySettings) },
                     onChange = { ThemePrefs.notifyChanged() },
                 )
+                if (!couiAvailable) {
+                    click(
+                        title = "COUI",
+                        summary = settingsUiModeCouiUnavailable,
+                        enabled = false,
+                        leading = { PrefIcon(Icons.Rounded.DisplaySettings) },
+                    )
+                }
                 // 导航入口用箭头，不暴露内部色板名称。
                 click(
                     title = themePaletteTitle,
@@ -325,13 +319,7 @@ fun SettingPage(activity: MainActivity, onOpenTheme: () -> Unit = {}) {
                 )
             }
         }
-        if (uiMode == UiMode.Miuix) {
-            CompositionLocalProvider(LocalScopeTopInset provides padding.calculateTopPadding()) {
-                scopeContent()
-            }
-        } else {
-            scopeContent()
-        }
+        scopeContent()
     }
 
     if (showDonateList) {
@@ -374,39 +362,6 @@ fun SettingPage(activity: MainActivity, onOpenTheme: () -> Unit = {}) {
 
     if (showClearDialog) {
         when (LocalUiMode.current) {
-            UiMode.Miuix -> OverlayDialog(
-                show = true,
-                onDismissRequest = { showClearDialog = false },
-            ) {
-                MiuixText(
-                    text = stringResource(R.string.clear_all_data_message),
-                    modifier = Modifier.fillMaxWidth(),
-                )
-                Row(modifier = Modifier.padding(top = 12.dp)) {
-                    MiuixTextButton(
-                        text = stringResource(android.R.string.cancel),
-                        onClick = { showClearDialog = false },
-                        modifier = Modifier.weight(1f),
-                    )
-                    Spacer(Modifier.width(20.dp))
-                    MiuixTextButton(
-                        text = stringResource(android.R.string.ok),
-                        onClick = {
-                            showClearDialog = false
-                            context.clearAllPrefs(
-                                ModulePrefs,
-                                IntentPrefs,
-                                SettingsPrefs,
-                                OtherPrefs
-                            )
-                            exitProcess(0)
-                        },
-                        modifier = Modifier.weight(1f),
-                        colors = ButtonDefaults.textButtonColorsPrimary(),
-                    )
-                }
-            }
-
             UiMode.Material -> AlertDialog(
                 onDismissRequest = { showClearDialog = false },
                 text = { Text(stringResource(R.string.clear_all_data_message)) },
@@ -422,6 +377,18 @@ fun SettingPage(activity: MainActivity, onOpenTheme: () -> Unit = {}) {
                         Text(stringResource(android.R.string.cancel))
                     }
                 },
+            )
+
+            UiMode.Coui -> CouiConfirmDialog(
+                message = stringResource(R.string.clear_all_data_message),
+                confirmText = stringResource(android.R.string.ok),
+                onConfirm = {
+                    showClearDialog = false
+                    context.clearAllPrefs(ModulePrefs, IntentPrefs, SettingsPrefs, OtherPrefs)
+                    exitProcess(0)
+                },
+                onDismissRequest = { showClearDialog = false },
+                dismissText = stringResource(android.R.string.cancel),
             )
         }
     }
@@ -477,30 +444,6 @@ fun SettingPage(activity: MainActivity, onOpenTheme: () -> Unit = {}) {
             stringResource(R.string.data_backup_status_tips),
         ).joinToString("\n\n")
         when (LocalUiMode.current) {
-            UiMode.Miuix -> OverlayDialog(
-                show = true,
-                onDismissRequest = { showBackupDialog = false },
-            ) {
-                MiuixText(text = message, modifier = Modifier.fillMaxWidth())
-                Row(modifier = Modifier.padding(top = 12.dp)) {
-                    MiuixTextButton(
-                        text = stringResource(android.R.string.cancel),
-                        onClick = { showBackupDialog = false },
-                        modifier = Modifier.weight(1f),
-                    )
-                    Spacer(Modifier.width(20.dp))
-                    MiuixTextButton(
-                        text = stringResource(R.string.backup_data),
-                        onClick = {
-                            showBackupDialog = false
-                            startBackup()
-                        },
-                        modifier = Modifier.weight(1f),
-                        colors = ButtonDefaults.textButtonColorsPrimary(),
-                    )
-                }
-            }
-
             UiMode.Material -> AlertDialog(
                 onDismissRequest = { showBackupDialog = false },
                 text = { Text(message) },
@@ -515,6 +458,17 @@ fun SettingPage(activity: MainActivity, onOpenTheme: () -> Unit = {}) {
                         Text(stringResource(android.R.string.cancel))
                     }
                 },
+            )
+
+            UiMode.Coui -> CouiConfirmDialog(
+                message = message,
+                confirmText = stringResource(R.string.backup_data),
+                onConfirm = {
+                    showBackupDialog = false
+                    startBackup()
+                },
+                onDismissRequest = { showBackupDialog = false },
+                dismissText = stringResource(android.R.string.cancel),
             )
         }
     }
@@ -560,33 +514,6 @@ fun SettingPage(activity: MainActivity, onOpenTheme: () -> Unit = {}) {
             if (remoteUnwritable) add(stringResource(R.string.data_remote_unavailable_tips))
         }.joinToString("\n\n")
         when (LocalUiMode.current) {
-            UiMode.Miuix -> OverlayDialog(
-                show = true,
-                onDismissRequest = { pendingRestoreJson = null },
-            ) {
-                MiuixText(
-                    text = restoreMessage,
-                    modifier = Modifier.fillMaxWidth(),
-                )
-                Row(modifier = Modifier.padding(top = 12.dp)) {
-                    MiuixTextButton(
-                        text = stringResource(android.R.string.cancel),
-                        onClick = { pendingRestoreJson = null },
-                        modifier = Modifier.weight(1f),
-                    )
-                    Spacer(Modifier.width(20.dp))
-                    MiuixTextButton(
-                        text = stringResource(R.string.restore_data),
-                        onClick = {
-                            pendingRestoreJson = null
-                            writeRestoreData(activity, json)
-                        },
-                        modifier = Modifier.weight(1f),
-                        colors = ButtonDefaults.textButtonColorsPrimary(),
-                    )
-                }
-            }
-
             UiMode.Material -> AlertDialog(
                 onDismissRequest = { pendingRestoreJson = null },
                 text = { Text(restoreMessage) },
@@ -602,8 +529,49 @@ fun SettingPage(activity: MainActivity, onOpenTheme: () -> Unit = {}) {
                     }
                 },
             )
+
+            UiMode.Coui -> CouiConfirmDialog(
+                message = restoreMessage,
+                confirmText = stringResource(R.string.restore_data),
+                onConfirm = {
+                    pendingRestoreJson = null
+                    writeRestoreData(activity, json)
+                },
+                onDismissRequest = { pendingRestoreJson = null },
+                dismissText = stringResource(android.R.string.cancel),
+            )
         }
     }
+}
+
+/**
+ * Coui 线的二次确认弹窗：一句正文 + 确定/取消。
+ *
+ * 清空、备份、恢复三处结构相同，摆位集中在这里只维护一份；各处的正文与按钮文案由调用方给，
+ * 因为正文里的路径、落点、版本行都是调用方现算的。
+ *
+ * 注意：确定键用 Primary 样式时必须显式传 colors（CouiDialogAction 的 init 会校验，缺了直接抛异常），
+ * 取消放 dismissAction —— 中性位固定按警示色渲染，与「点它只是关掉」的语义不符。
+ */
+@Composable
+private fun CouiConfirmDialog(
+    message: String,
+    confirmText: String,
+    onConfirm: () -> Unit,
+    onDismissRequest: () -> Unit,
+    dismissText: String,
+) {
+    CouiAlertDialog(
+        onDismissRequest = onDismissRequest,
+        message = message,
+        confirmAction = CouiDialogAction(
+            text = confirmText,
+            onClick = onConfirm,
+            style = CouiDialogActionStyle.Primary,
+            colors = CouiDialogDefaults.primaryActionColors(CouiTheme.colorScheme.accent),
+        ),
+        dismissAction = CouiDialogAction(text = dismissText, onClick = onDismissRequest),
+    )
 }
 
 /**

@@ -69,7 +69,10 @@ open class MainActivity : AppCompatActivity() {
     /** 跨标签页打开作用域页，由 MainShell 入栈并保留来源标签。 */
     val functionNavRequests = MutableStateFlow<FunctionRequest?>(null)
 
-    /** 启动阻塞门对话框（Xposed 未激活 / 无 root / 系统不支持）：非空即由 MainShell 渲染，见 GateDialog */
+    /**
+     * 启动阻塞门对话框（Xposed 未激活 / 无 root / 系统不支持）：非空即由主界面渲染，见 GateDialog。
+     * 只属于主界面 —— 权限页已经把 Root / 模块状态写在页面上，权限门在场时不组合它，状态留到主界面再弹。
+     */
     var gateDialog by mutableStateOf<GateDialogSpec?>(null)
 
     /** 权限阻塞门是否生效（模块自身 4 项权限未全授予）：只由 [refreshPermissionGate] 的纯查询驱动 */

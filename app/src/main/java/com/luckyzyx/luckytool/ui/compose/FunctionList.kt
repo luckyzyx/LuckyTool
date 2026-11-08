@@ -6,18 +6,11 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.calculateEndPadding
-import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -37,31 +30,24 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.platform.LocalLayoutDirection
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
+import com.itos.coui.icons.CouiIcons
+import com.itos.coui.layout.CouiPageDefaults
+import com.itos.coui.scroll.rememberCouiOverscrollEffect
+import com.itos.coui.text.CouiTextKind
+import com.itos.coui.text.Text as CouiText
+import com.itos.coui.theme.CouiTheme
 import com.luckyzyx.luckytool.ui.compose.components.material.LocalShellBottomInset
-import com.luckyzyx.luckytool.ui.compose.components.material.MaterialItem
-import com.luckyzyx.luckytool.ui.compose.components.material.MaterialListItem
-import com.luckyzyx.luckytool.ui.compose.components.material.materialBottomInset
+import com.luckyzyx.luckytool.ui.compose.components.AppItem
+import com.luckyzyx.luckytool.ui.compose.components.AppListItem
 import com.luckyzyx.luckytool.ui.shell.LocalCategoryBadgeColors
 import com.luckyzyx.luckytool.ui.theme.LocalUiMode
 import com.luckyzyx.luckytool.ui.theme.UiMode
 import com.luckyzyx.luckytool.utils.AppIconCache
-import top.yukonga.miuix.kmp.icon.MiuixIcons
-import top.yukonga.miuix.kmp.icon.basic.ArrowRight
-import top.yukonga.miuix.kmp.theme.MiuixTheme
-import top.yukonga.miuix.kmp.utils.overScrollVertical
-import top.yukonga.miuix.kmp.utils.scrollEndHaptic
-import top.yukonga.miuix.kmp.basic.Card as MiuixCard
-import top.yukonga.miuix.kmp.basic.Text as MiuixText
 
 /**
  * 功能行摘要最多两行：摘要是「该页前三个功能标题」，一行装不下三个就已截断成省略号，
@@ -86,35 +72,26 @@ internal fun FunctionList(
     onOpenPage: (pageKey: String, title: String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val isMiuix = LocalUiMode.current == UiMode.Miuix
-    val direction = LocalLayoutDirection.current
     val listState = rememberLazyListState()
-    // Miuix 的内容滚到顶栏下方；Material 的列表视口位于顶栏下方。
-    val listModifier = if (isMiuix) {
-        modifier.fillMaxSize().scrollEndHaptic().overScrollVertical()
-    } else {
-        modifier.fillMaxSize().padding(padding).consumeWindowInsets(padding)
-    }
-    val contentPadding = if (isMiuix) {
-        PaddingValues(
-            start = padding.calculateStartPadding(direction) + 12.dp,
-            end = padding.calculateEndPadding(direction) + 12.dp,
-            top = padding.calculateTopPadding() + 6.dp,
-            bottom = padding.calculateBottomPadding() + materialBottomInset(),
-        )
-    } else {
-        PaddingValues(
-            start = 16.dp,
-            end = 16.dp,
-            bottom = 16.dp + LocalShellBottomInset.current,
-        )
-    }
+    // 列表视口位于顶栏下方。
+    val listModifier = modifier.fillMaxSize().padding(padding).consumeWindowInsets(padding)
+    val contentPadding = PaddingValues(
+        start = 16.dp,
+        end = 16.dp,
+        // COUI 的首张分段卡片与折叠顶栏之间留出分组间距；Material 仍贴着顶栏起排
+        top = if (LocalUiMode.current == UiMode.Coui) CouiPageDefaults.groupSpacing else 0.dp,
+        bottom = 16.dp + LocalShellBottomInset.current,
+    )
+    val isCoui = LocalUiMode.current == UiMode.Coui
+    // 跟手回弹：一个 OverscrollEffect 只能挂在一个 LazyColumn 上，因此两线各自在 @Composable 里取好后传下去。
+    val listOverscroll = if (isCoui) rememberCouiOverscrollEffect() else rememberOverscrollEffect()
     LazyColumn(
         state = listState,
         modifier = listModifier,
         contentPadding = contentPadding,
-        verticalArrangement = Arrangement.spacedBy(if (isMiuix) 12.dp else 2.dp),
-        overscrollEffect = if (isMiuix) null else rememberOverscrollEffect(),
+        // COUI 行自带分段卡片，段间不能留缝，否则一张卡片被切断；Material 仍按 2dp 分段。
+        verticalArrangement = if (isCoui) Arrangement.Top else Arrangement.spacedBy(2.dp),
+        overscrollEffect = listOverscroll,
     ) {
         itemsIndexed(
             items = rows,
@@ -122,17 +99,34 @@ internal fun FunctionList(
             contentType = { _, _ -> "function" },
         ) { index, row ->
             val onClick = { onOpenPage(row.pageKey, row.title) }
-            if (isMiuix) {
-                MiuixFunctionRow(row, onClick)
-            } else {
-                MaterialItem(index = index, count = rows.size) {
-                    MaterialListItem(
-                        onClick = onClick,
-                        headlineContent = {
+            AppItem(index = index, count = rows.size) {
+                AppListItem(
+                    onClick = onClick,
+                    headlineContent = {
+                        // 行内排版按外观分派：COUI 线用 COUI 语义字体（PreferenceTitle/PreferenceSummary）
+                        // 与页面配色，Material 线保持 M3 Text。
+                        if (isCoui) {
+                            CouiText(
+                                text = row.title,
+                                kind = CouiTextKind.PreferenceTitle,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                            )
+                        } else {
                             Text(row.title, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                        },
-                        supportingContent = row.summary?.let { summary ->
-                            {
+                        }
+                    },
+                    supportingContent = row.summary?.let { summary ->
+                        {
+                            if (isCoui) {
+                                CouiText(
+                                    text = summary,
+                                    kind = CouiTextKind.PreferenceSummary,
+                                    color = CouiPageDefaults.themeColors(CouiTheme.isDark).summary,
+                                    maxLines = FUNCTION_SUMMARY_MAX_LINES,
+                                    overflow = TextOverflow.Ellipsis,
+                                )
+                            } else {
                                 Text(
                                     text = summary,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -140,58 +134,24 @@ internal fun FunctionList(
                                     overflow = TextOverflow.Ellipsis,
                                 )
                             }
-                        },
-                        leadingContent = { FunctionRowIcon(row) },
-                        trailingContent = {
+                        }
+                    },
+                    leadingContent = { FunctionRowIcon(row) },
+                    trailingContent = {
+                        if (isCoui) {
+                            // 尾部箭头尺寸与 COUI 偏好行一致（细长箭头），颜色弱于正文前景
+                            Icon(
+                                CouiIcons.Next,
+                                contentDescription = null,
+                                modifier = Modifier.size(width = 12.dp, height = 24.dp),
+                                tint = CouiPageDefaults.themeColors(CouiTheme.isDark).disabled,
+                            )
+                        } else {
                             Icon(Icons.AutoMirrored.Rounded.KeyboardArrowRight, contentDescription = null)
-                        },
-                    )
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun MiuixFunctionRow(row: FunctionRow, onClick: () -> Unit) {
-    val isRtl = LocalLayoutDirection.current == LayoutDirection.Rtl
-    MiuixCard(
-        modifier = Modifier.fillMaxWidth(),
-        onClick = onClick,
-        showIndication = true,
-        insideMargin = PaddingValues(start = 10.dp, end = 16.dp, top = 8.dp, bottom = 8.dp),
-    ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            FunctionRowIcon(row)
-            Spacer(Modifier.width(10.dp))
-            Column(Modifier.weight(1f)) {
-                MiuixText(
-                    text = row.title,
-                    style = MiuixTheme.textStyles.main,
-                    fontWeight = FontWeight.Medium,
-                    color = MiuixTheme.colorScheme.onSurface,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
+                        }
+                    },
                 )
-                row.summary?.let { summary ->
-                    MiuixText(
-                        text = summary,
-                        fontSize = 12.sp,
-                        color = MiuixTheme.colorScheme.onSurfaceVariantSummary,
-                        maxLines = FUNCTION_SUMMARY_MAX_LINES,
-                        overflow = TextOverflow.Ellipsis,
-                    )
-                }
             }
-            Image(
-                imageVector = MiuixIcons.Basic.ArrowRight,
-                contentDescription = null,
-                modifier = Modifier
-                    .padding(start = 8.dp)
-                    .size(width = 10.dp, height = 16.dp)
-                    .graphicsLayer { if (isRtl) scaleX = -1f },
-                colorFilter = ColorFilter.tint(MiuixTheme.colorScheme.onSurfaceVariantActions),
-            )
         }
     }
 }
@@ -249,9 +209,19 @@ private val CategoryBadgeCornerSize = 10.dp
 @Composable
 private fun CategoryBadgeIcon(badge: CategoryBadge?) {
     val colorful = LocalCategoryBadgeColors.current
-    val colorScheme = MaterialTheme.colorScheme
-    val background = if (colorful) badge?.color ?: Color(0xFF607D8B) else colorScheme.secondaryContainer
-    val foreground = if (colorful) Color.White else colorScheme.onSecondaryContainer
+    // 单色徽标的底色与前景按外观取：COUI 线用强调色与其反色（色板保证可读），Material 线用容器色与其前景
+    val background: Color
+    val foreground: Color
+    if (LocalUiMode.current == UiMode.Coui) {
+        val colorScheme = CouiTheme.colorScheme
+        background = if (colorful) badge?.color ?: Color(0xFF607D8B) else colorScheme.accent
+        foreground = if (colorful) Color.White else colorScheme.onAccent
+    } else {
+        // Material 线专用：多彩色相同，单色徽标取 M3 容器色
+        val colorScheme = MaterialTheme.colorScheme
+        background = if (colorful) badge?.color ?: Color(0xFF607D8B) else colorScheme.secondaryContainer
+        foreground = if (colorful) Color.White else colorScheme.onSecondaryContainer
+    }
     Box(
         modifier = Modifier
             .size(CategoryBadgeSize)

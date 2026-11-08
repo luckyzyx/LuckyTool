@@ -2,11 +2,8 @@ package com.luckyzyx.luckytool.ui.compose.pages
 
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.combinedClickable
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Text
@@ -23,12 +20,19 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.itos.coui.dialog.CouiDialogAction
+import com.itos.coui.dialog.CouiDialogActionStyle
+import com.itos.coui.dialog.CouiDialogDefaults
+import com.itos.coui.text.CouiTextKind
+import com.itos.coui.text.Text as CouiText
+import com.itos.coui.theme.CouiTheme
 import com.luckyzyx.luckytool.R
 import com.luckyzyx.luckytool.service.GlobalFuncService
 import com.luckyzyx.luckytool.ui.activity.MainActivity
 import com.luckyzyx.luckytool.ui.compose.components.ActionListDialog
 import com.luckyzyx.luckytool.ui.compose.components.ChoiceItem
 import com.luckyzyx.luckytool.ui.compose.components.MainPageActivationEffect
+import com.luckyzyx.luckytool.ui.compose.components.coui.CouiAlertDialog
 import com.luckyzyx.luckytool.ui.service.XposedServiceBridge
 import com.luckyzyx.luckytool.ui.shell.ShellBadgeState
 import com.luckyzyx.luckytool.ui.theme.LocalUiMode
@@ -56,11 +60,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import top.yukonga.miuix.kmp.basic.ButtonDefaults
-import top.yukonga.miuix.kmp.overlay.OverlayDialog
 import java.io.File
-import top.yukonga.miuix.kmp.basic.Text as MiuixText
-import top.yukonga.miuix.kmp.basic.TextButton as MiuixTextButton
 
 /**
  * 主页数据与操作入口，展示层按当前主题使用对应的原生组件。
@@ -96,6 +96,13 @@ fun HomePage(activity: MainActivity, isCurrentPage: Boolean = true) {
     var showDonateList by remember { mutableStateOf(false) }
     var showQrType by remember { mutableIntStateOf(-1) }
     var updateStage by remember { mutableStateOf<UpdateStage?>(null) }
+
+    // 长按作者名切换隐藏功能：两条线共用同一份写入与文案，避免两处分叉各自维护
+    fun toggleHiddenFunction() {
+        val newValue = !settings.getBoolean("hidden_function", false)
+        settings.set("hidden_function", newValue)
+        aboutText = if (newValue) "忆清鸣、luckyzyx T" else "忆清鸣、luckyzyx"
+    }
 
     fun checkDexOptimize(controller: com.luckyzyx.luckytool.IGlobalFuncController?) {
         if (getOSVersionCode < 34) return
@@ -198,20 +205,6 @@ fun HomePage(activity: MainActivity, isCurrentPage: Boolean = true) {
 
     if (showAbout) {
         when (LocalUiMode.current) {
-            UiMode.Miuix -> MiuixAboutDialog(
-                aboutText = aboutText,
-                onLongPress = {
-                    val newValue = !settings.getBoolean("hidden_function", false)
-                    settings.set("hidden_function", newValue)
-                    aboutText = if (newValue) {
-                        "忆清鸣、luckyzyx T"
-                    } else {
-                        "忆清鸣、luckyzyx"
-                    }
-                },
-                onDismiss = { showAbout = false },
-            )
-
             UiMode.Material -> AlertDialog(
                 onDismissRequest = { showAbout = false },
                 title = { Text(stringResource(R.string.about_author)) },
@@ -223,15 +216,7 @@ fun HomePage(activity: MainActivity, isCurrentPage: Boolean = true) {
                             .padding(20.dp)
                             .combinedClickable(
                                 onClick = {},
-                                onLongClick = {
-                                    val newValue = !settings.getBoolean("hidden_function", false)
-                                    settings.set("hidden_function", newValue)
-                                    aboutText = if (newValue) {
-                                        "忆清鸣、luckyzyx T"
-                                    } else {
-                                        "忆清鸣、luckyzyx"
-                                    }
-                                },
+                                onLongClick = { toggleHiddenFunction() },
                             ),
                     )
                 },
@@ -240,6 +225,13 @@ fun HomePage(activity: MainActivity, isCurrentPage: Boolean = true) {
                         Text(stringResource(android.R.string.ok))
                     }
                 },
+            )
+
+            UiMode.Coui -> CouiAboutDialog(
+                title = stringResource(R.string.about_author),
+                text = aboutText,
+                onDismissRequest = { showAbout = false },
+                onLongPress = { toggleHiddenFunction() },
             )
         }
     }
@@ -250,34 +242,6 @@ fun HomePage(activity: MainActivity, isCurrentPage: Boolean = true) {
 
     if (dexDialogVisible) {
         when (LocalUiMode.current) {
-            UiMode.Miuix -> OverlayDialog(
-                show = true,
-                onDismissRequest = { dexDialogVisible = false },
-            ) {
-                MiuixText(
-                    text = stringResource(R.string.optimize_dex_after_system_update),
-                    modifier = Modifier.fillMaxWidth(),
-                )
-                Row(modifier = Modifier.padding(top = 12.dp)) {
-                    MiuixTextButton(
-                        text = stringResource(R.string.ignore),
-                        onClick = { dexDialogVisible = false },
-                        modifier = Modifier.weight(1f),
-                    )
-                    Spacer(Modifier.width(20.dp))
-                    MiuixTextButton(
-                        text = stringResource(android.R.string.ok),
-                        onClick = {
-                            dexDialogVisible = false
-                            settings.set("current_os_version", pendingOsVersion)
-                            showOptimizeDex = true
-                        },
-                        modifier = Modifier.weight(1f),
-                        colors = ButtonDefaults.textButtonColorsPrimary(),
-                    )
-                }
-            }
-
             UiMode.Material -> AlertDialog(
                 onDismissRequest = { dexDialogVisible = false },
                 text = { Text(stringResource(R.string.optimize_dex_after_system_update)) },
@@ -294,6 +258,17 @@ fun HomePage(activity: MainActivity, isCurrentPage: Boolean = true) {
                     }
                 },
             )
+
+            UiMode.Coui -> CouiDexOptimizeDialog(
+                message = stringResource(R.string.optimize_dex_after_system_update),
+                onDismissRequest = { dexDialogVisible = false },
+                onConfirm = {
+                    dexDialogVisible = false
+                    settings.set("current_os_version", pendingOsVersion)
+                    showOptimizeDex = true
+                },
+                onIgnore = { dexDialogVisible = false },
+            )
         }
     }
 
@@ -308,25 +283,24 @@ fun HomePage(activity: MainActivity, isCurrentPage: Boolean = true) {
     }
 
     if (showDonateList) {
-        // 原来 Miuix / Material 两条线各手写一遍同一个动作列表，差异只在容器组件；
-        // 统一交给 ActionListDialog 后只剩一份数据，且改用 key 而不是下标路由：
-        // patreon 在非中文环境插在末尾，用下标判断就得依赖列表长度，key 不随插入位置漂移。
+        // 动作列表只维护一份数据，且用 key 而不是下标路由：
+        // patreon 在非中文环境追加到末尾，用下标判断就得依赖列表长度，key 不随插入位置漂移。
         val donateItems = arrayListOf(
             ChoiceItem(key = "qq", title = stringResource(R.string.qq)),
             ChoiceItem(key = "wechat", title = stringResource(R.string.wechat)),
             ChoiceItem(key = "alipay", title = stringResource(R.string.alipay)),
         )
-        // 非中文环境追加 patreon（原实现在下标 3 处 add，等价于追加到末尾）
+        // 非中文环境追加 patreon（恒为列表末位）
         if (!zh) {
             donateItems.add(ChoiceItem(key = "patreon", title = stringResource(R.string.patreon)))
         }
         ActionListDialog(
-            // 原来两条线都没有标题，ActionListDialog 的 title 必填，用捐赠入口自己的文案补上
+            // ActionListDialog 的 title 必填，用捐赠入口自己的文案补上
             title = stringResource(R.string.donate),
             items = donateItems,
             onDismiss = { showDonateList = false },
             onSelect = { item ->
-                // 先关弹层再执行动作，保持原实现里 showDonateList = false 在路由之前的顺序
+                // 先关弹层再执行动作：路由可能紧接着打开另一个弹层，关闭必须排在它前面
                 showDonateList = false
                 when (item.key) {
                     "qq" -> showQrType = 0
@@ -335,8 +309,7 @@ fun HomePage(activity: MainActivity, isCurrentPage: Boolean = true) {
                     "patreon" -> context.openUrl("https://www.patreon.com/LuckyTool")
                 }
             },
-            // 原两条线都没有可点的按钮（Miuix 无按钮行、Material 是空 confirmButton），
-            // 所以这里不造「取消」：showCancel = false 让整行动作区都不画
+            // 这里不造「取消」：showCancel = false 让整行动作区都不画
             showCancel = false,
         )
     }
@@ -381,38 +354,72 @@ fun HomePage(activity: MainActivity, isCurrentPage: Boolean = true) {
 }
 
 /**
- * 关于作者对话框（Miuix 线）。
+ * Coui 线的「关于作者」弹窗：正文要能被长按，只能走自定义内容槽。
  *
- * 弹层由根部 Miuix Scaffold 的 popup host 承载（`renderInRootScaffold` 保持默认 true），
- * 页面内不自装 host。
+ * 内容槽的左右内边距由调用方补（正文槽本身不带横向留白），它已经是纵向滚动容器，
+ * 这里不再套 verticalScroll。点击故意留空动作：只为了让长按手势成立。
+ */
+@OptIn(ExperimentalFoundationApi::class)
+@Composable
+private fun CouiAboutDialog(
+    title: String,
+    text: String,
+    onDismissRequest: () -> Unit,
+    onLongPress: () -> Unit,
+) {
+    CouiAlertDialog(
+        onDismissRequest = onDismissRequest,
+        title = title,
+        confirmAction = CouiDialogAction(
+            text = stringResource(android.R.string.ok),
+            onClick = onDismissRequest,
+            style = CouiDialogActionStyle.Primary,
+            // Primary 样式必须显式给按钮配色，构造时缺 colors 会直接抛异常
+            colors = CouiDialogDefaults.primaryActionColors(CouiTheme.colorScheme.accent),
+        ),
+        content = {
+            CouiText(
+                text = text,
+                kind = CouiTextKind.Body,
+                color = CouiTheme.colorScheme.onSurface,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(
+                        horizontal = CouiDialogDefaults.contentPadding,
+                        vertical = 16.dp,
+                    )
+                    .combinedClickable(onClick = {}, onLongClick = onLongPress),
+            )
+        },
+    )
+}
+
+/**
+ * Coui 线的「系统更新后优化 dex」提示：只有一句正文，动作是确定与忽略。
+ *
+ * 忽略放取消位而不是中性位：中性位固定按警示色渲染，而「先不优化」不是危险操作。
  */
 @Composable
-private fun MiuixAboutDialog(
-    aboutText: String,
-    onLongPress: () -> Unit,
-    onDismiss: () -> Unit,
+private fun CouiDexOptimizeDialog(
+    message: String,
+    onDismissRequest: () -> Unit,
+    onConfirm: () -> Unit,
+    onIgnore: () -> Unit,
 ) {
-    OverlayDialog(
-        show = true,
-        title = stringResource(R.string.about_author),
-        onDismissRequest = onDismiss,
-    ) {
-        MiuixText(
-            text = aboutText,
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(20.dp)
-                .combinedClickable(onClick = {}, onLongClick = onLongPress),
-        )
-        Row(modifier = Modifier.padding(top = 12.dp)) {
-            MiuixTextButton(
-                text = stringResource(android.R.string.ok),
-                onClick = onDismiss,
-                modifier = Modifier.weight(1f),
-                colors = ButtonDefaults.textButtonColorsPrimary(),
-            )
-        }
-    }
+    CouiAlertDialog(
+        onDismissRequest = onDismissRequest,
+        message = message,
+        confirmAction = CouiDialogAction(
+            text = stringResource(android.R.string.ok),
+            onClick = onConfirm,
+            style = CouiDialogActionStyle.Primary,
+            colors = CouiDialogDefaults.primaryActionColors(CouiTheme.colorScheme.accent),
+        ),
+        dismissAction = CouiDialogAction(
+            text = stringResource(R.string.ignore),
+            onClick = onIgnore,
+        ),
+    )
 }
 
 /**

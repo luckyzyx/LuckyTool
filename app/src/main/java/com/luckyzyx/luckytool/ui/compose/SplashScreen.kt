@@ -37,6 +37,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.luckyzyx.luckytool.R
+import com.luckyzyx.luckytool.ui.compose.components.coui.CouiCircularProgressIndicator
+import com.luckyzyx.luckytool.ui.theme.LocalUiMode
+import com.luckyzyx.luckytool.ui.theme.UiMode
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -119,10 +122,16 @@ fun ActivationLoadingLayer(modifier: Modifier = Modifier) {
             .pointerInput(Unit) { detectTapGestures { } },
         contentAlignment = Alignment.Center,
     ) {
-        CircularProgressIndicator(
-            color = colorResource(R.color.splash_foreground),
-            strokeWidth = 3.dp,
-        )
+        val foreground = colorResource(R.color.splash_foreground)
+        // 两条外观线各用各自的原生进度圈：M3 的尺寸与粗细由调用点给，COUI 的固定 32dp。
+        when (LocalUiMode.current) {
+            UiMode.Material -> CircularProgressIndicator(
+                color = foreground,
+                strokeWidth = 3.dp,
+            )
+
+            UiMode.Coui -> CouiCircularProgressIndicator(color = foreground)
+        }
     }
 }
 
@@ -180,7 +189,7 @@ private fun SplashLayer(modifier: Modifier = Modifier) {
                 .clip(RoundedCornerShape(SplashLogoCorner)),
         )
         Spacer(modifier = Modifier.height(20.dp))
-        // 文字走 BasicText：闪屏不依赖 Material / Miuix 任意外观线（两条线都可能被用户切换）
+        // 文字走 BasicText：闪屏不依赖 Material / COUI 任意外观线（两条线都可能被用户切换）
         BasicText(
             text = stringResource(R.string.app_name),
             modifier = Modifier.graphicsLayer {
