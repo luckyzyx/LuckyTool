@@ -14,6 +14,7 @@ import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowRight
 import androidx.compose.material.icons.automirrored.rounded.OpenInNew
 import androidx.compose.material.icons.rounded.Adb
 import androidx.compose.material.icons.rounded.GridView
+import androidx.compose.material.icons.rounded.PushPin
 import androidx.compose.material.icons.rounded.Speed
 import androidx.compose.material.icons.rounded.TouchApp
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -312,7 +313,7 @@ private fun ShortcutDialog(context: Context, onDismiss: () -> Unit) {
             when (LocalUiMode.current) {
                 UiMode.Material -> IconButton(onClick = onClick) {
                     Icon(
-                        imageVector = Icons.AutoMirrored.Rounded.AddToHomeScreen,
+                        imageVector = Icons.Rounded.PushPin,
                         contentDescription = pinContentDescription,
                     )
                 }
@@ -322,7 +323,7 @@ private fun ShortcutDialog(context: Context, onDismiss: () -> Unit) {
                     contentDescription = pinContentDescription,
                 ) {
                     Icon(
-                        imageVector = Icons.AutoMirrored.Rounded.AddToHomeScreen,
+                        imageVector = Icons.Rounded.PushPin,
                         contentDescription = null,
                         tint = CouiTheme.colorScheme.onSurface,
                     )
