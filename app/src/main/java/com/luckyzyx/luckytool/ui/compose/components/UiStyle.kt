@@ -22,6 +22,7 @@ import androidx.compose.material3.rememberTopAppBarState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.SideEffect
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.getValue
@@ -124,8 +125,10 @@ internal class PageHeader internal constructor(
     internal val couiBehavior: CouiTopAppBarScrollBehavior,
     /** 顶栏测量完成后按折叠比例还原 Material 顶栏位置的修饰符。 */
     internal val restoreModifier: Modifier,
-    /** 从 Material 切到 COUI 时要重放一次的折叠比例（COUI 没有对外的状态写入入口）。 */
-    internal val couiRestoreFraction: Float,
+    /** 从 Material 切到 COUI 时要重放一次的折叠比例；null 表示无需重放。 */
+    internal val couiRestoreFraction: Float?,
+    /** COUI 顶栏真实折叠比例（58dp 行程上的逻辑值），由 COUI 骨架持续回写。 */
+    internal val couiCollapsedFraction: MutableState<Float>,
 )
 
 /** Material 线：Material 3 的 Scaffold 与可折叠大标题。 */
@@ -218,6 +221,7 @@ private object CouiUiStyle : UiStyle {
             title = title,
             scrollBehavior = header.couiBehavior,
             restoreCollapsedFraction = header.couiRestoreFraction,
+            onCollapsedFractionChanged = { header.couiCollapsedFraction.value = it },
             modifier = modifier,
             onBack = onBack,
             actions = actions,
@@ -288,6 +292,8 @@ internal fun LuckyPageScaffold(
     val uiMode = LocalUiMode.current
     val materialState = rememberTopAppBarState()
     val couiBehavior = CouiTopAppBarDefaults.exitUntilCollapsedScrollBehavior()
+    // 库的 collapsedFraction 分母停在 116dp，COUI 骨架回写 58dp 行程上的真实比例。
+    val couiCollapsedFraction = remember { mutableStateOf(0f) }
     var previousUiMode by remember { mutableStateOf(uiMode) }
     var pendingCollapsedFraction by remember(uiMode) {
         mutableStateOf(
@@ -295,7 +301,7 @@ internal fun LuckyPageScaffold(
                 null
             } else if (previousUiMode == UiMode.Coui) {
                 // 记下上一副骨架的折叠比例，交给新骨架的顶栏恢复
-                couiBehavior.state.collapsedFraction
+                couiCollapsedFraction.value
             } else {
                 materialState.collapsedFraction
             }
@@ -306,7 +312,7 @@ internal fun LuckyPageScaffold(
     }
     // COUI 没有对外的状态写入入口，只能按折叠比例重放一次滚动把它收起来
     val couiRestoreFraction = remember(uiMode) {
-        if (previousUiMode == UiMode.Material) materialState.collapsedFraction else 0f
+        if (previousUiMode == UiMode.Material) materialState.collapsedFraction else null
     }
     SideEffect { previousUiMode = uiMode }
     // 顶栏测量后按折叠比例换算偏移量，避免切换外观时重置标题位置
@@ -320,7 +326,7 @@ internal fun LuckyPageScaffold(
     }
     // 下拉刷新组件用这个值判断顶栏是否已完全展开，两条线都只在展开后才接管下拉手势
     val topBarCollapsedFraction = if (uiMode == UiMode.Coui) {
-        couiBehavior.state.collapsedFraction
+        couiCollapsedFraction.value
     } else {
         materialState.collapsedFraction
     }
@@ -337,6 +343,7 @@ internal fun LuckyPageScaffold(
                 couiBehavior = couiBehavior,
                 restoreModifier = restoreModifier,
                 couiRestoreFraction = couiRestoreFraction,
+                couiCollapsedFraction = couiCollapsedFraction,
             ),
             content = movableContent,
         )
