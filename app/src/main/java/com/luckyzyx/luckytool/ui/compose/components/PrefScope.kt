@@ -58,7 +58,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.Shape
-import androidx.compose.ui.graphics.lerp
+import androidx.compose.ui.graphics.compositeOver
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
@@ -182,7 +182,7 @@ private val CouiCardCorner = 24.dp
  * 单行分组（[count] <= 1）直接用整卡形状。
  *
  * 水平 16dp 内缩在这里提供（与 COUI Group 的卡片内缩一致），列表层不再叠加。
- * 搜索跳转命中时卡片底色向强调色偏移，卡片保持不透明，避免透出滚动内容。
+ * 搜索跳转命中时用与手动长按一致的按压蒙层色叠在卡片底色上，卡片保持不透明，避免透出滚动内容。
  */
 @Composable
 internal fun CouiScopeCard(
@@ -193,6 +193,7 @@ internal fun CouiScopeCard(
     content: @Composable () -> Unit,
 ) {
     val colors = CouiPageDefaults.themeColors()
+    val dark = CouiTheme.isDark
     val shape: Shape = when {
         count <= 1 -> CouiPageDefaults.shape
         index <= 0 -> RoundedCornerShape(topStart = CouiCardCorner, topEnd = CouiCardCorner)
@@ -204,7 +205,15 @@ internal fun CouiScopeCard(
             .fillMaxWidth()
             .padding(horizontal = CouiPageDefaults.horizontalMargin)
             .clip(shape)
-            .background(if (highlighted) lerp(colors.card, colors.accent, 0.12f) else colors.card),
+            .background(
+                if (highlighted) {
+                    // 搜索跳转高亮与手动长按用同一按压蒙层色（浅色 0x1F000000 / 深色 0x33FFFFFF），
+                    // 叠在卡片底色上保持不透明。
+                    Color(if (dark) 0x33FFFFFF else 0x1F000000).compositeOver(colors.card)
+                } else {
+                    colors.card
+                },
+            ),
     ) {
         content()
         if (index < count - 1) CouiDivider()
