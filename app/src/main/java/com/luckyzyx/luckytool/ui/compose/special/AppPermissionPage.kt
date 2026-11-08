@@ -159,7 +159,7 @@ fun AppPermissionContent(
         )
     ) {
         // ===== Root / LSPosed：纯只读，整块放最上面（不参与门禁判定，无任何跳转）=====
-        SectionHeader(title = stringResource(R.string.app_permission_root_section))
+        Category(title = stringResource(R.string.app_permission_root_section))
         // Root / Xposed 状态合并成单行 "title: value"，不再用 title + summary 两行展示
         val rootStatus = stringResource(
             if (rootInfo?.rooted == true) R.string.app_permission_root_yes else R.string.app_permission_root_no
@@ -185,7 +185,7 @@ fun AppPermissionContent(
         }
 
         Spacer(Modifier.height(12.dp))
-        SectionHeader(
+        Category(
             title = stringResource(
                 if (blocking) R.string.app_permission_blocked_title else R.string.app_permission
             ),
@@ -269,12 +269,12 @@ fun AppPermissionContent(
 }
 
 /**
- * 小节标题 + 可选说明：标题与说明作为一个块渲染。
+ * 分类标题 + 可选说明：标题与说明作为一个块渲染，配合 [PrefGroup] 组成一个分类组。
  * 无说明时标题上下各 8dp 垂直居中；有说明时标题下沿收紧到 4dp 让说明贴紧标题，
  * 说明底部再补 8dp，保证有无说明两种情况的块级上下留白都是 8dp。
  */
 @Composable
-private fun SectionHeader(title: String, summary: String? = null) {
+private fun Category(title: String, summary: String? = null) {
     when (LocalUiMode.current) {
         UiMode.Material -> Column(modifier = Modifier.fillMaxWidth()) {
             Text(
