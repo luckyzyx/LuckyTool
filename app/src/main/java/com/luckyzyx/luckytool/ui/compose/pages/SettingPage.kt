@@ -11,6 +11,9 @@ import android.provider.OpenableColumns
 import android.util.ArraySet
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContract
+import androidx.compose.foundation.layout.calculateEndPadding
+import androidx.compose.foundation.layout.calculateStartPadding
+import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
@@ -34,6 +37,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -41,6 +45,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.stringResource
 import com.itos.coui.dialog.CouiDialogAction
 import com.itos.coui.dialog.CouiDialogActionStyle
@@ -50,6 +55,7 @@ import com.luckyzyx.luckytool.R
 import com.luckyzyx.luckytool.ui.activity.MainActivity
 import com.luckyzyx.luckytool.ui.compose.components.ActionListDialog
 import com.luckyzyx.luckytool.ui.compose.components.ChoiceItem
+import com.luckyzyx.luckytool.ui.compose.components.LocalScopeTopInset
 import com.luckyzyx.luckytool.ui.compose.components.ScopeScreen
 import com.luckyzyx.luckytool.ui.compose.components.PrefIcon
 import com.luckyzyx.luckytool.ui.compose.components.coui.CouiAlertDialog
@@ -134,10 +140,18 @@ fun SettingPage(activity: MainActivity, onOpenTheme: () -> Unit = {}) {
     PageScaffold(
         title = stringResource(R.string.nav_setting),
     ) { padding ->
-        // 作用域内容列表自带 LazyColumn（不能再套 ExpressiveList），外层内边距整块交给它。
+        // 顶栏高度经 LocalScopeTopInset 放进列表 contentPadding：视口铺满整屏，
+        // 滚动中的行才能进入顶栏下方；水平/底部内边距仍留在视口外。
+        val layoutDirection = LocalLayoutDirection.current
         val scopeModifier = Modifier
             .fillMaxSize()
-            .padding(padding)
+            .consumeWindowInsets(padding)
+            .padding(
+                start = padding.calculateStartPadding(layoutDirection),
+                end = padding.calculateEndPadding(layoutDirection),
+                bottom = padding.calculateBottomPadding(),
+            )
+        val topInset = padding.calculateTopPadding()
         val scopeContent: @Composable () -> Unit = {
             // 行参数在非 Composable 的构建 lambda 内求值（那里没有 Composer），字符串先在这里取一次
             val settingsUiModeTitle = stringResource(R.string.settings_ui_mode)
@@ -165,10 +179,11 @@ fun SettingPage(activity: MainActivity, onOpenTheme: () -> Unit = {}) {
                 stringResource(R.string.participate_translation_summary)
             val appPermissionTitle = stringResource(R.string.app_permission)
             val appPermissionSummary = stringResource(R.string.app_permission_summary)
-            ScopeScreen(
-                state = settings,
-                modifier = scopeModifier,
-            ) {
+            CompositionLocalProvider(LocalScopeTopInset provides topInset) {
+                ScopeScreen(
+                    state = settings,
+                    modifier = scopeModifier,
+                ) {
                 // ---------------- 主题 ----------------
                 // 主题模式 / 主题色 / 调色风格 / 色彩规格 / 动态取色 全部迁至独立主题页
                 group()
@@ -317,6 +332,7 @@ fun SettingPage(activity: MainActivity, onOpenTheme: () -> Unit = {}) {
                         context.openUrl("https://github.com/luckyzyx/LuckyTool-Localization")
                     },
                 )
+                }
             }
         }
         scopeContent()

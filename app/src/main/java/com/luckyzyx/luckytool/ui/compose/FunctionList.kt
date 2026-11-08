@@ -7,6 +7,8 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.calculateEndPadding
+import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -33,6 +35,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.itos.coui.icons.CouiIcons
@@ -73,13 +76,22 @@ internal fun FunctionList(
     modifier: Modifier = Modifier,
 ) {
     val listState = rememberLazyListState()
-    // 列表视口位于顶栏下方。
-    val listModifier = modifier.fillMaxSize().padding(padding).consumeWindowInsets(padding)
+    // 顶栏高度（padding 的 top）放进列表 contentPadding：视口铺满整屏，
+    // 滚动中的行能进入顶栏下方；水平与底部内边距仍留在视口外。
+    val layoutDirection = LocalLayoutDirection.current
+    val listModifier = modifier
+        .fillMaxSize()
+        .consumeWindowInsets(padding)
+        .padding(
+            start = padding.calculateStartPadding(layoutDirection),
+            end = padding.calculateEndPadding(layoutDirection),
+            bottom = padding.calculateBottomPadding(),
+        )
     val contentPadding = PaddingValues(
         start = 16.dp,
         end = 16.dp,
         // COUI 的首张分段卡片与折叠顶栏之间留出分组间距；Material 仍贴着顶栏起排
-        top = if (LocalUiMode.current == UiMode.Coui) CouiPageDefaults.groupSpacing else 0.dp,
+        top = padding.calculateTopPadding() + if (LocalUiMode.current == UiMode.Coui) CouiPageDefaults.groupSpacing else 0.dp,
         bottom = 16.dp + LocalShellBottomInset.current,
     )
     val isCoui = LocalUiMode.current == UiMode.Coui

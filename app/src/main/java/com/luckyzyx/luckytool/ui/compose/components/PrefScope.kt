@@ -1223,19 +1223,26 @@ fun ScopeScreen(
     val list: @Composable (Modifier) -> Unit = { listModifier ->
         if (LocalUiMode.current == UiMode.Coui) {
             // COUI 线：卡片自带 16dp 横向内缩（见 CouiScopeCard），列表不再叠一层；
-            // 顶部与左右留白由页面骨架的 Scaffold contentPadding 提供，这里只留底部间距
+            // 顶部额外留一组间距，让首卡与顶栏之间保持和其他列表页（FunctionList）一致的间距
             LazyColumn(
                 modifier = listModifier,
                 state = listState,
-                contentPadding = PaddingValues(bottom = listBottomPadding),
+                contentPadding = PaddingValues(
+                    top = LocalScopeTopInset.current + CouiPageDefaults.groupSpacing,
+                    bottom = listBottomPadding,
+                ),
                 overscrollEffect = couiOverscroll,
                 content = listItems,
             )
         } else {
+            // Material 线：首行贴着顶栏起排（与 FunctionList 一致），只留底部间距
             LazyColumn(
                 modifier = listModifier,
                 state = listState,
-                contentPadding = PaddingValues(bottom = listBottomPadding),
+                contentPadding = PaddingValues(
+                    top = LocalScopeTopInset.current,
+                    bottom = listBottomPadding,
+                ),
                 content = listItems,
             )
         }

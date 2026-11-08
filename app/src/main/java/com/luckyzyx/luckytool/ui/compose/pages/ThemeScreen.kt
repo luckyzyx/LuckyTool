@@ -24,7 +24,10 @@ import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.calculateEndPadding
+import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.captionBar
+import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.displayCutout
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
@@ -83,6 +86,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
@@ -290,10 +294,18 @@ private fun rememberThemeScreenState(): ThemeScreenState {
  */
 @Composable
 private fun ThemeScreenMaterial(state: ThemeScreenState, onBack: () -> Unit) {
-    val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior(rememberTopAppBarState())
+    val topBarState = rememberTopAppBarState()
+    val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior(topBarState)
     MaterialScaffold(
         topBar = {
             LargeFlexibleTopAppBar(
+                // 主题页不是导航页：顶栏保持收起样式，测量后压到折叠位置
+                modifier = Modifier.onSizeChanged {
+                    val limit = topBarState.heightOffsetLimit
+                    if (limit.isFinite() && limit != -Float.MAX_VALUE) {
+                        topBarState.heightOffset = limit
+                    }
+                },
                 navigationIcon = { MaterialTopBarBackButton(onClick = onBack) },
                 title = { Text(stringResource(R.string.settings_theme)) },
                 colors = materialTopAppBarColors(),
@@ -309,12 +321,18 @@ private fun ThemeScreenMaterial(state: ThemeScreenState, onBack: () -> Unit) {
     ) { paddingValues ->
         val navBars = WindowInsets.navigationBars.asPaddingValues()
         val captionBar = WindowInsets.captionBar.asPaddingValues()
+        val layoutDirection = LocalLayoutDirection.current
         ThemeScreenList(
             state = state,
             modifier = Modifier
                 .fillMaxSize()
-                .padding(paddingValues)
-                .nestedScroll(scrollBehavior.nestedScrollConnection),
+                .consumeWindowInsets(paddingValues)
+                .padding(
+                    start = paddingValues.calculateStartPadding(layoutDirection),
+                    end = paddingValues.calculateEndPadding(layoutDirection),
+                    bottom = paddingValues.calculateBottomPadding(),
+                ),
+            topInset = paddingValues.calculateTopPadding(),
             bottomSpace = 16.dp +
                 navBars.calculateBottomPadding() +
                 captionBar.calculateBottomPadding(),
@@ -325,8 +343,8 @@ private fun ThemeScreenMaterial(state: ThemeScreenState, onBack: () -> Unit) {
 /**
  * 主题与配色页的 COUI 实现。
  *
- * 顶栏是大标题折叠栏，正文内边距由折叠状态给出（滚动时随顶栏收起而收缩），
- * 折叠连接已由外壳挂在正文外层，列表里不要再挂一次。
+ * 顶栏保持收起样式：非导航页不允许折叠展开，折叠连接不再挂到正文外层，
+ * 正文内边距固定为收起后的顶栏高度。
  */
 @Composable
 private fun ThemeScreenCoui(state: ThemeScreenState, onBack: () -> Unit) {
@@ -334,13 +352,21 @@ private fun ThemeScreenCoui(state: ThemeScreenState, onBack: () -> Unit) {
     CouiPageScaffold(
         title = stringResource(R.string.settings_theme),
         scrollBehavior = behavior,
+        collapseEnabled = false,
         onBack = onBack,
     ) { paddingValues ->
+        val layoutDirection = LocalLayoutDirection.current
         ThemeScreenList(
             state = state,
             modifier = Modifier
                 .fillMaxSize()
-                .padding(paddingValues),
+                .consumeWindowInsets(paddingValues)
+                .padding(
+                    start = paddingValues.calculateStartPadding(layoutDirection),
+                    end = paddingValues.calculateEndPadding(layoutDirection),
+                    bottom = paddingValues.calculateBottomPadding(),
+                ),
+            topInset = paddingValues.calculateTopPadding(),
             // 外壳的系统栏内边距已含在 paddingValues 里，末尾只留视觉留白
             bottomSpace = 16.dp,
         )
@@ -350,13 +376,16 @@ private fun ThemeScreenCoui(state: ThemeScreenState, onBack: () -> Unit) {
 /**
  * 主题页正文：两条外观线的外壳不同，列表内容与状态共用这一份。
  *
- * @param modifier 已带上外壳内边距（Material 线还带折叠滚动连接）的列表修饰符
+ * @param modifier 已带上外壳水平/底部内边距（Material 线还带折叠滚动连接）的列表修饰符；
+ *   顶栏高度单独经 [topInset] 放进 contentPadding
+ * @param topInset 顶栏高度：作为列表 contentPadding 的 top，让滚动中的行能进入顶栏下方
  * @param bottomSpace 列表末尾留白；外壳已消费的底部内边距不要在列表里重复叠加
  */
 @Composable
 private fun ThemeScreenList(
     state: ThemeScreenState,
     modifier: Modifier,
+    topInset: Dp,
     bottomSpace: Dp,
 ) {
     val context = LocalContext.current
@@ -374,6 +403,10 @@ private fun ThemeScreenList(
 
     LazyColumn(
         modifier = modifier,
+        contentPadding = PaddingValues(
+            top = topInset,
+            bottom = bottomSpace,
+        ),
         verticalArrangement = Arrangement.spacedBy(13.dp),
     ) {
         item {
@@ -531,8 +564,9 @@ private fun ThemeScreenList(
             AppGroup(
                 modifier = Modifier.padding(horizontal = 16.dp),
                 content = buildList<@Composable () -> Unit> {
-                    // 低于 API 31 没有 RenderEffect，模糊开关无从生效，整项不出现
-                    if (isRenderEffectSupported()) add {
+                    // 模糊开关只对 Material 线生效：低于 API 31 没有 RenderEffect，
+                    // COUI 底栏的玻璃质感由自身渲染器提供，两种情况都不出现
+                    if (isRenderEffectSupported() && !isCouiLine) add {
                         AppSwitchItem(
                             icon = Icons.Rounded.BlurOn,
                             title = stringResource(R.string.settings_enable_blur),

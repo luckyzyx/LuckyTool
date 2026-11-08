@@ -1,6 +1,9 @@
 package com.luckyzyx.luckytool.ui.compose.pages
 
 import android.content.Context
+import androidx.compose.foundation.layout.calculateEndPadding
+import androidx.compose.foundation.layout.calculateStartPadding
+import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.KeyboardOptions
@@ -10,6 +13,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -23,6 +27,7 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -35,6 +40,7 @@ import com.luckyzyx.luckytool.ui.compose.FunctionPageData
 import com.luckyzyx.luckytool.ui.compose.pageTitle
 import com.luckyzyx.luckytool.ui.compose.ScopeRoute
 import com.luckyzyx.luckytool.ui.compose.components.LocalScopeListState
+import com.luckyzyx.luckytool.ui.compose.components.LocalScopeTopInset
 import com.luckyzyx.luckytool.ui.compose.components.PageScaffold
 import com.luckyzyx.luckytool.ui.compose.components.ScopeScreen
 import com.luckyzyx.luckytool.ui.compose.components.coui.CouiIconButton
@@ -126,7 +132,18 @@ fun SearchPage(isCurrentPage: Boolean, onOpen: (ScopeRoute) -> Unit) {
 
     PageScaffold(title = stringResource(R.string.menu_search)) { padding ->
         val settings = remember { PrefState.of(context, SettingsPrefs) }
-        val scopeModifier = Modifier.fillMaxSize().padding(padding)
+        val layoutDirection = LocalLayoutDirection.current
+        // 顶栏高度经 LocalScopeTopInset 放进列表 contentPadding：视口铺满整屏，
+        // 滚动中的行才能进入顶栏下方；水平/底部内边距仍留在视口外。
+        val scopeModifier = Modifier
+            .fillMaxSize()
+            .consumeWindowInsets(padding)
+            .padding(
+                start = padding.calculateStartPadding(layoutDirection),
+                end = padding.calculateEndPadding(layoutDirection),
+                bottom = padding.calculateBottomPadding(),
+            )
+        val topInset = padding.calculateTopPadding()
         val scopeContent: @Composable () -> Unit = {
             // 页面级状态在 @Composable 作用域内先读取：只在 ScopeScreen 的 content lambda 内
             // 读取不会被列表追踪，后果是搜索结果不随输入刷新
@@ -139,7 +156,8 @@ fun SearchPage(isCurrentPage: Boolean, onOpen: (ScopeRoute) -> Unit) {
             val searchNoResultsText = stringResource(R.string.search_no_results)
             val historyTitleText = stringResource(R.string.search_history)
             val historyClearText = stringResource(R.string.search_history_clear)
-            ScopeScreen(state = settings, modifier = scopeModifier) {
+            CompositionLocalProvider(LocalScopeTopInset provides topInset) {
+                ScopeScreen(state = settings, modifier = scopeModifier) {
                 // 搜索框不是「选项行」，独占一张卡片（否则会与紧随其后的结果行拼在一起）
                 custom(key = "search_field", standalone = true) {
                     // 顶栏折叠/展开由列表滚动驱动：滚动一开始就清掉搜索框焦点并收键盘，
@@ -301,6 +319,7 @@ fun SearchPage(isCurrentPage: Boolean, onOpen: (ScopeRoute) -> Unit) {
                             },
                         )
                     }
+                }
                 }
             }
         }

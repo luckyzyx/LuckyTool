@@ -95,6 +95,7 @@ internal interface UiStyle {
         actions: @Composable RowScope.() -> Unit = {},
         floatingActionButton: @Composable () -> Unit = {},
         bottomBar: @Composable () -> Unit = {},
+        collapseEnabled: Boolean = true,
         header: PageHeader,
         content: @Composable (PaddingValues) -> Unit,
     )
@@ -142,6 +143,7 @@ private object MaterialUiStyle : UiStyle {
         actions: @Composable RowScope.() -> Unit,
         floatingActionButton: @Composable () -> Unit,
         bottomBar: @Composable () -> Unit,
+        collapseEnabled: Boolean,
         header: PageHeader,
         content: @Composable (PaddingValues) -> Unit,
     ) {
@@ -171,7 +173,13 @@ private object MaterialUiStyle : UiStyle {
                 ChromeInsets
             },
         ) { innerPadding ->
-            Box(Modifier.nestedScroll(scrollBehavior.nestedScrollConnection)) {
+            Box(
+                if (collapseEnabled) {
+                    Modifier.nestedScroll(scrollBehavior.nestedScrollConnection)
+                } else {
+                    Modifier
+                }
+            ) {
                 content(innerPadding)
             }
         }
@@ -214,6 +222,7 @@ private object CouiUiStyle : UiStyle {
         actions: @Composable RowScope.() -> Unit,
         floatingActionButton: @Composable () -> Unit,
         bottomBar: @Composable () -> Unit,
+        collapseEnabled: Boolean,
         header: PageHeader,
         content: @Composable (PaddingValues) -> Unit,
     ) {
@@ -222,6 +231,7 @@ private object CouiUiStyle : UiStyle {
             scrollBehavior = header.couiBehavior,
             restoreCollapsedFraction = header.couiRestoreFraction,
             onCollapsedFractionChanged = { header.couiCollapsedFraction.value = it },
+            collapseEnabled = collapseEnabled,
             modifier = modifier,
             onBack = onBack,
             actions = actions,
@@ -282,6 +292,7 @@ internal fun PageScaffold(
     actions: @Composable RowScope.() -> Unit = {},
     floatingActionButton: @Composable () -> Unit = {},
     bottomBar: @Composable () -> Unit = {},
+    collapseEnabled: Boolean = true,
     content: @Composable (PaddingValues) -> Unit,
 ) {
     // rememberUpdatedState 防止固化首次组合的 lambda（否则页内回调会引用过期取值）
@@ -317,12 +328,17 @@ internal fun PageScaffold(
     SideEffect { previousUiMode = uiMode }
     // 顶栏测量后按折叠比例换算偏移量，避免切换外观时重置标题位置
     val restoreModifier = Modifier.onSizeChanged {
-        val fraction = pendingCollapsedFraction ?: return@onSizeChanged
         val limit = materialState.heightOffsetLimit
         if (!limit.isFinite() || limit == -Float.MAX_VALUE) return@onSizeChanged
-        materialState.heightOffset = limit * fraction.coerceIn(0f, 1f)
-        materialState.contentOffset = pendingContentOffset
-        pendingCollapsedFraction = null
+        val fraction = pendingCollapsedFraction
+        if (fraction != null) {
+            materialState.heightOffset = limit * fraction.coerceIn(0f, 1f)
+            materialState.contentOffset = pendingContentOffset
+            pendingCollapsedFraction = null
+        } else if (!collapseEnabled) {
+            // 非导航页不允许展开：测出高度上限后直接把标题压到收起位置
+            materialState.heightOffset = limit
+        }
     }
     // 下拉刷新组件用这个值判断顶栏是否已完全展开，两条线都只在展开后才接管下拉手势
     val topBarCollapsedFraction = if (uiMode == UiMode.Coui) {
@@ -338,6 +354,7 @@ internal fun PageScaffold(
             actions = actions,
             floatingActionButton = floatingActionButton,
             bottomBar = bottomBar,
+            collapseEnabled = collapseEnabled,
             header = PageHeader(
                 materialState = materialState,
                 couiBehavior = couiBehavior,

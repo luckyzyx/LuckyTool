@@ -1,6 +1,9 @@
 package com.luckyzyx.luckytool.ui.compose
 
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.calculateEndPadding
+import androidx.compose.foundation.layout.calculateStartPadding
+import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -18,10 +21,10 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
@@ -32,6 +35,7 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringArrayResource
@@ -49,6 +53,7 @@ import com.itos.coui.theme.CouiTheme
 import com.luckyzyx.luckytool.R
 import com.luckyzyx.luckytool.ui.activity.MainActivity
 import com.luckyzyx.luckytool.ui.compose.components.FunctionTopBarActions
+import com.luckyzyx.luckytool.ui.compose.components.LocalScopeTopInset
 import com.luckyzyx.luckytool.ui.compose.components.ScopeScreen
 import com.luckyzyx.luckytool.ui.compose.components.ScrollTarget
 import com.luckyzyx.luckytool.ui.compose.components.TopBarActionButton
@@ -71,8 +76,6 @@ import com.luckyzyx.luckytool.utils.formatStringAuto
 import com.luckyzyx.luckytool.utils.sendPrefsValue
 import io.noties.markwon.Markwon
 import io.noties.markwon.ext.tables.TablePlugin
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 import java.util.Arrays
 
 /** 功能标签页只展示功能树；搜索是独立的一级标签页，作用域页由同一个导航栈管理。 */
@@ -109,29 +112,14 @@ private fun FunctionTreeScreen(
 ) {
     val context = LocalContext.current
     // 以 Configuration 作 key：语言/字号等变化后需要重建行数据里的页面标题
-    val rows by produceState(initialValue = emptyList<FunctionRow>(), key1 = LocalConfiguration.current) {
-        value = try {
-            withContext(Dispatchers.IO) {
-                ScopePageRegistry.treeOrder.mapNotNull { key ->
-                    val spec = ScopePageRegistry[key] ?: return@mapNotNull null
-                    if (!spec.isVisible(context)) return@mapNotNull null
-                    if (!ScopePageRegistry.isScopeAppPresent(context, spec)) return@mapNotNull null
-                    val index = ScopePageRegistry.buildIndex(context, spec)
-                    // 自带整页渲染的特殊页（暗色模式列表/意图/自定义浮窗等）不声明共享行、索引恒空，
-                    // 空索引不代表不可见；判据与 ScopePageRegistry.hasVisibleContent 一致
-                    if (index.isEmpty() && !spec.selfRendered) return@mapNotNull null
-                    val packName = rowIconPackName(key, spec)
-                    val summary = rowSummary(index)
-                    FunctionRow(key, pageTitle(context, spec), summary, packName)
-                }
-            }
-        } catch (t: Throwable) {
-            // buildIndex 内部已逐页兜底，此处再兜底 isVisible/图标/标题等外层自定义逻辑，
-            // 避免任一页面构建异常导致整棵功能树为空（白屏）
-            LogUtils.e("FunctionPage", "buildTree", t.toString(), true)
-            emptyList()
-        }
+    val configuration = LocalConfiguration.current
+    val iconSize = with(LocalDensity.current) { 48.dp.roundToPx() }
+    // 先渲染 App 启动时预取的旧快照，后台重算后替换：不再现场跑 50 页偏好 DSL + PackageManager IPC
+    val snapshot by FunctionPageData.snapshot.collectAsStateWithLifecycle()
+    LaunchedEffect(configuration, iconSize) {
+        FunctionPageData.revalidate(context, iconSize)
     }
+    val rows = snapshot?.rows?.map { FunctionRow(it.pageKey, it.title, it.summary, it.packName) }.orEmpty()
 
     PageScaffold(
         title = stringResource(R.string.nav_function),
@@ -170,6 +158,7 @@ internal fun ScopePageHost(
     PageScaffold(
         title = route.title.ifBlank { spec?.let { pageTitle(context, it) } ?: route.pageKey },
         onBack = onBack,
+        collapseEnabled = false,
         actions = {
             if (spec?.restartEnabled == true) {
                 TopBarActionButton(
@@ -244,20 +233,30 @@ internal fun ScopePageHost(
             // 直接作为页面内容：不能再包一层 ExpressiveList（同向嵌套 LazyColumn 会以无限高度约束测量而崩溃）。
             // 水平内边距此处不叠加（由作用域内容自带）。
             //
-            // 骨架内边距传递：innerPadding 整块交给内容，包含大标题折叠后的实际顶栏高度；
-            // 默认折叠行为由页面骨架统一连接，内容不重复接入同一条滚动连接。
+            // 骨架内边距传递：顶栏高度（padding 的 top）经 LocalScopeTopInset 交给作用域列表的
+            // contentPadding，列表视口铺满整屏、滚动中的行才能进入顶栏下方；水平与底部内边距
+            // 仍留在视口外。默认折叠行为由页面骨架统一连接，内容不重复接入同一条滚动连接。
+            val layoutDirection = LocalLayoutDirection.current
             val pageContentModifier = Modifier
                 .fillMaxSize()
-                .padding(padding)
-            val pageContent: @Composable () -> Unit = {
-                ScopePageContent(
-                    spec = spec,
-                    state = state,
-                    modifier = pageContentModifier,
-                    sendValue = sendPrefsValue,
-                    scrollTarget = jumpTarget,
-                    onNavigate = navigatePage,
+                .consumeWindowInsets(padding)
+                .padding(
+                    start = padding.calculateStartPadding(layoutDirection),
+                    end = padding.calculateEndPadding(layoutDirection),
+                    bottom = padding.calculateBottomPadding(),
                 )
+            val topInset = padding.calculateTopPadding()
+            val pageContent: @Composable () -> Unit = {
+                CompositionLocalProvider(LocalScopeTopInset provides topInset) {
+                    ScopePageContent(
+                        spec = spec,
+                        state = state,
+                        modifier = pageContentModifier,
+                        sendValue = sendPrefsValue,
+                        scrollTarget = jumpTarget,
+                        onNavigate = navigatePage,
+                    )
+                }
             }
             pageContent()
         }

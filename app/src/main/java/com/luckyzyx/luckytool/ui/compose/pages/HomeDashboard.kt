@@ -8,6 +8,8 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.calculateEndPadding
+import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxSize
@@ -45,6 +47,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.heading
@@ -104,8 +107,16 @@ internal fun HomeDashboard(
         title = stringResource(R.string.app_name),
         actions = { HomeTopBarActions(onRestart = onRestart, onAbout = onAbout) },
     ) { padding ->
+        val layoutDirection = LocalLayoutDirection.current
         Box(
-            Modifier.fillMaxSize().padding(padding).consumeWindowInsets(padding),
+            Modifier
+                .fillMaxSize()
+                .consumeWindowInsets(padding)
+                .padding(
+                    start = padding.calculateStartPadding(layoutDirection),
+                    end = padding.calculateEndPadding(layoutDirection),
+                    bottom = padding.calculateBottomPadding(),
+                ),
             contentAlignment = Alignment.TopCenter,
         ) {
             LazyColumn(
@@ -114,7 +125,7 @@ internal fun HomeDashboard(
                 contentPadding = PaddingValues(
                     start = 16.dp,
                     end = 16.dp,
-                    top = 12.dp,
+                    top = padding.calculateTopPadding() + 12.dp,
                     bottom = bottomPadding,
                 ),
                 verticalArrangement = Arrangement.spacedBy(12.dp),

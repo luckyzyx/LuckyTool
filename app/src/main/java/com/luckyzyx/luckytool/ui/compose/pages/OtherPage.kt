@@ -6,6 +6,9 @@ import android.content.ComponentName
 import android.content.Context
 import android.content.pm.PackageManager
 import androidx.collection.ArrayMap
+import androidx.compose.foundation.layout.calculateEndPadding
+import androidx.compose.foundation.layout.calculateStartPadding
+import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
@@ -21,12 +24,14 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.stringResource
 import androidx.core.graphics.drawable.toBitmap
 import com.highcapable.kavaref.extension.classOf
@@ -41,6 +46,7 @@ import com.luckyzyx.luckytool.ui.compose.components.AdbDebugDialog
 import com.luckyzyx.luckytool.ui.compose.components.AppPickerDialog
 import com.luckyzyx.luckytool.ui.compose.components.ChoiceItem
 import com.luckyzyx.luckytool.ui.compose.components.MultiChoiceDialog
+import com.luckyzyx.luckytool.ui.compose.components.LocalScopeTopInset
 import com.luckyzyx.luckytool.ui.compose.components.SingleChoiceDialog
 import com.luckyzyx.luckytool.ui.compose.components.MainPageActivationEffect
 import com.luckyzyx.luckytool.ui.compose.components.OtherTopBarActions
@@ -95,10 +101,18 @@ fun OtherPage(activity: MainActivity, isCurrentPage: Boolean = true) {
             OtherTopBarActions(onOptimize = { showOptimizePicker = true })
         },
     ) { padding ->
-        // 作用域内容列表自带 LazyColumn（不能再套 ExpressiveList），外层内边距整块交给它。
+        // 顶栏高度经 LocalScopeTopInset 放进列表 contentPadding：视口铺满整屏，
+        // 滚动中的行才能进入顶栏下方；水平/底部内边距仍留在视口外。
+        val layoutDirection = LocalLayoutDirection.current
         val scopeModifier = Modifier
             .fillMaxSize()
-            .padding(padding)
+            .consumeWindowInsets(padding)
+            .padding(
+                start = padding.calculateStartPadding(layoutDirection),
+                end = padding.calculateEndPadding(layoutDirection),
+                bottom = padding.calculateBottomPadding(),
+            )
+        val topInset = padding.calculateTopPadding()
         val scopeContent: @Composable () -> Unit = {
             // 控制器状态在 @Composable 作用域内先读取（原因见 HomePage.scopeContent 注释）：
             // 否则 AIDL 控制器连上后入口不出现，需要切页才显示
@@ -119,10 +133,11 @@ fun OtherPage(activity: MainActivity, isCurrentPage: Boolean = true) {
                 stringResource(R.string.set_touch_sampling_rate_tile_level_summary)
             val remoteAdbTitle = stringResource(R.string.remote_adb_debug_title)
             val remoteAdbSummary = stringResource(R.string.remote_adb_debug_summary)
-            ScopeScreen(
-                state = settings,
-                modifier = scopeModifier,
-            ) {
+            CompositionLocalProvider(LocalScopeTopInset provides topInset) {
+                ScopeScreen(
+                    state = settings,
+                    modifier = scopeModifier,
+                ) {
                 // 快捷入口、显示与触控、调试各自成组。
                 group()
                 click(
@@ -186,6 +201,7 @@ fun OtherPage(activity: MainActivity, isCurrentPage: Boolean = true) {
                         animate = true,
                         onClick = { showAdbDialog = true },
                     )
+                }
                 }
             }
         }

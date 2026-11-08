@@ -3,7 +3,6 @@ package com.luckyzyx.luckytool.ui.compose.components.coui
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.CubicBezierEasing
 import androidx.compose.animation.core.spring
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -55,6 +54,7 @@ import com.itos.coui.topappbar.CouiCollapsingAppBarDefaults
 import com.itos.coui.topappbar.CouiTopAppBarColors
 import com.itos.coui.topappbar.CouiTopAppBarDefaults
 import com.itos.coui.topappbar.CouiTopAppBarScrollBehavior
+import com.itos.coui.topappbar.TopAppBarSurface
 import com.luckyzyx.luckytool.ui.compose.components.ChromeInsets
 import kotlin.math.roundToInt
 import kotlinx.coroutines.launch
@@ -74,6 +74,7 @@ internal fun CouiPageScaffold(
     scrollBehavior: CouiTopAppBarScrollBehavior,
     restoreCollapsedFraction: Float? = null,
     onCollapsedFractionChanged: (Float) -> Unit = {},
+    collapseEnabled: Boolean = true,
     modifier: Modifier = Modifier,
     onBack: (() -> Unit)? = null,
     actions: @Composable RowScope.() -> Unit = {},
@@ -92,8 +93,10 @@ internal fun CouiPageScaffold(
     val rangePx = with(density) {
         (CouiCollapsingAppBarDefaults.titleOnlyHeight - CouiCollapsingAppBarDefaults.collapsedTitleHeight).toPx()
     }
-    var logicalFraction by rememberSaveable {
-        mutableStateOf(state.collapsedFraction.coerceIn(0f, 1f))
+    var logicalFraction by rememberSaveable(collapseEnabled) {
+        mutableStateOf(
+            if (collapseEnabled) state.collapsedFraction.coerceIn(0f, 1f) else 1f
+        )
     }
     // 回写真实折叠比例：库的 collapsedFraction 分母仍停在 116dp，而栏的折叠行程是
     // 58dp，跨外观交接与下拉刷新的展开判定都要用 58dp 行程上的比例。
@@ -183,6 +186,7 @@ internal fun CouiPageScaffold(
     // 从另一种外观切回来时标题应保持收起：COUI 没有对外的状态写入入口，
     // 这里按折叠比例往滚动连接里补一次等效滚动，让可见栏位与列表留白一次到位。
     LaunchedEffect(behavior, restoreCollapsedFraction) {
+        if (!collapseEnabled) return@LaunchedEffect
         val fraction = restoreCollapsedFraction ?: return@LaunchedEffect
         val targetPx = fraction.coerceIn(0f, 1f) * rangePx
         val currentPx = logicalFraction * rangePx
@@ -276,7 +280,9 @@ internal fun CouiPageScaffold(
                 contentPadding.withTop(minOf(contentPadding.calculateTopPadding(), restoredTop))
             }
         }
-        Box(Modifier.nestedScroll(trackingConnection)) {
+        Box(
+            if (collapseEnabled) Modifier.nestedScroll(trackingConnection) else Modifier
+        ) {
             content(restoredPadding)
         }
     }
@@ -288,15 +294,19 @@ private val CouiTitleEasing = CubicBezierEasing(0.33f, 0f, 0.67f, 1f)
 /** 与库顶栏一致的按钮区水平留白与标题间距。 */
 private val CouiTitleBarPadding = 12.dp
 private val CouiTitleBarGap = 8.dp
+/** 折叠大标题栏的模糊几何：采样半径按像素换算，延伸段让模糊渐变淡入正文。 */
+private val CouiTitleBarBlurExtension = 8.dp
+private const val CouiTitleBarBlurRadiusPx = 27f
+/** 浅色顶栏遮罩顶部透明度：对齐 Material 底栏玻璃的 0.65，让正文滚过顶栏时透出。 */
+private const val CouiTitleBarTopAlpha = 0.65f
 
 /**
- * 应用侧折叠大标题栏：布局计算与库的 AppBarLayout 一致，但背景改用纯色。
+ * 应用侧折叠大标题栏：布局计算与库的 AppBarLayout 一致，背景使用库的
+ * TopAppBarSurface 渐变模糊，正文滚过顶栏时能透出。
  *
- * 库的 LargeTopAppBar 在每一帧弹簧动画里都会重跑一遍大半径高斯模糊采样
- * （顶栏背景要透过正文），展开态滚动时这就是掉帧来源；折叠后顶栏静止、
- * 模糊层留在缓存里，所以「展开卡顿、折叠没问题」。这里不再绘制模糊背景，
- * 栏高仍跟随弹簧比例 [fraction]，正文补偿继续走 state.contentPadding，
- * 滚动连接与外观交接逻辑都不动。
+ * API 33 及以上走 RenderEffect 离屏合成的渐变模糊，不在每帧弹簧动画里
+ * 重跑大半径高斯模糊；低版本回退渐进模糊。折叠偏移按 [fraction] 换算后
+ * 传给 topExtension，背景层随顶栏上移、渐变曲线不随当前栏高重拉伸。
  */
 @Composable
 private fun CouiCollapsingTitleBar(
@@ -315,82 +325,95 @@ private fun CouiCollapsingTitleBar(
         CouiCollapsingAppBarDefaults.collapsedTitleSize.toPx() / titleStyle.fontSize.toPx()
     }
     val scale = 1f + (collapsedScale - 1f) * progress
-    Layout(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(colors.backgroundColor)
-            .windowInsetsPadding(windowInsets),
-        content = {
-            Box { navigationIcon() }
-            Row(verticalAlignment = Alignment.CenterVertically) { actions() }
-            Box(
-                Modifier
-                    .semantics { heading() }
-                    .graphicsLayer {
-                        scaleX = scale
-                        scaleY = scale
-                        transformOrigin = TransformOrigin(
-                            if (direction == LayoutDirection.Rtl) 1f else 0f,
-                            0f,
-                        )
-                        clip = true
-                    },
-            ) { title() }
-        },
-    ) { nodes, constraints ->
-        require(constraints.hasBoundedWidth) { "顶栏需要有界宽度" }
-        val width = constraints.maxWidth
-        val expanded = CouiCollapsingAppBarDefaults.titleOnlyHeight.roundToPx()
-        val collapsed = CouiCollapsingAppBarDefaults.collapsedTitleHeight.roundToPx()
-        val range = expanded - collapsed
-        val offset = fraction.coerceIn(0f, 1f) * range
-        val height = constraints.constrainHeight((expanded - offset).roundToInt())
-        val toolbarHeight = minOf(collapsed, height)
-        val padding = CouiTitleBarPadding.roundToPx().coerceAtMost(width / 2)
-        val gap = CouiTitleBarGap.roundToPx()
-        val slotWidth = (width - 2 * padding).coerceAtLeast(0)
-        val navigation = nodes[0].measure(
-            Constraints(maxWidth = slotWidth, maxHeight = toolbarHeight)
-        )
-        val action = nodes[1].measure(
-            Constraints(maxWidth = slotWidth - navigation.width, maxHeight = toolbarHeight)
-        )
-        val compactStart =
-            (padding + navigation.width + if (navigation.width > 0) gap else 0).toFloat()
-        val compactEnd = padding + action.width + if (action.width > 0) gap else 0
-        val expandedStart = CouiCollapsingAppBarDefaults.titleStart.toPx()
-        val curvedTitle = navigation.width > 0
-        // 弧线偏移在两端的位置与变化率均为零，保留标题原有的起步和收尾节奏。
-        val arcEnvelope = progress * (1f - progress)
-        val arcOffset = if (curvedTitle) 0.8f * arcEnvelope * arcEnvelope else 0f
-        val horizontalProgress = progress + arcOffset
-        val start = expandedStart + (compactStart - expandedStart) * horizontalProgress
-        val end = compactEnd.toFloat()
-        // 用缩放后的可见宽度限制标题，避免收起时覆盖导航或操作按钮。
-        val titleWidth = ((width - start - end).coerceAtLeast(0f) / scale).roundToInt()
-        val titleNode = nodes[2].measure(
-            Constraints(maxWidth = titleWidth, maxHeight = (height / scale).toInt())
-        )
-        layout(width, height) {
-            val navigationY = (toolbarHeight - navigation.height) / 2
-            navigation.placeRelative(padding, navigationY, zIndex = 1f)
-            action.placeRelative(
-                width - padding - action.width,
-                (toolbarHeight - action.height) / 2,
-                zIndex = 1f,
+    val topExtensionOffset =
+        (CouiCollapsingAppBarDefaults.titleOnlyHeight - CouiCollapsingAppBarDefaults.collapsedTitleHeight) *
+            fraction.coerceIn(0f, 1f)
+    TopAppBarSurface(
+        modifier = Modifier.fillMaxWidth(),
+        referenceBlurRadius = with(density) { CouiTitleBarBlurRadiusPx.toDp() },
+        bottomExtension = CouiTitleBarBlurExtension,
+        gradientSpeed = 3f,
+        // 深色沿用库预设的顶部 0.4 透明度；浅色顶部 alpha 为 1.0 会完全遮住正文，
+        // 这里对齐 Material 底栏玻璃的透明度，让滚过顶栏的内容透出来。
+        gradientColor = colors.backgroundColor.copy(
+            alpha = if (CouiTheme.isDark) 1f else CouiTitleBarTopAlpha
+        ),
+        topExtension = { topExtensionOffset },
+    ) {
+        Layout(
+            modifier = Modifier.windowInsetsPadding(windowInsets),
+            content = {
+                Box { navigationIcon() }
+                Row(verticalAlignment = Alignment.CenterVertically) { actions() }
+                Box(
+                    Modifier
+                        .semantics { heading() }
+                        .graphicsLayer {
+                            scaleX = scale
+                            scaleY = scale
+                            transformOrigin = TransformOrigin(
+                                if (direction == LayoutDirection.Rtl) 1f else 0f,
+                                0f,
+                            )
+                            clip = true
+                        },
+                ) { title() }
+            },
+        ) { nodes, constraints ->
+            require(constraints.hasBoundedWidth) { "顶栏需要有界宽度" }
+            val width = constraints.maxWidth
+            val expanded = CouiCollapsingAppBarDefaults.titleOnlyHeight.roundToPx()
+            val collapsed = CouiCollapsingAppBarDefaults.collapsedTitleHeight.roundToPx()
+            val range = expanded - collapsed
+            val offset = fraction.coerceIn(0f, 1f) * range
+            val height = constraints.constrainHeight((expanded - offset).roundToInt())
+            val toolbarHeight = minOf(collapsed, height)
+            val padding = CouiTitleBarPadding.roundToPx().coerceAtMost(width / 2)
+            val gap = CouiTitleBarGap.roundToPx()
+            val slotWidth = (width - 2 * padding).coerceAtLeast(0)
+            val navigation = nodes[0].measure(
+                Constraints(maxWidth = slotWidth, maxHeight = toolbarHeight)
             )
-            val expandedY =
-                expanded - (CouiCollapsingAppBarDefaults.titleOnlyHeight -
-                    CouiCollapsingAppBarDefaults.titleOnlyTop).toPx()
-            val collapsedY = (collapsed - titleNode.height * scale) / 2f
-            val titleY = if (curvedTitle) {
-                val verticalProgress = progress - arcOffset
-                (expandedY + (collapsedY - expandedY) * verticalProgress).coerceAtLeast(0f)
-            } else {
-                (expandedY + (range + collapsedY - expandedY) * progress - offset)
-                    .coerceIn(0f, (height - titleNode.height * scale).coerceAtLeast(0f))
+            val action = nodes[1].measure(
+                Constraints(maxWidth = slotWidth - navigation.width, maxHeight = toolbarHeight)
+            )
+            val compactStart =
+                (padding + navigation.width + if (navigation.width > 0) gap else 0).toFloat()
+            val compactEnd = padding + action.width + if (action.width > 0) gap else 0
+            val expandedStart = CouiCollapsingAppBarDefaults.titleStart.toPx()
+            val curvedTitle = navigation.width > 0
+            // 弧线偏移在两端的位置与变化率均为零，保留标题原有的起步和收尾节奏。
+            val arcEnvelope = progress * (1f - progress)
+            val arcOffset = if (curvedTitle) 0.8f * arcEnvelope * arcEnvelope else 0f
+            val horizontalProgress = progress + arcOffset
+            val start = expandedStart + (compactStart - expandedStart) * horizontalProgress
+            val end = compactEnd.toFloat()
+            // 用缩放后的可见宽度限制标题，避免收起时覆盖导航或操作按钮。
+            val titleWidth = ((width - start - end).coerceAtLeast(0f) / scale).roundToInt()
+            val titleNode = nodes[2].measure(
+                Constraints(maxWidth = titleWidth, maxHeight = (height / scale).toInt())
+            )
+            layout(width, height) {
+                val navigationY = (toolbarHeight - navigation.height) / 2
+                navigation.placeRelative(padding, navigationY, zIndex = 1f)
+                action.placeRelative(
+                    width - padding - action.width,
+                    (toolbarHeight - action.height) / 2,
+                    zIndex = 1f,
+                )
+                val expandedY =
+                    expanded - (CouiCollapsingAppBarDefaults.titleOnlyHeight -
+                        CouiCollapsingAppBarDefaults.titleOnlyTop).toPx()
+                val collapsedY = (collapsed - titleNode.height * scale) / 2f
+                val titleY = if (curvedTitle) {
+                    val verticalProgress = progress - arcOffset
+                    (expandedY + (collapsedY - expandedY) * verticalProgress).coerceAtLeast(0f)
+                } else {
+                    (expandedY + (range + collapsedY - expandedY) * progress - offset)
+                        .coerceIn(0f, (height - titleNode.height * scale).coerceAtLeast(0f))
+                }
+                titleNode.placeRelative(start.roundToInt(), titleY.roundToInt())
             }
-            titleNode.placeRelative(start.roundToInt(), titleY.roundToInt())
         }
     }
 }
