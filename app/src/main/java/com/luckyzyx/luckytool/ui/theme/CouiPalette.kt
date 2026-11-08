@@ -10,20 +10,28 @@ import com.itos.coui.theme.CouiPresets
 
 /**
  * COUI 自带预设色板：浅色灰底白卡、深色黑底浅色浮层，两档明度差由预设负责，
- * 分组卡片因此有明确边界；深色预设的页面底色本身就是纯黑，AMOLED 与深色共用同一份。
+ * 分组卡片因此有明确边界。
  *
- * COUI 线的动态取色开关关闭时用这一套（默认），界面回到 COUI 自己的观感。
+ * 深色与 AMOLED 的差别在页面底色：深色用预设浮层灰做底，AMOLED 保持纯黑底，
+ * 这样主题页四个明暗按钮在 COUI 线上也能看出区别。
+ *
+ * COUI 线的取色开关关闭时用这一套（默认），界面回到 COUI 自己的观感。
  */
-internal fun couiPresetColorScheme(dark: Boolean): CouiColorScheme =
-    if (dark) CouiPresets.Dark else CouiPresets.Light
+internal fun couiPresetColorScheme(dark: Boolean, amoled: Boolean = false): CouiColorScheme = when {
+    !dark -> CouiPresets.Light
+    amoled -> CouiPresets.Dark
+    else -> CouiPresets.Dark.copy(background = CouiPresets.Dark.surface)
+}
 
 /**
- * 把 M3 色板翻译成 COUI 的语义色：COUI 线开启动态取色时与 Material 线共用同一套取色结果。
+ * 把 M3 色板翻译成 COUI 的语义色：COUI 线跟随 Material 取色时与 Material 线共用同一套取色结果。
  *
  * COUI 的 [CouiColorScheme.background] 是页面底色、[CouiColorScheme.card] 是列表卡片，
  * 两者必须拉开明度差，分组卡片才看得见；M3 的 background 与 surface 是同一档，
  * 直接取同名字段会让卡片和页面融成一片。这里改用容器阶：
- * 页面取 surfaceContainer，卡片取 surfaceContainerLow，弹层取 surfaceContainerHigh。
+ * 浅色页取 surfaceContainer、卡取 surfaceContainerLow、弹层取 surfaceContainerHigh；
+ * 深色整体上移一档（页 surfaceContainerLow / 卡 surfaceContainerHigh / 弹层 surfaceContainerHighest），
+ * 让深色页底明显浅于 AMOLED 纯黑。
  *
  * AMOLED 模式下容器阶被刷成纯黑（见 [amoledBackground]），卡片改用半透明白叠在纯黑上，
  * 保持「黑底 + 浅色浮层」的层次。
@@ -35,7 +43,7 @@ internal fun couiColorScheme(
 ): CouiColorScheme {
     val accent = colors.primary
     val card = when {
-        !amoled -> colors.surfaceContainerLow
+        !amoled -> if (dark) colors.surfaceContainerHigh else colors.surfaceContainerLow
         else -> Color.White.copy(alpha = 0.10f)
     }
     // 深色下 primary 直接铺在浮层上对比度不足，用 inversePrimary 提亮。
@@ -49,10 +57,18 @@ internal fun couiColorScheme(
         onSurfaceVariant = colors.onSurfaceVariant,
         outlineVariant = colors.outlineVariant,
         accentOnSurface = accent,
-        menuSurface = if (amoled) Color.White.copy(alpha = 0.14f) else colors.surfaceContainerHigh,
+        menuSurface = when {
+            amoled -> Color.White.copy(alpha = 0.14f)
+            dark -> colors.surfaceContainerHighest
+            else -> colors.surfaceContainerHigh
+        },
         checkboxAccent = checkboxAccent,
         menuCheckboxAccent = checkboxAccent,
-        background = if (amoled) Color.Black else if (dark) colors.surfaceContainerLowest else colors.surfaceContainer,
+        background = when {
+            amoled -> Color.Black
+            dark -> colors.surfaceContainerLow
+            else -> colors.surfaceContainer
+        },
         card = card,
     )
 }

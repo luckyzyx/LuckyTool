@@ -16,7 +16,7 @@ import com.luckyzyx.luckytool.ui.shell.LocalPagerInterceptionMode
 import com.luckyzyx.luckytool.ui.shell.PagerModeCrossAxis
 import com.luckyzyx.luckytool.ui.shell.ShellSettingsController
 import com.luckyzyx.luckytool.ui.theme.ColorMode
-import com.luckyzyx.luckytool.ui.theme.LuckyAppTheme
+import com.luckyzyx.luckytool.ui.theme.AppTheme
 import com.luckyzyx.luckytool.ui.theme.ThemeController
 import com.luckyzyx.luckytool.ui.theme.UiMode
 import com.luckyzyx.luckytool.utils.SettingsPrefs
@@ -172,7 +172,7 @@ class ThemeGesturesTest {
             }
             ui.setContent {
                 CompositionLocalProvider(LocalDensity provides Density(2f)) {
-                    LuckyAppTheme {
+                    AppTheme {
                         val enabled = LocalEnableSwipeDismiss.current
                         val interceptionMode = LocalPagerInterceptionMode.current
                         val style = LocalFloatingBottomBarStyle.current

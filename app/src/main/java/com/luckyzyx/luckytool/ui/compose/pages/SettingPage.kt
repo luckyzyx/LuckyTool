@@ -53,7 +53,7 @@ import com.luckyzyx.luckytool.ui.compose.components.ChoiceItem
 import com.luckyzyx.luckytool.ui.compose.components.ScopeScreen
 import com.luckyzyx.luckytool.ui.compose.components.PrefIcon
 import com.luckyzyx.luckytool.ui.compose.components.coui.CouiAlertDialog
-import com.luckyzyx.luckytool.ui.compose.components.LuckyPageScaffold
+import com.luckyzyx.luckytool.ui.compose.components.PageScaffold
 import com.luckyzyx.luckytool.ui.theme.LocalUiMode
 import com.luckyzyx.luckytool.ui.theme.ThemeController
 import com.luckyzyx.luckytool.ui.theme.ThemePrefs
@@ -131,7 +131,7 @@ fun SettingPage(activity: MainActivity, onOpenTheme: () -> Unit = {}) {
     var showClearDialog by remember { mutableStateOf(false) }
     var showFeedbackDialog by remember { mutableStateOf(false) }
 
-    LuckyPageScaffold(
+    PageScaffold(
         title = stringResource(R.string.nav_setting),
     ) { padding ->
         // 作用域内容列表自带 LazyColumn（不能再套 ExpressiveList），外层内边距整块交给它。

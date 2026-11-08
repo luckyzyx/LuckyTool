@@ -41,7 +41,7 @@ val keyColorOptions = listOf(
  * 注意：material-kolor 5.0.1 的 SpecVersion 只有 SPEC_2021 / SPEC_2025 两个值。
  */
 @Composable
-fun rememberLuckyColorScheme(
+fun rememberAppColorScheme(
     seedColor: Color,
     isDark: Boolean,
     isAmoled: Boolean = false,

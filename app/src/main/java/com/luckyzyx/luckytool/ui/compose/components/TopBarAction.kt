@@ -45,6 +45,7 @@ import androidx.compose.ui.window.Popup
 import androidx.compose.ui.window.PopupPositionProvider
 import androidx.compose.ui.window.PopupProperties
 import com.itos.coui.effect.couiButtonFeedback
+import com.itos.coui.icons.CouiIcons
 import com.itos.coui.layout.CouiPageDefaults
 import com.itos.coui.shape.CouiShape
 import com.itos.coui.text.CouiTextKind
@@ -221,7 +222,7 @@ private fun CouiTopBarOverflowMenu(
         CouiTopBarActionButton(
             onClick = { expanded = true },
             contentDescription = contentDescription,
-            painter = rememberVectorPainter(Icons.Filled.MoreVert),
+            painter = rememberVectorPainter(CouiIcons.More),
         )
         if (expanded) {
             Popup(

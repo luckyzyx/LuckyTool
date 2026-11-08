@@ -74,11 +74,11 @@ import com.luckyzyx.luckytool.ui.activity.MainActivity
 import com.luckyzyx.luckytool.ui.compose.components.ChromeInsets
 import com.luckyzyx.luckytool.ui.compose.components.GateDialog
 import com.luckyzyx.luckytool.ui.compose.components.LocalCouiTabsBarSlot
-import com.luckyzyx.luckytool.ui.compose.components.LuckyRootScaffold
-import com.luckyzyx.luckytool.ui.compose.components.LuckyTabsScaffold
+import com.luckyzyx.luckytool.ui.compose.components.RootScaffold
+import com.luckyzyx.luckytool.ui.compose.components.TabsScaffold
 import com.luckyzyx.luckytool.ui.compose.components.coui.CouiBadge
 import com.luckyzyx.luckytool.ui.compose.components.coui.CouiBadgedBox
-import com.luckyzyx.luckytool.ui.compose.components.coui.LuckyCouiIcons
+import com.luckyzyx.luckytool.ui.compose.components.coui.CouiIconsExt
 import com.luckyzyx.luckytool.ui.compose.components.material.MaterialFloatingBottomBar
 import com.luckyzyx.luckytool.ui.compose.components.material.LocalBottomBarPresent
 import com.luckyzyx.luckytool.ui.compose.components.material.LocalShellBottomInset
@@ -109,8 +109,8 @@ data class FunctionRequest(val pageKey: String, val title: String?)
 
 internal enum class MainTab(val labelRes: Int, val icon: ImageVector) {
     Other(R.string.nav_other, CouiIcons.Components),
-    Function(R.string.nav_function, LuckyCouiIcons.Tune),
-    Home(R.string.nav_home, LuckyCouiIcons.Home),
+    Function(R.string.nav_function, CouiIconsExt.Tune),
+    Home(R.string.nav_home, CouiIconsExt.Home),
     Search(R.string.nav_search, CouiIcons.Search),
     Setting(R.string.nav_setting, CouiIcons.Settings),
 }
@@ -209,7 +209,7 @@ fun MainShell(activity: MainActivity) {
         }
     }
     // 页面各自处理 insets；根壳按当前外观样式绘制（见 UiStyle）
-    LuckyRootScaffold(content = shellContent)
+    RootScaffold(content = shellContent)
 }
 
 @Composable
@@ -384,7 +384,7 @@ internal fun MainTabs(
     val movableShellContent = remember {
         movableContentOf<PaddingValues> { padding -> currentShellContent.value(padding) }
     }
-    LuckyTabsScaffold(bottomBar = rootBottomBar, content = movableShellContent)
+    TabsScaffold(bottomBar = rootBottomBar, content = movableShellContent)
 }
 
 /**

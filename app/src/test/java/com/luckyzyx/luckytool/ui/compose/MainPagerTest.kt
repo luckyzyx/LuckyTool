@@ -35,7 +35,7 @@ import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
 import androidx.navigationevent.DirectNavigationEventInput
 import com.luckyzyx.luckytool.ui.compose.components.MainPageActivationEffect
-import com.luckyzyx.luckytool.ui.compose.components.LuckyPageScaffold
+import com.luckyzyx.luckytool.ui.compose.components.PageScaffold
 import com.luckyzyx.luckytool.ui.shell.FloatingBottomBarStyle
 import com.luckyzyx.luckytool.ui.shell.LocalEnableBlur
 import com.luckyzyx.luckytool.ui.shell.ShellBadgeState
@@ -48,7 +48,7 @@ import com.luckyzyx.luckytool.ui.shell.PagerModeNative
 import com.luckyzyx.luckytool.ui.theme.AppSettings
 import com.luckyzyx.luckytool.ui.theme.ColorMode
 import com.luckyzyx.luckytool.ui.theme.LocalUiMode
-import com.luckyzyx.luckytool.ui.theme.LuckyTheme
+import com.luckyzyx.luckytool.ui.theme.AppTheme
 import com.luckyzyx.luckytool.ui.theme.UiMode
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
@@ -463,7 +463,7 @@ class MainPagerTest {
                     LocalEnableBlur provides this.blur,
                     LocalPagerInterceptionMode provides gestureMode,
                 ) {
-                    LuckyTheme(AppSettings(colorMode = color, dynamicColor = false), uiMode = this.mode) {
+                    AppTheme(AppSettings(colorMode = color, dynamicColor = false), uiMode = this.mode) {
                         val pager = rememberPagerState(initialPage = 2) { MainTab.entries.size }
                         val mainState = rememberMainPagerState(pager)
                         SideEffect { state = mainState }
@@ -507,7 +507,7 @@ class MainPagerTest {
                                     )
                                 }
                             }
-                            if (withHeaders) LuckyPageScaffold(title = tab.name, content = rows)
+                            if (withHeaders) PageScaffold(title = tab.name, content = rows)
                             else rows(PaddingValues())
                         }
                         androidx.activity.compose.BackHandler(enabled = !active) { blockedBacks++ }

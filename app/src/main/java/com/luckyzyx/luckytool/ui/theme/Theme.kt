@@ -102,7 +102,7 @@ data class AppSettings(
     val paletteStyle: PaletteStyle = PaletteStyle.TonalSpot,
     val colorSpec: ColorSpec.SpecVersion = ColorSpec.SpecVersion.SPEC_2025,
     val dynamicColor: Boolean = true,
-    /** COUI 线是否跟随壁纸取色；false 表示取 COUI 自带预设配色 */
+    /** COUI 线是否跟随 Material 取色；false 表示使用 COUI 自带预设配色 */
     val couiDynamicColor: Boolean = false,
 )
 
@@ -112,7 +112,7 @@ object ThemeController {
     /** 界面风格偏好键：ui_mode，取值 "coui" / "material"。 */
     const val KEY_UI_MODE = "ui_mode"
 
-    /** COUI 线专用取色开关：关闭时取 COUI 预设配色（见 couiPresetColorScheme） */
+    /** COUI 线专用取色开关：开启后跟随 Material 取色设置，关闭则使用 COUI 预设配色。 */
     const val KEY_COUI_DYNAMIC_COLOR = "coui_dynamic_color"
 
     fun getUiMode(context: Context): UiMode = UiMode.fromValue(
@@ -122,8 +122,8 @@ object ThemeController {
     /**
      * 读取主题设置。
      *
-     * Material 线的取色由 key_color / use_dynamic_color 决定；COUI 线另有 coui_dynamic_color，
-     * 关闭时取 COUI 预设配色，打开才复用同一条取色管线。
+     * Material 线的取色由 key_color / use_dynamic_color 决定；COUI 线由 coui_dynamic_color
+     * 决定使用 COUI 预设配色还是跟随同一份取色设置，跟随时才把结果翻译成 COUI 语义色。
      */
     fun getAppSettings(context: Context): AppSettings {
         val colorMode = ColorMode.fromValue(
@@ -158,7 +158,7 @@ object ThemeController {
 }
 
 /**
- * 主题偏好变更通知：主题页写入偏好后自增 [revision]，让 [LuckyAppTheme] 重新读取主题设置，
+ * 主题偏好变更通知：主题页写入偏好后自增 [revision]，让 [AppTheme] 重新读取主题设置，
  * 从而在页内即时预览配色，不必 recreate Activity 即生效。
  */
 object ThemePrefs {

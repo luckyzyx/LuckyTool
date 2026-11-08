@@ -25,7 +25,7 @@ import com.luckyzyx.luckytool.ui.shell.LocalFloatingBottomBarStyle
 import com.luckyzyx.luckytool.ui.theme.AppSettings
 import com.luckyzyx.luckytool.ui.theme.ColorMode
 import com.luckyzyx.luckytool.ui.theme.LocalUiMode
-import com.luckyzyx.luckytool.ui.theme.LuckyTheme
+import com.luckyzyx.luckytool.ui.theme.AppTheme
 import com.luckyzyx.luckytool.ui.theme.UiMode
 import com.luckyzyx.luckytool.utils.DeviceInfoEntry
 import org.junit.Assert.assertEquals
@@ -178,7 +178,7 @@ class HomeDashboardTest {
                     LocalEnableFloatingBottomBar provides (this.mode == UiMode.Material),
                     LocalFloatingBottomBarStyle provides FloatingBottomBarStyle.IosLike,
                 ) {
-                    LuckyTheme(AppSettings(colorMode = color, dynamicColor = false), uiMode = this.mode) {
+                    AppTheme(AppSettings(colorMode = color, dynamicColor = false), uiMode = this.mode) {
                         val pager = rememberMainPagerState(rememberPagerState(initialPage = 2) { 5 })
                         MainTabs(pager, isActive = true) { tab, _ ->
                             if (tab == MainTab.Home) {

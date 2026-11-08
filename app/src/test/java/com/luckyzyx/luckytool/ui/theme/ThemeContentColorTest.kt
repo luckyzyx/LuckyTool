@@ -41,7 +41,7 @@ class ThemeContentColorTest {
         var couiContentColor: Color? = null
         var materialContentColor: Color? = null
         compose {
-            CouiLuckyTheme(appSettings = appSettings) {
+            CouiAppTheme(appSettings = appSettings) {
                 couiContentColor = CouiTheme.colorScheme.onSurface
                 materialContentColor = MaterialLocalContentColor.current
             }
@@ -63,7 +63,7 @@ class ThemeContentColorTest {
         var schemeContentColor: Color? = null
         var materialContentColor: Color? = null
         compose {
-            MaterialLuckyTheme(appSettings = appSettings) {
+            MaterialAppTheme(appSettings = appSettings) {
                 schemeContentColor = MaterialTheme.colorScheme.onBackground
                 materialContentColor = MaterialLocalContentColor.current
             }
@@ -90,13 +90,13 @@ class ThemeContentColorTest {
         var couiRequested: Color? = null
         var materialRequested: Color? = null
         compose {
-            LuckyTheme(appSettings = appSettings, uiMode = UiMode.Coui) {
+            AppTheme(appSettings = appSettings, uiMode = UiMode.Coui) {
                 Text("coui 回落")
                 couiRequested = MaterialLocalContentColor.current
             }
         }
         compose {
-            LuckyTheme(appSettings = appSettings, uiMode = UiMode.Material) {
+            AppTheme(appSettings = appSettings, uiMode = UiMode.Material) {
                 Text("material")
                 materialRequested = MaterialLocalContentColor.current
             }

@@ -16,6 +16,8 @@
     <string name="theme_title_summary">Page will be automatically refreshed</string>
     <string name="use_dynamic_color">Dynamic colors</string>
     <string name="use_dynamic_color_summary">Use dynamic colors</string>
+    <string name="coui_follow_material_color">Follow Material colors</string>
+    <string name="coui_follow_material_color_summary">When on, COUI uses the color settings above; when off, COUI uses its own preset palette.</string>
     <string name="dark_theme">Dark theme</string>
     <string name="follow_system">Follow system</string>
     <string name="dark_theme_off">Always off</string>

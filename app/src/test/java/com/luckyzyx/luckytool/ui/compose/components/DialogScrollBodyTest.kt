@@ -11,7 +11,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.unit.dp
 import com.luckyzyx.luckytool.ui.compose.ComposeGestureHost
-import com.luckyzyx.luckytool.ui.theme.LuckyAppTheme
+import com.luckyzyx.luckytool.ui.theme.AppTheme
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
@@ -37,7 +37,7 @@ class DialogScrollBodyTest {
         ComposeGestureHost().use { host ->
             val sizes = MeasuredSizes()
             host.setContent {
-                LuckyAppTheme {
+                AppTheme {
                     Box(Modifier.fillMaxSize()) {
                         Box(
                             Modifier
@@ -74,7 +74,7 @@ class DialogScrollBodyTest {
         ComposeGestureHost().use { host ->
             val sizes = MeasuredSizes()
             host.setContent {
-                LuckyAppTheme {
+                AppTheme {
                     Box(Modifier.fillMaxSize()) {
                         DialogScrollBody(
                             modifier = Modifier.onSizeChanged { sizes.body = it.height },
@@ -97,7 +97,7 @@ class DialogScrollBodyTest {
         ComposeGestureHost().use { host ->
             val sizes = MeasuredSizes()
             host.setContent {
-                LuckyAppTheme {
+                AppTheme {
                     Box(Modifier.fillMaxSize()) {
                         Box(
                             Modifier

@@ -22,7 +22,7 @@ import androidx.navigationevent.NavigationEvent
 import com.luckyzyx.luckytool.ui.shell.LocalEnableSwipeDismiss
 import com.luckyzyx.luckytool.ui.theme.AppSettings
 import com.luckyzyx.luckytool.ui.theme.ColorMode
-import com.luckyzyx.luckytool.ui.theme.LuckyTheme
+import com.luckyzyx.luckytool.ui.theme.AppTheme
 import com.luckyzyx.luckytool.ui.theme.UiMode
 import org.junit.Assert.assertEquals
 import org.junit.Test
@@ -115,7 +115,7 @@ class AppSwipeNavigationTest {
                     LocalEnableSwipeDismiss provides swipeEnabled,
                     LocalLayoutDirection provides direction,
                 ) {
-                    LuckyTheme(AppSettings(colorMode = ColorMode.LIGHT, dynamicColor = false), uiMode = UiMode.Material) {
+                    AppTheme(AppSettings(colorMode = ColorMode.LIGHT, dynamicColor = false), uiMode = UiMode.Material) {
                         val navigator = rememberNavController()
                         val pager = rememberPagerState(initialPage = 2) { MainTab.entries.size }
                         val state = rememberMainPagerState(pager)

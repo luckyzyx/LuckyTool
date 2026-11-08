@@ -15,18 +15,18 @@ import androidx.compose.ui.unit.dp
  * 只在 COUI 图标集确实没有对应图形时使用；有对应图形时直接用 [com.itos.coui.icons.CouiIcons]，
  * 免得同一功能出现两种笔画粗细。
  */
-internal object LuckyCouiIcons {
+internal object CouiIconsExt {
 
     /** 首页：房屋轮廓。 */
     val Home: ImageVector by lazy {
-        outline("LuckyCoui.Home") {
+        outline("CouiExt.Home") {
             stroke("M4,10.5L12,3.5L20,10.5V20.5H14.5V15A2.5,2.5 0 0 0 9.5,15V20.5H4Z")
         }
     }
 
     /** 日志：文档轮廓 + 三行正文。 */
     val Notes: ImageVector by lazy {
-        outline("LuckyCoui.Notes") {
+        outline("CouiExt.Notes") {
             stroke("M6,3.5H18A2,2 0 0 1 20,5.5V18.5A2,2 0 0 1 18,20.5H6A2,2 0 0 1 4,18.5V5.5A2,2 0 0 1 6,3.5Z")
             stroke("M8,8.5H16")
             stroke("M8,12H16")
@@ -36,7 +36,7 @@ internal object LuckyCouiIcons {
 
     /** 功能页：两条滑杆 + 滑块。 */
     val Tune: ImageVector by lazy {
-        outline("LuckyCoui.Tune") {
+        outline("CouiExt.Tune") {
             stroke("M4,8H20")
             stroke("M4,16H20")
             circle(9.5f, 8f, 2.6f)
@@ -46,7 +46,7 @@ internal object LuckyCouiIcons {
 
     /** 置顶：圆头 + 针身。 */
     val Pin: ImageVector by lazy {
-        outline("LuckyCoui.Pin") {
+        outline("CouiExt.Pin") {
             circle(12f, 8.5f, 4f)
             stroke("M12,12.5V20.5")
         }

@@ -64,7 +64,7 @@ import com.itos.coui.text.Text as CouiText
 import com.itos.coui.theme.CouiTheme
 import com.luckyzyx.luckytool.R
 import com.luckyzyx.luckytool.ui.compose.components.HomeTopBarActions
-import com.luckyzyx.luckytool.ui.compose.components.LuckyPageScaffold
+import com.luckyzyx.luckytool.ui.compose.components.PageScaffold
 import com.luckyzyx.luckytool.ui.compose.components.AppCard
 import com.luckyzyx.luckytool.ui.compose.components.material.materialBottomInset
 import com.luckyzyx.luckytool.ui.theme.LocalUiMode
@@ -100,7 +100,7 @@ internal fun HomeDashboard(
     val isCoui = LocalUiMode.current == UiMode.Coui
     val colors = if (isCoui) couiHomeColors() else homeColors()
     val bottomPadding = materialBottomInset(24.dp)
-    LuckyPageScaffold(
+    PageScaffold(
         title = stringResource(R.string.app_name),
         actions = { HomeTopBarActions(onRestart = onRestart, onAbout = onAbout) },
     ) { padding ->

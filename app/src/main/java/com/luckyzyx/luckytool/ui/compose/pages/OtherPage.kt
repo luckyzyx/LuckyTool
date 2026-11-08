@@ -46,7 +46,7 @@ import com.luckyzyx.luckytool.ui.compose.components.OtherTopBarActions
 import com.luckyzyx.luckytool.ui.compose.components.PrefIcon
 import com.luckyzyx.luckytool.ui.compose.components.ScopeScreen
 import com.luckyzyx.luckytool.ui.compose.components.coui.CouiIconButton
-import com.luckyzyx.luckytool.ui.compose.components.LuckyPageScaffold
+import com.luckyzyx.luckytool.ui.compose.components.PageScaffold
 import com.luckyzyx.luckytool.ui.theme.LocalUiMode
 import com.luckyzyx.luckytool.ui.theme.UiMode
 import com.luckyzyx.luckytool.utils.A13
@@ -88,7 +88,7 @@ fun OtherPage(activity: MainActivity, isCurrentPage: Boolean = true) {
     }
     MainPageActivationEffect(isCurrentPage, ::loadControllers, ::loadControllers)
 
-    LuckyPageScaffold(
+    PageScaffold(
         title = stringResource(R.string.nav_other),
         actions = {
             OtherTopBarActions(onOptimize = { showOptimizePicker = true })

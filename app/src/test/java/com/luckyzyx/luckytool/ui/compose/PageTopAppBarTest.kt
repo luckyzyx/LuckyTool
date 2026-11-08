@@ -20,11 +20,11 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Density
 import com.luckyzyx.luckytool.ui.compose.components.LocalScopeTopInset
 import com.luckyzyx.luckytool.ui.compose.components.ScopeScreen
-import com.luckyzyx.luckytool.ui.compose.components.LuckyPageScaffold
+import com.luckyzyx.luckytool.ui.compose.components.PageScaffold
 import com.luckyzyx.luckytool.ui.theme.AppSettings
 import com.luckyzyx.luckytool.ui.theme.ColorMode
 import com.luckyzyx.luckytool.ui.theme.LocalUiMode
-import com.luckyzyx.luckytool.ui.theme.LuckyTheme
+import com.luckyzyx.luckytool.ui.theme.AppTheme
 import com.luckyzyx.luckytool.ui.theme.UiMode
 import com.luckyzyx.luckytool.utils.PrefState
 import org.junit.Assert.assertEquals
@@ -75,9 +75,9 @@ class PageTopAppBarTest {
         activity.setContentView(view)
         view.setContent {
             CompositionLocalProvider(LocalUiMode provides mode, LocalDensity provides Density(2f)) {
-                LuckyTheme(AppSettings(colorMode = ColorMode.LIGHT, dynamicColor = false), uiMode = mode) {
+                AppTheme(AppSettings(colorMode = ColorMode.LIGHT, dynamicColor = false), uiMode = mode) {
                     Scaffold(contentWindowInsets = WindowInsets(0, 0, 0, 0)) {
-                        LuckyPageScaffold(
+                        PageScaffold(
                             title = if (scopeList) "系统设置" else "功能",
                             onBack = if (scopeList) ({}) else null,
                         ) { padding ->

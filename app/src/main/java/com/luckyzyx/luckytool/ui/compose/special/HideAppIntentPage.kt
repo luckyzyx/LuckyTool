@@ -74,7 +74,7 @@ import com.luckyzyx.luckytool.ui.compose.components.coui.CouiFilterChip
 import com.luckyzyx.luckytool.ui.compose.components.coui.CouiIconButton
 import com.luckyzyx.luckytool.ui.compose.components.coui.CouiSuggestionChip
 import com.luckyzyx.luckytool.ui.compose.components.coui.CouiTextField
-import com.luckyzyx.luckytool.ui.compose.components.coui.LuckyCouiIcons
+import com.luckyzyx.luckytool.ui.compose.components.coui.CouiIconsExt
 import com.luckyzyx.luckytool.ui.compose.scopes.ScopePageAction
 import com.luckyzyx.luckytool.ui.compose.scopes.ScopePageSpec
 import com.luckyzyx.luckytool.ui.theme.DesignTokens
@@ -947,7 +947,7 @@ private fun CouiIntentSearchField(
                 enabled = enabled,
             ) {
                 Icon(
-                    imageVector = LuckyCouiIcons.Tune,
+                    imageVector = CouiIconsExt.Tune,
                     contentDescription = null,
                     modifier = Modifier.size(20.dp),
                     tint = CouiTheme.colorScheme.onSurface,

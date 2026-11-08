@@ -11,13 +11,13 @@ import com.itos.coui.theme.CouiTypography
 /**
  * COUI 外观线主题。
  *
- * 色板来源由主题页的 COUI 动态取色开关决定（[AppSettings.couiDynamicColor]）：
+ * 色板来源由主题页的 COUI 取色开关决定（[AppSettings.couiDynamicColor]）：
  * 关闭（默认）取 COUI 自带预设（[couiPresetColorScheme]），界面保持 COUI 自己的观感；
  * 打开才跑与 Material 线同一条 material-kolor 管线（种子色 / 壁纸动态取色、调色风格、
  * 色彩规格、AMOLED 刷黑、弹性过渡），把 M3 色板经 [couiColorScheme] 翻译成 COUI 语义色。
  *
  * 不使用 COUI 自带的 M3 适配（CouiMaterial3Style）：它把页面底色与卡片表面取成同一档，
- * 分组卡片会与页面撞色而看不见；动态取色时 [couiColorScheme] 改用 M3 的容器阶拉开层次。
+ * 分组卡片会与页面撞色而看不见；这里改用 M3 的容器阶拉开层次。
  *
  * COUI 线里仍由 material3 渲染的弹层与底部弹窗读的是 M3 色板，
  * 因此用同一套 COUI 色板反推 M3 色板（见 [couiMaterialColorScheme]），避免两种强调色并排出现。
@@ -29,7 +29,7 @@ import com.itos.coui.theme.CouiTypography
  * 与本项目「ui_mode 运行时可切换」的前提冲突；这里每次组合显式传入色板与字体。
  */
 @Composable
-fun CouiLuckyTheme(
+fun CouiAppTheme(
     appSettings: AppSettings,
     content: @Composable () -> Unit,
 ) {
@@ -38,9 +38,9 @@ fun CouiLuckyTheme(
 
     themeWindowAppearance(darkTheme)
 
-    // 关掉动态取色时连取色管线一起跳过：预设配色不必读壁纸，也不必逐帧过渡。
+    // 关闭取色时连取色管线一起跳过：预设配色不必读壁纸，也不必逐帧过渡。
     val couiColors = if (appSettings.couiDynamicColor) {
-        val colorScheme = rememberLuckyColorScheme(
+        val colorScheme = rememberAppColorScheme(
             seedColor = rememberSeedColor(appSettings = appSettings, isDark = darkTheme),
             isDark = darkTheme,
             isAmoled = colorMode.isAmoled,
@@ -49,13 +49,13 @@ fun CouiLuckyTheme(
         ).animateAsState()
         couiColorScheme(colorScheme, darkTheme, colorMode.isAmoled)
     } else {
-        couiPresetColorScheme(darkTheme)
+        couiPresetColorScheme(darkTheme, colorMode.isAmoled)
     }
     val materialScheme = couiMaterialColorScheme(couiColors, darkTheme)
 
     CompositionLocalProvider(
         LocalColorMode provides colorMode,
-        LocalLuckyColorScheme provides materialScheme,
+        LocalAppColorScheme provides materialScheme,
     ) {
         MaterialExpressiveTheme(
             colorScheme = materialScheme,

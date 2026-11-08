@@ -74,7 +74,9 @@ private const val PageTransitionMillis = 260
  * 导航宿主：唯一的 Activity 内部由一个 NavHost 承载全部页面。
  *
  * 前进时新页面从行尾侧滑入、旧页面向对侧退让一小段；后退时反向播放。
- * 系统返回键由 NavHost 自己接管，侧滑返回挂在每个非根目的地上。
+ * 系统返回键由 NavHost 自己接管；预测性返回手势在拖动过程中用同一组转场，
+ * 当前页不透明地在顶层滑走（预测性转场不加淡入淡出）。
+ * 页内横向拖拽的侧滑返回挂在每个非根目的地上，见 [SwipeBackPage]。
  */
 @Composable
 internal fun AppNavHost(
@@ -103,6 +105,13 @@ internal fun AppNavHost(
         popExitTransition = {
             slideOutHorizontally(tween(PageTransitionMillis)) { width -> width } +
                 fadeOut(tween(PageTransitionMillis))
+        },
+        // 预测性返回拖动过程：只做位移，不加淡入淡出，保证当前页不透明地滑走
+        predictivePopEnterTransition = {
+            slideInHorizontally(tween(PageTransitionMillis)) { width -> -width / 4 }
+        },
+        predictivePopExitTransition = {
+            slideOutHorizontally(tween(PageTransitionMillis)) { width -> width }
         },
     ) {
         // 根目的地不接侧滑返回：一级标签之间不是页面栈

@@ -14,12 +14,12 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Density
 import com.itos.coui.effect.CouiFloatingRenderer
-import com.luckyzyx.luckytool.ui.compose.components.LuckyPageScaffold
-import com.luckyzyx.luckytool.ui.compose.components.LuckyRootScaffold
-import com.luckyzyx.luckytool.ui.compose.components.LuckyTabsScaffold
+import com.luckyzyx.luckytool.ui.compose.components.PageScaffold
+import com.luckyzyx.luckytool.ui.compose.components.RootScaffold
+import com.luckyzyx.luckytool.ui.compose.components.TabsScaffold
 import com.luckyzyx.luckytool.ui.compose.components.ScopeScreen
 import com.luckyzyx.luckytool.ui.theme.ColorMode
-import com.luckyzyx.luckytool.ui.theme.LuckyAppTheme
+import com.luckyzyx.luckytool.ui.theme.AppTheme
 import com.luckyzyx.luckytool.ui.theme.ThemeController
 import com.luckyzyx.luckytool.ui.theme.ThemePrefs
 import com.luckyzyx.luckytool.ui.theme.UiMode
@@ -48,10 +48,10 @@ class ThemeSwitchCrashTest {
             .commit()
         host.setContent {
             CompositionLocalProvider(LocalDensity provides Density(2f)) {
-                LuckyAppTheme {
+                AppTheme {
                     val context = LocalContext.current
                     val settings = remember { PrefState.of(context, SettingsPrefs) }
-                    LuckyPageScaffold(title = "设置") { padding ->
+                    PageScaffold(title = "设置") { padding ->
                         ScopeScreen(
                             state = settings,
                             modifier = Modifier.fillMaxSize().padding(padding),
@@ -88,7 +88,7 @@ class ThemeSwitchCrashTest {
         var rendererOk = false
         var message = "none"
         host.setContent {
-            LuckyAppTheme {
+            AppTheme {
                 val renderer = remember {
                     runCatching { CouiFloatingRenderer() }.onFailure { message = it.toString() }.getOrNull()
                 }
@@ -109,7 +109,7 @@ class ThemeSwitchCrashTest {
             .commit()
         host.setContent {
             CompositionLocalProvider(LocalDensity provides Density(2f)) {
-                LuckyAppTheme {
+                AppTheme {
                     val pagerState = rememberPagerState(initialPage = MainTab.Home.ordinal) { MainTab.entries.size }
                     val mainPagerState = rememberMainPagerState(pagerState)
                     MainTabs(
@@ -143,10 +143,10 @@ class ThemeSwitchCrashTest {
             .commit()
         host.setContent {
             CompositionLocalProvider(LocalDensity provides Density(2f)) {
-                LuckyAppTheme {
-                    LuckyRootScaffold { _ ->
-                        LuckyTabsScaffold(bottomBar = { Text("底栏") }) { tabPadding ->
-                            LuckyPageScaffold(title = "设置") { pagePadding ->
+                AppTheme {
+                    RootScaffold { _ ->
+                        TabsScaffold(bottomBar = { Text("底栏") }) { tabPadding ->
+                            PageScaffold(title = "设置") { pagePadding ->
                                 Box(
                                     Modifier
                                         .fillMaxSize()

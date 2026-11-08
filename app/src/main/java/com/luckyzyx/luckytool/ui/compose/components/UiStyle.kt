@@ -51,7 +51,7 @@ import com.luckyzyx.luckytool.ui.theme.UiMode
  * 底栏当前是否被放在 COUI Scaffold 的底栏槽位里。
  *
  * 槽位会给底栏提供正文录制的背景采样源，悬浮底栏因此不必自建采样层；值为 false 时
- * （例如单独组合标签外壳、不经过 [LuckyTabsScaffold]）悬浮底栏拿不到采样源，要退回平铺样式。
+ * （例如单独组合标签外壳、不经过 [TabsScaffold]）悬浮底栏拿不到采样源，要退回平铺样式。
  */
 internal val LocalCouiTabsBarSlot = compositionLocalOf { false }
 
@@ -76,7 +76,7 @@ internal val ChromeInsets: WindowInsets
 /**
  * 一套外观样式（主题）的实现对象。
  *
- * 页面与外壳只调用文件末尾的 [LuckyPageScaffold] / [LuckyRootScaffold] / [LuckyTabsScaffold]，
+ * 页面与外壳只调用文件末尾的 [PageScaffold] / [RootScaffold] / [TabsScaffold]，
  * 由当前外观选中的实现对象去画骨架：新增样式时写一个新的实现对象、在 [currentUiStyle] 里接上分支即可，
  * 页面侧不用改。这与设置区块里开关 / 复选框按外观分派的写法是同一套思路。
  */
@@ -275,7 +275,7 @@ internal fun currentUiStyle(): UiStyle = when (LocalUiMode.current) {
  * remember 状态（列表滚动位置、页内临时状态）随内容走，只有外侧骨架被替换。
  */
 @Composable
-internal fun LuckyPageScaffold(
+internal fun PageScaffold(
     title: String,
     modifier: Modifier = Modifier,
     onBack: (() -> Unit)? = null,
@@ -352,7 +352,7 @@ internal fun LuckyPageScaffold(
 
 /** 根壳的统一入口：除页面骨架之外的最外层容器。 */
 @Composable
-internal fun LuckyRootScaffold(content: @Composable (PaddingValues) -> Unit) {
+internal fun RootScaffold(content: @Composable (PaddingValues) -> Unit) {
     // 两条外观线的根壳都只是铺底色、内边距为零：固定在同一处铺色而不走分支，
     // 避免切换外观时导航宿主因调用点变化被销毁重建。
     val background = if (LocalUiMode.current == UiMode.Coui) {
@@ -367,7 +367,7 @@ internal fun LuckyRootScaffold(content: @Composable (PaddingValues) -> Unit) {
 
 /** 一级标签外壳的统一入口。 */
 @Composable
-internal fun LuckyTabsScaffold(
+internal fun TabsScaffold(
     bottomBar: @Composable () -> Unit,
     content: @Composable (PaddingValues) -> Unit,
 ) {

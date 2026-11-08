@@ -74,7 +74,7 @@ private val SplashLogoCorner = 28.dp
  * 是场景内弹层、就在下方等着，闪屏淡出后即露出，两者不冲突。
  */
 @Composable
-fun LuckySplashHost(content: @Composable () -> Unit) {
+fun SplashHost(content: @Composable () -> Unit) {
     var isSplashVisible by rememberSaveable { mutableStateOf(true) }
     val splashAlpha = remember { Animatable(1f) }
 
@@ -109,7 +109,7 @@ fun LuckySplashHost(content: @Composable () -> Unit) {
  * 所以不需要淡出动画。
  *
  * 配色与闪屏同源（[R.color.splash_background] / [R.color.splash_foreground]）：闪屏淡出后
- * 只多出一个进度圈，不换底色。本层由 [LuckySplashHost] 的 content 组合、位于闪屏之下，
+ * 只多出一个进度圈，不换底色。本层由 [SplashHost] 的 content 组合、位于闪屏之下，
  * 闪屏还在时用户看不到它。
  */
 @Composable

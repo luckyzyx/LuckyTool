@@ -16,6 +16,8 @@
     <string name="theme_title_summary">將自動重新整理頁面</string>
     <string name="use_dynamic_color">動態取色</string>
     <string name="use_dynamic_color_summary">使用動態取色</string>
+    <string name="coui_follow_material_color">跟隨 Material 配色</string>
+    <string name="coui_follow_material_color_summary">開啟後 COUI 使用上方取色設定；關閉則使用 COUI 自帶預設配色</string>
     <string name="dark_theme">深色主題</string>
     <string name="follow_system">跟隨系統</string>
     <string name="dark_theme_off">總是關閉</string>

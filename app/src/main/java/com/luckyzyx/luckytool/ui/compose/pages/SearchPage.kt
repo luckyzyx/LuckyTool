@@ -35,7 +35,7 @@ import com.luckyzyx.luckytool.ui.compose.FunctionPageData
 import com.luckyzyx.luckytool.ui.compose.pageTitle
 import com.luckyzyx.luckytool.ui.compose.ScopeRoute
 import com.luckyzyx.luckytool.ui.compose.components.LocalScopeListState
-import com.luckyzyx.luckytool.ui.compose.components.LuckyPageScaffold
+import com.luckyzyx.luckytool.ui.compose.components.PageScaffold
 import com.luckyzyx.luckytool.ui.compose.components.ScopeScreen
 import com.luckyzyx.luckytool.ui.compose.components.coui.CouiIconButton
 import com.luckyzyx.luckytool.ui.compose.components.material.MaterialTextField
@@ -124,7 +124,7 @@ fun SearchPage(isCurrentPage: Boolean, onOpen: (ScopeRoute) -> Unit) {
         }
     }
 
-    LuckyPageScaffold(title = stringResource(R.string.menu_search)) { padding ->
+    PageScaffold(title = stringResource(R.string.menu_search)) { padding ->
         val settings = remember { PrefState.of(context, SettingsPrefs) }
         val scopeModifier = Modifier.fillMaxSize().padding(padding)
         val scopeContent: @Composable () -> Unit = {

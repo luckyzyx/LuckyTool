@@ -46,7 +46,7 @@ import com.luckyzyx.luckytool.ui.compose.components.coui.CouiFilterChip
 import com.luckyzyx.luckytool.ui.compose.components.coui.CouiIconButton
 import com.luckyzyx.luckytool.ui.compose.components.coui.CouiModalBottomSheet
 import com.luckyzyx.luckytool.ui.compose.components.coui.CouiTextField
-import com.luckyzyx.luckytool.ui.compose.components.coui.LuckyCouiIcons
+import com.luckyzyx.luckytool.ui.compose.components.coui.CouiIconsExt
 import com.luckyzyx.luckytool.ui.compose.components.material.MaterialSwitch
 import com.luckyzyx.luckytool.ui.compose.scopes.ScopePageSpec
 import com.luckyzyx.luckytool.ui.theme.LocalUiMode
@@ -512,7 +512,7 @@ private fun CouiDonateSearchField(
                 enabled = enabled,
             ) {
                 Icon(
-                    imageVector = LuckyCouiIcons.Tune,
+                    imageVector = CouiIconsExt.Tune,
                     contentDescription = null,
                     modifier = Modifier.size(20.dp),
                     tint = CouiTheme.colorScheme.onSurface,

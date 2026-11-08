@@ -58,7 +58,7 @@ in [TG Channel’s associated groups](https://t.me/LuckyTool)**
 - 功能页「XX相关」分类行改用彩色徽标
 - 设置页备份 / 恢复记录数据落点
 - 重构浮窗贴边后台运行
-- COUI 界面风格默认使用 COUI 预设配色，动态取色开关改为本线独立（默认关闭）
+- 主题取色与暗色模式统一：固定色 / 调色风格 / 色彩规格两条外观线共用，暗色模式两线统一为连体图标按钮；COUI 需开启「跟随 Material 配色」后才显示动态取色与 Material 取色控件（默认使用 COUI 预设配色），COUI 深色与 AMOLED 页面底色已区分
 
 #### 修复
 

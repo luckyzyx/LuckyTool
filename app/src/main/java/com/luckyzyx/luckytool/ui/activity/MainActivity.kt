@@ -26,12 +26,12 @@ import com.luckyzyx.luckytool.service.TilesService
 import com.luckyzyx.luckytool.service.UserService
 import com.luckyzyx.luckytool.ui.compose.ActivationLoadingLayer
 import com.luckyzyx.luckytool.ui.compose.FunctionRequest
-import com.luckyzyx.luckytool.ui.compose.LuckySplashHost
+import com.luckyzyx.luckytool.ui.compose.SplashHost
 import com.luckyzyx.luckytool.ui.compose.MainShell
 import com.luckyzyx.luckytool.ui.compose.components.GateDialogSpec
 import com.luckyzyx.luckytool.ui.service.XposedServiceBridge
 import com.luckyzyx.luckytool.ui.service.awaitActivation
-import com.luckyzyx.luckytool.ui.theme.LuckyAppTheme
+import com.luckyzyx.luckytool.ui.theme.AppTheme
 import com.luckyzyx.luckytool.utils.A12
 import com.luckyzyx.luckytool.utils.BiometricUtils
 import com.luckyzyx.luckytool.utils.DeviceUtils
@@ -115,11 +115,11 @@ open class MainActivity : AppCompatActivity() {
         setContent {
             // 闪屏与加载层是中性配色、不读主题；主界面的页面数据来自 ModulePrefs（remote 优先），
             // 绑定没落定时读到的还是默认值，所以激活检测出结果后再组合主界面
-            LuckySplashHost {
+            SplashHost {
                 if (isActivationPending) {
                     ActivationLoadingLayer()
                 } else {
-                    LuckyAppTheme {
+                    AppTheme {
                         MainShell(this)
                     }
                 }

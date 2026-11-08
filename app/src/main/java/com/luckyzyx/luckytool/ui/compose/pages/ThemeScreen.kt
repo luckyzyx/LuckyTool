@@ -104,7 +104,6 @@ import com.itos.coui.topappbar.CouiTopAppBarDefaults
 import com.luckyzyx.luckytool.R
 import com.luckyzyx.luckytool.ui.compose.components.ChromeInsets
 import com.luckyzyx.luckytool.ui.compose.components.coui.CouiPageScaffold
-import com.luckyzyx.luckytool.ui.compose.components.coui.CouiSegmentedTabs
 import com.luckyzyx.luckytool.ui.compose.components.material.MaterialScaffold
 import com.luckyzyx.luckytool.ui.compose.components.material.MaterialToggleButton
 import com.luckyzyx.luckytool.ui.compose.components.AppGroup
@@ -122,13 +121,13 @@ import com.luckyzyx.luckytool.ui.shell.ShellSettingsController
 import com.luckyzyx.luckytool.ui.theme.AppSettings
 import com.luckyzyx.luckytool.ui.theme.ColorMode
 import com.luckyzyx.luckytool.ui.compose.isRenderEffectSupported
-import com.luckyzyx.luckytool.ui.theme.LocalLuckyColorScheme
+import com.luckyzyx.luckytool.ui.theme.LocalAppColorScheme
 import com.luckyzyx.luckytool.ui.theme.LocalUiMode
 import com.luckyzyx.luckytool.ui.theme.ThemeController
 import com.luckyzyx.luckytool.ui.theme.ThemePrefs
 import com.luckyzyx.luckytool.ui.theme.UiMode
 import com.luckyzyx.luckytool.ui.theme.keyColorOptions
-import com.luckyzyx.luckytool.ui.theme.rememberLuckyColorScheme
+import com.luckyzyx.luckytool.ui.theme.rememberAppColorScheme
 import com.luckyzyx.luckytool.ui.theme.rememberSeedColor
 import com.luckyzyx.luckytool.ui.theme.resolveDarkTheme
 import com.luckyzyx.luckytool.utils.PredictiveBackUtils
@@ -198,7 +197,7 @@ private class ThemeScreenState(context: Context) {
         )
     )
 
-    /** COUI 线是否跟随壁纸取色；默认关，界面用 COUI 自带预设配色 */
+    /** COUI 线是否跟随 Material 取色；默认关，界面用 COUI 自带预设配色 */
     var couiDynamicColor by mutableStateOf(
         context.getBoolean(
             SettingsPrefs,
@@ -278,15 +277,15 @@ private fun rememberThemeScreenState(): ThemeScreenState {
  *
  * 页面组成：
  * 主题预览卡片 → 主题色选择（跟随系统 + 15 预设）→ 主题模式分段按钮
- * → 调色风格 / 色彩规格下拉 → 动态取色开关 → 返回与切页手势。
+ * → 调色风格 / 色彩规格下拉 → 动态取色开关 →（COUI 线）跟随 Material 配色开关 → 返回与切页手势。
  *
- * COUI 线收起固定主题色与调色风格 / 色彩规格：那几项只进 Material 线的取色管线。
- * 那条线只留一个自己的动态取色开关，关闭（默认）时用 COUI 预设配色。
+ * 两条外观线共用同一份列表与偏好；COUI 线额外显示「跟随 Material 配色」开关
+ * （coui_dynamic_color，默认关，用 COUI 预设配色），并隐藏本线无意义的悬浮底栏项。
  *
  * 偏好键沿用 LuckyTool 既有约定（SettingsPrefs）：
  * dark_theme（0 跟随系统 / 1 深色 / 2 浅色 / 3 深色 AMOLED）、key_color、
- * palette_style、color_spec、use_dynamic_color、coui_dynamic_color（COUI 线专用）、enable_predictive_back、
- * enable_swipe_dismiss、pager_interception_mode。
+ * palette_style、color_spec、use_dynamic_color、coui_dynamic_color（COUI 线专用）、
+ * enable_predictive_back、enable_swipe_dismiss、pager_interception_mode。
  * 写入后通过 [ThemePrefs.notifyChanged] 让应用主题即时重算，无需 recreate。
  */
 @Composable
@@ -384,43 +383,44 @@ private fun ThemeScreenList(
             )
         }
 
-        // 首个按钮是「跟随壁纸取色」，其余为固定主题色；这些只作用于 Material 线，
-        // COUI 线的配色由本线自己的动态取色开关决定（见下方开关项）。
-        if (!isCouiLine) item {
-            LazyRow(
-                modifier = Modifier.fillMaxWidth(),
-                contentPadding = PaddingValues(horizontal = 16.dp),
-                horizontalArrangement = Arrangement.spacedBy(16.dp),
-            ) {
-                item {
-                    ColorButtonMaterial(
-                        color = Color.Unspecified,
-                        isSelected = state.dynamicColor,
-                        appSettings = appSettings,
-                        isDark = isDark,
-                        onClick = {
-                            state.keyColor = 0
-                            context.putInt(SettingsPrefs, "key_color", 0)
-                            state.dynamicColor = true
-                            context.putBoolean(SettingsPrefs, "use_dynamic_color", true)
-                            ThemePrefs.notifyChanged()
-                        },
-                    )
-                }
-                items(keyColorOptions) { color ->
-                    ColorButtonMaterial(
-                        color = Color(color),
-                        isSelected = !state.dynamicColor && state.keyColor == color,
-                        appSettings = appSettings,
-                        isDark = isDark,
-                        onClick = {
-                            state.keyColor = color
-                            context.putInt(SettingsPrefs, "key_color", color)
-                            state.dynamicColor = false
-                            context.putBoolean(SettingsPrefs, "use_dynamic_color", false)
-                            ThemePrefs.notifyChanged()
-                        },
-                    )
+        // 首个按钮是「跟随壁纸取色」，其余为固定主题色；COUI 未开启「跟随 Material 配色」时整行隐藏。
+        if (!isCouiLine || state.couiDynamicColor) {
+            item {
+                LazyRow(
+                    modifier = Modifier.fillMaxWidth(),
+                    contentPadding = PaddingValues(horizontal = 16.dp),
+                    horizontalArrangement = Arrangement.spacedBy(16.dp),
+                ) {
+                    item {
+                        ColorButtonMaterial(
+                            color = Color.Unspecified,
+                            isSelected = state.dynamicColor,
+                            appSettings = appSettings,
+                            isDark = isDark,
+                            onClick = {
+                                state.keyColor = 0
+                                context.putInt(SettingsPrefs, "key_color", 0)
+                                state.dynamicColor = true
+                                context.putBoolean(SettingsPrefs, "use_dynamic_color", true)
+                                ThemePrefs.notifyChanged()
+                            },
+                        )
+                    }
+                    items(keyColorOptions) { color ->
+                        ColorButtonMaterial(
+                            color = Color(color),
+                            isSelected = !state.dynamicColor && state.keyColor == color,
+                            appSettings = appSettings,
+                            isDark = isDark,
+                            onClick = {
+                                state.keyColor = color
+                                context.putInt(SettingsPrefs, "key_color", color)
+                                state.dynamicColor = false
+                                context.putBoolean(SettingsPrefs, "use_dynamic_color", false)
+                                ThemePrefs.notifyChanged()
+                            },
+                        )
+                    }
                 }
             }
         }
@@ -429,90 +429,99 @@ private fun ThemeScreenList(
             ThemeModeSelector(state = state)
         }
 
-        // 调色风格 / 色彩规格只进 Material 线的取色管线，COUI 线不显示。
-        if (!isCouiLine) item {
-            AppGroup(
-                modifier = Modifier.padding(horizontal = 16.dp),
-                content = listOf(
-                    {
-                        val styles = PaletteStyle.entries
-                        AppDropdownItem(
-                            icon = Icons.Rounded.Style,
-                            title = stringResource(R.string.palette_style_title),
-                            items = styles.map { it.name },
-                            selectedIndex = styles.indexOf(state.paletteStyle),
-                            onItemSelected = { index ->
-                                state.paletteStyle = styles[index]
-                                context.putString(
-                                    SettingsPrefs,
-                                    KeyPaletteStyle,
-                                    styles[index].name
-                                )
-                                ThemePrefs.notifyChanged()
-                            },
-                        )
-                    },
-                    {
-                        val specs = ColorSpec.SpecVersion.entries
-                        AppDropdownItem(
-                            icon = Icons.Rounded.DesignServices,
-                            title = stringResource(R.string.color_spec_title),
-                            items = specs.map { it.name },
-                            selectedIndex = specs.indexOf(state.colorSpec).coerceAtLeast(0),
-                            onItemSelected = { index ->
-                                state.colorSpec = specs[index]
-                                context.putString(
-                                    SettingsPrefs,
-                                    KeyColorSpec,
-                                    specs[index].name
-                                )
-                                ThemePrefs.notifyChanged()
-                            },
-                        )
-                    },
-                ),
-            )
-        }
-
-        // 系统没有取色能力（API 31 以下）时整项不出现。
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+        // 调色风格 / 色彩规格两条外观线共用；COUI 未开启「跟随 Material 配色」时整组隐藏。
+        if (!isCouiLine || state.couiDynamicColor) {
             item {
                 AppGroup(
                     modifier = Modifier.padding(horizontal = 16.dp),
                     content = listOf(
                         {
-                            AppSwitchItem(
+                            val styles = PaletteStyle.entries
+                            AppDropdownItem(
                                 icon = Icons.Rounded.Style,
-                                title = stringResource(R.string.use_dynamic_color),
-                                summary = stringResource(R.string.use_dynamic_color_summary),
-                                // COUI 线有独立的开关：关（默认）取 COUI 预设配色，开才跟随壁纸取色
-                                checked = if (isCouiLine) {
-                                    state.couiDynamicColor
-                                } else {
-                                    state.dynamicColor
+                                title = stringResource(R.string.palette_style_title),
+                                items = styles.map { it.name },
+                                selectedIndex = styles.indexOf(state.paletteStyle),
+                                onItemSelected = { index ->
+                                    state.paletteStyle = styles[index]
+                                    context.putString(
+                                        SettingsPrefs,
+                                        KeyPaletteStyle,
+                                        styles[index].name
+                                    )
+                                    ThemePrefs.notifyChanged()
                                 },
-                                onCheckedChange = {
-                                    if (isCouiLine) {
-                                        state.couiDynamicColor = it
-                                        context.putBoolean(
-                                            SettingsPrefs,
-                                            ThemeController.KEY_COUI_DYNAMIC_COLOR,
-                                            it,
-                                        )
-                                    } else {
-                                        state.dynamicColor = it
-                                        context.putBoolean(SettingsPrefs, "use_dynamic_color", it)
-                                        // 开启动态取色时把自定义主题色归零，保证"跟随系统"色板与开关状态一致
-                                        if (it) {
-                                            state.keyColor = 0
-                                            context.putInt(SettingsPrefs, "key_color", 0)
-                                        }
-                                    }
+                            )
+                        },
+                        {
+                            val specs = ColorSpec.SpecVersion.entries
+                            AppDropdownItem(
+                                icon = Icons.Rounded.DesignServices,
+                                title = stringResource(R.string.color_spec_title),
+                                items = specs.map { it.name },
+                                selectedIndex = specs.indexOf(state.colorSpec).coerceAtLeast(0),
+                                onItemSelected = { index ->
+                                    state.colorSpec = specs[index]
+                                    context.putString(
+                                        SettingsPrefs,
+                                        KeyColorSpec,
+                                        specs[index].name
+                                    )
                                     ThemePrefs.notifyChanged()
                                 },
                             )
                         },
                     ),
+                )
+            }
+        }
+
+        // 动态取色依赖 API 31（Monet）；COUI 线的「跟随 Material 配色」开关不依赖取色能力，API 31 以下也要出现。
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S || isCouiLine) {
+            item {
+                AppGroup(
+                    modifier = Modifier.padding(horizontal = 16.dp),
+                    content = buildList<@Composable () -> Unit> {
+                        // COUI 线单独决定用预设配色还是跟随 Material 的取色设置；放在动态取色上方
+                        if (isCouiLine) add {
+                            AppSwitchItem(
+                                icon = Icons.Rounded.Colorize,
+                                title = stringResource(R.string.coui_follow_material_color),
+                                summary = stringResource(R.string.coui_follow_material_color_summary),
+                                checked = state.couiDynamicColor,
+                                onCheckedChange = {
+                                    state.couiDynamicColor = it
+                                    context.putBoolean(
+                                        SettingsPrefs,
+                                        ThemeController.KEY_COUI_DYNAMIC_COLOR,
+                                        it,
+                                    )
+                                    ThemePrefs.notifyChanged()
+                                },
+                            )
+                        }
+                        // COUI 未开启「跟随 Material 配色」时隐藏动态取色；API 31 以下同样不出现
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S &&
+                            (!isCouiLine || state.couiDynamicColor)
+                        ) add {
+                            AppSwitchItem(
+                                icon = Icons.Rounded.Style,
+                                title = stringResource(R.string.use_dynamic_color),
+                                summary = stringResource(R.string.use_dynamic_color_summary),
+                                checked = state.dynamicColor,
+                                onCheckedChange = {
+                                    state.dynamicColor = it
+                                    context.putBoolean(SettingsPrefs, "use_dynamic_color", it)
+                                    // 开启动态取色时把自定义主题色归零，保证"跟随系统"色板与开关状态一致
+                                    if (it) {
+                                        state.keyColor = 0
+                                        context.putInt(SettingsPrefs, "key_color", 0)
+                                    }
+                                    ThemePrefs.notifyChanged()
+                                },
+                            )
+                        }
+                    },
                 )
             }
         }
@@ -676,8 +685,8 @@ private fun ThemeScreenList(
 /**
  * 主题模式选择。
  *
- * Material 线是连体按钮组（选中态由按钮的 checked 表达），COUI 线没有 ButtonGroup，
- * 用等宽分段条取而代之：四个模式固定一屏排开，选中下标由同一份状态换算。
+ * 两条线统一用 Material 连体图标按钮组：四个模式固定一屏排开，
+ * 选中态由按钮的 checked 表达；COUI 线复用同一控件，不再单独用分段条。
  */
 @Composable
 private fun ThemeModeSelector(state: ThemeScreenState) {
@@ -689,7 +698,7 @@ private fun ThemeModeSelector(state: ThemeScreenState) {
         ColorMode.DARK to R.string.dark_theme_on,
         ColorMode.DARK_AMOLED to R.string.dark_theme_on_amoled,
     )
-    // 选中即写偏好并重算主题；两条线的触发方式不同（按钮 / 分段条），落盘逻辑共用这一份
+    // 选中即写偏好并重算主题；两条线共用这一份落盘逻辑
     val select: (ColorMode) -> Unit = { mode ->
         haptic.performHapticFeedback(HapticFeedbackType.ContextClick)
         state.colorMode = mode
@@ -704,57 +713,44 @@ private fun ThemeModeSelector(state: ThemeScreenState) {
         ThemeUtils.initTheme(context)
     }
 
-    when (LocalUiMode.current) {
-        UiMode.Material -> Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
-        ) {
-            modes.chunked(4).forEach { rowModes ->
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(ButtonGroupDefaults.ConnectedSpaceBetween),
-                ) {
-                    rowModes.forEachIndexed { index, (mode, labelRes) ->
-                        val label = stringResource(labelRes)
-                        MaterialToggleButton(
-                            checked = state.colorMode == mode,
-                            onCheckedChange = { if (it) select(mode) },
-                            modifier = Modifier
-                                .weight(1f)
-                                .semantics { role = Role.RadioButton },
-                            shapes = when (index) {
-                                0 -> ButtonGroupDefaults.connectedLeadingButtonShapes()
-                                rowModes.lastIndex -> ButtonGroupDefaults.connectedTrailingButtonShapes()
-                                else -> ButtonGroupDefaults.connectedMiddleButtonShapes()
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        modes.chunked(4).forEach { rowModes ->
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(ButtonGroupDefaults.ConnectedSpaceBetween),
+            ) {
+                rowModes.forEachIndexed { index, (mode, labelRes) ->
+                    val label = stringResource(labelRes)
+                    MaterialToggleButton(
+                        checked = state.colorMode == mode,
+                        onCheckedChange = { if (it) select(mode) },
+                        modifier = Modifier
+                            .weight(1f)
+                            .semantics { role = Role.RadioButton },
+                        shapes = when (index) {
+                            0 -> ButtonGroupDefaults.connectedLeadingButtonShapes()
+                            rowModes.lastIndex -> ButtonGroupDefaults.connectedTrailingButtonShapes()
+                            else -> ButtonGroupDefaults.connectedMiddleButtonShapes()
+                        },
+                    ) {
+                        Icon(
+                            imageVector = when (mode) {
+                                ColorMode.SYSTEM -> Icons.Filled.Brightness4
+                                ColorMode.LIGHT -> Icons.Filled.Brightness7
+                                ColorMode.DARK -> Icons.Filled.Brightness3
+                                else -> Icons.Filled.Brightness1
                             },
-                        ) {
-                            Icon(
-                                imageVector = when (mode) {
-                                    ColorMode.SYSTEM -> Icons.Filled.Brightness4
-                                    ColorMode.LIGHT -> Icons.Filled.Brightness7
-                                    ColorMode.DARK -> Icons.Filled.Brightness3
-                                    else -> Icons.Filled.Brightness1
-                                },
-                                contentDescription = label,
-                            )
-                        }
+                            contentDescription = label,
+                        )
                     }
                 }
             }
         }
-
-        UiMode.Coui -> CouiSegmentedTabs(
-            labels = modes.map { stringResource(it.second) },
-            // 动态取色模式下 colorMode 是 MONET_* 系列，四个模式里没有对应项，
-            // 这里按「无选中项」呈现，与 Material 线连体按钮的观感一致
-            selectedIndex = modes.indexOfFirst { it.first == state.colorMode },
-            onSelect = { index -> modes.getOrNull(index)?.let { select(it.first) } },
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp),
-        )
     }
 }
 
@@ -883,7 +879,7 @@ private fun MaterialPreviewCard(
     val screenHeight = configuration.screenHeightDp.toFloat()
     val screenRatio = screenWidth / screenHeight
 
-    val colorScheme = rememberLuckyColorScheme(
+    val colorScheme = rememberAppColorScheme(
         seedColor = rememberSeedColor(appSettings = appSettings, isDark = isDark),
         isDark = isDark,
         isAmoled = appSettings.colorMode.isAmoled,
@@ -1068,7 +1064,7 @@ private fun ColorButtonMaterial(
     onClick: () -> Unit,
 ) {
     val haptic = LocalHapticFeedback.current
-    val colorScheme = rememberLuckyColorScheme(
+    val colorScheme = rememberAppColorScheme(
         seedColor = color,
         isDark = isDark,
         isAmoled = appSettings.colorMode.isAmoled,

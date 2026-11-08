@@ -14,6 +14,8 @@
     <string name="theme_title_summary">页面将自动刷新</string>
     <string name="use_dynamic_color">动态取色</string>
     <string name="use_dynamic_color_summary">使用动态取色</string>
+    <string name="coui_follow_material_color">跟随 Material 配色</string>
+    <string name="coui_follow_material_color_summary">开启后 COUI 使用上方取色设置；关闭则使用 COUI 自带预设配色</string>
     <string name="dark_theme">深色主题</string>
     <string name="follow_system">跟随系统</string>
     <string name="dark_theme_off">总是关闭</string>

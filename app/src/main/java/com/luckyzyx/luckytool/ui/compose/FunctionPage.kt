@@ -56,7 +56,7 @@ import com.luckyzyx.luckytool.ui.compose.components.TopBarOverflowItem
 import com.luckyzyx.luckytool.ui.compose.components.TopBarOverflowMenu
 import com.luckyzyx.luckytool.ui.compose.components.coui.CouiAlertDialog
 import com.luckyzyx.luckytool.ui.compose.components.coui.CouiIconButton
-import com.luckyzyx.luckytool.ui.compose.components.LuckyPageScaffold
+import com.luckyzyx.luckytool.ui.compose.components.PageScaffold
 import com.luckyzyx.luckytool.ui.compose.components.material.MaterialTextField
 import com.luckyzyx.luckytool.ui.compose.scopes.ScopePageContent
 import com.luckyzyx.luckytool.ui.compose.scopes.ScopePageRegistry
@@ -133,7 +133,7 @@ private fun FunctionTreeScreen(
         }
     }
 
-    LuckyPageScaffold(
+    PageScaffold(
         title = stringResource(R.string.nav_function),
         actions = {
             FunctionTopBarActions(
@@ -167,7 +167,7 @@ internal fun ScopePageHost(
     val topActions = spec?.topActions.orEmpty()
     val overflowActions = topActions.filter { !(it.showAsAction && it.icon != 0) }
 
-    LuckyPageScaffold(
+    PageScaffold(
         title = route.title.ifBlank { spec?.let { pageTitle(context, it) } ?: route.pageKey },
         onBack = onBack,
         actions = {
