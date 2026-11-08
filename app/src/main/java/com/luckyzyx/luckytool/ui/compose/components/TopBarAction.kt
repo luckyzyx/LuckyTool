@@ -6,9 +6,11 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -233,6 +235,9 @@ private fun CouiTopBarOverflowMenu(
                 Column(
                     modifier = Modifier
                         .widthIn(min = 160.dp)
+                        // 弹层按 WRAP_CONTENT 测量，行内 fillMaxWidth 会把宽度撑到整个窗口；
+                        // 先按内容最宽行定宽，行再填满这个宽度，才会收成菜单而不是铺满屏幕。
+                        .width(IntrinsicSize.Max)
                         .heightIn(max = 320.dp)
                         .shadow(elevation = 8.dp, shape = CouiPageDefaults.shape)
                         .clip(CouiPageDefaults.shape)
