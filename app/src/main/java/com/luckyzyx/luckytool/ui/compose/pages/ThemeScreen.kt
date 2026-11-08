@@ -49,6 +49,7 @@ import androidx.compose.material.icons.filled.Brightness3
 import androidx.compose.material.icons.filled.Brightness4
 import androidx.compose.material.icons.filled.Brightness7
 import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.rounded.AspectRatio
 import androidx.compose.material.icons.rounded.BlurOn
 import androidx.compose.material.icons.rounded.CallToAction
 import androidx.compose.material.icons.rounded.Check
@@ -64,11 +65,13 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.LargeFlexibleTopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberTopAppBarState
+import androidx.compose.material3.rememberSliderState
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -78,6 +81,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalConfiguration
@@ -107,10 +111,13 @@ import com.luckyzyx.luckytool.ui.compose.components.AppGroup
 import com.luckyzyx.luckytool.ui.compose.components.AppDropdownItem
 import com.luckyzyx.luckytool.ui.compose.components.AppSwitchItem
 import com.luckyzyx.luckytool.ui.compose.components.AppCard
+import com.luckyzyx.luckytool.ui.compose.components.AppSlider
 import com.luckyzyx.luckytool.ui.compose.components.material.MaterialTopBarBackButton
 import com.luckyzyx.luckytool.ui.compose.components.material.materialTopAppBarColors
 import com.luckyzyx.luckytool.ui.compose.MainTab
 import com.luckyzyx.luckytool.ui.shell.FloatingBottomBarStyle
+import com.luckyzyx.luckytool.ui.shell.PageScaleMax
+import com.luckyzyx.luckytool.ui.shell.PageScaleMin
 import com.luckyzyx.luckytool.ui.shell.ShellSettingsController
 import com.luckyzyx.luckytool.ui.theme.AppSettings
 import com.luckyzyx.luckytool.ui.theme.ColorMode
@@ -128,13 +135,16 @@ import com.luckyzyx.luckytool.utils.PredictiveBackUtils
 import com.luckyzyx.luckytool.utils.SettingsPrefs
 import com.luckyzyx.luckytool.utils.ThemeUtils
 import com.luckyzyx.luckytool.utils.getBoolean
+import com.luckyzyx.luckytool.utils.getFloat
 import com.luckyzyx.luckytool.utils.getInt
 import com.luckyzyx.luckytool.utils.getString
 import com.luckyzyx.luckytool.utils.putBoolean
+import com.luckyzyx.luckytool.utils.putFloat
 import com.luckyzyx.luckytool.utils.putInt
 import com.luckyzyx.luckytool.utils.putString
 import com.materialkolor.PaletteStyle
 import com.materialkolor.dynamiccolor.ColorSpec
+import kotlin.math.roundToInt
 
 /**
  * 主题与配色页入口。
@@ -248,6 +258,11 @@ private class ThemeScreenState(context: Context) {
             ShellSettingsController.KEY_CATEGORY_BADGE_COLORS,
             true
         )
+    )
+
+    var pageScale by mutableFloatStateOf(
+        context.getFloat(SettingsPrefs, ShellSettingsController.KEY_PAGE_SCALE, 1.0f)
+            .coerceIn(PageScaleMin, PageScaleMax)
     )
 }
 
@@ -630,6 +645,28 @@ private fun ThemeScreenList(
             )
         }
 
+        // 界面缩放（page_scale）：拖动只更新页内状态，松手才提交偏好，避免重建全应用密度
+        item {
+            ThemeSliderCard(
+                icon = Icons.Rounded.AspectRatio,
+                title = stringResource(R.string.settings_page_scale),
+                summary = stringResource(R.string.settings_page_scale_summary),
+                valueText = "${(state.pageScale * 100).roundToInt()}%",
+                value = state.pageScale,
+                valueRange = PageScaleMin..PageScaleMax,
+                steps = 0,
+                onValueChange = { state.pageScale = it },
+                onValueChangeFinished = {
+                    context.putFloat(
+                        SettingsPrefs,
+                        ShellSettingsController.KEY_PAGE_SCALE,
+                        state.pageScale
+                    )
+                    ThemePrefs.notifyChanged()
+                },
+            )
+        }
+
         item {
             Spacer(modifier = Modifier.height(bottomSpace))
         }
@@ -718,6 +755,71 @@ private fun ThemeModeSelector(state: ThemeScreenState) {
                 .fillMaxWidth()
                 .padding(horizontal = 16.dp),
         )
+    }
+}
+
+/**
+ * 滑杆卡片：图标 + 标题 / 说明 + 当前值，下面一条滑杆。
+ *
+ * 取值由调用方持有（页内状态），[AppSlider] 在两条外观线上写回的都是同一份；
+ * material3 的 SliderState 是非受控语义，值必须由调用方写回，否则滑块不跟手。
+ * 松手回调用于提交偏好，拖动过程中不落盘。
+ */
+@Composable
+private fun ThemeSliderCard(
+    icon: ImageVector,
+    title: String,
+    summary: String,
+    valueText: String,
+    value: Float,
+    valueRange: ClosedFloatingPointRange<Float>,
+    steps: Int,
+    onValueChange: (Float) -> Unit,
+    onValueChangeFinished: () -> Unit,
+) {
+    val iconTint = when (LocalUiMode.current) {
+        UiMode.Material -> MaterialTheme.colorScheme.onSurfaceVariant
+        UiMode.Coui -> CouiTheme.colorScheme.onSurfaceVariant
+    }
+    AppCard(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp),
+    ) {
+        Column(
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 16.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(
+                    imageVector = icon,
+                    contentDescription = title,
+                    tint = iconTint,
+                )
+                Spacer(modifier = Modifier.width(12.dp))
+                Column(modifier = Modifier.weight(1f)) {
+                    ThemeCardTitle(text = title)
+                    ThemeCardSummary(text = summary)
+                }
+                ThemeCardSummary(text = valueText)
+            }
+            val sliderState = rememberSliderState(
+                value = value,
+                steps = steps,
+                trackRange = valueRange,
+            )
+            AppSlider(
+                state = sliderState,
+                valueRange = valueRange,
+                steps = steps,
+                onValueChange = {
+                    sliderState.value = it
+                    onValueChange(it)
+                },
+                modifier = Modifier.fillMaxWidth(),
+                onValueChangeFinished = onValueChangeFinished,
+            )
+        }
     }
 }
 

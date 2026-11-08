@@ -9,6 +9,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.staticCompositionLocalOf
 import com.luckyzyx.luckytool.utils.SettingsPrefs
 import com.luckyzyx.luckytool.utils.getBoolean
+import com.luckyzyx.luckytool.utils.getFloat
 import com.luckyzyx.luckytool.utils.getInt
 import com.luckyzyx.luckytool.utils.getString
 
@@ -16,6 +17,10 @@ import com.luckyzyx.luckytool.utils.getString
 const val PagerModeNative = 0
 const val PagerModeCrossAxis = 1
 const val PagerModeIosLike = 2
+
+/** 界面缩放下限 / 上限。 */
+const val PageScaleMin = 0.8f
+const val PageScaleMax = 1.1f
 
 /** 悬浮底栏样式及其持久化值。 */
 enum class FloatingBottomBarStyle(val value: String) {
@@ -42,7 +47,7 @@ enum class FloatingBottomBarStyle(val value: String) {
  *
  * 偏好键及默认值：
  * enable_navigation_badge = true、enable_predictive_back = true、enable_swipe_dismiss = true、
- * pager_interception_mode = 1、enable_blur = false、enable_floating_bottom_bar = false、
+ * pager_interception_mode = 1、page_scale = 1.0f、enable_blur = false、enable_floating_bottom_bar = false、
  * floating_bottom_bar_style = classic、enable_category_badge_colors = true。
  *
  * enable_predictive_back 默认开启；
@@ -55,6 +60,8 @@ data class ShellSettings(
     val predictiveBack: Boolean = true,
     val swipeDismiss: Boolean = true,
     val pagerInterceptionMode: Int = PagerModeCrossAxis,
+    /** 全局界面缩放：0.8~1.1，1.0 为原始大小。 */
+    val pageScale: Float = 1.0f,
     /** 顶栏 / 底栏背景模糊（需 isRenderEffectSupported()，API 31+） */
     val enableBlur: Boolean = false,
     /** 只显示图标的悬浮底栏，适用于两种外观。 */
@@ -70,6 +77,7 @@ object ShellSettingsController {
     const val KEY_PREDICTIVE_BACK = "enable_predictive_back"
     const val KEY_SWIPE_DISMISS = "enable_swipe_dismiss"
     const val KEY_PAGER_MODE = "pager_interception_mode"
+    const val KEY_PAGE_SCALE = "page_scale"
     const val KEY_ENABLE_BLUR = "enable_blur"
     const val KEY_FLOATING_BOTTOM_BAR = "enable_floating_bottom_bar"
     const val KEY_FLOATING_BOTTOM_BAR_STYLE = "floating_bottom_bar_style"
@@ -83,6 +91,8 @@ object ShellSettingsController {
         swipeDismiss = context.getBoolean(SettingsPrefs, KEY_SWIPE_DISMISS, true),
         pagerInterceptionMode = context.getInt(SettingsPrefs, KEY_PAGER_MODE, PagerModeCrossAxis)
             .coerceIn(PagerModeNative, PagerModeIosLike),
+        pageScale = context.getFloat(SettingsPrefs, KEY_PAGE_SCALE, 1.0f)
+            .coerceIn(PageScaleMin, PageScaleMax),
         enableBlur = context.getBoolean(SettingsPrefs, KEY_ENABLE_BLUR, false),
         enableFloatingBottomBar = context.getBoolean(SettingsPrefs, KEY_FLOATING_BOTTOM_BAR, false),
         floatingBottomBarStyle = floatingBottomBarStyle(context),

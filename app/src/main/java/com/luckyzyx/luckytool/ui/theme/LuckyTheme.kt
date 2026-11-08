@@ -17,7 +17,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalView
+import androidx.compose.ui.unit.Density
 import androidx.core.view.WindowCompat
 import com.luckyzyx.luckytool.ui.shell.LocalEnableBlur
 import com.luckyzyx.luckytool.ui.shell.LocalEnableFloatingBottomBar
@@ -158,6 +160,8 @@ internal fun themeWindowAppearance(darkTheme: Boolean) {
  * 全应用配色与外壳行为均无需 recreate Activity 即时生效；明暗模式另外要经
  * `ThemeUtils.initTheme(context)` 同步平台 DayNight 主题（AppCompat 在明暗实际变化时
  * 会重建 Activity），否则矢量图的 `?attr/colorControlNormal` 仍按旧明暗解析而不可见。
+ *
+ * 界面缩放（page_scale）：覆盖 [LocalDensity]，只缩放 density，fontScale 原样透传。
  */
 @Composable
 fun LuckyAppTheme(content: @Composable () -> Unit) {
@@ -168,7 +172,13 @@ fun LuckyAppTheme(content: @Composable () -> Unit) {
     val shellSettings = remember(context, revision) { ShellSettingsController.get(context) }
     val uiMode = remember(context, revision) { ThemeController.getUiMode(context) }
 
+    val systemDensity = LocalDensity.current
+    val density = remember(systemDensity, shellSettings.pageScale) {
+        Density(systemDensity.density * shellSettings.pageScale, systemDensity.fontScale)
+    }
+
     CompositionLocalProvider(
+        LocalDensity provides density,
         LocalUiMode provides uiMode,
         LocalEnableNavigationBadge provides shellSettings.navigationBadge,
         LocalEnableBlur provides shellSettings.enableBlur,

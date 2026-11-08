@@ -37,6 +37,8 @@
     <string name="settings_pager_gesture_native">Default</string>
     <string name="settings_pager_gesture_cross_axis">Cross-axis</string>
     <string name="settings_pager_gesture_ios_like">iOS-like</string>
+    <string name="settings_page_scale">Page Scale</string>
+    <string name="settings_page_scale_summary">Adjust the global display scale.</string>
     <string name="settings_ui_mode">UI Style</string>
     <string name="settings_ui_mode_summary">Choose the interface style.</string>
     <string name="settings_ui_mode_coui_unavailable">Requires Android 14 (API 34) or above.</string>
