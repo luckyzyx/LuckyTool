@@ -330,7 +330,16 @@ internal fun LuckyPageScaffold(
 /** 根壳的统一入口：除页面骨架之外的最外层容器。 */
 @Composable
 internal fun LuckyRootScaffold(content: @Composable (PaddingValues) -> Unit) {
-    currentUiStyle().RootScaffold(content)
+    // 两条外观线的根壳都只是铺底色、内边距为零：固定在同一处铺色而不走分支，
+    // 避免切换外观时导航宿主因调用点变化被销毁重建。
+    val background = if (LocalUiMode.current == UiMode.Coui) {
+        CouiPageDefaults.themeColors(CouiTheme.isDark).background
+    } else {
+        MaterialTheme.colorScheme.surfaceContainer
+    }
+    Box(Modifier.fillMaxSize().background(background)) {
+        content(PaddingValues())
+    }
 }
 
 /** 一级标签外壳的统一入口。 */

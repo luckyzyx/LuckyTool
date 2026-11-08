@@ -43,8 +43,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.movableContentOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
@@ -208,13 +208,8 @@ fun MainShell(activity: MainActivity) {
             }
         }
     }
-    // 外观切换时保留同一个导航宿主及其页面状态。
-    val currentShellContent = rememberUpdatedState(shellContent)
-    val movableShellContent = remember {
-        movableContentOf<PaddingValues> { padding -> currentShellContent.value(padding) }
-    }
     // 页面各自处理 insets；根壳按当前外观样式绘制（见 UiStyle）
-    LuckyRootScaffold(content = movableShellContent)
+    LuckyRootScaffold(content = shellContent)
 }
 
 @Composable
@@ -384,6 +379,7 @@ internal fun MainTabs(
             }
         }
     }
+    // 切换一级标签外壳时搬移整份标签内容：页内 remember 状态随内容走，不重建。
     val currentShellContent = rememberUpdatedState(shellContent)
     val movableShellContent = remember {
         movableContentOf<PaddingValues> { padding -> currentShellContent.value(padding) }
