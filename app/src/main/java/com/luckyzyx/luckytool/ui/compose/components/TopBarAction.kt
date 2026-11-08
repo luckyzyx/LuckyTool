@@ -49,10 +49,10 @@ import androidx.compose.ui.window.PopupProperties
 import com.itos.coui.effect.couiButtonFeedback
 import com.itos.coui.icons.CouiIcons
 import com.itos.coui.layout.CouiPageDefaults
-import com.itos.coui.shape.CouiShape
 import com.itos.coui.text.CouiTextKind
 import com.itos.coui.text.Text as CouiText
 import com.itos.coui.theme.CouiTheme
+import com.luckyzyx.luckytool.ui.compose.components.coui.CouiTopBarIconButton
 import com.luckyzyx.luckytool.ui.theme.LocalUiMode
 import com.luckyzyx.luckytool.ui.theme.UiMode
 
@@ -167,11 +167,8 @@ fun TopBarOverflowMenu(
 }
 
 /**
- * COUI 线动作键：48dp 圆形点击面，不铺底色，按压高光由 [couiButtonFeedback] 绘制。
- *
- * 不用 COUI 顶栏自带的按钮组件：它按 Mesh 材质绘制按钮底色与阴影，在没有 Mesh 的环境里
- * （Robolectric 单测、部分低版本设备）构造即抛异常。语义与 material3 一致：点击面是可点节点，
- * 图标节点承载 contentDescription，读屏与既有测试都按图标描述定位。
+ * COUI 线动作键：有 Mesh 渲染器时按 demo 顶栏按钮样式画材质按钮，否则退回
+ * 48dp 纯点击面；两种形态的图标、按压反馈与语义统一由 [CouiTopBarIconButton] 处理。
  */
 @Composable
 private fun CouiTopBarActionButton(
@@ -180,21 +177,7 @@ private fun CouiTopBarActionButton(
     painter: Painter,
     modifier: Modifier = Modifier,
 ) {
-    val dark = CouiTheme.isDark
-    val interactionSource = remember { MutableInteractionSource() }
-    Box(
-        modifier = modifier
-            .size(48.dp)
-            .clip(CouiShape(24.dp, 2f))
-            .couiButtonFeedback(dark = dark, interactionSource = interactionSource)
-            .clickable(
-                interactionSource = interactionSource,
-                indication = null,
-                role = Role.Button,
-                onClick = onClick,
-            ),
-        contentAlignment = Alignment.Center,
-    ) {
+    CouiTopBarIconButton(onClick = onClick, modifier = modifier) {
         Icon(
             painter = painter,
             contentDescription = contentDescription,
