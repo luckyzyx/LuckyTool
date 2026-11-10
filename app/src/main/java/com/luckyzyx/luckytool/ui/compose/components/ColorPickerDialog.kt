@@ -1,5 +1,6 @@
 package com.luckyzyx.luckytool.ui.compose.components
 
+import android.os.Build
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -56,6 +57,7 @@ import androidx.core.graphics.toColorInt
 import com.itos.coui.dialog.CouiDialogAction
 import com.itos.coui.dialog.CouiDialogActionStyle
 import com.itos.coui.dialog.CouiDialogDefaults
+import com.itos.coui.segmentbutton.SegmentedControl
 import com.itos.coui.text.CouiTextKind
 import com.itos.coui.text.Text as CouiText
 import com.itos.coui.theme.CouiTheme
@@ -353,8 +355,8 @@ private fun ColorPickerBody(state: ColorPickerUiState) {
 /**
  * 取色模式切换：SV 面板与 ARGB 四通道滑杆二选一。
  *
- * 两个选项互斥且可反复切换，所以用筛选标签表达选中态；模式状态只有 [ColorPickerUiState.mode] 一份，
- * 两条线只换标签外观。
+ * 两个选项互斥、可反复切换且段数固定，所以 COUI 线用官方分段选择器表达选中态；
+ * 模式状态只有 [ColorPickerUiState.mode] 一份，两条线只换控件外观。
  */
 @Composable
 private fun PickerModeSwitch(
@@ -386,12 +388,31 @@ private fun PickerModeSwitch(
     }
 }
 
-/** COUI 线：同一组互斥标签改用 COUI 筛选标签，居中排布与 Material 线保持一致 */
+/**
+ * COUI 线：API 34 起用官方分段选择器（胶囊容器 + 滑动指示器，可按住拖动切换）。
+ *
+ * 控件按标签自然宽度收窄，外层居中；低版本取不到该控件（[SegmentedControl] 标注 @RequiresApi(34)），
+ * 退回同一组互斥的 COUI 筛选标签，选中态同样由 [ColorPickerUiState.mode] 持有。
+ */
 @Composable
 private fun CouiPickerModeSwitch(
     state: ColorPickerUiState,
     modifier: Modifier = Modifier,
 ) {
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+        val labels = remember {
+            PickerMode.entries.map { mode -> if (mode == PickerMode.Sv) MODE_SV_LABEL else MODE_ARGB_LABEL }
+        }
+        Box(modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+            SegmentedControl(
+                labels = labels,
+                selectedIndex = state.mode.ordinal,
+                onSelected = { index -> state.mode = PickerMode.entries[index] },
+            )
+        }
+        return
+    }
+
     Row(
         modifier = modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.Center,
@@ -555,7 +576,7 @@ private fun CouiChannelText(
     ) {
         CouiText(
             text = text,
-            kind = CouiTextKind.PreferenceValue,
+            kind = CouiTextKind.ItemValue,
             color = CouiTheme.colorScheme.onSurface,
             maxLines = 1,
         )

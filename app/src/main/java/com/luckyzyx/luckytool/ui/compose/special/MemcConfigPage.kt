@@ -39,6 +39,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.itos.coui.dialog.CouiDialogAction
@@ -386,7 +387,7 @@ internal fun LazyItemScope.MemcConfigContent() {
 /**
  * 顶部双 Tab：选中态由调用方持有，点击只回传下标。
  *
- * Material 线是带下划线的 SecondaryTabRow，Coui 线是等宽胶囊分段条；
+ * Material 线是带下划线的 SecondaryTabRow，Coui 线是官方分段选择器（低版本回退等宽胶囊分段条）；
  * 两条线共用同一个下标语义，切换只改调用方的 [selected]。
  */
 @Composable
@@ -608,7 +609,8 @@ private fun CouiMemcPackagePanel(
             ) {
                 CouiText(
                     text = stringResource(R.string.no_memc_data),
-                    kind = CouiTextKind.Body,
+                    kind = CouiTextKind.Search,
+                    textAlign = TextAlign.Start,
                     color = colors.onSurfaceVariant,
                 )
             }
@@ -628,7 +630,7 @@ private fun CouiMemcPackagePanel(
                             headlineContent = {
                                 CouiText(
                                     text = info.packName,
-                                    kind = CouiTextKind.PreferenceTitle,
+                                    kind = CouiTextKind.ItemTitle,
                                     color = colors.onSurface,
                                 )
                             },
@@ -636,12 +638,12 @@ private fun CouiMemcPackagePanel(
                                 Column {
                                     CouiText(
                                         text = "Rate: ${info.rate}",
-                                        kind = CouiTextKind.PreferenceSummary,
+                                        kind = CouiTextKind.ItemSummary,
                                         color = colors.onSurfaceVariant,
                                     )
                                     CouiText(
                                         text = "Type: ${info.type}",
-                                        kind = CouiTextKind.PreferenceSummary,
+                                        kind = CouiTextKind.ItemSummary,
                                         color = colors.onSurfaceVariant,
                                     )
                                 }
@@ -764,7 +766,8 @@ private fun CouiMemcActivityPanel(
             ) {
                 CouiText(
                     text = stringResource(R.string.no_memc_data),
-                    kind = CouiTextKind.Body,
+                    kind = CouiTextKind.Search,
+                    textAlign = TextAlign.Start,
                     color = colors.onSurfaceVariant,
                 )
             }
@@ -784,7 +787,7 @@ private fun CouiMemcActivityPanel(
                             headlineContent = {
                                 CouiText(
                                     text = info.packName,
-                                    kind = CouiTextKind.PreferenceTitle,
+                                    kind = CouiTextKind.ItemTitle,
                                     color = colors.onSurface,
                                 )
                             },
@@ -792,14 +795,14 @@ private fun CouiMemcActivityPanel(
                                 Column {
                                     CouiText(
                                         text = info.activity,
-                                        kind = CouiTextKind.PreferenceSummary,
+                                        kind = CouiTextKind.ItemSummary,
                                         color = colors.onSurfaceVariant,
                                         maxLines = 1,
                                         overflow = TextOverflow.Ellipsis,
                                     )
                                     CouiText(
                                         text = "Type: ${info.type}",
-                                        kind = CouiTextKind.PreferenceSummary,
+                                        kind = CouiTextKind.ItemSummary,
                                         color = colors.onSurfaceVariant,
                                     )
                                 }
@@ -1053,7 +1056,7 @@ private fun CouiMemcPackageDialog(
             )
             CouiText(
                 text = tips,
-                kind = CouiTextKind.PreferenceSummary,
+                kind = CouiTextKind.ItemSummary,
                 color = colors.onSurfaceVariant,
                 modifier = Modifier.padding(top = 8.dp),
             )
@@ -1414,7 +1417,7 @@ private fun CouiMemcActivityDialog(
             )
             CouiText(
                 text = tips,
-                kind = CouiTextKind.PreferenceSummary,
+                kind = CouiTextKind.ItemSummary,
                 color = colors.onSurfaceVariant,
                 modifier = Modifier.padding(top = 8.dp),
             )

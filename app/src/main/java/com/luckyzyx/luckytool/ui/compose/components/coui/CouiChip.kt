@@ -59,7 +59,7 @@ internal fun CouiFilterChip(
         }
         CouiText(
             text = label,
-            kind = CouiTextKind.PreferenceValue,
+            kind = CouiTextKind.ItemValue,
             color = contentColor,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
@@ -88,7 +88,7 @@ internal fun CouiSuggestionChip(
     ) {
         CouiText(
             text = label,
-            kind = CouiTextKind.PreferenceValue,
+            kind = CouiTextKind.ItemValue,
             color = if (enabled) colors.onSurface else colors.onSurfaceVariant.copy(alpha = 0.38f),
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
@@ -123,7 +123,7 @@ internal fun CouiAssistChip(
         }
         CouiText(
             text = label,
-            kind = CouiTextKind.PreferenceValue,
+            kind = CouiTextKind.ItemValue,
             color = contentColor,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,

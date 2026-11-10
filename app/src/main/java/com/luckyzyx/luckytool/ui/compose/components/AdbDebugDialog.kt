@@ -375,7 +375,7 @@ private fun AdbDebugCouiContent(state: AdbDebugDialogState) {
         ) {
             CouiText(
                 text = stringResource(R.string.enable_remote_adb_debugging),
-                kind = CouiTextKind.PreferenceTitle,
+                kind = CouiTextKind.ItemTitle,
                 color = colors.onSurface,
                 modifier = Modifier.weight(1f),
                 maxLines = 2,
@@ -480,7 +480,7 @@ private fun CouiAdbCommandText(text: String, modifier: Modifier = Modifier) {
     BasicText(
         text = text,
         modifier = modifier,
-        style = rememberCouiTextStyle(CouiTextKind.Body).copy(
+        style = rememberCouiTextStyle(CouiTextKind.Search).copy(
             color = CouiTheme.colorScheme.onSurface,
             fontFamily = FontFamily.Monospace,
         ),
@@ -501,7 +501,7 @@ private fun CouiAdbErrorText(error: AdbDebugError) {
                 AdbDebugError.OperationFailed -> R.string.adb_debug_operation_failed
             }
         ),
-        kind = CouiTextKind.Description,
+        kind = CouiTextKind.GroupFooter,
         color = CouiTheme.colorScheme.onSurface,
         modifier = Modifier.fillMaxWidth(),
     )

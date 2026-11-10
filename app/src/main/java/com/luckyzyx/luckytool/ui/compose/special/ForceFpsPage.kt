@@ -194,7 +194,7 @@ object ForceFpsPage {
                     if (isCoui) {
                         CouiText(
                             text = text,
-                            kind = CouiTextKind.Body,
+                            kind = CouiTextKind.Search,
                             color = CouiPageDefaults.themeColors(CouiTheme.isDark).summary,
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -258,7 +258,7 @@ object ForceFpsPage {
                 if (isCoui) {
                     CouiText(
                         text = stringResource(R.string.fps_tips),
-                        kind = CouiTextKind.Body,
+                        kind = CouiTextKind.Search,
                         color = CouiPageDefaults.themeColors(CouiTheme.isDark).summary,
                         modifier = Modifier
                             .fillMaxWidth()

@@ -636,12 +636,12 @@ private fun OrderResetRow(onReset: () -> Unit) {
                 Column(modifier = Modifier.weight(1f)) {
                     CouiText(
                         text = title,
-                        kind = CouiTextKind.PreferenceTitle,
+                        kind = CouiTextKind.ItemTitle,
                         color = colors.title,
                     )
                     CouiText(
                         text = summary,
-                        kind = CouiTextKind.PreferenceSummary,
+                        kind = CouiTextKind.ItemSummary,
                         color = colors.summary,
                     )
                 }
@@ -739,7 +739,7 @@ private fun LeftZoneEmptyRow(modifier: Modifier, highlighted: Boolean) {
         ) {
             CouiText(
                 text = text,
-                kind = CouiTextKind.PreferenceSummary,
+                kind = CouiTextKind.ItemSummary,
                 color = CouiPageDefaults.themeColors().summary,
             )
         }
@@ -882,18 +882,18 @@ private fun CouiOrderItemRow(
         CouiText(
             text = number.toString(),
             modifier = Modifier.width(28.dp),
-            kind = CouiTextKind.PreferenceSummary,
+            kind = CouiTextKind.ItemSummary,
             color = colors.summary,
         )
         Column(modifier = Modifier.weight(1f)) {
             CouiText(
                 text = label,
-                kind = CouiTextKind.PreferenceTitle,
+                kind = CouiTextKind.ItemTitle,
                 color = colors.title,
             )
             CouiText(
                 text = slot,
-                kind = CouiTextKind.PreferenceSummary,
+                kind = CouiTextKind.ItemSummary,
                 color = colors.summary,
             )
         }

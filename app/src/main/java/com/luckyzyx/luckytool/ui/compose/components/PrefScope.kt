@@ -72,7 +72,7 @@ import com.itos.coui.dialog.CouiDialogActionStyle
 import com.itos.coui.dialog.CouiDialogDefaults
 import com.itos.coui.dialog.InputDialog as CouiInputDialog
 import com.itos.coui.effect.couiButtonFeedback
-import com.itos.coui.icons.CouiIcons
+import com.luckyzyx.luckytool.ui.compose.components.coui.CouiIconsExt
 import com.itos.coui.layout.CouiPageColors
 import com.itos.coui.layout.CouiPageDefaults
 import com.itos.coui.layout.Divider as CouiDivider
@@ -233,34 +233,34 @@ private fun CouiCategoryHeader(title: String, summary: String?) {
         }
         if (summary != null) {
             Box(modifier = Modifier.padding(start = 32.dp, end = 32.dp).padding(bottom = 4.dp)) {
-                CouiText(text = summary, kind = CouiTextKind.Description, color = colors.summary)
+                CouiText(text = summary, kind = CouiTextKind.GroupFooter, color = colors.summary)
             }
         }
     }
 }
 
-/** COUI 行的标题文字（16 号 PreferenceTitle）：禁用态改用 colors.disabled */
+/** COUI 行的标题文字（16 号 ItemTitle）：禁用态改用 colors.disabled */
 @Composable
 internal fun CouiRowTitle(text: String, enabled: Boolean, colors: CouiPageColors) {
     CouiText(
         text = text,
-        kind = CouiTextKind.PreferenceTitle,
+        kind = CouiTextKind.ItemTitle,
         color = if (enabled) colors.title else colors.disabled,
     )
 }
 
-/** COUI 行的说明文字（13 号 PreferenceSummary）：禁用态改用 colors.disabled */
+/** COUI 行的说明文字（13 号 ItemSummary）：禁用态改用 colors.disabled */
 @Composable
 internal fun CouiRowSummary(text: String, enabled: Boolean, colors: CouiPageColors) {
     CouiText(
         text = text,
-        kind = CouiTextKind.PreferenceSummary,
+        kind = CouiTextKind.ItemSummary,
         color = if (enabled) colors.summary else colors.disabled,
     )
 }
 
 /**
- * COUI 行尾当前值（14 号 PreferenceValue，右对齐）：
+ * COUI 行尾当前值（14 号 ItemValue，右对齐）：
  * 右缘与行尾对齐，宽度上限 162dp 以免长文本把标题挤没。
  */
 @Composable
@@ -268,7 +268,7 @@ internal fun CouiRowValue(text: String, enabled: Boolean, colors: CouiPageColors
     CouiText(
         modifier = Modifier.padding(start = 16.dp).widthIn(max = 162.dp),
         text = text,
-        kind = CouiTextKind.PreferenceValue,
+        kind = CouiTextKind.ItemValue,
         color = if (enabled) colors.summary else colors.disabled,
         textAlign = TextAlign.End,
     )
@@ -578,7 +578,7 @@ class PrefScopeBuilder internal constructor(
                     trailing = {
                         CouiRowValue(text = currentLabel, enabled = enabled, colors = colors)
                         Icon(
-                            imageVector = CouiIcons.Popup,
+                            imageVector = CouiIconsExt.Popup,
                             contentDescription = null,
                             modifier = Modifier.padding(start = 4.dp).size(width = 14.dp, height = 24.dp),
                             tint = couiTrailingIconTint(dark),
@@ -792,7 +792,7 @@ class PrefScopeBuilder internal constructor(
                 summary = { CouiRowSummary(current.ifBlank { summary ?: "" }, enabled, colors) },
                 trailing = {
                     Icon(
-                        imageVector = CouiIcons.Next,
+                        imageVector = CouiIconsExt.Next,
                         contentDescription = null,
                         modifier = Modifier.size(width = 12.dp, height = 24.dp),
                         tint = couiTrailingIconTint(dark),
@@ -933,7 +933,7 @@ class PrefScopeBuilder internal constructor(
                     summary = summary?.let { text -> { CouiRowSummary(text, enabled, colors) } },
                     trailing = {
                         Icon(
-                            imageVector = CouiIcons.Next,
+                            imageVector = CouiIconsExt.Next,
                             contentDescription = null,
                             modifier = Modifier.size(width = 12.dp, height = 24.dp),
                             tint = couiTrailingIconTint(dark),

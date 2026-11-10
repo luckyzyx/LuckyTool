@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Text
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.itos.coui.text.CouiTextKind
 import com.itos.coui.text.Text as CouiText
@@ -42,7 +43,8 @@ object BatteryInfoPage {
                 if (isCoui) {
                     CouiText(
                         text = "Test",
-                        kind = CouiTextKind.Body,
+                        kind = CouiTextKind.Search,
+                        textAlign = TextAlign.Start,
                         color = CouiTheme.colorScheme.onSurface,
                     )
                 } else {

@@ -96,6 +96,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
@@ -865,7 +866,7 @@ private fun ThemeCardTitle(text: String) {
 
         UiMode.Coui -> CouiText(
             text = text,
-            kind = CouiTextKind.PreferenceTitle,
+            kind = CouiTextKind.ItemTitle,
             color = CouiPageDefaults.themeColors().title,
         )
     }
@@ -883,7 +884,7 @@ private fun ThemeCardSummary(text: String) {
 
         UiMode.Coui -> CouiText(
             text = text,
-            kind = CouiTextKind.PreferenceSummary,
+            kind = CouiTextKind.ItemSummary,
             color = CouiPageDefaults.themeColors().summary,
         )
     }
@@ -1041,7 +1042,8 @@ private fun CouiPreviewCard(isDark: Boolean) {
             ) {
                 CouiText(
                     text = stringResource(id = R.string.app_name),
-                    kind = CouiTextKind.Body,
+                    kind = CouiTextKind.Search,
+                    textAlign = TextAlign.Start,
                     color = pageColors.title,
                 )
             }

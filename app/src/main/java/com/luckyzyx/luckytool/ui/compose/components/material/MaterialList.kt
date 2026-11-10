@@ -61,10 +61,10 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.VisualTransformation
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
@@ -573,7 +573,7 @@ fun MaterialTextField(
             UiMode.Material -> Text("-")
             UiMode.Coui -> CouiText(
                 text = "-",
-                kind = CouiTextKind.PreferenceSummary,
+                kind = CouiTextKind.ItemSummary,
                 color = CouiTheme.colorScheme.onSurfaceVariant,
             )
         }
@@ -788,7 +788,7 @@ private fun CouiTextRow(
         if (label.isNotEmpty()) {
             CouiText(
                 text = label,
-                kind = CouiTextKind.PreferenceSummary,
+                kind = CouiTextKind.ItemSummary,
                 color = if (isError) colors.onSurface else colors.onSurfaceVariant,
                 modifier = Modifier.padding(start = 4.dp, bottom = 4.dp),
                 maxLines = 1,

@@ -66,7 +66,7 @@ internal fun CouiTextField(
     val colors = CouiTheme.colorScheme
     val source = interactionSource ?: remember { MutableInteractionSource() }
     val focused by source.collectIsFocusedAsState()
-    val textStyle = rememberCouiTextStyle(CouiTextKind.PreferenceTitle).copy(
+    val textStyle = rememberCouiTextStyle(CouiTextKind.ItemTitle).copy(
         color = if (enabled) colors.onSurface else colors.onSurfaceVariant,
     )
     CouiTextFieldFrame(
@@ -126,7 +126,7 @@ internal fun CouiTextField(
     val colors = CouiTheme.colorScheme
     val source = interactionSource ?: remember { MutableInteractionSource() }
     val focused by source.collectIsFocusedAsState()
-    val textStyle = rememberCouiTextStyle(CouiTextKind.PreferenceTitle).copy(
+    val textStyle = rememberCouiTextStyle(CouiTextKind.ItemTitle).copy(
         color = if (enabled) colors.onSurface else colors.onSurfaceVariant,
     )
     CouiTextFieldFrame(
@@ -190,7 +190,7 @@ private fun CouiTextFieldFrame(
         if (label != null) {
             CouiText(
                 text = label,
-                kind = CouiTextKind.PreferenceSummary,
+                kind = CouiTextKind.ItemSummary,
                 color = hintColor,
                 modifier = Modifier.padding(start = 16.dp, bottom = 4.dp),
                 maxLines = 1,
@@ -215,7 +215,7 @@ private fun CouiTextFieldFrame(
                 if (showPlaceholder && placeholder != null) {
                     CouiText(
                         text = placeholder,
-                        kind = CouiTextKind.PreferenceSummary,
+                        kind = CouiTextKind.ItemSummary,
                         color = colors.onSurfaceVariant,
                         maxLines = 1,
                     )
@@ -230,7 +230,7 @@ private fun CouiTextFieldFrame(
         if (supportingText != null) {
             CouiText(
                 text = supportingText,
-                kind = CouiTextKind.PreferenceSummary,
+                kind = CouiTextKind.ItemSummary,
                 color = hintColor,
                 modifier = Modifier.padding(start = 16.dp, top = 4.dp),
             )

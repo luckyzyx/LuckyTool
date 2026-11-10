@@ -48,7 +48,7 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.itos.coui.effect.couiButtonFeedback
-import com.itos.coui.icons.CouiIcons
+import com.luckyzyx.luckytool.ui.compose.components.coui.CouiIconsExt
 import com.itos.coui.layout.CouiPageDefaults
 import com.itos.coui.layout.Divider as CouiDivider
 import com.itos.coui.layout.Item as CouiItem
@@ -539,7 +539,7 @@ fun AppDropdownItem(
                         colors = pageColors,
                     )
                     CouiIcon(
-                        vector = CouiIcons.Popup,
+                        vector = CouiIconsExt.Popup,
                         tint = couiTrailingIconTint(dark),
                         size = 14.dp,
                         modifier = Modifier.padding(start = 4.dp),

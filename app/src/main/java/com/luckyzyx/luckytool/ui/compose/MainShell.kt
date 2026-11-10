@@ -107,12 +107,24 @@ import kotlin.system.exitProcess
 /** 跨标签页打开作用域页时保留来源标签。 */
 data class FunctionRequest(val pageKey: String, val title: String?)
 
-internal enum class MainTab(val labelRes: Int, val icon: ImageVector) {
-    Other(R.string.nav_other, CouiIcons.Components),
-    Function(R.string.nav_function, CouiIconsExt.Tune),
-    Home(R.string.nav_home, CouiIconsExt.Home),
-    Search(R.string.nav_search, CouiIcons.Search),
-    Setting(R.string.nav_setting, CouiIcons.Settings),
+internal enum class MainTab(val labelRes: Int) {
+    Other(R.string.nav_other),
+    Function(R.string.nav_function),
+    Home(R.string.nav_home),
+    Search(R.string.nav_search),
+    Setting(R.string.nav_setting),
+}
+
+/**
+ * 页签图标。COUI 图标是资源型向量，要在组合期按当前日夜配置解析，所以不能挂在枚举常量上。
+ */
+@Composable
+internal fun MainTab.icon(): ImageVector = when (this) {
+    MainTab.Other -> CouiIcons.Filled.Grid
+    MainTab.Function -> CouiIcons.Outlined.SliderCustom
+    MainTab.Home -> CouiIconsExt.Home
+    MainTab.Search -> CouiIcons.Outlined.Search
+    MainTab.Setting -> CouiIcons.Filled.Setting
 }
 
 @Composable
@@ -290,10 +302,10 @@ internal fun MainTabs(
                                                     ) { Text("1") }
                                                 },
                                             ) {
-                                                Icon(tab.icon, contentDescription = null, modifier = Modifier.size(24.dp))
+                                                Icon(tab.icon(), contentDescription = null, modifier = Modifier.size(24.dp))
                                             }
                                         } else {
-                                            Icon(tab.icon, contentDescription = null, modifier = Modifier.size(24.dp))
+                                            Icon(tab.icon(), contentDescription = null, modifier = Modifier.size(24.dp))
                                         }
                                     },
                                     label = { Text(stringResource(tab.labelRes)) },
@@ -409,10 +421,10 @@ private fun CouiTabsBottomBar(
             CouiNavigationBar(
                 modifier = Modifier.align(Alignment.BottomCenter),
                 renderer = renderer,
-                // COUI 图标集里没有这五个页签的图标，选中与未选中只能共用同一个图形，
+                // COUI 图标集没有选中/未选中成对的页签图标，两态共用同一个图形，
                 // 选中态由底栏用文字透明度区分。
                 items = tabs.map { tab ->
-                    CouiNavigationItem(stringResource(tab.labelRes), tab.icon, tab.icon)
+                    CouiNavigationItem(stringResource(tab.labelRes), tab.icon(), tab.icon())
                 },
                 selectedIndex = selectedIndex,
                 dark = CouiTheme.isDark,
@@ -475,7 +487,7 @@ private fun CouiFlatTabsBottomBar(
             ) {
                 val tabIcon: @Composable () -> Unit = {
                     Icon(
-                        imageVector = tab.icon,
+                        imageVector = tab.icon(),
                         contentDescription = null,
                         modifier = Modifier.size(24.dp),
                         tint = tint,
@@ -490,7 +502,7 @@ private fun CouiFlatTabsBottomBar(
                 Spacer(Modifier.height(2.dp))
                 CouiText(
                     text = stringResource(tab.labelRes),
-                    kind = CouiTextKind.Category,
+                    kind = CouiTextKind.GroupFooter,
                     color = tint,
                     textAlign = TextAlign.Center,
                     maxLines = 1,

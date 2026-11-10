@@ -38,6 +38,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntRect
 import androidx.compose.ui.unit.IntSize
@@ -207,7 +208,7 @@ private fun CouiTopBarOverflowMenu(
         CouiTopBarActionButton(
             onClick = { expanded = true },
             contentDescription = contentDescription,
-            painter = rememberVectorPainter(CouiIcons.More),
+            painter = rememberVectorPainter(CouiIcons.Outlined.More),
         )
         if (expanded) {
             Popup(
@@ -261,7 +262,8 @@ private fun CouiOverflowMenuItemRow(label: String, onClick: () -> Unit) {
     ) {
         CouiText(
             text = label,
-            kind = CouiTextKind.Body,
+            kind = CouiTextKind.Search,
+            textAlign = TextAlign.Start,
             color = CouiTheme.colorScheme.onSurface,
         )
     }

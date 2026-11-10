@@ -139,7 +139,7 @@ internal fun SortFilterSheetMaterial(
  *
  * 标签本身不带外边距，行内与行间都要在这里补：不补的话相邻胶囊贴在一起，整行读起来像一串连写的文字。
  * 排序项比其他入口多（6 项），用 FlowRow 折行而不是横向滚动，靠后的项不会被挤出屏幕外。
- * 标题用 [CouiTextKind.SectionTitle]：比小节标题更大，层级才不会反过来。
+ * 标题用 [CouiTextKind.TopBar]：比小节标题更大，层级才不会反过来。
  * 关闭行为由面板负责：点遮罩或按返回键都走 [onDismiss]，内容再多也只在面板内部滚动。
  */
 @OptIn(ExperimentalLayoutApi::class)
@@ -162,7 +162,7 @@ private fun CouiSortFilterSheet(
         ) {
             CouiText(
                 text = stringResource(R.string.appinfo_sort_and_filter),
-                kind = CouiTextKind.SectionTitle,
+                kind = CouiTextKind.TopBar,
                 textAlign = TextAlign.Center,
                 modifier = Modifier.fillMaxWidth(),
             )
@@ -174,12 +174,12 @@ private fun CouiSortFilterSheet(
             ) {
                 CouiText(
                     text = stringResource(R.string.appinfo_sort_by),
-                    kind = CouiTextKind.PreferenceTitle,
+                    kind = CouiTextKind.ItemTitle,
                     modifier = Modifier.weight(1f),
                 )
                 CouiText(
                     text = stringResource(R.string.appinfo_reverse),
-                    kind = CouiTextKind.PreferenceTitle,
+                    kind = CouiTextKind.ItemTitle,
                 )
                 CouiSwitch(
                     modifier = Modifier.padding(start = 8.dp),
@@ -213,7 +213,7 @@ private fun CouiSortFilterSheet(
                 )
                 CouiText(
                     text = stringResource(R.string.appinfo_filter),
-                    kind = CouiTextKind.PreferenceTitle,
+                    kind = CouiTextKind.ItemTitle,
                 )
                 Spacer(Modifier.size(8.dp))
                 filterContent()

@@ -58,7 +58,7 @@ internal fun CouiBadge(
         ) {
             CouiText(
                 text = count.toString(),
-                kind = CouiTextKind.Description,
+                kind = CouiTextKind.GroupFooter,
                 color = colors.onAccent,
                 maxLines = 1,
             )

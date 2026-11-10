@@ -530,7 +530,7 @@ private fun DonateSortSheetCoui(sheet: DonateSortSheetModel) {
         ) {
             CouiText(
                 text = stringResource(R.string.appinfo_sort_and_filter),
-                kind = CouiTextKind.SectionTitle,
+                kind = CouiTextKind.TopBar,
                 textAlign = TextAlign.Center,
                 modifier = Modifier.fillMaxWidth(),
             )
@@ -540,12 +540,12 @@ private fun DonateSortSheetCoui(sheet: DonateSortSheetModel) {
             ) {
                 CouiText(
                     text = stringResource(R.string.appinfo_sort_by),
-                    kind = CouiTextKind.PreferenceTitle,
+                    kind = CouiTextKind.ItemTitle,
                     modifier = Modifier.weight(1f),
                 )
                 CouiText(
                     text = stringResource(R.string.appinfo_reverse),
-                    kind = CouiTextKind.PreferenceTitle,
+                    kind = CouiTextKind.ItemTitle,
                 )
                 CouiSwitch(
                     modifier = Modifier.padding(start = 8.dp),
@@ -575,7 +575,7 @@ private fun DonateSortSheetCoui(sheet: DonateSortSheetModel) {
             )
             CouiText(
                 text = stringResource(R.string.appinfo_filter),
-                kind = CouiTextKind.PreferenceTitle,
+                kind = CouiTextKind.ItemTitle,
             )
             Row(
                 Modifier.fillMaxWidth().horizontalScroll(rememberScrollState())

@@ -51,7 +51,7 @@ internal fun CouiTextButton(
     ) {
         CouiText(
             text = text,
-            kind = CouiTextKind.PreferenceTitle,
+            kind = CouiTextKind.ItemTitle,
             color = if (enabled) colors.accent else colors.onSurfaceVariant.copy(alpha = 0.38f),
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
@@ -75,7 +75,7 @@ internal fun CouiFilledButton(
     CouiFilledButton(onClick = onClick, modifier = modifier, enabled = enabled) {
         CouiText(
             text = text,
-            kind = CouiTextKind.PreferenceTitle,
+            kind = CouiTextKind.ItemTitle,
             color = colors.onAccent.copy(alpha = if (enabled) 1f else 0.7f),
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,

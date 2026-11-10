@@ -2,9 +2,6 @@ package com.luckyzyx.luckytool.ui.compose.scopes.apps
 
 import android.content.Context
 import android.os.Build
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -13,7 +10,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.itos.coui.layout.CouiPageDefaults
 import com.itos.coui.text.CouiTextKind
@@ -25,6 +21,7 @@ import com.luckyzyx.luckytool.ui.compose.components.AppPickerDialog
 import com.luckyzyx.luckytool.ui.compose.components.ChoiceItem
 import com.luckyzyx.luckytool.ui.compose.components.MultiChoiceDialog
 import com.luckyzyx.luckytool.ui.compose.components.AppListItem
+import com.luckyzyx.luckytool.ui.compose.components.PrefRowInset
 import com.luckyzyx.luckytool.ui.compose.scopes.ScopePageSpec
 import com.luckyzyx.luckytool.ui.theme.LocalUiMode
 import com.luckyzyx.luckytool.ui.theme.UiMode
@@ -73,7 +70,7 @@ object OplusCameraPage {
                 val current by state.stringFlow("custom_camera_open_gallery_by_default")
                     .collectAsStateWithLifecycle()
                 var show by remember { mutableStateOf(false) }
-                Box(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
+                PrefRowInset {
                     AppListItem(
                         onClick = { show = true },
                         supportingContent = {
@@ -81,7 +78,7 @@ object OplusCameraPage {
                             if (LocalUiMode.current == UiMode.Coui) {
                                 CouiText(
                                     text = arraySummaryLine(current.ifBlank { stringResource(R.string.not_set) }),
-                                    kind = CouiTextKind.PreferenceSummary,
+                                    kind = CouiTextKind.ItemSummary,
                                     color = CouiPageDefaults.themeColors(CouiTheme.isDark).summary,
                                 )
                             } else {
@@ -93,7 +90,7 @@ object OplusCameraPage {
                             if (LocalUiMode.current == UiMode.Coui) {
                                 CouiText(
                                     text = stringResource(R.string.custom_camera_open_gallery_by_default),
-                                    kind = CouiTextKind.PreferenceTitle,
+                                    kind = CouiTextKind.ItemTitle,
                                 )
                             } else {
                                 Text(stringResource(R.string.custom_camera_open_gallery_by_default))
@@ -177,7 +174,7 @@ object OplusCameraPage {
                 val filters = CameraUtils.getCameraFilters(c).apply {
                     forEach { it.isEnable = it.key in saved }
                 }
-                Box(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
+                PrefRowInset {
                     AppListItem(
                         onClick = { showDialog = true },
                         supportingContent = {
@@ -185,7 +182,7 @@ object OplusCameraPage {
                             if (LocalUiMode.current == UiMode.Coui) {
                                 CouiText(
                                     text = filters.filter { it.isEnable }.map { it.title }.toString(),
-                                    kind = CouiTextKind.PreferenceSummary,
+                                    kind = CouiTextKind.ItemSummary,
                                     color = CouiPageDefaults.themeColors(CouiTheme.isDark).summary,
                                 )
                             } else {
@@ -197,7 +194,7 @@ object OplusCameraPage {
                             if (LocalUiMode.current == UiMode.Coui) {
                                 CouiText(
                                     text = stringResource(R.string.camera_universal_filter_settings),
-                                    kind = CouiTextKind.PreferenceTitle,
+                                    kind = CouiTextKind.ItemTitle,
                                 )
                             } else {
                                 Text(stringResource(R.string.camera_universal_filter_settings))
@@ -232,7 +229,7 @@ object OplusCameraPage {
                 val filters = CameraUtils.getPortraitCameraFilters(c).apply {
                     forEach { it.isEnable = it.key in saved }
                 }
-                Box(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
+                PrefRowInset {
                     AppListItem(
                         onClick = { showDialog = true },
                         supportingContent = {
@@ -240,7 +237,7 @@ object OplusCameraPage {
                             if (LocalUiMode.current == UiMode.Coui) {
                                 CouiText(
                                     text = filters.filter { it.isEnable }.map { it.title }.toString(),
-                                    kind = CouiTextKind.PreferenceSummary,
+                                    kind = CouiTextKind.ItemSummary,
                                     color = CouiPageDefaults.themeColors(CouiTheme.isDark).summary,
                                 )
                             } else {
@@ -252,7 +249,7 @@ object OplusCameraPage {
                             if (LocalUiMode.current == UiMode.Coui) {
                                 CouiText(
                                     text = stringResource(R.string.camera_portrait_filter_settings),
-                                    kind = CouiTextKind.PreferenceTitle,
+                                    kind = CouiTextKind.ItemTitle,
                                 )
                             } else {
                                 Text(stringResource(R.string.camera_portrait_filter_settings))
@@ -282,7 +279,7 @@ object OplusCameraPage {
                 val filters = CameraUtils.getVideoCameraFilters(c).apply {
                     forEach { it.isEnable = it.key in saved }
                 }
-                Box(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
+                PrefRowInset {
                     AppListItem(
                         onClick = { showDialog = true },
                         supportingContent = {
@@ -290,7 +287,7 @@ object OplusCameraPage {
                             if (LocalUiMode.current == UiMode.Coui) {
                                 CouiText(
                                     text = filters.filter { it.isEnable }.map { it.title }.toString(),
-                                    kind = CouiTextKind.PreferenceSummary,
+                                    kind = CouiTextKind.ItemSummary,
                                     color = CouiPageDefaults.themeColors(CouiTheme.isDark).summary,
                                 )
                             } else {
@@ -302,7 +299,7 @@ object OplusCameraPage {
                             if (LocalUiMode.current == UiMode.Coui) {
                                 CouiText(
                                     text = stringResource(R.string.camera_video_filter_settings),
-                                    kind = CouiTextKind.PreferenceTitle,
+                                    kind = CouiTextKind.ItemTitle,
                                 )
                             } else {
                                 Text(stringResource(R.string.camera_video_filter_settings))

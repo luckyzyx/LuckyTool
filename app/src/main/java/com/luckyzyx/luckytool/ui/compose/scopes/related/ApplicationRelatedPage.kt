@@ -1,8 +1,5 @@
 package com.luckyzyx.luckytool.ui.compose.scopes.related
 
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Text
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -10,7 +7,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.itos.coui.layout.CouiPageDefaults
 import com.itos.coui.text.CouiTextKind
@@ -21,6 +17,7 @@ import com.luckyzyx.luckytool.hook.scopes.android.InstallerRoutingPolicy
 import com.luckyzyx.luckytool.ui.compose.components.AppPickerDialog
 import com.luckyzyx.luckytool.ui.compose.components.AppListItem
 import com.luckyzyx.luckytool.ui.compose.components.AppSwitchItem
+import com.luckyzyx.luckytool.ui.compose.components.PrefRowInset
 import com.luckyzyx.luckytool.ui.compose.scopes.ScopePageSpec
 import com.luckyzyx.luckytool.ui.theme.LocalUiMode
 import com.luckyzyx.luckytool.ui.theme.UiMode
@@ -299,7 +296,7 @@ object ApplicationRelatedPage {
                 summary = c.getString(R.string.disable_app_archiving_summary),
             ) { slot ->
                 val checked by state.booleanFlow(archivingKey, true).collectAsStateWithLifecycle()
-                Box(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
+                PrefRowInset {
                     AppSwitchItem(
                         title = stringResource(R.string.disable_app_archiving),
                         summary = stringResource(R.string.disable_app_archiving_summary),
@@ -338,7 +335,7 @@ object ApplicationRelatedPage {
         custom(key = key, title = title) { slot ->
             var showPicker by remember { mutableStateOf(false) }
             val current = state.getStringSet(key).toString()
-            Box(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
+            PrefRowInset {
                 AppListItem(
                     onClick = { showPicker = true },
                     supportingContent = {
@@ -346,7 +343,7 @@ object ApplicationRelatedPage {
                         if (LocalUiMode.current == UiMode.Coui) {
                             CouiText(
                                 text = current,
-                                kind = CouiTextKind.PreferenceSummary,
+                                kind = CouiTextKind.ItemSummary,
                                 color = CouiPageDefaults.themeColors(CouiTheme.isDark).summary,
                             )
                         } else {
@@ -356,7 +353,7 @@ object ApplicationRelatedPage {
                     colors = itemColors(slot),
                     headlineContent = {
                         if (LocalUiMode.current == UiMode.Coui) {
-                            CouiText(text = title, kind = CouiTextKind.PreferenceTitle)
+                            CouiText(text = title, kind = CouiTextKind.ItemTitle)
                         } else {
                             Text(title)
                         }

@@ -15,6 +15,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.itos.coui.dialog.CouiDialogAction
 import com.itos.coui.dialog.CouiDialogActionStyle
@@ -111,7 +112,8 @@ object DonateUtils {
                 bitmap?.let { Image(it, contentDescription = title) }
                 CouiText(
                     text = stringResource(R.string.donate_message),
-                    kind = CouiTextKind.Body,
+                    kind = CouiTextKind.Search,
+                    textAlign = TextAlign.Start,
                     color = colors.onSurfaceVariant,
                 )
             }

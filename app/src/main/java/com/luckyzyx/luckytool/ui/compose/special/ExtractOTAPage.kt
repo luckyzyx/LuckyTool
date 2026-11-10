@@ -145,7 +145,7 @@ object ExtractOTAPage {
                     if (isCoui) {
                         CouiText(
                             text = tipsText,
-                            kind = CouiTextKind.Body,
+                            kind = CouiTextKind.Search,
                             color = CouiPageDefaults.themeColors(CouiTheme.isDark).summary,
                             modifier = Modifier.fillMaxWidth(),
                             textAlign = TextAlign.Center,
@@ -162,7 +162,8 @@ object ExtractOTAPage {
                     if (isCoui) {
                         CouiText(
                             text = fullText,
-                            kind = CouiTextKind.Body,
+                            kind = CouiTextKind.Search,
+                            textAlign = TextAlign.Start,
                             color = CouiTheme.colorScheme.onSurface,
                             modifier = Modifier.fillMaxWidth().padding(vertical = 16.dp),
                         )
@@ -176,7 +177,7 @@ object ExtractOTAPage {
                     if (isCoui) {
                         CouiText(
                             text = noDataText,
-                            kind = CouiTextKind.Body,
+                            kind = CouiTextKind.Search,
                             color = CouiPageDefaults.themeColors(CouiTheme.isDark).summary,
                             modifier = Modifier.fillMaxWidth().padding(vertical = 24.dp),
                             textAlign = TextAlign.Center,

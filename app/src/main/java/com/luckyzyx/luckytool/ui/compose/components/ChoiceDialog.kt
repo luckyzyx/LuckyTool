@@ -35,6 +35,7 @@ import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -475,7 +476,7 @@ private fun CouiButtonlessChoiceDialog(
         ) {
             CouiText(
                 text = title,
-                kind = CouiTextKind.PreferenceTitle,
+                kind = CouiTextKind.ItemTitle,
                 color = scheme.onSurface,
                 modifier = Modifier.padding(horizontal = CouiDialogDefaults.contentPadding),
             )
@@ -507,7 +508,8 @@ private fun CouiChoiceBody(
         ChoicePlaceholder {
             CouiText(
                 text = stringResource(R.string.choice_dialog_empty),
-                kind = CouiTextKind.Body,
+                kind = CouiTextKind.Search,
+                textAlign = TextAlign.Start,
                 color = CouiTheme.colorScheme.onSurfaceVariant,
             )
         }
@@ -571,7 +573,7 @@ private fun CouiChoiceRow(
         Column(Modifier.weight(1f)) {
             CouiText(
                 text = row.item.title,
-                kind = CouiTextKind.PreferenceTitle,
+                kind = CouiTextKind.ItemTitle,
                 color = if (enabled) scheme.onSurface else scheme.onSurfaceVariant,
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis,
@@ -579,7 +581,7 @@ private fun CouiChoiceRow(
             row.item.summary?.let { summary ->
                 CouiText(
                     text = summary,
-                    kind = CouiTextKind.PreferenceSummary,
+                    kind = CouiTextKind.ItemSummary,
                     color = scheme.onSurfaceVariant,
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis,
@@ -631,7 +633,7 @@ private fun ChoiceSelectAllRow(
 
             UiMode.Coui -> CouiText(
                 text = countText,
-                kind = CouiTextKind.PreferenceSummary,
+                kind = CouiTextKind.ItemSummary,
                 color = CouiTheme.colorScheme.onSurfaceVariant,
             )
         }
@@ -672,7 +674,8 @@ private fun CouiTextAction(
 ) {
     CouiText(
         text = text,
-        kind = CouiTextKind.Body,
+        kind = CouiTextKind.Search,
+        textAlign = TextAlign.Start,
         color = CouiTheme.colorScheme.accent,
         modifier = Modifier
             .clickable(role = Role.Button, onClick = onClick)

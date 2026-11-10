@@ -17,7 +17,6 @@ import androidx.compose.ui.unit.dp
 import com.itos.coui.icons.CouiIcons
 import com.luckyzyx.luckytool.R
 import com.luckyzyx.luckytool.ui.compose.components.coui.CouiIconButton
-import com.luckyzyx.luckytool.ui.compose.components.coui.CouiIconsExt
 import com.luckyzyx.luckytool.ui.compose.components.coui.CouiTextField
 import com.itos.coui.theme.CouiTheme
 import com.luckyzyx.luckytool.ui.theme.LocalUiMode
@@ -98,7 +97,7 @@ internal fun AppSearchBar(
                 placeholder = placeholder,
                 leadingIcon = {
                     Icon(
-                        imageVector = CouiIcons.SearchField,
+                        imageVector = CouiIcons.Outlined.Search,
                         contentDescription = null,
                         modifier = Modifier.size(SearchIconSize),
                         tint = colors.onSurfaceVariant,
@@ -113,7 +112,7 @@ internal fun AppSearchBar(
                                 enabled = enabled,
                             ) {
                                 Icon(
-                                    imageVector = CouiIcons.Close,
+                                    imageVector = CouiIcons.Filled.Close,
                                     contentDescription = null,
                                     modifier = Modifier.size(SearchIconSize),
                                     tint = colors.onSurfaceVariant,
@@ -127,7 +126,7 @@ internal fun AppSearchBar(
                                 enabled = enabled,
                             ) {
                                 Icon(
-                                    imageVector = CouiIconsExt.FilterList,
+                                    imageVector = CouiIcons.Filled.ListFilter,
                                     contentDescription = null,
                                     modifier = Modifier.size(SearchIconSize),
                                     tint = if (filterActive) colors.accent else colors.onSurfaceVariant,

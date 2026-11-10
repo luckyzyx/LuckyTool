@@ -345,7 +345,7 @@ internal fun DarkModeAppRow(
                     if (coui) {
                         CouiText(
                             text = info.name,
-                            kind = CouiTextKind.PreferenceTitle,
+                            kind = CouiTextKind.ItemTitle,
                             color = CouiTheme.colorScheme.onSurface,
                             maxLines = 2,
                             overflow = TextOverflow.Ellipsis,
@@ -362,7 +362,7 @@ internal fun DarkModeAppRow(
                     if (coui) {
                         CouiText(
                             text = info.packageName,
-                            kind = CouiTextKind.PreferenceSummary,
+                            kind = CouiTextKind.ItemSummary,
                             color = CouiTheme.colorScheme.onSurfaceVariant,
                             maxLines = 2,
                             overflow = TextOverflow.Ellipsis,
@@ -459,7 +459,7 @@ internal fun DarkModeAppRow(
                             )
                             CouiText(
                                 text = curType.toString(),
-                                kind = CouiTextKind.PreferenceValue,
+                                kind = CouiTextKind.ItemValue,
                                 color = CouiTheme.colorScheme.onSurface,
                             )
                         }

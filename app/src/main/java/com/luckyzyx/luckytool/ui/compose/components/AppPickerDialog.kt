@@ -55,6 +55,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -643,7 +644,8 @@ private fun CouiAppPickerBody(
             filtered.isEmpty() -> PickerPlaceholder {
                 CouiText(
                     text = stringResource(R.string.appinfo_no_match),
-                    kind = CouiTextKind.Body,
+                    kind = CouiTextKind.Search,
+                    textAlign = TextAlign.Start,
                     color = CouiTheme.colorScheme.onSurfaceVariant,
                 )
             }
@@ -688,7 +690,7 @@ private fun CouiPickerStatusRow(
         CouiText(
             text = stringResource(R.string.appinfo_app_count, visibleCount) +
                 if (multiMode) " · " + stringResource(R.string.appinfo_selected_count, state.selected.size) else "",
-            kind = CouiTextKind.PreferenceSummary,
+            kind = CouiTextKind.ItemSummary,
             color = CouiTheme.colorScheme.onSurfaceVariant,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
@@ -792,7 +794,7 @@ private fun CouiAppRow(
         ) {
             CouiText(
                 text = app.name,
-                kind = CouiTextKind.PreferenceTitle,
+                kind = CouiTextKind.ItemTitle,
                 color = colors.onSurface,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
@@ -800,7 +802,7 @@ private fun CouiAppRow(
             )
             CouiText(
                 text = app.packageName,
-                kind = CouiTextKind.PreferenceSummary,
+                kind = CouiTextKind.ItemSummary,
                 color = colors.onSurfaceVariant,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,

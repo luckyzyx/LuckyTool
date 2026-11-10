@@ -53,9 +53,9 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDirection
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
@@ -403,13 +403,13 @@ private fun couiHomeColors(): HomeColors {
 
 private enum class HomeTextRole { Status, Title, Body, Caption }
 
-/** COUI 排版按现有层级对应：卡片标题走 PreferenceTitle，正文走 Body，页脚提示走 Description。 */
+/** COUI 排版按现有层级对应：卡片标题走 ItemTitle，正文走 Search（与 a7 的 Body 同为 15/400），页脚提示走 GroupFooter。 */
 private val HomeTextRole.couiKind: CouiTextKind
     get() = when (this) {
-        HomeTextRole.Status -> CouiTextKind.PreferenceTitle
-        HomeTextRole.Title -> CouiTextKind.PreferenceTitle
-        HomeTextRole.Body -> CouiTextKind.Body
-        HomeTextRole.Caption -> CouiTextKind.Description
+        HomeTextRole.Status -> CouiTextKind.ItemTitle
+        HomeTextRole.Title -> CouiTextKind.ItemTitle
+        HomeTextRole.Body -> CouiTextKind.Search
+        HomeTextRole.Caption -> CouiTextKind.GroupFooter
     }
 
 private val StatusHeadlineSize = 22.sp
@@ -446,7 +446,8 @@ private fun HomeText(
             text = text,
             kind = role.couiKind,
             color = color,
-            textAlign = textAlign,
+            // 仪表盘文案在不传对齐时按起始对齐：COUI 的 Search 默认居中，与这里的左对齐版式不符。
+            textAlign = textAlign ?: TextAlign.Start,
         )
         return
     }

@@ -1,8 +1,5 @@
 package com.luckyzyx.luckytool.ui.compose.scopes
 
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Text
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -10,7 +7,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.itos.coui.layout.CouiPageDefaults
 import com.itos.coui.text.CouiTextKind
@@ -19,6 +15,7 @@ import com.itos.coui.theme.CouiTheme
 import com.luckyzyx.luckytool.R
 import com.luckyzyx.luckytool.ui.compose.components.AppPickerDialog
 import com.luckyzyx.luckytool.ui.compose.components.AppListItem
+import com.luckyzyx.luckytool.ui.compose.components.PrefRowInset
 import com.luckyzyx.luckytool.ui.theme.LocalUiMode
 import com.luckyzyx.luckytool.ui.theme.UiMode
 import com.luckyzyx.luckytool.utils.A13
@@ -101,7 +98,7 @@ object StatusBarRelatedPage {
                         .collectAsStateWithLifecycle()
                     val enabled = !state.getBoolean("disable_music_fluid_cloud_display")
                     var showPicker by remember { mutableStateOf(false) }
-                    Box(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
+                    PrefRowInset {
                         AppListItem(
                             onClick = { if (enabled) showPicker = true },
                             supportingContent = {
@@ -109,7 +106,7 @@ object StatusBarRelatedPage {
                                 if (LocalUiMode.current == UiMode.Coui) {
                                     CouiText(
                                         text = whitelist.toString(),
-                                        kind = CouiTextKind.PreferenceSummary,
+                                        kind = CouiTextKind.ItemSummary,
                                         color = CouiPageDefaults.themeColors(CouiTheme.isDark).summary,
                                     )
                                 } else {
@@ -122,7 +119,7 @@ object StatusBarRelatedPage {
                                 if (LocalUiMode.current == UiMode.Coui) {
                                     CouiText(
                                         text = stringResource(R.string.set_custom_music_fluid_cloud_whitelist),
-                                        kind = CouiTextKind.PreferenceTitle,
+                                        kind = CouiTextKind.ItemTitle,
                                     )
                                 } else {
                                     Text(stringResource(R.string.set_custom_music_fluid_cloud_whitelist))

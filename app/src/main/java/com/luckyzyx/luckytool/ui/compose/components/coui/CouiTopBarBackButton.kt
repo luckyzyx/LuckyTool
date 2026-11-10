@@ -22,7 +22,7 @@ internal fun CouiTopBarBackButton(
 ) {
     CouiTopBarIconButton(onClick = onClick, modifier = modifier) {
         Icon(
-            imageVector = CouiIcons.Back,
+            imageVector = CouiIcons.Filled.Back,
             contentDescription = contentDescription,
             modifier = Modifier.size(24.dp),
             tint = CouiTheme.colorScheme.onSurface,

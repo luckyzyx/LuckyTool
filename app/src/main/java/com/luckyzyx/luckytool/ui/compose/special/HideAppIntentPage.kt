@@ -46,6 +46,7 @@ import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.core.graphics.drawable.toBitmap
@@ -719,7 +720,8 @@ private fun IntentAppRowCoui(
             headlineContent = {
                 CouiText(
                     text = info.name,
-                    kind = CouiTextKind.Body,
+                    kind = CouiTextKind.Search,
+                    textAlign = TextAlign.Start,
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis,
                 )
@@ -727,7 +729,7 @@ private fun IntentAppRowCoui(
             supportingContent = {
                 CouiText(
                     text = info.packageName,
-                    kind = CouiTextKind.PreferenceSummary,
+                    kind = CouiTextKind.ItemSummary,
                     color = CouiTheme.colorScheme.onSurfaceVariant,
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis,

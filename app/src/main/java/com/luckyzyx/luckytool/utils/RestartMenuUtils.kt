@@ -593,13 +593,14 @@ object RestartMenuUtils {
             ) {
                 CouiText(
                     text = title,
-                    kind = CouiTextKind.PreferenceTitle,
+                    kind = CouiTextKind.ItemTitle,
                     color = colors.onSurface,
                 )
                 CouiCircularProgressIndicator(color = colors.accent)
                 CouiText(
                     text = progressText,
-                    kind = CouiTextKind.Body,
+                    kind = CouiTextKind.Search,
+                    textAlign = TextAlign.Start,
                     color = colors.onSurfaceVariant,
                 )
             }

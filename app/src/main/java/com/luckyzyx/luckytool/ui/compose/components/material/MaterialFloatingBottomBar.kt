@@ -69,6 +69,7 @@ import com.luckyzyx.luckytool.ui.compose.components.ChromeInsets
 import com.luckyzyx.luckytool.ui.compose.components.animation.DampedDragAnimation
 import com.luckyzyx.luckytool.ui.theme.isInDarkTheme
 import com.luckyzyx.luckytool.ui.shell.FloatingBottomBarStyle
+import com.luckyzyx.luckytool.ui.compose.icon
 import kotlinx.coroutines.launch
 import kotlin.math.abs
 import kotlin.math.roundToInt
@@ -298,7 +299,7 @@ private fun MaterialFloatingTabs(
                     }
                 }) {
                     Icon(
-                        tab.icon,
+                        tab.icon(),
                         contentDescription = stringResource(tab.labelRes),
                         modifier = Modifier.size(iconSize),
                         tint = tint,

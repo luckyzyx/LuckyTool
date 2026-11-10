@@ -313,7 +313,8 @@ private fun Category(title: String, summary: String? = null) {
             if (summary != null) {
                 CouiText(
                     text = summary,
-                    kind = CouiTextKind.Body,
+                    kind = CouiTextKind.Search,
+                    textAlign = TextAlign.Start,
                     color = CouiTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier
                         .fillMaxWidth()

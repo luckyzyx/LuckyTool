@@ -38,7 +38,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import com.itos.coui.icons.CouiIcons
+import com.luckyzyx.luckytool.ui.compose.components.coui.CouiIconsExt
 import com.itos.coui.layout.CouiPageDefaults
 import com.itos.coui.scroll.rememberCouiOverscrollEffect
 import com.itos.coui.text.CouiTextKind
@@ -116,12 +116,12 @@ internal fun FunctionList(
                     onClick = onClick,
                     iconSize = 48.dp,
                     headlineContent = {
-                        // 行内排版按外观分派：COUI 线用 COUI 语义字体（PreferenceTitle/PreferenceSummary）
+                        // 行内排版按外观分派：COUI 线用 COUI 语义字体（ItemTitle/ItemSummary）
                         // 与页面配色，Material 线保持 M3 Text。
                         if (isCoui) {
                             CouiText(
                                 text = row.title,
-                                kind = CouiTextKind.PreferenceTitle,
+                                kind = CouiTextKind.ItemTitle,
                                 maxLines = 1,
                                 overflow = TextOverflow.Ellipsis,
                             )
@@ -134,7 +134,7 @@ internal fun FunctionList(
                             if (isCoui) {
                                 CouiText(
                                     text = summary,
-                                    kind = CouiTextKind.PreferenceSummary,
+                                    kind = CouiTextKind.ItemSummary,
                                     color = CouiPageDefaults.themeColors(CouiTheme.isDark).summary,
                                     maxLines = FUNCTION_SUMMARY_MAX_LINES,
                                     overflow = TextOverflow.Ellipsis,
@@ -154,7 +154,7 @@ internal fun FunctionList(
                         if (isCoui) {
                             // 尾部箭头尺寸与 COUI 偏好行一致（细长箭头），颜色弱于正文前景
                             Icon(
-                                CouiIcons.Next,
+                                CouiIconsExt.Next,
                                 contentDescription = null,
                                 modifier = Modifier.size(width = 12.dp, height = 24.dp),
                                 tint = CouiPageDefaults.themeColors(CouiTheme.isDark).disabled,

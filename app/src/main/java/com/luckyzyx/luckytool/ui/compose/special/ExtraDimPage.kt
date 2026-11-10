@@ -247,7 +247,7 @@ object ExtraDimPage {
                         CouiText(
                             text = hint,
                             modifier = hintModifier,
-                            kind = CouiTextKind.PreferenceSummary,
+                            kind = CouiTextKind.ItemSummary,
                             color = CouiTheme.colorScheme.onSurfaceVariant,
                         )
                     } else {
@@ -307,7 +307,7 @@ private fun CouiLevelCard(
                     trailing = {
                         CouiText(
                             text = dragValue.roundToInt().toString(),
-                            kind = CouiTextKind.PreferenceValue,
+                            kind = CouiTextKind.ItemValue,
                             color = CouiTheme.colorScheme.accent,
                         )
                     },

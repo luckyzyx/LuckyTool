@@ -41,6 +41,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringArrayResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -206,7 +207,8 @@ internal fun ScopePageHost(
                     // 整屏只有这一行字，用常态正文色也不会被误读成普通提示
                     UiMode.Coui -> CouiText(
                         text = "Unknown page: ${route.pageKey}",
-                        kind = CouiTextKind.Body,
+                        kind = CouiTextKind.Search,
+                        textAlign = TextAlign.Start,
                         color = CouiTheme.colorScheme.onSurface,
                     )
                 }
