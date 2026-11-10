@@ -35,9 +35,9 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
 
-    <!--miuix-blur 的 minSdk 为 33、coui 的 minSdk 为 31，都高于本模块的 30，放行 manifest 合并；
+    <!--miuix-blur 的 minSdk 为 33、coui 与 coui-icons 的 minSdk 为 31，都高于本模块的 30，放行 manifest 合并；
         运行期由 Build.VERSION 决定是否启用对应外观线-->
-    <uses-sdk tools:overrideLibrary="top.yukonga.miuix.kmp.blur, com.itos.coui, com.itos.coui.material3" />
+    <uses-sdk tools:overrideLibrary="top.yukonga.miuix.kmp.blur, com.itos.coui, com.itos.coui.material3, com.itos.coui.icons" />
 
     <!--预测性返回：Android 15 及更早版本必须显式声明该 flag，系统才会为应用提供官方预测性返回动画
         （返回桌面 / 跨 Activity / 跨任务；Android 16 起 targetSdk 36+ 默认开启）。运行期由
