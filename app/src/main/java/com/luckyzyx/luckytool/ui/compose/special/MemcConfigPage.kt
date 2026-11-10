@@ -595,10 +595,11 @@ private fun CouiMemcPackagePanel(
             enabled = !state.pkgLoading,
             placeholder = "PackageName",
         )
+        // COUI 线的卡片自带 16dp 水平内缩（CouiScopeCard），这里再补会与搜索框、列表行差 16dp；
+        // Material 线的卡片不自带内缩，那边保留 16dp
         PrefCard(
             title = "＋ Add",
             onClick = { onEdit(null) },
-            modifier = Modifier.padding(horizontal = 16.dp),
         )
         if (state.pkgFilter.isEmpty() && !state.pkgLoading) {
             Box(
@@ -752,10 +753,11 @@ private fun CouiMemcActivityPanel(
             enabled = !state.actLoading,
             placeholder = "PackageName / ActivityName",
         )
+        // COUI 线的卡片自带 16dp 水平内缩（CouiScopeCard），这里再补会与搜索框、列表行差 16dp；
+        // Material 线的卡片不自带内缩，那边保留 16dp
         PrefCard(
             title = "＋ Add",
             onClick = { onEdit(null) },
-            modifier = Modifier.padding(horizontal = 16.dp),
         )
         if (state.actFilter.isEmpty() && !state.actLoading) {
             Box(
