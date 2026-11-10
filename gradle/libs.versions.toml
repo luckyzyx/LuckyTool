@@ -8,17 +8,17 @@ kavaref = "1.1.1"
 betterandroid = "1.1.6"
 
 compose-bom = "2026.09.00"
-material3 = "1.5.0-beta02"
+material3 = "1.5.0-rc01"
 materialKolor = "5.0.1"
 activity-compose = "1.13.0"
 kotlinx-coroutines = "1.11.0"
 kotlinx-serialization = "1.12.0"
 lifecycle = "2.11.0"
-navigationevent = "1.1.2"
+navigationevent = "1.2.0"
 navigation = "2.10.2"
 
 miuix = "0.9.4"
-coui = "0.0.1-alpha7"
+coui = "0.0.1-alpha10"
 libsu = "6.0.0"
 coil = "3.6.3"
 markwon = "4.6.2"
@@ -81,6 +81,7 @@ material-kolor = { group = "com.materialkolor", name = "material-kolor", version
 androidx-compose-material-icons-extended = { group = "androidx.compose.material", name = "material-icons-extended", version = "1.7.8" }
 miuix-blur = { module = "top.yukonga.miuix.kmp:miuix-blur-android", version.ref = "miuix" }
 coui-material3 = { module = "io.github.itoseo:coui-material3", version.ref = "coui" }
+coui-icons = { module = "io.github.itoseo:coui-icons", version.ref = "coui" }
 coil-compose = { group = "io.coil-kt.coil3", name = "coil-compose", version.ref = "coil" }
 coil-network-okhttp = { group = "io.coil-kt.coil3", name = "coil-network-okhttp", version.ref = "coil" }
 appiconloader-iconloaderlib = { module = "me.zhanghai.android.appiconloader:appiconloader-iconloaderlib", version = "1.5.0" }

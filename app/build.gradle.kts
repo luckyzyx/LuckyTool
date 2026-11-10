@@ -150,6 +150,8 @@ dependencies {
     implementation(libs.miuix.blur)
     //COUI（组件与材质外观线）
     implementation(libs.coui.material3)
+    //COUI 图标（独立 artifact：矢量与位图图标，日夜配色跟随 COUI 主题）
+    implementation(libs.coui.icons)
     //Markdown
     implementation(libs.markwon.core)
     implementation(libs.markwon.html)
