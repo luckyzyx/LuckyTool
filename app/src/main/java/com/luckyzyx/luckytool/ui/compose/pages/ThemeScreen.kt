@@ -241,14 +241,6 @@ private class ThemeScreenState(context: Context) {
         ShellSettingsController.get(context).floatingBottomBarStyle
     )
 
-    var swipeDismiss by mutableStateOf(
-        context.getBoolean(
-            SettingsPrefs,
-            ShellSettingsController.KEY_SWIPE_DISMISS,
-            true
-        )
-    )
-
     var pagerMode by mutableIntStateOf(ShellSettingsController.get(context).pagerInterceptionMode)
 
     /** 预测式返回手势（需 Android 14+，反射 ApplicationInfo.setEnableOnBackInvokedCallback） */
@@ -290,7 +282,7 @@ private fun rememberThemeScreenState(): ThemeScreenState {
  * 偏好键沿用 LuckyTool 既有约定（SettingsPrefs）：
  * dark_theme（0 跟随系统 / 1 深色 / 2 浅色 / 3 深色 AMOLED）、key_color、
  * palette_style、color_spec、use_dynamic_color、coui_dynamic_color（COUI 线专用）、
- * enable_predictive_back、enable_swipe_dismiss、pager_interception_mode。
+ * enable_predictive_back、pager_interception_mode。
  * 写入后通过 [ThemePrefs.notifyChanged] 让应用主题即时重算，无需 recreate。
  */
 @Composable
@@ -654,19 +646,6 @@ private fun ThemeScreenList(
                                 },
                             )
                         }
-                    }
-                    add {
-                        AppSwitchItem(
-                            icon = Icons.Rounded.Swipe,
-                            title = stringResource(R.string.settings_enable_swipe_dismiss),
-                            summary = stringResource(R.string.settings_enable_swipe_dismiss_summary),
-                            checked = state.swipeDismiss,
-                            onCheckedChange = {
-                                state.swipeDismiss = it
-                                context.putBoolean(SettingsPrefs, ShellSettingsController.KEY_SWIPE_DISMISS, it)
-                                ThemePrefs.notifyChanged()
-                            },
-                        )
                     }
                     add {
                         AppDropdownItem(

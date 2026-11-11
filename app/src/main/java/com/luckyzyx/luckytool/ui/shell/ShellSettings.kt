@@ -46,7 +46,7 @@ enum class FloatingBottomBarStyle(val value: String) {
  * 外壳行为偏好，包含导航、手势及布局设置。
  *
  * 偏好键及默认值：
- * enable_navigation_badge = true、enable_predictive_back = true、enable_swipe_dismiss = true、
+ * enable_navigation_badge = true、enable_predictive_back = true、
  * pager_interception_mode = 1、page_scale = 1.0f、enable_blur = false、enable_floating_bottom_bar = false、
  * floating_bottom_bar_style = classic、enable_category_badge_colors = true。
  *
@@ -58,7 +58,6 @@ enum class FloatingBottomBarStyle(val value: String) {
 data class ShellSettings(
     val navigationBadge: Boolean = true,
     val predictiveBack: Boolean = true,
-    val swipeDismiss: Boolean = true,
     val pagerInterceptionMode: Int = PagerModeCrossAxis,
     /** 全局界面缩放：0.8~1.1，1.0 为原始大小。 */
     val pageScale: Float = 1.0f,
@@ -75,7 +74,6 @@ data class ShellSettings(
 object ShellSettingsController {
     const val KEY_NAVIGATION_BADGE = "enable_navigation_badge"
     const val KEY_PREDICTIVE_BACK = "enable_predictive_back"
-    const val KEY_SWIPE_DISMISS = "enable_swipe_dismiss"
     const val KEY_PAGER_MODE = "pager_interception_mode"
     const val KEY_PAGE_SCALE = "page_scale"
     const val KEY_ENABLE_BLUR = "enable_blur"
@@ -88,7 +86,6 @@ object ShellSettingsController {
     fun get(context: Context): ShellSettings = ShellSettings(
         navigationBadge = context.getBoolean(SettingsPrefs, KEY_NAVIGATION_BADGE, true),
         predictiveBack = context.getBoolean(SettingsPrefs, KEY_PREDICTIVE_BACK, true),
-        swipeDismiss = context.getBoolean(SettingsPrefs, KEY_SWIPE_DISMISS, true),
         pagerInterceptionMode = context.getInt(SettingsPrefs, KEY_PAGER_MODE, PagerModeCrossAxis)
             .coerceIn(PagerModeNative, PagerModeIosLike),
         pageScale = context.getFloat(SettingsPrefs, KEY_PAGE_SCALE, 1.0f)
@@ -126,9 +123,6 @@ val LocalFloatingBottomBarStyle = staticCompositionLocalOf { FloatingBottomBarSt
 
 /** 功能页分类行多彩图标开关（关闭时用主题色单色徽标）。 */
 val LocalCategoryBadgeColors = staticCompositionLocalOf { true }
-
-/** 边缘横移返回手势开关 */
-val LocalEnableSwipeDismiss = staticCompositionLocalOf { true }
 
 /** 五个一级页面共用的分页手势模式。 */
 val LocalPagerInterceptionMode = staticCompositionLocalOf { PagerModeCrossAxis }

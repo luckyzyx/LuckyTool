@@ -68,6 +68,11 @@
                 <category android:name="de.robv.android.xposed.category.MODULE_SETTINGS" />
             </intent-filter>
         </activity>
+        <activity
+                android:name=".ui.activity.PageActivity"
+                android:exported="false"
+                android:theme="@style/Theme.Luckyzyx.NoActionBar"
+                android:windowSoftInputMode="adjustNothing" />
         <activity-alias
                 android:name=".Hide"
                 android:enabled="true"
