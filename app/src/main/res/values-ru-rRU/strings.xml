@@ -387,6 +387,8 @@
     <string name="statusbar_carriers_use_user_typeface">Операторы связи в статусбаре используют пользовательские шрифты</string>
     <string name="LockScreenButton">Кнопки экрана блокировки</string>
     <string name="remove_top_lock_screen_icon">Удалить иконку замка на экране блокировки</string>
+    <string name="lock_screen_credential_shortcut">Ярлык для разблокировки паролем</string>
+    <string name="lock_screen_credential_shortcut_summary">Проведите по ярлыку напротив камеры, чтобы открыть экран графического ключа, PIN-кода или пароля. Обычное проведение вверх больше не открывает его, пока доступна разблокировка отпечатком пальца. Заменяет ярлык в этой позиции.</string>
     <string name="remove_lock_screen_bottom_left_button">Удалить нижнюю левую кнопку на экране блокировки</string>
     <string name="lock_screen_bottom_left_button_replace_with_flashlight">Кнопка в левом нижнем углу экрана блокировки заменяется фонариком</string>
     <string name="lock_screen_switch_flashlight_auto_close_screen">Включите фонарик для автоматического отключения экрана</string>

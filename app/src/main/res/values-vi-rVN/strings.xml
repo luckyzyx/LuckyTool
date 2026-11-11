@@ -388,6 +388,8 @@
     <string name="statusbar_carriers_use_user_typeface">StatusBar Carrier sử dụng phông chữ người dùng</string>
     <string name="LockScreenButton">Nút khóa màn hình</string>
     <string name="remove_top_lock_screen_icon">Xóa biểu tượng màn hình khóa trên cùng</string>
+    <string name="lock_screen_credential_shortcut">Lối tắt mở khóa bằng mật khẩu</string>
+    <string name="lock_screen_credential_shortcut_summary">Vuốt vào lối tắt đối diện camera để mở màn hình nhập hình mở khóa, mã PIN hoặc mật khẩu. Khi mở khóa bằng vân tay khả dụng, thao tác vuốt lên thông thường sẽ không còn mở màn hình này. Thay thế lối tắt ở vị trí đó.</string>
     <string name="remove_lock_screen_bottom_left_button">Xóa nút dưới cùng bên trái của màn hình khóa</string>
     <string name="lock_screen_bottom_left_button_replace_with_flashlight">Nút ở góc dưới bên trái màn hình khóa thay thế đèn pin</string>
     <string name="lock_screen_switch_flashlight_auto_close_screen">Bật và tắt đèn pin tự động</string>
