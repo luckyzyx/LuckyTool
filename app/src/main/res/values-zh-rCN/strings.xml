@@ -1462,4 +1462,6 @@
     <string name="metis_rule_heytap_http_summary">目标为 com.heytap.browser 且链接是合法 http(s) 的卡片参与重定向</string>
     <string name="metis_rule_browser_card">其他浏览器 http(s) 卡片（实验性）</string>
     <string name="metis_rule_browser_card_summary">目标为其他浏览器且链接是合法 http(s) 的卡片参与重定向。实验性：需要自身应用处理链接的卡片可能受影响</string>
+    <string name="search_categories">功能分类</string>
+    <string name="search_history_empty">暂无最近搜索</string>
 </resources>

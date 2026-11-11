@@ -1598,4 +1598,6 @@
     <string name="settings_enable_glass_summary">啟用懸浮底欄的液態玻璃效果</string>
     <string name="allow_third_party_installer">允許第三方安裝程式</string>
     <string name="allow_third_party_installer_summary">依系統預設選擇開啟 APK，允許記住第三方安裝程式</string>
+    <string name="search_categories">功能分類</string>
+    <string name="search_history_empty">暫無最近搜尋</string>
 </resources>

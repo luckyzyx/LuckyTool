@@ -1647,4 +1647,6 @@
     <string name="metis_rule_heytap_http_summary">Redirect cards that point to com.heytap.browser with a valid http(s) link</string>
     <string name="metis_rule_browser_card">Other browser http(s) cards (experimental)</string>
     <string name="metis_rule_browser_card_summary">Redirect cards that point to another browser with a valid http(s) link. Experimental: cards that need their own app to handle the link may break</string>
+    <string name="search_categories">Browse categories</string>
+    <string name="search_history_empty">No recent searches</string>
 </resources>
