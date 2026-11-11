@@ -124,6 +124,16 @@ internal fun MainTab.icon(): ImageVector = when (this) {
     MainTab.Setting -> CouiIcons.Filled.Setting
 }
 
+/** COUI 底栏按选中状态切换图形；颜色及拖动预选由 NavigationBar 管理。 */
+@Composable
+private fun MainTab.couiIcon(selected: Boolean): ImageVector = when (this) {
+    MainTab.Other -> if (selected) CouiIcons.Filled.Grid else CouiIconsExt.GridOutline
+    MainTab.Function -> if (selected) CouiIconsExt.SlidersSelected else CouiIcons.Outlined.SliderCustom
+    MainTab.Home -> if (selected) CouiIconsExt.HomeSelected else CouiIconsExt.Home
+    MainTab.Search -> if (selected) CouiIconsExt.SearchSelected else CouiIcons.Outlined.Search
+    MainTab.Setting -> if (selected) CouiIcons.Filled.Setting else CouiIcons.Outlined.Setting
+}
+
 @Composable
 fun MainShell(activity: MainActivity) {
     val pagerState = rememberPagerState(initialPage = MainTab.Home.ordinal) { MainTab.entries.size }
@@ -394,10 +404,9 @@ private fun CouiTabsBottomBar(
             CouiNavigationBar(
                 modifier = Modifier.align(Alignment.BottomCenter),
                 renderer = renderer,
-                // COUI 图标集没有选中/未选中成对的页签图标，两态共用同一个图形，
-                // 选中态由底栏用文字透明度区分。
+                // 同时传入两态图形，拖动预选时也由库切换为选中图标。
                 items = tabs.map { tab ->
-                    CouiNavigationItem(stringResource(tab.labelRes), tab.icon(), tab.icon())
+                    CouiNavigationItem(stringResource(tab.labelRes), tab.couiIcon(false), tab.couiIcon(true))
                 },
                 selectedIndex = selectedIndex,
                 dark = CouiTheme.isDark,
@@ -415,7 +424,7 @@ private fun CouiTabsBottomBar(
 }
 
 /**
- * 不依赖渲染器的 Coui 底栏：整条铺满宽度、页签均分，选中项用强调色、未选中用次级文字色。
+ * 不依赖渲染器的 Coui 底栏：整条铺满宽度、页签均分，图标与状态色和悬浮底栏一致。
  *
  * 系统底部安全区由底栏自己消费（与悬浮底栏一致），正文侧因此不必再为底栏留白；
  * 每个页签是整块可点的胶囊区，按下时长按悬停反馈由 [couiNavigationFeedback] 画；
@@ -429,7 +438,6 @@ private fun CouiFlatTabsBottomBar(
     showUpdateBadge: Boolean,
 ) {
     val dark = CouiTheme.isDark
-    val colors = CouiTheme.colorScheme
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -441,7 +449,8 @@ private fun CouiFlatTabsBottomBar(
     ) {
         tabs.forEach { tab ->
             val selected = selectedIndex == tab.ordinal
-            val tint = if (selected) colors.accent else MaterialTheme.colorScheme.onSurfaceVariant
+            val tint = (if (dark) androidx.compose.ui.graphics.Color.White else androidx.compose.ui.graphics.Color.Black)
+                .copy(alpha = if (selected) 230f / 255f else 184f / 255f)
             val interactionSource = remember { MutableInteractionSource() }
             Column(
                 modifier = Modifier
@@ -460,7 +469,7 @@ private fun CouiFlatTabsBottomBar(
             ) {
                 val tabIcon: @Composable () -> Unit = {
                     Icon(
-                        imageVector = tab.icon(),
+                        imageVector = tab.couiIcon(selected),
                         contentDescription = null,
                         modifier = Modifier.size(24.dp),
                         tint = tint,

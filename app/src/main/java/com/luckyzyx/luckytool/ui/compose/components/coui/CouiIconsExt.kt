@@ -26,6 +26,40 @@ internal object CouiIconsExt {
         }
     }
 
+    /** 导航首页选中态：保持相同外轮廓，填实屋身并留出门洞。 */
+    val HomeSelected: ImageVector by lazy {
+        outline("CouiExt.HomeSelected") {
+            fill("M4,10.5L12,3.5L20,10.5V20.5H14.5V15A2.5,2.5 0 0 0 9.5,15V20.5H4Z")
+        }
+    }
+
+    /** 对应官方 Grid 的四格轮廓，右上格沿用较大的尺寸。 */
+    val GridOutline: ImageVector by lazy {
+        outline("CouiExt.GridOutline") {
+            stroke("M4.8,3.7H9.2Q10.3,3.7 10.3,4.8V9.2Q10.3,10.3 9.2,10.3H4.8Q3.7,10.3 3.7,9.2V4.8Q3.7,3.7 4.8,3.7Z")
+            stroke("M14.8,2.7H20.2Q21.3,2.7 21.3,3.8V9.2Q21.3,10.3 20.2,10.3H14.8Q13.7,10.3 13.7,9.2V3.8Q13.7,2.7 14.8,2.7Z")
+            stroke("M4.8,13.7H9.2Q10.3,13.7 10.3,14.8V19.2Q10.3,20.3 9.2,20.3H4.8Q3.7,20.3 3.7,19.2V14.8Q3.7,13.7 4.8,13.7Z")
+            stroke("M14.8,13.7H19.2Q20.3,13.7 20.3,14.8V19.2Q20.3,20.3 19.2,20.3H14.8Q13.7,20.3 13.7,19.2V14.8Q13.7,13.7 14.8,13.7Z")
+        }
+    }
+
+    /** 与 SliderCustom 同位置的调节杆，选中时填实两个滑块。 */
+    val SlidersSelected: ImageVector by lazy {
+        outline("CouiExt.SlidersSelected") {
+            stroke("M2,7H22M2,17H22")
+            fill("M11.15,7a3.85,3.85 0 1,0 7.7,0a3.85,3.85 0 1,0 -7.7,0")
+            fill("M5.15,17a3.85,3.85 0 1,0 7.7,0a3.85,3.85 0 1,0 -7.7,0")
+        }
+    }
+
+    /** 搜索选中态加厚镜框，保留透空镜面以维持放大镜辨识度。 */
+    val SearchSelected: ImageVector by lazy {
+        strokeVector("CouiExt.SearchSelected", 20.dp, 20.dp, 20f, 20f) {
+            fill("M1.422,8.191a6.769,6.769 0 1,0 13.538,0a6.769,6.769 0 1,0 -13.538,0 M4.122,8.191a4.069,4.069 0 1,0 8.138,0a4.069,4.069 0 1,0 -8.138,0")
+            fill("M11.8,13.6L16.7,18.5Q17.7,19.5 18.6,18.6Q19.5,17.7 18.5,16.7L13.6,11.8Z")
+        }
+    }
+
     /** 日志：文档轮廓 + 三行正文。 */
     val Notes: ImageVector by lazy {
         outline("CouiExt.Notes") {
@@ -99,4 +133,13 @@ private fun ImageVector.Builder.stroke(pathData: String) {
 /** 追加一个描边圆。 */
 private fun ImageVector.Builder.circle(cx: Float, cy: Float, r: Float) {
     stroke("M${cx - r},${cy}a${r},${r} 0 1,0 ${r * 2},0a${r},${r} 0 1,0 ${-r * 2},0")
+}
+
+/** 实心导航图形使用满不透明度，状态透明度由底栏统一应用。 */
+private fun ImageVector.Builder.fill(pathData: String) {
+    addPath(
+        PathParser().parsePathString(pathData).toNodes(),
+        fill = SolidColor(Color.Black),
+        pathFillType = PathFillType.EvenOdd,
+    )
 }
