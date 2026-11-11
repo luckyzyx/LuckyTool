@@ -26,7 +26,6 @@ import com.luckyzyx.luckytool.ui.shell.LocalEnableFloatingBottomBar
 import com.luckyzyx.luckytool.ui.shell.LocalFloatingBottomBarStyle
 import com.luckyzyx.luckytool.ui.shell.LocalCategoryBadgeColors
 import com.luckyzyx.luckytool.ui.shell.LocalEnableNavigationBadge
-import com.luckyzyx.luckytool.ui.shell.LocalPagerInterceptionMode
 import com.luckyzyx.luckytool.ui.shell.ShellSettingsController
 
 /** 关闭动态取色、且未选自定义主题色时的种子色：M3 基线紫，与 light/darkColorScheme() 的默认种子色一致。 */
@@ -183,7 +182,6 @@ fun AppTheme(content: @Composable () -> Unit) {
         LocalEnableBlur provides shellSettings.enableBlur,
         LocalEnableFloatingBottomBar provides shellSettings.enableFloatingBottomBar,
         LocalFloatingBottomBarStyle provides shellSettings.floatingBottomBarStyle,
-        LocalPagerInterceptionMode provides shellSettings.pagerInterceptionMode,
         LocalCategoryBadgeColors provides shellSettings.categoryBadgeColors,
     ) {
         AppTheme(appSettings = appSettings, uiMode = uiMode, content = content)

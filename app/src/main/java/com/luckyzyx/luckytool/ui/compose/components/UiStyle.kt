@@ -29,6 +29,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.movableContentOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
@@ -304,8 +305,8 @@ internal fun PageScaffold(
     val materialState = rememberTopAppBarState()
     val couiBehavior = CouiTopAppBarDefaults.exitUntilCollapsedScrollBehavior()
     // 库的 collapsedFraction 分母停在 116dp，COUI 骨架回写 58dp 行程上的真实比例。
-    val couiCollapsedFraction = remember { mutableStateOf(0f) }
-    var previousUiMode by remember { mutableStateOf(uiMode) }
+    val couiCollapsedFraction = rememberSaveable { mutableStateOf(0f) }
+    var previousUiMode by rememberSaveable { mutableStateOf(uiMode) }
     var pendingCollapsedFraction by remember(uiMode) {
         mutableStateOf(
             if (previousUiMode == uiMode) {

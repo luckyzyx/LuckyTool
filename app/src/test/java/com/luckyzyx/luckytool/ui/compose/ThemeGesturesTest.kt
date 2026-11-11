@@ -11,8 +11,6 @@ import com.luckyzyx.luckytool.ui.compose.pages.ThemeScreen
 import com.luckyzyx.luckytool.ui.shell.FloatingBottomBarStyle
 import com.luckyzyx.luckytool.ui.shell.LocalFloatingBottomBarStyle
 import com.luckyzyx.luckytool.ui.shell.LocalEnableBlur
-import com.luckyzyx.luckytool.ui.shell.LocalPagerInterceptionMode
-import com.luckyzyx.luckytool.ui.shell.PagerModeCrossAxis
 import com.luckyzyx.luckytool.ui.shell.ShellSettingsController
 import com.luckyzyx.luckytool.ui.theme.ColorMode
 import com.luckyzyx.luckytool.ui.theme.AppTheme
@@ -36,62 +34,13 @@ import org.robolectric.annotation.GraphicsMode
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
 class ThemeGesturesTest {
     @Test
-    // 旧系统仍保留分页手势设置，但不显示预测性返回开关。
-    @Config(sdk = [32])
-    fun `both appearances expose working gesture preferences below the predictive back API level`() {
-        for (mode in UiMode.entries) {
-            for (color in listOf(ColorMode.LIGHT, ColorMode.DARK)) {
-                ThemeHost(mode, color).use { h ->
-                    assertEquals(PagerModeCrossAxis, h.pagerMode)
-                    h.scrollTo("页面切换手势")
-                    assertNull(h.ui.textNode("预测性返回手势"))
-                    h.ui.snapshot("theme-${mode.name.lowercase()}-${color.name.lowercase()}")
-                    for ((index, label) in listOf(2 to "iOS 风格", 0 to "默认", 1 to "跨轴拦截")) {
-                        h.ui.clickText("页面切换手势")
-                        h.ui.advance()
-                        h.ui.snapshot("theme-${mode.name.lowercase()}-${color.name.lowercase()}-menu")
-                        h.ui.clickText(label)
-                        h.ui.advance()
-                        assertEquals(index, h.pagerMode)
-                        assertEquals(index, ShellSettingsController.get(h.ui.activity).pagerInterceptionMode)
-                    }
-                    assertFalse("These preferences must not recreate the activity", h.ui.activity.isChangingConfigurations)
-                }
-            }
-        }
-    }
-
-    @Test
-    @Config(sdk = [35])
-    fun `supported Android shows predictive back before pager mode without custom swipe`() {
+    fun `custom pager gesture choices are absent`() {
         for (mode in UiMode.entries) {
             ThemeHost(mode, ColorMode.LIGHT).use { h ->
                 h.scrollTo("预测性返回手势")
-                assertNull(h.ui.textNode("横移返回手势"))
-                assertNotNull(h.ui.textNode("页面切换手势"))
-                val predictiveY = h.ui.textNode("预测性返回手势")!!.boundsInRoot.top
-                val pagerY = h.ui.textNode("页面切换手势")!!.boundsInRoot.top
-                assertTrue(predictiveY < pagerY)
-            }
-        }
-    }
-
-    @Test
-    fun `gesture choices persist through activity recreation`() {
-        for (mode in listOf(UiMode.Material)) {
-            val saved: Bundle
-            ThemeHost(mode, ColorMode.LIGHT).use { h ->
-                h.scrollTo("页面切换手势")
-                h.ui.clickText("页面切换手势")
-                h.ui.advance()
-                h.ui.clickText("iOS 风格")
-                h.ui.advance()
-                saved = h.ui.saveAndClose()
-            }
-            ThemeHost(mode, ColorMode.LIGHT, saved).use { h ->
-                assertEquals(2, h.pagerMode)
-                h.scrollTo("页面切换手势")
-                assertNotNull(h.ui.textNode("iOS 风格"))
+                assertNotNull(h.ui.textNode("预测性返回手势"))
+                assertNull(h.ui.textNode("页面切换手势"))
+                assertNull(h.ui.textNode("跨轴拦截"))
             }
         }
     }
@@ -145,7 +94,6 @@ class ThemeGesturesTest {
 
     private class ThemeHost(mode: UiMode, color: ColorMode, saved: Bundle? = null) : AutoCloseable {
         val ui = ComposeGestureHost(saved)
-        var pagerMode = -1
         var floatingStyle = FloatingBottomBarStyle.Classic
         var blur = false
 
@@ -160,11 +108,9 @@ class ThemeGesturesTest {
             ui.setContent {
                 CompositionLocalProvider(LocalDensity provides Density(2f)) {
                     AppTheme {
-                        val interceptionMode = LocalPagerInterceptionMode.current
                         val style = LocalFloatingBottomBarStyle.current
                         val blurEnabled = LocalEnableBlur.current
                         SideEffect {
-                            pagerMode = interceptionMode
                             floatingStyle = style
                             blur = blurEnabled
                         }

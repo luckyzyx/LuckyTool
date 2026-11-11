@@ -61,7 +61,6 @@ import androidx.compose.material.icons.rounded.DesignServices
 import androidx.compose.material.icons.rounded.Palette
 import androidx.compose.material.icons.rounded.Style
 import androidx.compose.material.icons.rounded.Swipe
-import androidx.compose.material.icons.rounded.ViewCarousel
 import androidx.compose.material.icons.rounded.Wallpaper
 import androidx.compose.material3.ButtonGroupDefaults
 import androidx.compose.material3.Icon
@@ -241,7 +240,6 @@ private class ThemeScreenState(context: Context) {
         ShellSettingsController.get(context).floatingBottomBarStyle
     )
 
-    var pagerMode by mutableIntStateOf(ShellSettingsController.get(context).pagerInterceptionMode)
 
     /** 预测式返回手势（需 Android 14+，反射 ApplicationInfo.setEnableOnBackInvokedCallback） */
     var predictiveBack by mutableStateOf(
@@ -282,7 +280,7 @@ private fun rememberThemeScreenState(): ThemeScreenState {
  * 偏好键沿用 LuckyTool 既有约定（SettingsPrefs）：
  * dark_theme（0 跟随系统 / 1 深色 / 2 浅色 / 3 深色 AMOLED）、key_color、
  * palette_style、color_spec、use_dynamic_color、coui_dynamic_color（COUI 线专用）、
- * enable_predictive_back、pager_interception_mode。
+ * enable_predictive_back。
  * 写入后通过 [ThemePrefs.notifyChanged] 让应用主题即时重算，无需 recreate。
  */
 @Composable
@@ -646,23 +644,6 @@ private fun ThemeScreenList(
                                 },
                             )
                         }
-                    }
-                    add {
-                        AppDropdownItem(
-                            icon = Icons.Rounded.ViewCarousel,
-                            title = stringResource(R.string.settings_pager_gesture_mode),
-                            items = listOf(
-                                stringResource(R.string.settings_pager_gesture_native),
-                                stringResource(R.string.settings_pager_gesture_cross_axis),
-                                stringResource(R.string.settings_pager_gesture_ios_like),
-                            ),
-                            selectedIndex = state.pagerMode,
-                            onItemSelected = {
-                                state.pagerMode = it
-                                context.putInt(SettingsPrefs, ShellSettingsController.KEY_PAGER_MODE, it)
-                                ThemePrefs.notifyChanged()
-                            },
-                        )
                     }
                 },
             )

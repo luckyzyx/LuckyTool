@@ -138,7 +138,7 @@ private fun MainTab.couiIcon(selected: Boolean): ImageVector = when (this) {
 fun MainShell(activity: MainActivity) {
     val pagerState = rememberPagerState(initialPage = MainTab.Home.ordinal) { MainTab.entries.size }
     val mainPagerState = rememberMainPagerState(pagerState)
-    val settledTab = MainTab.entries[pagerState.settledPage]
+    val settledTab = MainTab.entries[mainPagerState.settledPage]
     LaunchedEffect(settledTab) {
         activity.isOnFunctionTab = settledTab == MainTab.Function
         activity.isOnHomeTab = settledTab == MainTab.Home
@@ -225,6 +225,24 @@ internal fun MainTabs(
     val selectedIndex = mainPagerState.selectedPage
     val onSelect: (Int) -> Unit = { index -> if (isActive) mainPagerState.animateToPage(index) }
     val tabStateHolder = rememberSaveableStateHolder()
+    val currentPageContent = rememberUpdatedState(pageContent)
+    // 独立内容作用域使保存键不依赖 Pager / 直接切换的调用位置。
+    val tabContents = remember(tabStateHolder, uiMode) {
+        tabs.associateWith { tab ->
+            movableContentOf<Boolean> { active ->
+                tabStateHolder.SaveableStateProvider(tab.name) {
+                    currentPageContent.value(tab, active)
+                }
+            }
+        }
+    }
+    var contentMode by remember { mutableStateOf(uiMode) }
+    LaunchedEffect(uiMode) { contentMode = uiMode }
+    val tabContent: @Composable (Int) -> Unit = { index ->
+        val active = isActive && (isCoui ||
+            (index == mainPagerState.pagerState.settledPage && !mainPagerState.pagerState.isScrollInProgress))
+        tabContents.getValue(tabs[index])(active)
+    }
 
     // 只录制页面内容，底栏/胶囊必须在采样层之外，避免渲染树循环引用。
     // COUI 悬浮底栏的采样源由标签外壳的 COUI Scaffold 提供（正文整屏录入），这里只建 Material 的模糊源。
@@ -342,16 +360,17 @@ internal fun MainTabs(
                         .consumeWindowInsets(innerPadding)
                         .then(if (backdrop != null && needBackdrop) Modifier.layerBackdrop(backdrop) else Modifier),
                 ) {
-                    MainPager(
-                        state = mainPagerState,
-                        gesturesEnabled = isActive,
-                        pageKey = { tabs[it].name },
-                    ) { index ->
-                        val tab = tabs[index]
-                        val isCurrentPage = isActive && index == mainPagerState.pagerState.settledPage &&
-                            !mainPagerState.pagerState.isScrollInProgress
-                        tabStateHolder.SaveableStateProvider(tab.name) {
-                            pageContent(tab, isCurrentPage)
+                    if (contentMode == uiMode) {
+                        if (isCoui) {
+                            // 与 COUI Demo 一致：仅组合当前页，不通过 Pager 做整屏横移。
+                            tabContent(selectedIndex)
+                        } else {
+                            MainPager(
+                                state = mainPagerState,
+                                gesturesEnabled = isActive,
+                                pageKey = { tabs[it].name },
+                                content = tabContent,
+                            )
                         }
                     }
                 }
