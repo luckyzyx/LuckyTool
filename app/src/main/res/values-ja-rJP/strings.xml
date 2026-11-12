@@ -75,7 +75,7 @@
     <string name="participate_translation_summary">Githubでアプリの翻訳にご協力ください</string>
     <!-- check lsposed -->
     <string name="system_not_support">現在のシステムではサポートをしていません!</string>
-    <string name="unsupported_xposed">Module not activated detected.\nPlease use the LSPosed framework for activation after activation!</string>
+    <string name="unsupported_xposed">LSPosed でモジュールを有効化してから、もう一度お試しください。</string>
     <string name="unsupported_os">非対応のシステム</string>
     <string name="unsupported_os_summary">モジュールは ColorOS 12 以降しかサポートしていません。古いシステムには脆弱性があるため、しっかりセキュリティ対策してください。</string>
     <string name="no_root">root 権限がありません</string>

@@ -151,7 +151,10 @@ open class MainActivity : AppCompatActivity() {
             // 超时仍未激活：弹未激活门（无 root / 系统不支持的门可能已经先弹，不抢它）
             if (gateDialog == null) {
                 activationGateShown = true
-                gateDialog = GateDialogSpec(message = getString(R.string.unsupported_xposed))
+                gateDialog = GateDialogSpec(
+                    title = getString(R.string.module_notactive),
+                    message = getString(R.string.unsupported_xposed),
+                )
             }
             // 激活迟到（框架服务起得慢）时撤掉未激活门：主界面已按本地 prefs 组合过了，
             // 重建一次让主题和页面数据重新走 remote prefs，免得显示的默认值与写入目标不一致

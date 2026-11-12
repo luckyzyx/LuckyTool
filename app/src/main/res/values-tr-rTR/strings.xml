@@ -85,7 +85,7 @@
     
     <!-- check lsposed -->
     <string name="system_not_support">Mevcut sistem desteklenmiyor!</string>
-    <string name="unsupported_xposed">Modülün etkinleştirilmediği tespit edildi.\nLütfen etkinleştirme için LSPosed altyapısını kullanın!</string>
+    <string name="unsupported_xposed">Lütfen modülü LSPosed altyapısında etkinleştirip tekrar deneyin!</string>
     <string name="unsupported_os">Desteklenmeyen sistem</string>
     <string name="unsupported_os_summary">Bu modül yalnızca ColorOS 12 ve üzeri sistemleri desteklediğinden, lütfen gerekli güvenlik önlemlerini aldığınızdan emin olun!</string>
     <string name="no_root">Root izni yok</string>
@@ -1073,7 +1073,7 @@
     <string name="fps_tips">Kendiliğinden başlatma işlevi ekran kilidi açıldıktan 1 saniye sonra tetiklenir</string>
     <string name="restore_default_refresh_rate">Varsayılan ekran yenileme hızına dön</string>
     <string name="module_isactivated">Modül etkinleştirildi (Etkin)</string>
-    <string name="module_notactive">Modül etkinleştirilmedi ! (Pasif)</string>
+    <string name="module_notactive">Modül etkinleştirilmedi</string>
     <string name="module_has_updated">Modül güncellenmiş (Xposed Üzerinden Onay Vermeniz veya Re-boot Etmeniz Gerekebilir).</string>
     <string name="module_is_disabled">Modül devredışı bırakıldı</string>
     <string name="module_version">Modül sürümü:</string>

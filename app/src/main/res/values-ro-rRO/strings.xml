@@ -75,7 +75,7 @@
     <string name="participate_translation_summary">Du-te la Github pentru a contribui cu traducerea</string>
     <!-- check lsposed -->
     <string name="system_not_support">Sistemul actual nu acceptă!</string>
-    <string name="unsupported_xposed">Module not activated detected.\nPlease use the LSPosed framework for activation after activation!</string>
+    <string name="unsupported_xposed">Vă rugăm să activați modulul în LSPosed și să încercați din nou!</string>
     <string name="unsupported_os">Sistem neacceptat</string>
     <string name="unsupported_os_summary">Deoarece modulul acceptă doar sistemele ColorOS 12 sau mai sus, asigurați-vă că luați măsuri de securitate!</string>
     <string name="no_root">Fără permisiune root</string>

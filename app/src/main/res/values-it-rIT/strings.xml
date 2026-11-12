@@ -75,7 +75,7 @@
     <string name="participate_translation_summary">Vai su Github per contribuire alla traduzione</string>
     <!-- check lsposed -->
     <string name="system_not_support">Il sistema attuale non è supportato!</string>
-    <string name="unsupported_xposed">Rilevato modulo non attivato.\nUtilizzare il framework LSPosed per l\'attivazione dopo l\'attivazione!</string>
+    <string name="unsupported_xposed">Utilizzare il framework LSPosed per attivare il modulo e riprovare!</string>
     <string name="unsupported_os">Sistema non supportato</string>
     <string name="unsupported_os_summary">Dato che il modulo supporta solo i sistemi ColorOS 12 e superiori, assicurati di prendere misure di sicurezza!</string>
     <string name="no_root">Nessun permesso di root</string>

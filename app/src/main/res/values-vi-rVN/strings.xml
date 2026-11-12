@@ -77,7 +77,7 @@
     <string name="participate_translation_summary">Truy cập Github để đóng góp bản dịch của bạn</string>
     <!-- check lsposed -->
     <string name="system_not_support">Hệ thống hiện tại không hỗ trợ!</string>
-    <string name="unsupported_xposed">Phát hiện mô-đun chưa được kích hoạt\nVui lòng sử dụng khung LSPosed để kích hoạt mô-đun và thử lại!</string>
+    <string name="unsupported_xposed">Vui lòng kích hoạt mô-đun trong khung LSPosed và thử lại!</string>
     <string name="unsupported_os">Hệ thống không được hỗ trợ</string>
     <string name="unsupported_os_summary">Vì mô-đun này chỉ hỗ trợ các hệ thống ColorOS 12 trở lên nên hãy đảm bảo thực hiện các biện pháp an toàn!</string>
     <string name="no_root">Không có quyền Root</string>

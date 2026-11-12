@@ -148,7 +148,7 @@
 
     <!-- check lsposed -->
     <string name="system_not_support">當前系統不支援!</string>
-    <string name="unsupported_xposed">檢測到模組未啟用\n請使用LSPosed框架進行啟用後重試!</string>
+    <string name="unsupported_xposed">請使用LSPosed框架進行啟用後重試!</string>
     <string name="unsupported_os">不受支援的系統</string>
     <string name="unsupported_os_summary">由於該模組僅支援ColorOS 12及以上系統，請務必做好安全措施！</string>
     <string name="no_root">無 Root 權限</string>

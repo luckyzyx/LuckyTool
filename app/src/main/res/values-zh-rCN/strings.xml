@@ -139,7 +139,7 @@
     <string name="participate_translation_summary">前往 Github 贡献您的翻译</string>
     <!-- check lsposed -->
     <string name="system_not_support">当前系统不支持!</string>
-    <string name="unsupported_xposed">检测到模块未激活\n请使用LSPosed框架进行激活后重试!</string>
+    <string name="unsupported_xposed">请使用LSPosed框架进行激活后重试!</string>
     <string name="unsupported_os">不受支持的系统</string>
     <string name="unsupported_os_summary">由于该模块仅支持 ColorOS 12 及以上系统，请务必采取安全措施！</string>
     <string name="no_root">无 Root 权限</string>
