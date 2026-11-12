@@ -560,7 +560,6 @@
     <string name="media_volume_level">Úroveň hlasitosti médií</string>
     <string name="media_volume_level_summary">Nastavte na 0 pro vypnutí této funkce, restartujte systém, aby se změny projevily</string>
     <string name="enable_super_volume_mode">Povolit režim superhlasitosti</string>
-    <string name="enable_super_volume_mode_for_calls">Povolit režim superhlasitosti pro hovory</string>
     <string name="minimum_volume_level_can_be_zero">Minimální úroveň hlasitosti může být nula</string>
     <string name="enable_app_specific_media_volume">Povolit hlasitost pro každou aplikaci zvlášť</string>
     <string name="enable_app_specific_media_volume_summary">Tato funkce vyžaduje podporu systému, aby fungovala</string>

@@ -561,7 +561,6 @@
     <string name="media_volume_level">Уровень громкости мультимедиа</string>
     <string name="media_volume_level_summary">Установите 0, чтобы отключить эту функцию, перезагрузите систему, чтобы изменения вступили в силу</string>
     <string name="enable_super_volume_mode">Включить режим супер громкости</string>
-    <string name="enable_super_volume_mode_for_calls">Включить режим супер громкости для звонков</string>
     <string name="minimum_volume_level_can_be_zero">Минимальный уровень громкости может быть нулевым</string>
     <string name="enable_app_specific_media_volume">Включить громкость мультимедиа для конкретных приложений</string>
     <string name="enable_app_specific_media_volume_summary">Эта функция требует системной поддержки</string>

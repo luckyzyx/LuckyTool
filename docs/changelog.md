@@ -116,6 +116,7 @@ in [TG Channel’s associated groups](https://t.me/LuckyTool)**
 
 - 移除「状态栏通知中心两侧对齐」
 - 移除支付保护作用域，相关限制可在系统设置中关闭支付保护
+- 移除「通话超级音量模式」
 
 ### 1.3.4
 

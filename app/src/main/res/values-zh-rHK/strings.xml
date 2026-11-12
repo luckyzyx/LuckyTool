@@ -769,7 +769,6 @@
     <string name="media_volume_level">媒體音量階數</string>
     <string name="media_volume_level_summary">設定為0關閉功能，系統重啟生效</string>
     <string name="enable_super_volume_mode">啟用超級音量模式</string>
-    <string name="enable_super_volume_mode_for_calls">啟用通話超級音量模式</string>
     <string name="minimum_volume_level_can_be_zero">音量階數最低可為 0</string>
     <string name="enable_app_specific_media_volume">啟用應用專屬媒體音量</string>
     <string name="enable_app_specific_media_volume_summary">此功能需要系統支援才能生效</string>

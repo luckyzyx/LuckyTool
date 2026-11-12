@@ -67,15 +67,6 @@ object HookGlobalFeatureConfig : YukiBaseHooker() {
                 put("oplus.software.audio.super_volume", true)
                 put("oplus.software.audio.super_volume_3x", true)
             }
-            //Source SystemUI 启用通话超级音量模式
-            if (osCode >= 27 && preferences(ModulePrefs).getBoolean(
-                    "enable_super_volume_mode_for_calls",
-                    false
-                )
-            ) {
-                put("oplus.software.audio.super_volume_call_earpiece", true)
-                put("oplus.software.audio.super_volume_call_earpiece_disable", false)
-            }
             //Source SystemUI FlavorOneFeatureOption 启用应用专属媒体音量
             if (osCode >= 27 && preferences(ModulePrefs).getBoolean(
                     "enable_app_specific_media_volume",

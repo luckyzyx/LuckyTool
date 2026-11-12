@@ -656,7 +656,6 @@
     <string name="media_volume_level">Medya ses düzeyi (oran kademesi)</string>
     <string name="media_volume_level_summary">Bu işlevi devre dışı bırakmak için 0\'a ayarlayın, geçerli olması için cihazı yeniden başlatın</string>
     <string name="enable_super_volume_mode">Süper ses modunu etkinleştir</string>
-    <string name="enable_super_volume_mode_for_calls">Aramalar için süper ses modunu etkinleştir</string>
     <string name="minimum_volume_level_can_be_zero">Minimum ses seviyesi sıfır olabilir</string>
     <string name="enable_app_specific_media_volume">Uygulamaya özel medya sesini etkinleştir</string>
     <string name="enable_app_specific_media_volume_summary">Bu işlevin geçerli olması için sistemde desteklenmesi gerekir</string>
