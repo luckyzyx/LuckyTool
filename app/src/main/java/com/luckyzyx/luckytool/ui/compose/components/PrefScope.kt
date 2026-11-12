@@ -62,6 +62,8 @@ import androidx.compose.ui.graphics.compositeOver
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextAlign
@@ -221,20 +223,36 @@ internal fun CouiScopeCard(
 }
 
 /**
- * COUI 分类标题：与 COUI 分组标题行同位（水平 32dp 内缩、上下 8dp、12 号 GroupTitle），
- * 说明文字接在标题下方，用 12 号 Description 字号。
+ * COUI 分类标题：对齐 coui demo 底栏设置页 Group 的标题样式
+ * （GroupTitle 12sp 字重 500 + colors.summary，水平 32dp、上下 8dp、TextAlign.Start、heading 语义）。
+ * 说明行是 LT 在标题下方的扩展：与标题同字号、弱化前景色，有说明时标题下沿收紧到 4dp、
+ * 说明底部补 8dp，整体节奏沿用 AppPermissionPage 的 preference 分类标题。
  */
 @Composable
 private fun CouiCategoryHeader(title: String, summary: String?) {
     val colors = CouiPageDefaults.themeColors()
     Column(modifier = Modifier.fillMaxWidth()) {
-        Box(modifier = Modifier.padding(horizontal = 32.dp, vertical = 8.dp)) {
-            CouiText(text = title, kind = CouiTextKind.GroupTitle, color = colors.summary)
-        }
+        CouiText(
+            text = title,
+            kind = CouiTextKind.GroupTitle,
+            color = colors.summary,
+            // GroupTitle 在库内默认水平居中，这里与库内 Group 一样强制起始对齐
+            textAlign = TextAlign.Start,
+            modifier = Modifier
+                .fillMaxWidth()
+                .semantics { heading() }
+                .padding(start = 32.dp, end = 32.dp, top = 8.dp, bottom = if (summary == null) 8.dp else 4.dp),
+        )
         if (summary != null) {
-            Box(modifier = Modifier.padding(start = 32.dp, end = 32.dp).padding(bottom = 4.dp)) {
-                CouiText(text = summary, kind = CouiTextKind.GroupFooter, color = colors.summary)
-            }
+            CouiText(
+                text = summary,
+                kind = CouiTextKind.GroupFooter,
+                color = colors.summary,
+                textAlign = TextAlign.Start,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(start = 32.dp, end = 32.dp, bottom = 8.dp),
+            )
         }
     }
 }
@@ -1148,7 +1166,7 @@ fun ScopeScreen(
         if (pageFullContent != null) {
             item(key = "full") { pageFullContent(this, builder) }
         } else {
-            builder.entries.forEach { entry ->
+            builder.entries.forEachIndexed { index, entry ->
                 item(key = entry.itemKey) {
                     if (entry.groupBreak) {
                         // 保留零高度槽位，让搜索索引和滚动定位仍与 entry.slot 一致。
@@ -1178,8 +1196,14 @@ fun ScopeScreen(
                             modifier = animModifier.padding(
                                 top = when {
                                     entry.slot == 0 -> 0.dp
-                                    // 组首与上一组之间用 COUI 的分组间距，组内条目直接连成一张卡片
-                                    entry.segIndex == 0 -> CouiPageDefaults.groupSpacing
+                                    // 组首与上一组之间用 COUI 的分组间距，组内条目直接连成一张卡片。
+                                    // 但组首上方是分类标题时不再叠加：标题自身带下留白，叠加后离卡片太远，
+                                    // 与 coui demo Group 标题行贴紧卡片不一致。
+                                    entry.segIndex == 0 -> {
+                                        val previous = builder.entries.getOrNull(index - 1)
+                                        if (previous != null && previous.bare && !previous.groupBreak) 0.dp
+                                        else CouiPageDefaults.groupSpacing
+                                    }
                                     else -> 0.dp
                                 }
                             ),
