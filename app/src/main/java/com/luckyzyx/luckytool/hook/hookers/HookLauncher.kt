@@ -30,6 +30,7 @@ import com.luckyzyx.luckytool.hook.scopes.launcher.RemoveWidgetsAddRequestWhitel
 import com.luckyzyx.luckytool.hook.scopes.launcher.UnlockTaskLocks
 import com.luckyzyx.luckytool.utils.A13
 import com.luckyzyx.luckytool.utils.DexkitUtils
+import com.luckyzyx.luckytool.utils.LauncherBackupPrefs
 import com.luckyzyx.luckytool.utils.ModulePrefs
 import com.luckyzyx.luckytool.utils.SDK
 import com.luckyzyx.luckytool.utils.getOSVersionCode
@@ -137,8 +138,10 @@ object HookLauncher : YukiBaseHooker() {
         }
         //自定义桌面默认主页
         loadHooker(CustomDesktopDefaultHomePage)
-        //桌面布局备份/恢复（无开关：指令通道常驻，未使用时不做任何事）
-        loadHooker(LauncherBackupHooker)
+        //桌面布局备份/恢复：总开关关闭就不装载（指令通道随之不存在）
+        if (preferences(ModulePrefs).getBoolean(LauncherBackupPrefs.KEY_ENABLED, false)) {
+            loadHooker(LauncherBackupHooker)
+        }
         //启用桌面下方按钮选择项
         if (preferences(ModulePrefs).getBoolean("enable_launcher_indicator_entry", false)) {
             if (osCode >= 37) loadHooker(EnableLauncherIndicatorEntry)

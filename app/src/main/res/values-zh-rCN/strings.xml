@@ -1390,6 +1390,9 @@
     <string name="launcher_backup">桌面布局备份</string>
     <string name="launcher_backup_entry">桌面布局备份与恢复</string>
     <string name="launcher_backup_entry_summary">备份桌面布局，并可随时按快照恢复</string>
+    <string name="launcher_backup_category_switch">功能开关</string>
+    <string name="launcher_backup_enable">桌面布局备份与恢复</string>
+    <string name="launcher_backup_enable_summary">关闭时桌面进程不装载本功能，本页也联系不上它，手动与自动备份都停止；开启后需重启桌面作用域才生效</string>
     <string name="launcher_backup_category_settings">备份设置</string>
     <string name="launcher_backup_category_actions">操作</string>
     <string name="launcher_backup_category_history">快照历史</string>

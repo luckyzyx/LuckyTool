@@ -1539,6 +1539,9 @@
     <string name="launcher_backup">桌面佈局備份</string>
     <string name="launcher_backup_entry">桌面佈局備份與恢復</string>
     <string name="launcher_backup_entry_summary">備份桌面佈局，並可隨時按快照恢復</string>
+    <string name="launcher_backup_category_switch">功能開關</string>
+    <string name="launcher_backup_enable">桌面佈局備份與恢復</string>
+    <string name="launcher_backup_enable_summary">關閉時桌面程序不裝載本功能，本頁也聯繫不上它，手動與自動備份都停止；開啟後需重啟桌面作用域才生效</string>
     <string name="launcher_backup_category_settings">備份設定</string>
     <string name="launcher_backup_category_actions">操作</string>
     <string name="launcher_backup_category_history">快照歷史</string>

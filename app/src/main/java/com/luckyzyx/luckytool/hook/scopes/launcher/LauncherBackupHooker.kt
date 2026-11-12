@@ -221,6 +221,11 @@ object LauncherBackupHooker : YukiBaseHooker() {
     // ---------------- 指令分发 ----------------
 
     private fun handleCommand(raw: String?) {
+        //总开关刚关掉、桌面进程还没重启时通道仍然在：指令在这里丢弃，不要半途执行
+        if (!masterEnabled()) {
+            LogUtils.d(TAG, "handleCommand", "总开关已关闭，忽略指令: $raw")
+            return
+        }
         val command = LauncherBackupUtils.parseCommand(raw)
         if (command == null) {
             LogUtils.d(TAG, "handleCommand", "忽略非法指令: $raw")
@@ -435,8 +440,13 @@ object LauncherBackupHooker : YukiBaseHooker() {
         )
     }
 
-    /** 自动备份开关；重试链路里每一跳都要重新确认，用户可能在等待期间把它关掉 */
-    private fun autoBackupEnabled(): Boolean = runCatching {
+    /** 功能总开关；装载在桌面进程启动时判定，这里是用户在运行期关掉后的兜底闸门 */
+    private fun masterEnabled(): Boolean = runCatching {
+        preferences(ModulePrefs).getBoolean(LauncherBackupPrefs.KEY_ENABLED, false)
+    }.getOrDefault(false)
+
+    /** 自动备份开关：总开关与自动开关都开着才算；重试链路里每一跳都要重新确认，用户可能在等待期间把它关掉 */
+    private fun autoBackupEnabled(): Boolean = masterEnabled() && runCatching {
         preferences(ModulePrefs).getBoolean(LauncherBackupPrefs.KEY_AUTO_ENABLED, false)
     }.getOrDefault(false)
 

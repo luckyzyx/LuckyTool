@@ -34,6 +34,7 @@ in [TG Channel’s associated groups](https://t.me/LuckyTool)**
 - 应用权限页（通知 / 所有文件 / 应用列表 / 安装应用）
 - MEMC 配置 Activity 列表支持搜索并显示名称
 - 桌面布局备份与恢复
+- 桌面布局备份与恢复新增功能总开关（默认关闭，开启后需重启桌面作用域）
 - 允许选择第三方 APK 安装器 (@蛮吉)
 - 经典控制中心磁贴行列数适配 C17
 - 控制中心 HDR/SDR 比率磁贴

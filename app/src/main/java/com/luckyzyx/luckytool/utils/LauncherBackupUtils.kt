@@ -900,10 +900,16 @@ data class LauncherCommand(
     val token: String,
 )
 
-/** 自动备份的 prefs 键与取值约定 */
+/** 桌面布局备份/恢复的 prefs 键与取值约定 */
 object LauncherBackupPrefs {
 
-    /** 自动备份开关 */
+    /**
+     * 功能总开关：关闭时 HookLauncher 不装载 LauncherBackupHooker，桌面进程里连指令通道都不会注册。
+     * 装载发生在桌面进程启动时，所以改动要等桌面重启（或作用域重启）才生效，开关本身不做实时同步。
+     */
+    const val KEY_ENABLED = "launcher_backup_enabled"
+
+    /** 自动备份开关（总开关之外的第二道条件） */
     const val KEY_AUTO_ENABLED = "launcher_backup_auto_enabled"
 
     /** 自动备份周期（小时，字符串存值，与 list 控件一致） */

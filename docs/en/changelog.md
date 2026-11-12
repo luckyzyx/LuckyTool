@@ -35,6 +35,7 @@ Entries for versions before `1.3.5_beta` are currently only available in the
 - App permission page (notifications / all files access / app list / install apps)
 - MEMC configuration Activity list supports searching and shows activity names
 - Launcher layout backup and restore
+- Feature switch for the launcher layout backup and restore page (off by default; restart the launcher scope after enabling)
 - Allow choosing a third-party APK installer (@蛮吉)
 - Classic Control Center tile rows and columns on ColorOS 17
 - Control Center HDR/SDR ratio tile

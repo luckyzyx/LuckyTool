@@ -1572,6 +1572,9 @@
     <string name="launcher_backup">Desktop layout backup</string>
     <string name="launcher_backup_entry">Desktop layout backup and restore</string>
     <string name="launcher_backup_entry_summary">Back up the home screen layout and restore it from a snapshot</string>
+    <string name="launcher_backup_category_switch">Feature switch</string>
+    <string name="launcher_backup_enable">Desktop layout backup and restore</string>
+    <string name="launcher_backup_enable_summary">When off, the launcher process does not load this feature and this page cannot reach it, so both manual and automatic backup stop; turn it on and restart the launcher scope to take effect</string>
     <string name="launcher_backup_category_settings">Backup settings</string>
     <string name="launcher_backup_category_actions">Actions</string>
     <string name="launcher_backup_category_history">Snapshot history</string>
