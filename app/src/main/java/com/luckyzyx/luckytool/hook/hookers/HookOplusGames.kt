@@ -59,7 +59,7 @@ object HookOplusGames : YukiBaseHooker() {
             }
             //启用游戏助手后台挂机
             if (preferences(ModulePrefs).getBoolean("enable_game_run_in_background", false)) {
-                if (osCode >= 27) loadHooker(EnableGameRunInBackground(dexKitBridge))
+                if (osCode >= 27) loadHooker(EnableGameRunInBackground(appVer, dexKitBridge))
             }
             //自定义媒体播放器支持
             loadHooker(CustomMediaPlayerSupport(dexKitBridge))

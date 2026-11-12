@@ -6,6 +6,7 @@ import com.highcapable.yukihookapi.extension.kavaref.hook
 import com.highcapable.yukihookapi.extension.kavaref.toClass
 import com.highcapable.yukihookapi.hook.entity.YukiBaseHooker
 import com.highcapable.yukihookapi.hook.log.YLog
+import com.luckyzyx.luckytool.data.AppVerInfo
 import com.luckyzyx.luckytool.utils.DexkitUtils.checkDataList
 import com.luckyzyx.luckytool.utils.IntentUtils
 import com.luckyzyx.luckytool.utils.getOSVersionCode
@@ -14,9 +15,14 @@ import org.lsposed.lsparanoid.Obfuscate
 import org.luckypray.dexkit.DexKitBridge
 
 @Obfuscate
-class EnableGameRunInBackground(val dexKitBridge: DexKitBridge) : YukiBaseHooker() {
+class EnableGameRunInBackground(
+    private val appVer: AppVerInfo?, val dexKitBridge: DexKitBridge
+) : YukiBaseHooker() {
     override fun onHook() {
         val osCode = getOSVersionCode
+        //开始挂机在 Runnable 里的动作值：V10.44.6 起 switch 前面多了一支，从 6 挪到 5
+        //只按已验证的版本切换，未知版本沿用旧值，避免误接管其它分支
+        val startAction = if ((appVer?.versionCode ?: 0) >= 500440006) 5.toByte() else 6.toByte()
 
         //Source HangUpUtil.isSupportBackgroundHangUp
         //新版把支持判定内联进后台挂机面板项(GameHungUpItemState)的构造函数，结果写进该类唯一的 boolean 字段
@@ -46,7 +52,7 @@ class EnableGameRunInBackground(val dexKitBridge: DexKitBridge) : YukiBaseHooker
         }
 
         //Source HangUpUtil.startBackgroundHangUp
-        //新版开始挂机被内联进一个多用途 Runnable 的 byte == 6 分支(5 是停止)，这里只接管这一支
+        //开始挂机被内联进一个多用途 Runnable，靠 byte 动作值选分支，这里只接管开始挂机那一支
         dexKitBridge.findClass {
             matcher { usingStrings("startBackgroundHangUp not in game, return") }
         }.apply {
@@ -65,7 +71,7 @@ class EnableGameRunInBackground(val dexKitBridge: DexKitBridge) : YukiBaseHooker
                         actionField?.isAccessible = true
                         actionField?.get(self) as? Byte
                     }.getOrNull()
-                    if (action != 6.toByte()) return@before
+                    if (action != startAction) return@before
                     if (osCode >= 34) {
                         startMirageWindow(null)
                     } else {
