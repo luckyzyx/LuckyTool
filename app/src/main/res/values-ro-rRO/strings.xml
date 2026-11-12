@@ -560,7 +560,6 @@
     <string name="SoundRelated">Sound Related</string>
     <string name="media_volume_level">Media volume level</string>
     <string name="media_volume_level_summary">Set to 0 to disable this function, restart the system to take effect</string>
-    <string name="enable_super_volume_mode">Enable super volume mode</string>
     <string name="minimum_volume_level_can_be_zero">Minimum volume level can be zero</string>
     <string name="enable_app_specific_media_volume">Enable app-specific media volume</string>
     <string name="enable_app_specific_media_volume_summary">This function requires system support to take effect</string>

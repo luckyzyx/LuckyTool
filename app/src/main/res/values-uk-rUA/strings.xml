@@ -559,7 +559,6 @@
     <string name="SoundRelated">Sound Related</string>
     <string name="media_volume_level">Рівень гучності мультимедіа</string>
     <string name="media_volume_level_summary">Встановіть 0, щоб вимкнути цю функцію, перезавантажте систему, щоб зміни набули чинності</string>
-    <string name="enable_super_volume_mode">Enable super volume mode</string>
     <string name="minimum_volume_level_can_be_zero">Minimum volume level can be zero</string>
     <string name="enable_app_specific_media_volume">Enable app-specific media volume</string>
     <string name="enable_app_specific_media_volume_summary">This function requires system support to take effect</string>

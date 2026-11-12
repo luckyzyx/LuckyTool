@@ -691,7 +691,6 @@
     <string name="SoundRelated">声音相关</string>
     <string name="media_volume_level">媒体音量阶数</string>
     <string name="media_volume_level_summary">设置为 0 关闭此功能，重启系统生效</string>
-    <string name="enable_super_volume_mode">启用超级音量模式</string>
     <string name="minimum_volume_level_can_be_zero">音量阶数最低可为 0</string>
     <string name="enable_app_specific_media_volume">启用应用专属媒体音量</string>
     <string name="enable_app_specific_media_volume_summary">此功能需要系统支持才能生效</string>

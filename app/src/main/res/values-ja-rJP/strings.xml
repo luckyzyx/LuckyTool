@@ -558,7 +558,6 @@
     <string name="SoundRelated">サウンド関連</string>
     <string name="media_volume_level">メディアのボリュームレベル</string>
     <string name="media_volume_level_summary">0に設定するとこの機能を無効にします。システムの再起動後に有効化されます</string>
-    <string name="enable_super_volume_mode">スーパーボリュームモードを有効化</string>
     <string name="minimum_volume_level_can_be_zero">最小音量レベルは0に設定できます</string>
     <string name="enable_app_specific_media_volume">アプリ別のメディア音量を有効化</string>
     <string name="enable_app_specific_media_volume_summary">この機能を有効にするにはシステムサポートが必要です</string>

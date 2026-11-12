@@ -561,7 +561,6 @@
     <string name="SoundRelated">Âm thanh</string>
     <string name="media_volume_level">Mức âm lượng</string>
     <string name="media_volume_level_summary">Đặt thành 0 để tắt chức năng này, khởi động lại hệ thống để có hiệu lực</string>
-    <string name="enable_super_volume_mode">Bật chế độ siêu âm lượng</string>
     <string name="minimum_volume_level_can_be_zero">Mức âm lượng có thể thấp đến mức 0</string>
     <string name="enable_app_specific_media_volume">Bật âm lượng phương tiện dành riêng cho ứng dụng</string>
     <string name="enable_app_specific_media_volume_summary">Tính năng này yêu cầu sự hỗ trợ của hệ thống để có hiệu lực</string>

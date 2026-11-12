@@ -558,7 +558,6 @@
     <string name="SoundRelated">Audio</string>
     <string name="media_volume_level">Livello volume multimediale</string>
     <string name="media_volume_level_summary">Impostare su 0 per disabilitare questa funzione, riavviare il sistema per renderla effettiva</string>
-    <string name="enable_super_volume_mode">Abilita la modalità super volume</string>
     <string name="minimum_volume_level_can_be_zero">Il livello di volume minimo può essere zero</string>
     <string name="enable_app_specific_media_volume">Abilita volume multimediale specifico per app</string>
     <string name="enable_app_specific_media_volume_summary">Questa funzione richiede il supporto di sistema per avere effetto</string>

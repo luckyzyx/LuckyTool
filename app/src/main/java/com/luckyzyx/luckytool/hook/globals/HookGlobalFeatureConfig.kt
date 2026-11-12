@@ -58,15 +58,6 @@ object HookGlobalFeatureConfig : YukiBaseHooker() {
                 put("oplus.software.display.osie_aisdr2hdr_support", false) //C12
             }
 
-            //Source SystemUI 启用超级音量模式
-            if (SDK >= A13 && preferences(ModulePrefs).getBoolean(
-                    "enable_super_volume_mode",
-                    false
-                )
-            ) {
-                put("oplus.software.audio.super_volume", true)
-                put("oplus.software.audio.super_volume_3x", true)
-            }
             //Source SystemUI FlavorOneFeatureOption 启用应用专属媒体音量
             if (osCode >= 27 && preferences(ModulePrefs).getBoolean(
                     "enable_app_specific_media_volume",
