@@ -35,10 +35,6 @@
     <string name="settings_enable_predictive_back_summary">啟用預測性返回手勢支援</string>
     <string name="settings_enable_swipe_dismiss">橫移返回手勢</string>
     <string name="settings_enable_swipe_dismiss_summary">從螢幕邊緣橫移返回上一頁</string>
-    <string name="settings_pager_gesture_mode">頁面切換手勢</string>
-    <string name="settings_pager_gesture_native">預設</string>
-    <string name="settings_pager_gesture_cross_axis">跨軸攔截</string>
-    <string name="settings_pager_gesture_ios_like">iOS 風格</string>
     <string name="settings_page_scale">介面縮放</string>
     <string name="settings_page_scale_summary">調整介面顯示比例</string>
     <string name="settings_ui_mode">介面風格</string>
@@ -1603,4 +1599,6 @@
     <string name="settings_enable_glass_summary">啟用懸浮底欄的液態玻璃效果</string>
     <string name="allow_third_party_installer">允許第三方安裝程式</string>
     <string name="allow_third_party_installer_summary">依系統預設選擇開啟 APK，允許記住第三方安裝程式</string>
+    <string name="search_categories">功能分類</string>
+    <string name="search_history_empty">暫無最近搜尋</string>
 </resources>

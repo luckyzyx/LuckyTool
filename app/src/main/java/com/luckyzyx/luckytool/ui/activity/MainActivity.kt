@@ -66,7 +66,7 @@ open class MainActivity : AppCompatActivity() {
     /** 当前是否位于 Home tab（冷启动默认 true = 起始目的地；checkOs 判断用） */
     var isOnHomeTab by mutableStateOf(true)
 
-    /** 跨标签页打开作用域页，由 MainShell 入栈并保留来源标签。 */
+    /** 跨标签页打开作用域 Activity，主界面保留来源标签。 */
     val functionNavRequests = MutableStateFlow<FunctionRequest?>(null)
 
     /**

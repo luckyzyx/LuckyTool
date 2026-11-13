@@ -1,5 +1,6 @@
 package com.luckyzyx.luckytool.ui.compose.special
 
+import android.app.Activity
 import android.annotation.SuppressLint
 import android.content.Context
 import android.content.ContextWrapper
@@ -32,7 +33,6 @@ import com.itos.coui.text.CouiTextKind
 import com.itos.coui.text.Text as CouiText
 import com.itos.coui.theme.CouiTheme
 import com.luckyzyx.luckytool.R
-import com.luckyzyx.luckytool.ui.activity.MainActivity
 import com.luckyzyx.luckytool.ui.compose.components.PrefCard
 import com.luckyzyx.luckytool.ui.compose.components.PrefGroup
 import com.luckyzyx.luckytool.ui.compose.components.PrefRow
@@ -69,7 +69,7 @@ object AppPermissionPage {
             // custom() 逃生舱：行内容需自带 16dp 内缩
             PrefRowInset {
                 AppPermissionContent(
-                    activity = LocalContext.current.findMainActivity(),
+                    activity = LocalContext.current.findPermissionActivity(),
                     blocking = false,
                 )
             }
@@ -99,7 +99,7 @@ private data class RootInfo(
 @SuppressLint("ReplaceWithLifecycleExtension")
 @Composable
 fun AppPermissionContent(
-    activity: MainActivity?,
+    activity: Activity?,
     blocking: Boolean,
     modifier: Modifier = Modifier,
     selfInset: Boolean = false,
@@ -339,8 +339,8 @@ private fun ActionButton(text: String, onClick: () -> Unit, enabled: Boolean = t
 }
 
 /** LocalContext 可能是包装 Context：逐层解包取宿主 Activity，取不到就是 null */
-private fun Context.findMainActivity(): MainActivity? = when (this) {
-    is MainActivity -> this
-    is ContextWrapper -> baseContext.findMainActivity()
+private fun Context.findPermissionActivity(): Activity? = when (this) {
+    is Activity -> this
+    is ContextWrapper -> baseContext.findPermissionActivity()
     else -> null
 }

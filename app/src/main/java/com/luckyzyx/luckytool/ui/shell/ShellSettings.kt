@@ -10,13 +10,7 @@ import androidx.compose.runtime.staticCompositionLocalOf
 import com.luckyzyx.luckytool.utils.SettingsPrefs
 import com.luckyzyx.luckytool.utils.getBoolean
 import com.luckyzyx.luckytool.utils.getFloat
-import com.luckyzyx.luckytool.utils.getInt
 import com.luckyzyx.luckytool.utils.getString
-
-/** 页面切换手势：0 系统原生、1 横向越界拦截、2 iOS 式跟手翻页。 */
-const val PagerModeNative = 0
-const val PagerModeCrossAxis = 1
-const val PagerModeIosLike = 2
 
 /** 界面缩放下限 / 上限。 */
 const val PageScaleMin = 0.8f
@@ -46,8 +40,8 @@ enum class FloatingBottomBarStyle(val value: String) {
  * 外壳行为偏好，包含导航、手势及布局设置。
  *
  * 偏好键及默认值：
- * enable_navigation_badge = true、enable_predictive_back = true、enable_swipe_dismiss = true、
- * pager_interception_mode = 1、page_scale = 1.0f、enable_blur = false、enable_floating_bottom_bar = false、
+ * enable_navigation_badge = true、enable_predictive_back = true、
+ * page_scale = 1.0f、enable_blur = false、enable_floating_bottom_bar = false、
  * floating_bottom_bar_style = classic、enable_category_badge_colors = true。
  *
  * enable_predictive_back 默认开启；
@@ -58,8 +52,6 @@ enum class FloatingBottomBarStyle(val value: String) {
 data class ShellSettings(
     val navigationBadge: Boolean = true,
     val predictiveBack: Boolean = true,
-    val swipeDismiss: Boolean = true,
-    val pagerInterceptionMode: Int = PagerModeCrossAxis,
     /** 全局界面缩放：0.8~1.1，1.0 为原始大小。 */
     val pageScale: Float = 1.0f,
     /** 顶栏 / 底栏背景模糊（需 isRenderEffectSupported()，API 31+） */
@@ -75,8 +67,6 @@ data class ShellSettings(
 object ShellSettingsController {
     const val KEY_NAVIGATION_BADGE = "enable_navigation_badge"
     const val KEY_PREDICTIVE_BACK = "enable_predictive_back"
-    const val KEY_SWIPE_DISMISS = "enable_swipe_dismiss"
-    const val KEY_PAGER_MODE = "pager_interception_mode"
     const val KEY_PAGE_SCALE = "page_scale"
     const val KEY_ENABLE_BLUR = "enable_blur"
     const val KEY_FLOATING_BOTTOM_BAR = "enable_floating_bottom_bar"
@@ -88,9 +78,6 @@ object ShellSettingsController {
     fun get(context: Context): ShellSettings = ShellSettings(
         navigationBadge = context.getBoolean(SettingsPrefs, KEY_NAVIGATION_BADGE, true),
         predictiveBack = context.getBoolean(SettingsPrefs, KEY_PREDICTIVE_BACK, true),
-        swipeDismiss = context.getBoolean(SettingsPrefs, KEY_SWIPE_DISMISS, true),
-        pagerInterceptionMode = context.getInt(SettingsPrefs, KEY_PAGER_MODE, PagerModeCrossAxis)
-            .coerceIn(PagerModeNative, PagerModeIosLike),
         pageScale = context.getFloat(SettingsPrefs, KEY_PAGE_SCALE, 1.0f)
             .coerceIn(PageScaleMin, PageScaleMax),
         enableBlur = context.getBoolean(SettingsPrefs, KEY_ENABLE_BLUR, false),
@@ -126,12 +113,6 @@ val LocalFloatingBottomBarStyle = staticCompositionLocalOf { FloatingBottomBarSt
 
 /** 功能页分类行多彩图标开关（关闭时用主题色单色徽标）。 */
 val LocalCategoryBadgeColors = staticCompositionLocalOf { true }
-
-/** 边缘横移返回手势开关 */
-val LocalEnableSwipeDismiss = staticCompositionLocalOf { true }
-
-/** 五个一级页面共用的分页手势模式。 */
-val LocalPagerInterceptionMode = staticCompositionLocalOf { PagerModeCrossAxis }
 
 /**
  * 底部导航角标数据源。

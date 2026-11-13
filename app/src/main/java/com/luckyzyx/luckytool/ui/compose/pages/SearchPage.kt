@@ -1,6 +1,13 @@
 package com.luckyzyx.luckytool.ui.compose.pages
 
 import android.content.Context
+import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.layout.PaddingValues
+import com.itos.coui.topappbar.CollapsingTopAppBar
+import com.itos.coui.topappbar.rememberCouiCollapsingAppBarState
+import com.itos.coui.layout.Scaffold as CouiScaffold
+import com.itos.coui.search.SearchBar as CouiSearchBar
+import com.itos.coui.search.rememberCouiSearchBarState
 import androidx.compose.foundation.layout.calculateEndPadding
 import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.consumeWindowInsets
@@ -21,7 +28,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
-import androidx.compose.runtime.withFrameNanos
+import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.platform.LocalContext
@@ -36,6 +43,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.itos.coui.theme.CouiTheme
 import com.luckyzyx.luckytool.R
+import com.luckyzyx.luckytool.ui.compose.categoryBadges
 import com.luckyzyx.luckytool.ui.compose.FunctionPageData
 import com.luckyzyx.luckytool.ui.compose.pageTitle
 import com.luckyzyx.luckytool.ui.compose.ScopeRoute
@@ -85,28 +93,26 @@ private fun writeSearchHistory(context: Context, terms: List<String>) {
 @Composable
 fun SearchPage(isCurrentPage: Boolean, onOpen: (ScopeRoute) -> Unit) {
     val context = LocalContext.current
+    val isCoui = LocalUiMode.current == UiMode.Coui
+    var searchExpanded by remember { mutableStateOf(false) }
     var query by rememberSaveable { mutableStateOf("") }
     var history by remember { mutableStateOf(readSearchHistory(context)) }
 
-    // 切到搜索页即聚焦输入框并拉起输入法：打开就能直接打字，不必先点一下搜索框。
-    // 分页器会预先组合相邻页面，因此焦点只在「本页是当前标签」时请求，否则启动即弹输入法。
+    // 默认先浏览历史与分类，点击搜索框才请求焦点和输入法。
     val searchFocusRequester = remember { FocusRequester() }
     val keyboardController = LocalSoftwareKeyboardController.current
+    val focusManager = LocalFocusManager.current
     LaunchedEffect(isCurrentPage) {
         if (!isCurrentPage) {
-            // 离开搜索页时收起输入法，免得键盘跟着滑到别的标签上
+            searchExpanded = false
+            focusManager.clearFocus(force = true)
             keyboardController?.hide()
-            return@LaunchedEffect
         }
-        // 等首帧布局完成（focus 节点挂载）后再请求焦点：节点未挂载时 requestFocus 会抛未初始化
-        withFrameNanos { }
-        searchFocusRequester.requestFocus()
-        // 个别 ROM 上 requestFocus 不会自动弹出输入法，这里显式再请求一次
-        keyboardController?.show()
     }
 
     val snapshot by FunctionPageData.snapshot.collectAsStateWithLifecycle()
     val entries = snapshot?.searchEntries.orEmpty()
+    val categories = snapshot?.rows.orEmpty().filter { it.pageKey in categoryBadges }
     // 图标预热尺寸必须与功能树读取时一致（AppIconCache 的键含 size，不一致会白热一份）
     val iconSize = with(LocalDensity.current) { 48.dp.roundToPx() }
     LaunchedEffect(context, iconSize) { FunctionPageData.revalidate(context, iconSize) }
@@ -130,20 +136,23 @@ fun SearchPage(isCurrentPage: Boolean, onOpen: (ScopeRoute) -> Unit) {
         }
     }
 
-    PageScaffold(title = stringResource(R.string.menu_search)) { padding ->
+    val resultsContent: @Composable (PaddingValues) -> Unit = { padding ->
         val settings = remember { PrefState.of(context, SettingsPrefs) }
         val layoutDirection = LocalLayoutDirection.current
         // 顶栏高度经 LocalScopeTopInset 放进列表 contentPadding：视口铺满整屏，
         // 滚动中的行才能进入顶栏下方；水平/底部内边距仍留在视口外。
-        val scopeModifier = Modifier
-            .fillMaxSize()
-            .consumeWindowInsets(padding)
-            .padding(
+        val scopeModifier = if (isCoui) {
+            // COUI Scaffold 的 PaddingValues 会随顶栏测量更新：在布局阶段读取整份占位。
+            // 列表视口从搜索框下方开始，不能再把顶栏高度仅当作列表内部留白。
+            Modifier.fillMaxSize().padding(padding).consumeWindowInsets(padding).clipToBounds()
+        } else {
+            Modifier.fillMaxSize().consumeWindowInsets(padding).padding(
                 start = padding.calculateStartPadding(layoutDirection),
                 end = padding.calculateEndPadding(layoutDirection),
                 bottom = padding.calculateBottomPadding(),
             )
-        val topInset = padding.calculateTopPadding()
+        }
+        val topInset = if (isCoui) 0.dp else padding.calculateTopPadding()
         val scopeContent: @Composable () -> Unit = {
             // 页面级状态在 @Composable 作用域内先读取：只在 ScopeScreen 的 content lambda 内
             // 读取不会被列表追踪，后果是搜索结果不随输入刷新
@@ -151,6 +160,10 @@ fun SearchPage(isCurrentPage: Boolean, onOpen: (ScopeRoute) -> Unit) {
             val entriesNow = entries
             val filteredNow = filtered
             val historyNow = history
+            val categoriesNow = categories
+            val indexLoading = snapshot == null
+            val categoriesTitle = stringResource(R.string.search_categories)
+            val historyEmptyText = stringResource(R.string.search_history_empty)
             // 行参数在非 Composable 的构建 lambda 内求值（那里没有 Composer），字符串先在这里取一次
             val searchIndexLoadingText = stringResource(R.string.search_index_loading)
             val searchNoResultsText = stringResource(R.string.search_no_results)
@@ -159,7 +172,7 @@ fun SearchPage(isCurrentPage: Boolean, onOpen: (ScopeRoute) -> Unit) {
             CompositionLocalProvider(LocalScopeTopInset provides topInset) {
                 ScopeScreen(state = settings, modifier = scopeModifier) {
                 // 搜索框不是「选项行」，独占一张卡片（否则会与紧随其后的结果行拼在一起）
-                custom(key = "search_field", standalone = true) {
+                if (!isCoui) custom(key = "search_field", standalone = true) {
                     // 顶栏折叠/展开由列表滚动驱动：滚动一开始就清掉搜索框焦点并收键盘，
                     // 否则仍聚焦的字段会在布局变化时被平台恢复输入法。
                     val scopeListState = LocalScopeListState.current
@@ -194,27 +207,11 @@ fun SearchPage(isCurrentPage: Boolean, onOpen: (ScopeRoute) -> Unit) {
                         },
                         trailingContent = if (queryNow.isNotEmpty()) {
                             {
-                                // 清空按钮跟随当前渲染线：搜索框两条线共用同一个入口，
-                                // 里面混进另一种线族的按钮会在 COUI 线上露出 Material 的点击态
-                                when (LocalUiMode.current) {
-                                    UiMode.Material -> IconButton(onClick = { query = "" }) {
-                                        Icon(
-                                            painterResource(R.drawable.ic_baseline_close_24),
-                                            contentDescription = stringResource(R.string.clear),
-                                        )
-                                    }
-
-                                    UiMode.Coui -> CouiIconButton(
-                                        onClick = { query = "" },
+                                IconButton(onClick = { query = "" }) {
+                                    Icon(
+                                        painterResource(R.drawable.ic_baseline_close_24),
                                         contentDescription = stringResource(R.string.clear),
-                                    ) {
-                                        // 图标语义由按钮统一声明，这里传 null 免得读屏播报两遍
-                                        Icon(
-                                            painterResource(R.drawable.ic_baseline_close_24),
-                                            contentDescription = null,
-                                            tint = CouiTheme.colorScheme.onSurface,
-                                        )
-                                    }
+                                    )
                                 }
                             }
                         } else {
@@ -224,9 +221,11 @@ fun SearchPage(isCurrentPage: Boolean, onOpen: (ScopeRoute) -> Unit) {
                 }
                 if (queryNow.isBlank()) {
                     // 空查询时给最近搜索历史留出入口：点一条即填入，右侧按钮只删这一条
-                    if (historyNow.isNotEmpty()) {
-                        // 分类标题裸渲染在分组之上，不套卡片
-                        category(historyTitleText)
+                    category(historyTitleText)
+                    if (historyNow.isEmpty()) {
+                        // 无操作回调的独立提示卡片，沿用分组行的圆角、字号和内边距。
+                        click(title = historyEmptyText, itemKey = "search_history_empty")
+                    } else {
                         historyNow.forEach { term ->
                             click(
                                 title = term,
@@ -259,7 +258,7 @@ fun SearchPage(isCurrentPage: Boolean, onOpen: (ScopeRoute) -> Unit) {
                                         }
                                     }
                                 },
-                                onClick = { query = term },
+                                onClick = { query = term; searchExpanded = true },
                             )
                         }
                         click(
@@ -268,6 +267,19 @@ fun SearchPage(isCurrentPage: Boolean, onOpen: (ScopeRoute) -> Unit) {
                                 history = emptyList()
                                 writeSearchHistory(context, history)
                             },
+                        )
+                    }
+                    category(categoriesTitle)
+                    if (indexLoading) {
+                        click(title = searchIndexLoadingText)
+                    }
+                    categoriesNow.forEach { row ->
+                        click(
+                            title = row.title,
+                            trailing = {
+                                Icon(Icons.AutoMirrored.Rounded.KeyboardArrowRight, contentDescription = null)
+                            },
+                            onClick = { onOpen(ScopeRoute(row.pageKey, row.title)) },
                         )
                     }
                 } else {
@@ -325,4 +337,50 @@ fun SearchPage(isCurrentPage: Boolean, onOpen: (ScopeRoute) -> Unit) {
         }
         scopeContent()
     }
+    if (isCoui) {
+        val searchState = rememberCouiSearchBarState(searchExpanded)
+        val headerState = rememberCouiCollapsingAppBarState(canScroll = { false })
+        val density = LocalDensity.current
+        val closeSearch = {
+            searchExpanded = false
+            query = ""
+        }
+        BackHandler(enabled = isCurrentPage && searchExpanded, onBack = closeSearch)
+        CouiScaffold(
+            modifier = Modifier.fillMaxSize(),
+            topBar = {
+                // 标题和搜索始终留在同一棵布局树，共用库的展开/取消动画状态。
+                CollapsingTopAppBar(
+                    state = headerState,
+                    searchState = searchState,
+                    title = stringResource(R.string.nav_search),
+                ) {
+                    CouiSearchBar(
+                        state = searchState,
+                        query = query,
+                        onQueryChange = { query = it },
+                        onExpandedChange = { expanded ->
+                            searchExpanded = expanded
+                            if (!expanded) query = ""
+                        },
+                        placeholder = stringResource(R.string.menu_search),
+                        cancelText = stringResource(android.R.string.cancel),
+                        clearDescription = stringResource(R.string.clear),
+                        onSearch = { recordHistory(query.trim()) },
+                        enabled = isCurrentPage,
+                        shadowProgress = headerState.collapsedFraction,
+                    )
+                }
+            },
+            content = { padding ->
+                val contentPadding = remember(headerState, padding, density) {
+                    headerState.contentPadding(padding, density)
+                }
+                resultsContent(contentPadding)
+            },
+        )
+    } else {
+        PageScaffold(title = stringResource(R.string.nav_search), content = resultsContent)
+    }
+
 }
