@@ -401,8 +401,11 @@ internal fun MainTabs(
     TabsScaffold(bottomBar = rootBottomBar, content = movableShellContent)
 }
 
-/** 底栏两端附件位占掉的宽度：每侧 56dp 圆 + 12dp 间距。 */
+/** kit 在菜单两侧预留的附件位：每侧 56dp 圆 + 12dp 间距，不挂附件也照样占位。 */
 private val CouiBarAttachmentSpace = 136.dp
+
+/** 底栏单个页签的目标宽度：kit 的设计基准 70dp 铺满时过于扁平，取更紧凑的一档。 */
+private val CouiBarItemWidth = 52.dp
 
 /**
  * Coui 线底栏：有背景渲染器时用悬浮胶囊底栏，取不到渲染器时退回同一套配色的平铺底栏。
@@ -422,19 +425,18 @@ private fun CouiTabsBottomBar(
     // 悬浮底栏要采样整块页面：采样源由标签外壳的 COUI Scaffold 底栏槽位提供，
     // 不在槽位里（例如单独组合标签外壳）拿不到，只能退回平铺底栏。
     if (renderer != null && LocalCouiTabsBarSlot.current) {
-        // 胶囊宽度由 kit 按「可用宽 - 两端附件位」算出，附件位不挂也照样占位（合计 136dp），
-        // 本应用恒有 5 个页签，扣完只剩屏宽六成、页签压到约 37dp。这里把这段预留补回再居中，
-        // 胶囊回到整条可用宽度；多出来的部分落在屏幕外，不参与绘制与点击。
+        // kit 的菜单宽 = 可用宽 - 136dp（两端附件位），5 个页签只剩每项约 37dp。
+        // 这里按页签目标宽度反推菜单宽，再把这 136dp 加回去：kit 扣完正好落在目标宽度上，
+        // 胶囊宽度因此不随屏宽浮动，页签也拿到设计宽度；溢出的部分落在屏幕外，不参与绘制。
         BoxWithConstraints(
             modifier = Modifier.fillMaxWidth(),
             contentAlignment = Alignment.BottomCenter,
         ) {
-            // 宽上限取 kit 自己的菜单上限，页签不足 5 个时胶囊按设计宽度居中，不会被推到一侧。
-            val kitMenuMaxWidth = 24.dp + 70.dp * tabs.size + 8.dp * (tabs.size - 1)
-            val barWidth = (maxWidth + CouiBarAttachmentSpace)
-                .coerceAtMost(kitMenuMaxWidth + CouiBarAttachmentSpace + 32.dp)
+            // 窄屏兜底：菜单不超过整条可用宽（屏宽减去 kit 左右各 16dp 的内边距）。
+            val menuWidth = (24.dp + CouiBarItemWidth * tabs.size + 8.dp * (tabs.size - 1))
+                .coerceAtMost(maxWidth - 32.dp)
             CouiNavigationBar(
-                modifier = Modifier.requiredWidth(barWidth),
+                modifier = Modifier.requiredWidth(menuWidth + CouiBarAttachmentSpace + 32.dp),
                 renderer = renderer,
                 // COUI 图标集没有选中/未选中成对的页签图标，两态共用同一个图形，
                 // 选中态由底栏用文字透明度区分。
