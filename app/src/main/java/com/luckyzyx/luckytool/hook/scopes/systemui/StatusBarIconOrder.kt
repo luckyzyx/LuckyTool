@@ -9,15 +9,14 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.LinearLayout
 import com.highcapable.kavaref.KavaRef.Companion.resolve
-import com.highcapable.kavaref.extension.makeAccessible
+import com.highcapable.kavaref.condition.type.Modifiers
+import com.highcapable.kavaref.resolver.MethodResolver
 import com.highcapable.yukihookapi.extension.kavaref.hook
 import com.highcapable.yukihookapi.extension.kavaref.toClassOrNull
 import com.highcapable.yukihookapi.hook.entity.YukiBaseHooker
 import com.highcapable.yukihookapi.hook.log.YLog
 import com.luckyzyx.luckytool.utils.ModulePrefs
 import org.lsposed.lsparanoid.Obfuscate
-import java.lang.reflect.Field
-import java.lang.reflect.Method
 
 /**
  * 状态栏图标位置排序（左 / 右两区域，区域内可排序、可跨区搬运）。
@@ -178,29 +177,33 @@ object StatusBarIconOrder : YukiBaseHooker() {
     @Volatile
     private var zonesActive = false
 
-    private val slotMethodCache = HashMap<Class<*>, Method?>(8)
+    /** 图标 view 类的 `getSlot()` 解析结果缓存：按 Class 解析一次、每个 view 调用时再绑定实例 */
+    private val slotMethodCache = HashMap<Class<*>, MethodResolver<View>>(8)
 
-    /** `ViewGroup.detachViewFromParent(View)`：同容器内移动子 view 的第一步（不触发 detach 回调） */
-    private val detachViewFromParentMethod: Method? by lazy {
-        runCatching {
-            ViewGroup::class.java
-                .getDeclaredMethod("detachViewFromParent", View::class.java)
-                .apply { makeAccessible() }
-        }.getOrNull()
+    /**
+     * `ViewGroup.detachViewFromParent(View)`：同容器内移动子 view 的第一步（不触发 detach 回调）。
+     *
+     * 解析结果只保留 resolver，调用时用 `copy().of(parent)` 绑定实例：一个 resolver 只能绑定一次。
+     */
+    private val detachViewFromParentResolver: MethodResolver<ViewGroup>? by lazy {
+        ViewGroup::class.java.resolve()
+            .firstMethodOrNull {
+                name = "detachViewFromParent"
+                parameters(View::class)
+            }
     }
 
-    /** `ViewGroup.attachViewToParent(View, int, LayoutParams)`：挂子 view 但不触发 attach 回调 */
-    private val attachViewToParentMethod: Method? by lazy {
-        runCatching {
-            ViewGroup::class.java
-                .getDeclaredMethod(
-                    "attachViewToParent",
-                    View::class.java,
-                    Int::class.javaPrimitiveType,
-                    ViewGroup.LayoutParams::class.java,
-                )
-                .apply { makeAccessible() }
-        }.getOrNull()
+    /**
+     * `ViewGroup.attachViewToParent(View, int, LayoutParams)`：挂子 view 但不触发 attach 回调。
+     *
+     * 参数类型按 primitives 精确匹配（int 用 `Int::class`），与宿主声明一致。
+     */
+    private val attachViewToParentResolver: MethodResolver<ViewGroup>? by lazy {
+        ViewGroup::class.java.resolve()
+            .firstMethodOrNull {
+                name = "attachViewToParent"
+                parameters(View::class, Int::class, ViewGroup.LayoutParams::class)
+            }
     }
 
     override fun onHook() {
@@ -492,9 +495,9 @@ object StatusBarIconOrder : YukiBaseHooker() {
      * `State is 'DESTROYED' and cannot be moved to RESUMED`。
      */
     private fun detachQuietly(parent: ViewGroup, view: View) {
-        val detach = detachViewFromParentMethod
+        val detach = detachViewFromParentResolver
         if (detach != null) {
-            runCatching { detach.invoke(parent, view) }
+            runCatching { detach.copy().of(parent).invoke<Any?>(view) }
                 .onSuccess { return }
                 .onFailure { YLog.debug("StatusBarIconOrder: detachQuietly failed -> $it") }
         }
@@ -507,11 +510,10 @@ object StatusBarIconOrder : YukiBaseHooker() {
      * `onDetachedFromWindow` / `onAttachedToWindow`**，因此不会碰坏宿主挂在 attach 回调上的生命周期。
      */
     private fun moveChildInPlace(parent: ViewGroup, view: View, index: Int): Boolean = runCatching {
-        val detach = detachViewFromParentMethod ?: return@runCatching false
-        val attach = attachViewToParentMethod ?: return@runCatching false
-        detach.invoke(parent, view)
-        attach.invoke(
-            parent,
+        val detach = detachViewFromParentResolver ?: return@runCatching false
+        val attach = attachViewToParentResolver ?: return@runCatching false
+        detach.copy().of(parent).invoke<Any?>(view)
+        attach.copy().of(parent).invoke<Any?>(
             view,
             index.coerceIn(0, parent.childCount),
             view.layoutParams
@@ -739,13 +741,22 @@ object StatusBarIconOrder : YukiBaseHooker() {
     private fun idOf(view: View, name: String): Int =
         view.resources.getIdentifier(name, "id", view.context.packageName)
 
-    /** 图标 view 自报槽位名（`StatusIconDisplayable.getSlot()`） */
+    /**
+     * 图标 view 自报槽位名（`StatusIconDisplayable.getSlot()`）。
+     *
+     * 只认 public 方法，并沿父类与接口找：实现类常常只继承 `getSlot` 而不复写。
+     * 解析失败不写缓存，下一次调用会重新解析（宿主可能晚一点才把实现类补上）。
+     */
     private fun slotOf(view: View): String? = runCatching {
         val clazz = view.javaClass
-        if (!slotMethodCache.containsKey(clazz)) {
-            slotMethodCache[clazz] = clazz.getMethod("getSlot")
-        }
-        slotMethodCache[clazz]?.invoke(view) as? String
+        val resolver = slotMethodCache[clazz] ?: clazz.resolve()
+            .firstMethodOrNull {
+                name = "getSlot"
+                modifiers(Modifiers.PUBLIC)
+                superclass(interfaces = true)
+            }
+            ?.also { slotMethodCache[clazz] = it }
+        resolver?.copy()?.of(view)?.invoke<Any?>() as? String
     }.getOrNull()
 
     /**
@@ -782,15 +793,24 @@ object StatusBarIconOrder : YukiBaseHooker() {
         if (refresh) refreshIcons()
     }
 
-    /** 重建全部图标 view（宿主 OplusStatusBarIconControllerEx 会在前后保存/恢复图标状态） */
+    /**
+     * 重建全部图标 view（宿主 OplusStatusBarIconControllerEx 会在前后保存/恢复图标状态）。
+     *
+     * `refreshStatusBarIconList()` 在 oplus 实现里是 public final 且无重载，按「无参、沿父类」定位。
+     */
     private fun refreshIcons() {
         val controller = iconController ?: return
-        val method = findMethod(controller.javaClass, "refreshStatusBarIconList")
-        if (method == null) {
+        val resolver = controller.javaClass.resolve()
+            .firstMethodOrNull {
+                name = "refreshStatusBarIconList"
+                parameterCount = 0
+                superclass()
+            }
+        if (resolver == null) {
             YLog.debug("StatusBarIconOrder: refreshStatusBarIconList not found, restart SystemUI to apply")
             return
         }
-        runCatching { method.invoke(controller) }
+        runCatching { resolver.copy().of(controller).invoke<Any?>() }
             .onFailure { YLog.debug("StatusBarIconOrder: refreshStatusBarIconList failed -> $it") }
     }
 
@@ -802,7 +822,12 @@ object StatusBarIconOrder : YukiBaseHooker() {
         iconList?.let { return it }
         val controller = iconController ?: return null
         val list = runCatching {
-            findField(controller.javaClass, "mStatusBarIconList")?.get(controller)
+            controller.javaClass.resolve()
+                .firstFieldOrNull {
+                    name = "mStatusBarIconList"
+                    superclass()
+                }
+                ?.let { it.copy().of(controller).get<Any?>() }
         }.getOrNull() ?: return null
         iconList = list
         if (defaultOrder.isEmpty()) defaultOrder = namesOf(list)
@@ -814,39 +839,23 @@ object StatusBarIconOrder : YukiBaseHooker() {
 
     @Suppress("UNCHECKED_CAST")
     private fun slotsOf(list: Any): MutableList<Any?>? = runCatching {
-        findField(list.javaClass, "mSlots")?.get(list) as? MutableList<Any?>
+        list.javaClass.resolve()
+            .firstFieldOrNull {
+                name = "mSlots"
+                superclass()
+            }
+            ?.let { it.copy().of(list).get<Any?>() } as? MutableList<Any?>
     }.getOrNull()
 
-    /** Slot 是宿主内部类，直接按字段名反射取值，避免写死 `StatusBarIconList$Slot` */
+    /** Slot 是宿主内部类，直接按字段名取值，避免写死 `StatusBarIconList$Slot` */
     private fun slotName(slot: Any): String? = runCatching {
-        findField(slot.javaClass, "mName")?.get(slot) as? String
+        slot.javaClass.resolve()
+            .firstFieldOrNull {
+                name = "mName"
+                superclass()
+            }
+            ?.let { it.copy().of(slot).get<Any?>() } as? String
     }.getOrNull()
-
-    private fun findField(clazz: Class<*>, name: String): Field? {
-        var current: Class<*>? = clazz
-        while (true) {
-            val target = current ?: return null
-            val field = runCatching {
-                target.getDeclaredField(name).apply { makeAccessible() }
-            }.getOrNull()
-            if (field != null) return field
-            current = target.superclass
-        }
-    }
-
-    /** 无参方法：`refreshStatusBarIconList()` 在 oplus 实现里是 public final，无重载 */
-    private fun findMethod(clazz: Class<*>, name: String): Method? {
-        var current: Class<*>? = clazz
-        while (true) {
-            val target = current ?: return null
-            val method = runCatching {
-                target.declaredMethods.firstOrNull { it.name == name && it.parameterCount == 0 }
-                    ?.apply { makeAccessible() }
-            }.getOrNull()
-            if (method != null) return method
-            current = target.superclass
-        }
-    }
 
     private fun classOrNull(vararg names: String): Class<*>? =
         names.firstNotNullOfOrNull { runCatching { it.toClassOrNull() }.getOrNull() }

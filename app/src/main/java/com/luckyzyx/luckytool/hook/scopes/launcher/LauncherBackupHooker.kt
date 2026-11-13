@@ -22,8 +22,7 @@ import androidx.core.net.toUri
 import com.highcapable.betterandroid.ui.extension.view.toast
 import com.highcapable.kavaref.KavaRef.Companion.asResolver
 import com.highcapable.kavaref.KavaRef.Companion.resolve
-import com.highcapable.kavaref.extension.classOf
-import com.highcapable.kavaref.extension.isStatic
+import com.highcapable.kavaref.condition.type.Modifiers
 import com.highcapable.kavaref.extension.isSubclassOf
 import com.highcapable.kavaref.resolver.MethodResolver
 import com.highcapable.yukihookapi.extension.kavaref.hook
@@ -955,15 +954,16 @@ object LauncherBackupHooker : YukiBaseHooker() {
      */
     private fun protectedAppsManager(context: Context): Any? = runCatching {
         val managerClass = DEEP_PROTECTED_MANAGER.toClass(launcherClassLoader())
-        val accessor = managerClass.declaredMethods.firstOrNull { method ->
-            method.isStatic &&
-                method.parameterTypes.contentEquals(arrayOf(classOf<Context>())) &&
-                method.returnType isSubclassOf managerClass
+        val accessor = managerClass.resolve().firstMethodOrNull {
+            modifiers(Modifiers.STATIC)
+            parameters(Context::class)
+            returnType { it isSubclassOf managerClass }
         }
-        if (accessor != null) return@runCatching accessor.invoke(null, context)
-        managerClass.declaredFields.firstOrNull { field ->
-            field.isStatic && field.type isSubclassOf managerClass
-        }?.get(null)
+        if (accessor != null) return@runCatching accessor.invoke(context)
+        managerClass.resolve().firstFieldOrNull {
+            modifiers(Modifiers.STATIC)
+            type { it isSubclassOf managerClass }
+        }?.get()
     }.getOrNull()
 
     /**

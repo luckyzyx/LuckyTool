@@ -4,6 +4,9 @@ import android.annotation.SuppressLint
 import android.hardware.display.DisplayManager
 import android.os.Build
 import android.view.SurfaceControl
+import com.highcapable.kavaref.KavaRef.Companion.resolve
+import com.highcapable.yukihookapi.extension.kavaref.hook
+import com.highcapable.yukihookapi.extension.kavaref.intercept
 import com.highcapable.yukihookapi.extension.kavaref.toClass
 import com.highcapable.yukihookapi.hook.entity.YukiBaseHooker
 import com.highcapable.yukihookapi.hook.log.YLog
@@ -163,14 +166,14 @@ object HookDisableFlagSecure : YukiBaseHooker() {
     }
 
     private fun deoptimizeMethods(clazz: Class<*>, vararg names: String) {
-        clazz.declaredMethods.filter { it.name in names }.forEach { it.deoptimize() }
+        // 同名重载全部去优化，任何一个重载留在 AOT 状态都会让改动失效
+        clazz.resolve().method { name { it in names } }.forEach { it.self.deoptimize() }
     }
 
     private fun hookWindowState() {
         val windowStateClazz = "com.android.server.wm.WindowState".toClass()
         val systemServerCl = windowStateClazz.classLoader
-        val isSecureLockedMethod = windowStateClazz.getDeclaredMethod("isSecureLocked")
-        isSecureLockedMethod.hook {
+        windowStateClazz.resolve().firstMethod { name = "isSecureLocked" }.hook {
             before {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
                     val walker = StackWalker.getInstance(StackWalker.Option.RETAIN_CLASS_REFERENCE)
@@ -218,33 +221,33 @@ object HookDisableFlagSecure : YukiBaseHooker() {
             screenCaptureClazz = SurfaceControl::class.java
             captureArgsClazz = "android.view.SurfaceControl\$CaptureArgs".toClass()
         }
-        val captureSecureLayersField = captureArgsClazz.getDeclaredField(
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.BAKLAVA &&
+        val captureSecureLayersField = captureArgsClazz.resolve().firstField {
+            name = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.BAKLAVA &&
                 Build.VERSION.SDK_INT_FULL >= Build.VERSION_CODES_FULL.BAKLAVA_1
             ) "mSecureContentPolicy" else "mCaptureSecureLayers"
-        )
-        captureSecureLayersField.isAccessible = true
+        }
 
-        screenCaptureClazz.declaredMethods
-            .filter { it.name == "nativeCaptureDisplay" || it.name == "nativeCaptureLayers" }
-            .forEach { method ->
-                method.hook {
-                    before {
-                        val captureArgs = args[0]
-                        try {
-                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.BAKLAVA &&
-                                Build.VERSION.SDK_INT_FULL >= Build.VERSION_CODES_FULL.BAKLAVA_1
-                            ) {
-                                captureSecureLayersField.set(captureArgs, 1)
-                            } else {
-                                captureSecureLayersField.set(captureArgs, true)
-                            }
-                        } catch (t: IllegalAccessException) {
-                            YLog.error("ScreenCaptureHooker failed", t)
+        screenCaptureClazz.resolve().method {
+            name { it == "nativeCaptureDisplay" || it == "nativeCaptureLayers" }
+        }.forEach { method ->
+            method.hook {
+                before {
+                    val captureArgs = args[0]
+                    try {
+                        // 同一个 field resolver 只能绑定一次实例，每次调用都要 copy() 出新的一份
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.BAKLAVA &&
+                            Build.VERSION.SDK_INT_FULL >= Build.VERSION_CODES_FULL.BAKLAVA_1
+                        ) {
+                            captureSecureLayersField.copy().of(captureArgs).set(1)
+                        } else {
+                            captureSecureLayersField.copy().of(captureArgs).set(true)
                         }
+                    } catch (t: IllegalAccessException) {
+                        YLog.error("ScreenCaptureHooker failed", t)
                     }
                 }
             }
+        }
     }
 
     private fun hookDisplayControl() {
@@ -254,14 +257,14 @@ object HookDisableFlagSecure : YukiBaseHooker() {
             SurfaceControl::class.java
         }
         val systemServerCl = displayControlClazz.classLoader
-        val method = displayControlClazz.getDeclaredMethod(
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.VANILLA_ICE_CREAM) {
+        val method = displayControlClazz.resolve().firstMethod {
+            name = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.VANILLA_ICE_CREAM) {
                 "createVirtualDisplay"
             } else {
                 "createDisplay"
-            },
-            String::class.java, Boolean::class.javaPrimitiveType!!
-        )
+            }
+            parameters(String::class.java, Boolean::class.javaPrimitiveType!!)
+        }
         method.hook {
             before {
                 if (Build.VERSION.SDK_INT < Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
@@ -284,8 +287,8 @@ object HookDisableFlagSecure : YukiBaseHooker() {
     }
 
     private fun hookVirtualDisplayAdapter() {
-        "com.android.server.display.VirtualDisplayAdapter".toClass().declaredMethods
-            .filter { it.name == "createVirtualDisplayLocked" }
+        "com.android.server.display.VirtualDisplayAdapter".toClass().resolve()
+            .method { name = "createVirtualDisplayLocked" }
             .forEach { method ->
                 method.hook {
                     before {
@@ -311,9 +314,10 @@ object HookDisableFlagSecure : YukiBaseHooker() {
         val activityTaskManagerServiceClazz = "com.android.server.wm.ActivityTaskManagerService".toClass()
         val iBinderClazz = "android.os.IBinder".toClass()
         val iScreenCaptureObserverClazz = "android.app.IScreenCaptureObserver".toClass()
-        val method = activityTaskManagerServiceClazz.getDeclaredMethod(
-            "registerScreenCaptureObserver", iBinderClazz, iScreenCaptureObserverClazz
-        )
+        val method = activityTaskManagerServiceClazz.resolve().firstMethod {
+            name = "registerScreenCaptureObserver"
+            parameters(iBinderClazz, iScreenCaptureObserverClazz)
+        }
         method.hook {
             //经典 before 钩子无法可靠跳过 void 方法的原始调用，改用 intercept
             intercept {
@@ -326,9 +330,10 @@ object HookDisableFlagSecure : YukiBaseHooker() {
     private fun hookWindowManagerService() {
         val windowManagerServiceClazz = "com.android.server.wm.WindowManagerService".toClass()
         val iScreenRecordingCallbackClazz = "android.window.IScreenRecordingCallback".toClass()
-        val method = windowManagerServiceClazz.getDeclaredMethod(
-            "registerScreenRecordingCallback", iScreenRecordingCallbackClazz
-        )
+        val method = windowManagerServiceClazz.resolve().firstMethod {
+            name = "registerScreenRecordingCallback"
+            parameters(iScreenRecordingCallbackClazz)
+        }
         method.hook {
             //经典 before 钩子无法可靠跳过 void 方法的原始调用，改用 intercept
             intercept {
@@ -340,10 +345,12 @@ object HookDisableFlagSecure : YukiBaseHooker() {
 
     private fun hookActivityManagerService() {
         val activityManagerServiceClazz = "com.android.server.am.ActivityManagerService".toClass()
-        val method = activityManagerServiceClazz.getDeclaredMethod(
-            "checkPermission", String::class.java,
-            Int::class.javaPrimitiveType!!, Int::class.javaPrimitiveType!!
-        )
+        val method = activityManagerServiceClazz.resolve().firstMethod {
+            name = "checkPermission"
+            parameters(
+                String::class.java, Int::class.javaPrimitiveType!!, Int::class.javaPrimitiveType!!
+            )
+        }
         method.hook {
             before {
                 if ("android.permission.CAPTURE_BLACKOUT_CONTENT" == args[0]) {
@@ -354,8 +361,8 @@ object HookDisableFlagSecure : YukiBaseHooker() {
     }
 
     private fun hookHyperOS() {
-        "com.android.server.wm.WindowManagerServiceImpl".toClass().declaredMethods
-            .filter { it.name == "notAllowCaptureDisplay" }
+        "com.android.server.wm.WindowManagerServiceImpl".toClass().resolve()
+            .method { name = "notAllowCaptureDisplay" }
             .forEach { method -> method.hook { before { result = false } } }
     }
 
@@ -365,22 +372,24 @@ object HookDisableFlagSecure : YukiBaseHooker() {
         } else {
             "android.view.SurfaceControl\$ScreenshotHardwareBuffer"
         }).toClass()
-        val method = screenshotHardwareBufferClazz.getDeclaredMethod("containsSecureLayers")
-        method.hook {
-            before { result = false }
-        }
+        screenshotHardwareBufferClazz.resolve()
+            .firstMethod {
+                name = "containsSecureLayers"
+                emptyParameters()
+            }
+            .hook { before { result = false } }
     }
 
     private fun hookOplus() {
         // caller: com.android.server.wm.OplusLongshotWindowDump#dumpWindows
-        "com.android.server.wm.OplusLongshotMainWindow".toClass().declaredMethods
-            .filter { it.name == "hasSecure" }
+        "com.android.server.wm.OplusLongshotMainWindow".toClass().resolve()
+            .method { name = "hasSecure" }
             .forEach { method -> method.hook { before { result = false } } }
     }
 
     private fun hookOneUI() {
-        "com.android.server.wm.WmScreenshotController".toClass().declaredMethods
-            .filter { it.name == "canBeScreenshotTarget" }
+        "com.android.server.wm.WmScreenshotController".toClass().resolve()
+            .method { name = "canBeScreenshotTarget" }
             .forEach { method -> method.hook { before { result = true } } }
     }
 }
@@ -452,7 +461,10 @@ object HookDisableFlagSecureApp : YukiBaseHooker() {
 
     private fun hookOplusScreenCapture() {
         val oplusScreenCaptureClazz = "com.oplus.screenshot.OplusScreenCapture\$CaptureArgs\$Builder".toClass()
-        val method = oplusScreenCaptureClazz.getDeclaredMethod("setUid", Long::class.javaPrimitiveType!!)
+        val method = oplusScreenCaptureClazz.resolve().firstMethod {
+            name = "setUid"
+            parameters(Long::class.javaPrimitiveType!!)
+        }
         method.hook {
             before {
                 args[0] = -1
@@ -466,10 +478,12 @@ object HookDisableFlagSecureApp : YukiBaseHooker() {
         } else {
             "android.view.SurfaceControl\$ScreenshotHardwareBuffer"
         }).toClass()
-        val method = screenshotHardwareBufferClazz.getDeclaredMethod("containsSecureLayers")
-        method.hook {
-            before { result = false }
-        }
+        screenshotHardwareBufferClazz.resolve()
+            .firstMethod {
+                name = "containsSecureLayers"
+                emptyParameters()
+            }
+            .hook { before { result = false } }
     }
 
     private fun hookScreenCapture() {
@@ -487,32 +501,32 @@ object HookDisableFlagSecureApp : YukiBaseHooker() {
             screenCaptureClazz = SurfaceControl::class.java
             captureArgsClazz = "android.view.SurfaceControl\$CaptureArgs".toClass()
         }
-        val captureSecureLayersField = captureArgsClazz.getDeclaredField(
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.BAKLAVA &&
+        val captureSecureLayersField = captureArgsClazz.resolve().firstField {
+            name = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.BAKLAVA &&
                 Build.VERSION.SDK_INT_FULL >= Build.VERSION_CODES_FULL.BAKLAVA_1
             ) "mSecureContentPolicy" else "mCaptureSecureLayers"
-        )
-        captureSecureLayersField.isAccessible = true
+        }
 
-        screenCaptureClazz.declaredMethods
-            .filter { it.name == "nativeCaptureDisplay" || it.name == "nativeCaptureLayers" }
-            .forEach { method ->
-                method.hook {
-                    before {
-                        val captureArgs = args[0]
-                        try {
-                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.BAKLAVA &&
-                                Build.VERSION.SDK_INT_FULL >= Build.VERSION_CODES_FULL.BAKLAVA_1
-                            ) {
-                                captureSecureLayersField.set(captureArgs, 1)
-                            } else {
-                                captureSecureLayersField.set(captureArgs, true)
-                            }
-                        } catch (t: IllegalAccessException) {
-                            YLog.error("ScreenCaptureHooker failed", t)
+        screenCaptureClazz.resolve().method {
+            name { it == "nativeCaptureDisplay" || it == "nativeCaptureLayers" }
+        }.forEach { method ->
+            method.hook {
+                before {
+                    val captureArgs = args[0]
+                    try {
+                        // 同一个 field resolver 只能绑定一次实例，每次调用都要 copy() 出新的一份
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.BAKLAVA &&
+                            Build.VERSION.SDK_INT_FULL >= Build.VERSION_CODES_FULL.BAKLAVA_1
+                        ) {
+                            captureSecureLayersField.copy().of(captureArgs).set(1)
+                        } else {
+                            captureSecureLayersField.copy().of(captureArgs).set(true)
                         }
+                    } catch (t: IllegalAccessException) {
+                        YLog.error("ScreenCaptureHooker failed", t)
                     }
                 }
             }
+        }
     }
 }

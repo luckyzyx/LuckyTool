@@ -2,6 +2,7 @@ package com.luckyzyx.luckytool.hook.scopes.games
 
 import android.content.Context
 import com.highcapable.kavaref.KavaRef.Companion.resolve
+import com.highcapable.kavaref.extension.classOf
 import com.highcapable.yukihookapi.extension.kavaref.hook
 import com.highcapable.yukihookapi.extension.kavaref.toClass
 import com.highcapable.yukihookapi.hook.entity.YukiBaseHooker
@@ -38,14 +39,14 @@ class EnableGameRunInBackground(
             YLog.error("EnableGameRunInBackground Support Class -> $supportClassList")
         } else {
             val clazz = supportClassList.first().toClass()
-            val supportField = clazz.declaredFields.firstOrNull {
-                it.type == Boolean::class.javaPrimitiveType
+            val supportField = clazz.resolve().firstFieldOrNull {
+                type = classOf<Boolean>()
             }
             clazz.resolve().firstConstructor { parameters(Context::class) }.hook {
                 after {
                     runCatching {
-                        supportField?.isAccessible = true
-                        supportField?.setBoolean(instance, true)
+                        //字段解析结果可复用，但一个 resolver 只能绑定一次实例，每次按当前实例 copy 后再写
+                        supportField?.let { it.copy().of(instance).set(true) }
                     }.onFailure { YLog.error("EnableGameRunInBackground Support -> $it") }
                 }
             }
@@ -58,26 +59,24 @@ class EnableGameRunInBackground(
         }.apply {
             checkDataList("EnableGameRunInBackground HangUp Runnable")
             val clazz = single().name.toClass()
-            val actionField = clazz.declaredFields.firstOrNull {
-                it.type == Byte::class.javaPrimitiveType
+            val actionField = clazz.resolve().firstFieldOrNull {
+                type = classOf<Byte>()
             }
-            val contextField = clazz.declaredFields.firstOrNull {
-                Context::class.java.isAssignableFrom(it.type)
+            val contextField = clazz.resolve().firstFieldOrNull {
+                type { Context::class.java.isAssignableFrom(it) }
             }
             clazz.resolve().firstMethod { name = "run";emptyParameters() }.hook {
                 before {
                     val self = instance
                     val action = runCatching {
-                        actionField?.isAccessible = true
-                        actionField?.get(self) as? Byte
+                        actionField?.let { it.copy().of(self).get() } as? Byte
                     }.getOrNull()
                     if (action != startAction) return@before
                     if (osCode >= 34) {
                         startMirageWindow(null)
                     } else {
                         val context = runCatching {
-                            contextField?.isAccessible = true
-                            contextField?.get(self) as? Context
+                            contextField?.let { it.copy().of(self).get() } as? Context
                         }.getOrNull() ?: return@before
                         IntentUtils(context).startBackgroundRunServiceV14()
                     }
