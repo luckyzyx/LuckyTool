@@ -41,6 +41,13 @@ import org.robolectric.annotation.Config
 @Config(sdk = [34])
 class ScopeScreenConditionalRefreshTest {
 
+    private companion object {
+        const val PREFS_NAME = "scope_conditional_refresh_test"
+
+        /** 视口高度：远大于测试条目高度，保证新增条目落在视口内被组合。 */
+        const val VIEWPORT_HEIGHT = 20_000
+    }
+
     @Test
     fun `conditional entry makes the list rebuild after a prefs write`() {
         val context = ApplicationProvider.getApplicationContext<Context>()
@@ -100,12 +107,5 @@ class ScopeScreenConditionalRefreshTest {
             view.layout(0, 0, 1080, VIEWPORT_HEIGHT)
         }
         shadowOf(Looper.getMainLooper()).idle()
-    }
-
-    private companion object {
-        const val PREFS_NAME = "scope_conditional_refresh_test"
-
-        /** 视口高度：远大于测试条目高度，保证新增条目落在视口内被组合。 */
-        const val VIEWPORT_HEIGHT = 20_000
     }
 }

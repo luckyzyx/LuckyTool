@@ -12,6 +12,11 @@ import org.luckypray.dexkit.DexKitBridge
 
 @Obfuscate
 class ForceEnableRecentTaskMemoryDisplay(val dexKitBridge: DexKitBridge) : YukiBaseHooker() {
+
+    private companion object {
+        const val PANEL = "com.oplus.quickstep.views.OplusClearAllPanelView"
+    }
+
     override fun onHook() {
         //Source MemoryInfoManager
         // 这一行显示与否只看这个类里的展示开关：旧版是两个方法，17.x 起合并成一个布尔字段；
@@ -144,9 +149,5 @@ class ForceEnableRecentTaskMemoryDisplay(val dexKitBridge: DexKitBridge) : YukiB
             }
 
         }
-    }
-
-    private companion object {
-        const val PANEL = "com.oplus.quickstep.views.OplusClearAllPanelView"
     }
 }

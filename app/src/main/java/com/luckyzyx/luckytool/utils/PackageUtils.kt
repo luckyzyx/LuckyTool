@@ -18,6 +18,32 @@ import java.io.File
 @Obfuscate
 class PackageUtils(private val packageManager: PackageManager) {
 
+    companion object {
+        fun PackageInfo.toAppInfo(pm: PackageManager): AppInfo? {
+            return try {
+                val appInfo = applicationInfo ?: return null
+                val name = appInfo.loadLabel(pm)
+                val icon = appInfo.loadIcon(pm)
+                val size = FileUtils.getFileSize(File(appInfo.sourceDir))
+                val versionName = versionName ?: ""
+                val versionCode = longVersionCode
+                val installTime = firstInstallTime
+                val lastInstallTime = lastUpdateTime
+                val target = appInfo.targetSdkVersion
+                val isSystem = appInfo.flags and ApplicationInfo.FLAG_SYSTEM == 1
+                val isOverlay = appInfo.isResourceOverlay
+                val isEnable = PackageUtils(pm).getApplicationEnabledSetting(packageName)
+                AppInfo(
+                    name.toString(), packageName, icon, size, versionName, versionCode,
+                    installTime, lastInstallTime, target, isSystem, isOverlay, isEnable
+                )
+            } catch (e: Exception) {
+                LogUtils.e("toAppInfo", packageName, toString())
+                null
+            }
+        }
+    }
+
     /**
      * @see [PackageManager.getPackageArchiveInfo]
      */
@@ -222,32 +248,6 @@ class PackageUtils(private val packageManager: PackageManager) {
             if (appInfo != null) appInfoList.add(appInfo)
         }
         return appInfoList
-    }
-
-    companion object {
-        fun PackageInfo.toAppInfo(pm: PackageManager): AppInfo? {
-            return try {
-                val appInfo = applicationInfo ?: return null
-                val name = appInfo.loadLabel(pm)
-                val icon = appInfo.loadIcon(pm)
-                val size = FileUtils.getFileSize(File(appInfo.sourceDir))
-                val versionName = versionName ?: ""
-                val versionCode = longVersionCode
-                val installTime = firstInstallTime
-                val lastInstallTime = lastUpdateTime
-                val target = appInfo.targetSdkVersion
-                val isSystem = appInfo.flags and ApplicationInfo.FLAG_SYSTEM == 1
-                val isOverlay = appInfo.isResourceOverlay
-                val isEnable = PackageUtils(pm).getApplicationEnabledSetting(packageName)
-                AppInfo(
-                    name.toString(), packageName, icon, size, versionName, versionCode,
-                    installTime, lastInstallTime, target, isSystem, isOverlay, isEnable
-                )
-            } catch (e: Exception) {
-                LogUtils.e("toAppInfo", packageName, toString())
-                null
-            }
-        }
     }
 }
 

@@ -14,6 +14,30 @@ import org.lsposed.lsparanoid.Obfuscate
 @Suppress("unused")
 class BatteryControllerUtils(val classLoader: ClassLoader?) {
 
+    companion object {
+        private val VOOC_ADAPTER_ID_LIST =
+            listOf(1, 19, 21, 22, 23, 24, 25, 41, 52, 65, 66, 67, 68, 69, 70)
+        private val SVOOC_ADAPTER_ID_LIST = listOf(
+            17, 18, 20, 26, 27, 28, 29, 30, 2, 33, 34, 35, 36, 37, 38, 39, 40, 42, 43, 44,
+            45, 46, 49, 50, 51, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 71, 72, 73, 74, 75,
+            76, 77, 78, 81, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110
+        )
+        private val UFCS_ADAPTER_ID_LIST = listOf(529, 16913, 33297, 49681)
+
+        fun transferChargerType(i: Int): Int {
+            if (VOOC_ADAPTER_ID_LIST.contains(i)) {
+                return 1
+            }
+            if (SVOOC_ADAPTER_ID_LIST.contains(i)) {
+                return 2
+            }
+            if (UFCS_ADAPTER_ID_LIST.contains(i)) {
+                return 6
+            }
+            return i
+        }
+    }
+
     val clazz = VariousClass(
         "com.oplusos.systemui.keyguard.charginganim.ChargingAnimationImpl", //C12 C13
         "com.oplusos.systemui.common.battery.OplusBatteryController" //C14
@@ -110,30 +134,6 @@ class BatteryControllerUtils(val classLoader: ClassLoader?) {
             5 -> "PPS" //null
             6 -> "UFCS" //null
             else -> "[${technology}]"
-        }
-    }
-
-    companion object {
-        private val VOOC_ADAPTER_ID_LIST =
-            listOf(1, 19, 21, 22, 23, 24, 25, 41, 52, 65, 66, 67, 68, 69, 70)
-        private val SVOOC_ADAPTER_ID_LIST = listOf(
-            17, 18, 20, 26, 27, 28, 29, 30, 2, 33, 34, 35, 36, 37, 38, 39, 40, 42, 43, 44,
-            45, 46, 49, 50, 51, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 71, 72, 73, 74, 75,
-            76, 77, 78, 81, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110
-        )
-        private val UFCS_ADAPTER_ID_LIST = listOf(529, 16913, 33297, 49681)
-
-        fun transferChargerType(i: Int): Int {
-            if (VOOC_ADAPTER_ID_LIST.contains(i)) {
-                return 1
-            }
-            if (SVOOC_ADAPTER_ID_LIST.contains(i)) {
-                return 2
-            }
-            if (UFCS_ADAPTER_ID_LIST.contains(i)) {
-                return 6
-            }
-            return i
         }
     }
 }

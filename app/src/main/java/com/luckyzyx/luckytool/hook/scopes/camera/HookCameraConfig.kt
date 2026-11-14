@@ -159,22 +159,6 @@ object HookCameraConfig : YukiBaseHooker() {
 
     @Obfuscate
     private class HookCameraVendorTag(val tags: Map<String, Any>) : YukiBaseHooker() {
-        override fun onHook() {
-            //Source CameraAdapterUtils
-            "com.oplus.ocs.camera.appinterface.adapter.CameraAdapterUtils".toClassOrNull()
-                ?.resolve()?.apply {
-                    firstMethod { name = "getVendorTagConfig";parameterCount = 1 }.hook {
-                        hookVendorTag(tags)
-                    }
-                }
-            //Source ApsUtils
-            "com.oplus.ocs.camera.consumer.apsAdapter.adapter.ApsUtils".toClassOrNull()?.resolve()
-                ?.apply {
-                    firstMethod { name = "getVendorTagConfig";parameterCount = 1 }.hook {
-                        hookVendorTag(tags)
-                    }
-                }
-        }
 
         companion object {
             private fun YukiHookCreator.ClassicMemberHooker.hookVendorTag(tags: Map<String, Any>) {
@@ -216,6 +200,23 @@ object HookCameraConfig : YukiBaseHooker() {
                     }
                 }
             }
+        }
+
+        override fun onHook() {
+            //Source CameraAdapterUtils
+            "com.oplus.ocs.camera.appinterface.adapter.CameraAdapterUtils".toClassOrNull()
+                ?.resolve()?.apply {
+                    firstMethod { name = "getVendorTagConfig";parameterCount = 1 }.hook {
+                        hookVendorTag(tags)
+                    }
+                }
+            //Source ApsUtils
+            "com.oplus.ocs.camera.consumer.apsAdapter.adapter.ApsUtils".toClassOrNull()?.resolve()
+                ?.apply {
+                    firstMethod { name = "getVendorTagConfig";parameterCount = 1 }.hook {
+                        hookVendorTag(tags)
+                    }
+                }
         }
     }
 }

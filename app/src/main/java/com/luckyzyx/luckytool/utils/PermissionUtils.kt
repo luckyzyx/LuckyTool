@@ -33,6 +33,44 @@ enum class AppPermission(@StringRes val labelRes: Int) {
 @Obfuscate
 class PermissionUtils(val activity: Activity) {
 
+    companion object {
+        /** 申请互斥标记：[request] 的在途状态（进程内单值，配合 [requester] 绑定发起实例） */
+        private var requesting = false
+
+        /** 在途请求的发起者：复位绑定到它的生命周期，宿主实例消亡即在途请求随之作废 */
+        private var requester: WeakReference<Activity>? = null
+
+        /**
+         * 宿主实例销毁时撤销属于它的在途请求（MainActivity.onDestroy 调用）：
+         * 该实例的 ActivityResultLauncher 已随之消亡、回调不会再来，标记留 true 会把阻塞页卡死。
+         * 只清理属于该实例的请求，不碰更新实例的在途状态。
+         */
+        fun onHostDestroyed(activity: Activity) {
+            val current = requester?.get()
+            if (current == null || current === activity) {
+                requesting = false
+                requester = null
+            }
+        }
+
+        /**
+         * 纯查询：4 项权限是否全部授予。**无任何副作用** —— 不申请、不跳转，
+         * 供 onResume 与权限页驱动阻塞门（见 MainActivity.refreshPermissionGate）。
+         */
+        fun areAllGranted(activity: Activity): Boolean = XXPermissions.isGrantedPermissions(
+            activity,
+            AppPermission.values().map { it.toPermission() },
+        )
+
+        /** 纯查询：单项是否已授予 */
+        fun isGranted(activity: Activity, kind: AppPermission): Boolean =
+            XXPermissions.isGrantedPermission(activity, kind.toPermission())
+
+        /** 纯查询：单项是否被「不再询问」永久拒绝（页面据此决定是否给「去系统设置」入口） */
+        fun isDoNotAskAgain(activity: Activity, kind: AppPermission): Boolean =
+            XXPermissions.isDoNotAskAgainPermission(activity, kind.toPermission())
+    }
+
     /**
      * 页面内逐项申请（唯一的申请入口）：**绝不自动跳转**，被永久拒绝的行由页面显式提供
      * 「去设置」按钮（见 [isDoNotAskAgain] / [openSystemPermissionSettings]）。
@@ -82,43 +120,5 @@ class PermissionUtils(val activity: Activity) {
             requesting = false
             requester = null
         }
-    }
-
-    companion object {
-        /** 申请互斥标记：[request] 的在途状态（进程内单值，配合 [requester] 绑定发起实例） */
-        private var requesting = false
-
-        /** 在途请求的发起者：复位绑定到它的生命周期，宿主实例消亡即在途请求随之作废 */
-        private var requester: WeakReference<Activity>? = null
-
-        /**
-         * 宿主实例销毁时撤销属于它的在途请求（MainActivity.onDestroy 调用）：
-         * 该实例的 ActivityResultLauncher 已随之消亡、回调不会再来，标记留 true 会把阻塞页卡死。
-         * 只清理属于该实例的请求，不碰更新实例的在途状态。
-         */
-        fun onHostDestroyed(activity: Activity) {
-            val current = requester?.get()
-            if (current == null || current === activity) {
-                requesting = false
-                requester = null
-            }
-        }
-
-        /**
-         * 纯查询：4 项权限是否全部授予。**无任何副作用** —— 不申请、不跳转，
-         * 供 onResume 与权限页驱动阻塞门（见 MainActivity.refreshPermissionGate）。
-         */
-        fun areAllGranted(activity: Activity): Boolean = XXPermissions.isGrantedPermissions(
-            activity,
-            AppPermission.values().map { it.toPermission() },
-        )
-
-        /** 纯查询：单项是否已授予 */
-        fun isGranted(activity: Activity, kind: AppPermission): Boolean =
-            XXPermissions.isGrantedPermission(activity, kind.toPermission())
-
-        /** 纯查询：单项是否被「不再询问」永久拒绝（页面据此决定是否给「去系统设置」入口） */
-        fun isDoNotAskAgain(activity: Activity, kind: AppPermission): Boolean =
-            XXPermissions.isDoNotAskAgainPermission(activity, kind.toPermission())
     }
 }

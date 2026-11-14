@@ -14,6 +14,12 @@ import org.luckypray.dexkit.result.ClassData
 
 @Obfuscate
 class RemoveStartupAnimation(val dexKitBridge: DexKitBridge) : YukiBaseHooker() {
+
+    private companion object {
+        const val INVOKE_SUSPEND = "invokeSuspend"
+        const val SUSPEND_LAMBDA = "kotlin.coroutines.jvm.internal.SuspendLambda"
+    }
+
     override fun onHook() {
         //下面这段处理的是游戏优化浮窗的滑入动画，和启动动画弹窗不是同一条链路，行为保持原样
         //Source GameFloatView.startAnimation(boolean)
@@ -84,10 +90,5 @@ class RemoveStartupAnimation(val dexKitBridge: DexKitBridge) : YukiBaseHooker() 
             }
         }
         return null
-    }
-
-    private companion object {
-        const val INVOKE_SUSPEND = "invokeSuspend"
-        const val SUSPEND_LAMBDA = "kotlin.coroutines.jvm.internal.SuspendLambda"
     }
 }

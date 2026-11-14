@@ -23,6 +23,22 @@ import java.util.concurrent.CopyOnWriteArrayList
 class PrefState private constructor(
     private val provider: () -> SharedPreferences,
 ) {
+
+    companion object {
+        private val cache = ConcurrentHashMap<String, PrefState>()
+
+        /** 按 prefs 文件名缓存实例（进程生命周期）；测试或需强制重建时可显式 [invalidate] */
+        fun of(context: Context, prefsName: String): PrefState =
+            cache.getOrPut(prefsName) { PrefState { context.appPrefs(prefsName) } }
+
+        /** 测试/过渡用：直接注入 prefs 来源 */
+        internal fun ofProvider(provider: () -> SharedPreferences): PrefState = PrefState(provider)
+
+        fun invalidate(prefsName: String) {
+            cache.remove(prefsName)
+        }
+    }
+
     /**
      * 只读槽按「类型标签|键」分别缓存：脏数据下同一个键可能被不同类型读取，
      * 共用一个 flow 会把错误类型的值交给消费者。
@@ -180,20 +196,5 @@ class PrefState private constructor(
         refreshers.getOrPut(key) { CopyOnWriteArrayList() }.add(refresh)
         refresh()
         return slot as StateFlow<T>
-    }
-
-    companion object {
-        private val cache = ConcurrentHashMap<String, PrefState>()
-
-        /** 按 prefs 文件名缓存实例（进程生命周期）；测试或需强制重建时可显式 [invalidate] */
-        fun of(context: Context, prefsName: String): PrefState =
-            cache.getOrPut(prefsName) { PrefState { context.appPrefs(prefsName) } }
-
-        /** 测试/过渡用：直接注入 prefs 来源 */
-        internal fun ofProvider(provider: () -> SharedPreferences): PrefState = PrefState(provider)
-
-        fun invalidate(prefsName: String) {
-            cache.remove(prefsName)
-        }
     }
 }

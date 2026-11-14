@@ -32,6 +32,12 @@ import org.robolectric.annotation.GraphicsMode
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
 class DialogScrollBodyTest {
 
+    private companion object {
+        val SHORT_CONTAINER = 200.dp
+        val TALL_CONTAINER = 400.dp
+        const val ACTION_LABEL = "确定"
+    }
+
     @Test
     fun `actions stay visible when the body overflows a short container`() {
         ComposeGestureHost().use { host ->
@@ -140,11 +146,5 @@ class DialogScrollBodyTest {
     private class MeasuredSizes {
         var container = 0
         var body = 0
-    }
-
-    private companion object {
-        val SHORT_CONTAINER = 200.dp
-        val TALL_CONTAINER = 400.dp
-        const val ACTION_LABEL = "确定"
     }
 }

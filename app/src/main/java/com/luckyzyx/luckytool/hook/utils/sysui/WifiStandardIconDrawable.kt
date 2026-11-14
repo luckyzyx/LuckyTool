@@ -24,6 +24,16 @@ class WifiStandardIconDrawable(
     private val heightPx: Int
 ) : Drawable() {
 
+    private companion object {
+        const val VIEWPORT_WIDTH = 22f
+        const val VIEWPORT_HEIGHT = 17f
+        const val TEXT_SIZE_RATIO = 0.45f
+        const val DIGIT_CENTER_X = 4.52f / VIEWPORT_WIDTH
+        const val DIGIT_BASELINE_Y = 15.1f / VIEWPORT_HEIGHT
+
+        val DIGIT_TYPEFACE: Typeface = Typeface.create("sans-serif", Typeface.NORMAL)
+    }
+
     private val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         typeface = DIGIT_TYPEFACE
         textAlign = Paint.Align.CENTER
@@ -92,15 +102,5 @@ class WifiStandardIconDrawable(
         if (tintList?.isStateful != true) return false
         invalidateSelf()
         return true
-    }
-
-    private companion object {
-        const val VIEWPORT_WIDTH = 22f
-        const val VIEWPORT_HEIGHT = 17f
-        const val TEXT_SIZE_RATIO = 0.45f
-        const val DIGIT_CENTER_X = 4.52f / VIEWPORT_WIDTH
-        const val DIGIT_BASELINE_Y = 15.1f / VIEWPORT_HEIGHT
-
-        val DIGIT_TYPEFACE: Typeface = Typeface.create("sans-serif", Typeface.NORMAL)
     }
 }

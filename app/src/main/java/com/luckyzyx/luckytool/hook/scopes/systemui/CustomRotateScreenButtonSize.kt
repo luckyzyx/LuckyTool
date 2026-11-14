@@ -18,6 +18,12 @@ import kotlin.math.roundToInt
 
 @Obfuscate
 class CustomRotateScreenButtonSize(val dexKitBridge: DexKitBridge) : YukiBaseHooker() {
+
+    internal companion object {
+        fun scaledDiameter(originalDiameter: Int, percent: Int): Int =
+            (originalDiameter * percent.coerceIn(50, 100) / 100f).roundToInt().coerceAtLeast(1)
+    }
+
     private val originalDiameters = WeakHashMap<View, Int>()
     private var hasLoggedScaledSize = false
 
@@ -132,10 +138,5 @@ class CustomRotateScreenButtonSize(val dexKitBridge: DexKitBridge) : YukiBaseHoo
             }
         }
         YLog.debug("CustomRotateScreenButtonSize hook success: $percent%", tag = "LuckyTool")
-    }
-
-    internal companion object {
-        fun scaledDiameter(originalDiameter: Int, percent: Int): Int =
-            (originalDiameter * percent.coerceIn(50, 100) / 100f).roundToInt().coerceAtLeast(1)
     }
 }

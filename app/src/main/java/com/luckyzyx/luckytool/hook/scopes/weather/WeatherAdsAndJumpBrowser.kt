@@ -25,6 +25,73 @@ import org.luckypray.dexkit.query.enums.StringMatchType
 class WeatherAdsAndJumpBrowser(
     private val appVer: AppVerInfo?, val dexKitBridge: DexKitBridge
 ) : YukiBaseHooker() {
+
+    companion object {
+        private fun getWeatherIntent(
+            action: String, browser: Int, url: String, statisticsTag: String
+        ): Intent {
+            return Intent("com.heytap.browser.action.DETAIL_PAGE").apply {
+                if (action.isNotBlank()) setAction(action)
+                addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP)
+//                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_NEW_DOCUMENT)
+                data = url.toUri()
+                when (browser) {
+                    1 -> setPackage("com.android.browser")
+                    2 -> setPackage("com.heytap.browser")
+                    3 -> setPackage("com.coloros.browser")
+                }
+                putExtra("clickTime", System.currentTimeMillis())
+                putExtra("clickType", "weather")
+                putExtra("intent_params_url", url)
+                putExtra("intent_params_isFirst", true)
+                putExtra("intent_params_statistics", statisticsTag)
+            }
+        }
+
+        fun startWebActivity(browser: Int, context: Context, url: String, statisticsTag: String) {
+            //Source BrowserCommonUtils -> startWeatherWebActivity
+//            clazz.method { paramCount = 5 }.get().call(context, url, true, statisticsTag, true)
+            var intent = getWeatherIntent("", browser, url, statisticsTag)
+            try {
+                context.startActivity(intent)
+                return
+            } catch (_: Throwable) {
+                intent = getWeatherIntent(Intent.ACTION_VIEW, browser, url, statisticsTag)
+                try {
+                    context.startActivity(intent)
+                } catch (_: ActivityNotFoundException) {
+                    startWebActivity(browser - 1, context, url, statisticsTag)
+                }
+                return
+            }
+        }
+
+        fun startWebActivity(
+            clazz: Class<*>, context: Context, url: String, statisticsTag: String
+        ) {
+            //Source BrowserCommonUtils -> startWeatherWebActivity
+            clazz.resolve().firstMethod { parameterCount = 5 }
+                .invoke(context, url, true, statisticsTag, true)
+        }
+
+        fun formatWeatherUrl(url: String): String {
+            if (url.isBlank()) return url
+            var cacheUrl = url
+            if (cacheUrl.contains("fromWeatherApp=true")) cacheUrl = cacheUrl.replace(
+                "fromWeatherApp=true", "fromWeatherApp=false"
+            )
+            if (cacheUrl.contains("infoEnable=true")) cacheUrl = cacheUrl.replace(
+                "infoEnable=true", "infoEnable=false"
+            )
+            if (cacheUrl.contains("infoEnable").not()) {
+                if (cacheUrl.lastOrNull() != '&') cacheUrl += "&"
+                cacheUrl += "infoEnable=false"
+            }
+//            YLog.debug("url -> $cacheUrl")
+            return cacheUrl
+        }
+    }
+
     override fun onHook() {
         val isNew = appVer?.versionCode?.let { it >= 13000000 } ?: return
         if (isNew) loadHooker(HookWeatherAdsAndJump)
@@ -306,72 +373,6 @@ class WeatherAdsAndJumpBrowser(
                     result = null
                 }
             }
-        }
-    }
-
-    companion object {
-        private fun getWeatherIntent(
-            action: String, browser: Int, url: String, statisticsTag: String
-        ): Intent {
-            return Intent("com.heytap.browser.action.DETAIL_PAGE").apply {
-                if (action.isNotBlank()) setAction(action)
-                addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP)
-//                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_NEW_DOCUMENT)
-                data = url.toUri()
-                when (browser) {
-                    1 -> setPackage("com.android.browser")
-                    2 -> setPackage("com.heytap.browser")
-                    3 -> setPackage("com.coloros.browser")
-                }
-                putExtra("clickTime", System.currentTimeMillis())
-                putExtra("clickType", "weather")
-                putExtra("intent_params_url", url)
-                putExtra("intent_params_isFirst", true)
-                putExtra("intent_params_statistics", statisticsTag)
-            }
-        }
-
-        fun startWebActivity(browser: Int, context: Context, url: String, statisticsTag: String) {
-            //Source BrowserCommonUtils -> startWeatherWebActivity
-//            clazz.method { paramCount = 5 }.get().call(context, url, true, statisticsTag, true)
-            var intent = getWeatherIntent("", browser, url, statisticsTag)
-            try {
-                context.startActivity(intent)
-                return
-            } catch (_: Throwable) {
-                intent = getWeatherIntent(Intent.ACTION_VIEW, browser, url, statisticsTag)
-                try {
-                    context.startActivity(intent)
-                } catch (_: ActivityNotFoundException) {
-                    startWebActivity(browser - 1, context, url, statisticsTag)
-                }
-                return
-            }
-        }
-
-        fun startWebActivity(
-            clazz: Class<*>, context: Context, url: String, statisticsTag: String
-        ) {
-            //Source BrowserCommonUtils -> startWeatherWebActivity
-            clazz.resolve().firstMethod { parameterCount = 5 }
-                .invoke(context, url, true, statisticsTag, true)
-        }
-
-        fun formatWeatherUrl(url: String): String {
-            if (url.isBlank()) return url
-            var cacheUrl = url
-            if (cacheUrl.contains("fromWeatherApp=true")) cacheUrl = cacheUrl.replace(
-                "fromWeatherApp=true", "fromWeatherApp=false"
-            )
-            if (cacheUrl.contains("infoEnable=true")) cacheUrl = cacheUrl.replace(
-                "infoEnable=true", "infoEnable=false"
-            )
-            if (cacheUrl.contains("infoEnable").not()) {
-                if (cacheUrl.lastOrNull() != '&') cacheUrl += "&"
-                cacheUrl += "infoEnable=false"
-            }
-//            YLog.debug("url -> $cacheUrl")
-            return cacheUrl
         }
     }
 }

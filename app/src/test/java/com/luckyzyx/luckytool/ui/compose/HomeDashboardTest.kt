@@ -43,6 +43,28 @@ import org.robolectric.annotation.GraphicsMode
 @Config(sdk = [35], application = Application::class, qualifiers = "zh-rCN-w411dp-h880dp-xhdpi")
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
 class HomeDashboardTest {
+
+    companion object {
+        private const val model = "realme RMX5200 真我 GT8 Pro"
+        private const val rootLine = "Root来源: 3.3.1 (32680)"
+        private const val frameworkLine = "框架版本: LSPosed v2.2.1 (7912)"
+        private val sample = HomeDashboardState(
+            moduleActive = true, moduleVersion = "1.3.5_beta (22848)",
+            rootVersion = "Root 来源：3.3.1 (32680)", frameworkVersion = "框架版本：LSPosed v2.2.1 (7912)",
+            showNotice = true,
+            deviceInfo = listOf(
+                DeviceInfoEntry(R.string.model, model),
+                DeviceInfoEntry(R.string.system, "Android 17 (37) · OS V17.0.0 (40)"),
+                DeviceInfoEntry(R.string.version, "RMX5200_11.C.27_1270_202610051850"),
+                DeviceInfoEntry(R.string.product, "RMX5200 RE6030L1 SM8850 24624 B"),
+                DeviceInfoEntry(R.string.build_version, "RMX5200_17.0.0.106(CN01) 97 b45da55c"),
+                DeviceInfoEntry(R.string.flash, "SKhynix HN8T274EJKX130 A401"),
+                DeviceInfoEntry(R.string.home_device_pos, "SAMPLE-PCB-000001"),
+                DeviceInfoEntry(R.string.home_device_sas, "SAMPLE-SERIAL-000001 SAMPLE-CHIP-000001"),
+            ),
+        )
+    }
+
     @Test
     fun `both themes present device values as body text in light and dark appearances`() {
         for (mode in UiMode.entries) {
@@ -221,26 +243,5 @@ class HomeDashboardTest {
         }
 
         override fun close() = ui.close()
-    }
-
-    companion object {
-        private const val model = "realme RMX5200 真我 GT8 Pro"
-        private const val rootLine = "Root来源: 3.3.1 (32680)"
-        private const val frameworkLine = "框架版本: LSPosed v2.2.1 (7912)"
-        private val sample = HomeDashboardState(
-            moduleActive = true, moduleVersion = "1.3.5_beta (22848)",
-            rootVersion = "Root 来源：3.3.1 (32680)", frameworkVersion = "框架版本：LSPosed v2.2.1 (7912)",
-            showNotice = true,
-            deviceInfo = listOf(
-                DeviceInfoEntry(R.string.model, model),
-                DeviceInfoEntry(R.string.system, "Android 17 (37) · OS V17.0.0 (40)"),
-                DeviceInfoEntry(R.string.version, "RMX5200_11.C.27_1270_202610051850"),
-                DeviceInfoEntry(R.string.product, "RMX5200 RE6030L1 SM8850 24624 B"),
-                DeviceInfoEntry(R.string.build_version, "RMX5200_17.0.0.106(CN01) 97 b45da55c"),
-                DeviceInfoEntry(R.string.flash, "SKhynix HN8T274EJKX130 A401"),
-                DeviceInfoEntry(R.string.home_device_pos, "SAMPLE-PCB-000001"),
-                DeviceInfoEntry(R.string.home_device_sas, "SAMPLE-SERIAL-000001 SAMPLE-CHIP-000001"),
-            ),
-        )
     }
 }

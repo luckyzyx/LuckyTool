@@ -24,6 +24,12 @@ import java.util.Locale
 @Config(sdk = [34])
 class LauncherBackupUtilsTest {
 
+    private companion object {
+        /** 固定基准时间，避免测试依赖当前时区之外的时钟 */
+        const val BASE = 1_767_225_600_000L
+        const val HOUR = 3_600_000L
+    }
+
     private val stampFormat = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US)
 
     private fun time(text: String): Long = requireNotNull(stampFormat.parse(text)) { "bad fixture: " + text }.time
@@ -480,11 +486,5 @@ class LauncherBackupUtilsTest {
         val reranked = LauncherBackupUtils.planHiddenSync(mapOf("com.demo.a#0" to 9), mapOf("com.demo.a#0" to 1))
         assertTrue(reranked.toHide.isEmpty())
         assertTrue(reranked.toUnhide.isEmpty())
-    }
-
-    private companion object {
-        /** 固定基准时间，避免测试依赖当前时区之外的时钟 */
-        const val BASE = 1_767_225_600_000L
-        const val HOUR = 3_600_000L
     }
 }

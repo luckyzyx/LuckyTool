@@ -19,47 +19,6 @@ class ReflectedTextIntent private constructor(
     private val bean: Any,
     private val accessors: Accessors
 ) {
-    private class Accessors(
-        val getPackageName: MethodResolver<Any>?,
-        val setPackageName: MethodResolver<Any>?,
-        val packageNameField: FieldResolver<Any>?,
-        val getIntent: MethodResolver<Any>?,
-        val getTextType: MethodResolver<Any>?
-    )
-
-    /** 当前包名，读不到返回 null */
-    fun packageName(): String? {
-        accessors.getPackageName?.let { resolver ->
-            runCatching { resolver.copy().of(bean).invoke<Any?>() as? String }.getOrNull()?.let { return it }
-        }
-        val field = accessors.packageNameField ?: return null
-        return runCatching { field.copy().of(bean).get<Any?>() as? String }.getOrNull()
-    }
-
-    /**
-     * 写入包名。
-     *
-     * 这里必须「有 setter 就只走 setter 并立刻返回」，不能写成 setter?.invoke(x) ?: 字段赋值：
-     * void 方法的 invoke 返回 null，?: 会永远落到字段分支，等于 setter 白调、字段也没写对。
-     */
-    fun setPackageName(value: String) {
-        accessors.setPackageName?.let { resolver ->
-            if (runCatching { resolver.copy().of(bean).invoke<Any?>(value) }.isSuccess) return
-        }
-        accessors.packageNameField?.let { field ->
-            runCatching { field.copy().of(bean).set(value) }
-        }
-    }
-
-    /** 卡片自带的 Intent，读不到返回 null；改写动作都作用在它上面 */
-    fun intent(): Any? = accessors.getIntent?.let { resolver ->
-        runCatching { resolver.copy().of(bean).invoke<Any?>() }.getOrNull()
-    }
-
-    /** 卡片类型标记，textType == 29 是文本搜索卡 */
-    fun textType(): Int? = accessors.getTextType?.let { resolver ->
-        runCatching { (resolver.copy().of(bean).invoke<Any?>() as? Number)?.toInt() }.getOrNull()
-    }
 
     companion object {
         private val ACCESSORS = java.util.concurrent.ConcurrentHashMap<Class<*>, Accessors>()
@@ -101,5 +60,47 @@ class ReflectedTextIntent private constructor(
                 name = fieldName
                 superclass()
             }
+    }
+
+    private class Accessors(
+        val getPackageName: MethodResolver<Any>?,
+        val setPackageName: MethodResolver<Any>?,
+        val packageNameField: FieldResolver<Any>?,
+        val getIntent: MethodResolver<Any>?,
+        val getTextType: MethodResolver<Any>?
+    )
+
+    /** 当前包名，读不到返回 null */
+    fun packageName(): String? {
+        accessors.getPackageName?.let { resolver ->
+            runCatching { resolver.copy().of(bean).invoke<Any?>() as? String }.getOrNull()?.let { return it }
+        }
+        val field = accessors.packageNameField ?: return null
+        return runCatching { field.copy().of(bean).get<Any?>() as? String }.getOrNull()
+    }
+
+    /**
+     * 写入包名。
+     *
+     * 这里必须「有 setter 就只走 setter 并立刻返回」，不能写成 setter?.invoke(x) ?: 字段赋值：
+     * void 方法的 invoke 返回 null，?: 会永远落到字段分支，等于 setter 白调、字段也没写对。
+     */
+    fun setPackageName(value: String) {
+        accessors.setPackageName?.let { resolver ->
+            if (runCatching { resolver.copy().of(bean).invoke<Any?>(value) }.isSuccess) return
+        }
+        accessors.packageNameField?.let { field ->
+            runCatching { field.copy().of(bean).set(value) }
+        }
+    }
+
+    /** 卡片自带的 Intent，读不到返回 null；改写动作都作用在它上面 */
+    fun intent(): Any? = accessors.getIntent?.let { resolver ->
+        runCatching { resolver.copy().of(bean).invoke<Any?>() }.getOrNull()
+    }
+
+    /** 卡片类型标记，textType == 29 是文本搜索卡 */
+    fun textType(): Int? = accessors.getTextType?.let { resolver ->
+        runCatching { (resolver.copy().of(bean).invoke<Any?>() as? Number)?.toInt() }.getOrNull()
     }
 }
