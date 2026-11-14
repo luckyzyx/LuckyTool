@@ -86,6 +86,7 @@ Entries for versions before `1.3.5_beta` are currently only available in the
 - Fixed three broken com.oplus.games hooks V10.43
 - Fixed "Remove startup animation" not removing the game start popup animation V10.43
 - Fixed the app permission page being skipped on a device without root, which went straight to the home page and showed the no-root dialog
+- Fixed "Enable docker background" and "Force docker background blur" doing nothing on C17
 
 #### Adapted
 
@@ -127,3 +128,4 @@ Entries for versions before `1.3.5_beta` are currently only available in the
 - Removed the secure payment scope, its restrictions can be turned off in the system secure payment settings
 - Removed the super volume mode and its call variant
 - Removed "Disable FLAG_SECURE" and the never-shown "Remove screenshot privacy limit" item
+- Removed the app recommendation filters on the app market detail and search pages
