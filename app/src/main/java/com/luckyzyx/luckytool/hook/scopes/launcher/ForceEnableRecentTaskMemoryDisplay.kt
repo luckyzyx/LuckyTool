@@ -1,9 +1,9 @@
 package com.luckyzyx.luckytool.hook.scopes.launcher
 
+import android.widget.TextView
+import androidx.core.view.isVisible
 import com.highcapable.kavaref.KavaRef.Companion.resolve
 import com.highcapable.kavaref.extension.classOf
-import com.highcapable.kavaref.resolver.FieldResolver
-import com.highcapable.kavaref.resolver.MethodResolver
 import com.highcapable.yukihookapi.extension.kavaref.toClass
 import com.highcapable.yukihookapi.hook.entity.YukiBaseHooker
 import com.luckyzyx.luckytool.utils.DexkitUtils.checkDataList
@@ -59,7 +59,6 @@ class ForceEnableRecentTaskMemoryDisplay(val dexKitBridge: DexKitBridge) : YukiB
                 checkDataList("displaySwitch")
             }.single().name
             val switchField = memoryManager.toClass().resolve().firstField { name = displaySwitch }
-                .let { it as FieldResolver<Any> }
 
             // 单例可能在本 hook 安装前就创建好，先定位它（类里唯一的自引用静态字段）
             val singletonSwitch = dexKitBridge.findField {
@@ -71,9 +70,10 @@ class ForceEnableRecentTaskMemoryDisplay(val dexKitBridge: DexKitBridge) : YukiB
                 checkDataList("memoryManagerSingleton")
             }.singleOrNull()?.name?.let { name ->
                 memoryManager.toClass().resolve().firstField { this.name = name }
-                    .let { it as FieldResolver<Any> }
             }
-            fun forceSwitch() = singletonSwitch?.get<Any?>()?.let { switchField.copy().of(it).set(true) }
+
+            fun forceSwitch() =
+                singletonSwitch?.get<Any?>()?.let { switchField.copy().of(it).set(true) }
 
             // 内存信息对象与其中那串文本：方法按 boolean 入参定位，返回类里取唯一的 String 字段
             val memInfo = dexKitBridge.findMethod {
@@ -83,19 +83,17 @@ class ForceEnableRecentTaskMemoryDisplay(val dexKitBridge: DexKitBridge) : YukiB
                 }
             }.singleOrNull()?.let { method ->
                 val owner = memoryManager.toClass().resolve()
-                owner.firstMethod { name = method.methodName; parameters(Boolean::class) }
-                    .let { it as MethodResolver<Any> } to
-                    method.returnTypeName.removePrefix("L").removeSuffix(";").replace('/', '.')
+                owner.firstMethod { name = method.methodName; parameters(Boolean::class) } to
+                        method.returnTypeName.removePrefix("L").removeSuffix(";").replace('/', '.')
             }
             val memInfoText = memInfo?.second?.let { infoClass ->
                 dexKitBridge.findField {
                     matcher {
                         declaredClass(infoClass)
-                        type(String::class.java)
+                        type(classOf<String>())
                     }
                 }.singleOrNull()?.name?.let { name ->
                     infoClass.toClass().resolve().firstField { this.name = name }
-                        .let { it as FieldResolver<Any> }
                 }
             }
 
@@ -109,15 +107,15 @@ class ForceEnableRecentTaskMemoryDisplay(val dexKitBridge: DexKitBridge) : YukiB
             val memText = dexKitBridge.findField {
                 matcher {
                     declaredClass(PANEL)
-                    type(android.widget.TextView::class.java)
+                    type(classOf<TextView>())
                 }
             }.singleOrNull()?.name?.let { name ->
-                PANEL.toClass().resolve().firstField { this.name = name }.let { it as FieldResolver<Any> }
+                PANEL.toClass().resolve().firstField { this.name = name }
             }
 
             fun showMemoryInfo(panel: Any) {
                 forceSwitch()
-                val tv = memText?.copy()?.of(panel)?.get<android.widget.TextView>() ?: return
+                val tv = memText?.copy()?.of(panel)?.get<TextView>() ?: return
                 if (tv.visibility == 0) return
                 val instance = singletonSwitch?.get<Any?>()
                 val text = if (instance != null && memInfo != null) {
@@ -126,7 +124,7 @@ class ForceEnableRecentTaskMemoryDisplay(val dexKitBridge: DexKitBridge) : YukiB
                 } else null
                 if (!text.isNullOrEmpty()) {
                     tv.text = text
-                    tv.visibility = 0
+                    tv.isVisible = true
                 } else panelUpdate?.invoke(false)
             }
 
