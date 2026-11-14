@@ -20,7 +20,6 @@ object OplusTeleServicePage {
         prefsName = ModulePrefs,
         packName = "com.android.phone",
         scopes = arrayOf("com.android.phone", "com.android.incallui"),
-        restartEnabled = false,
         isVisible = { SDK >= A13 && checkPackName("com.android.phone") },
     ) {
         val c = requireNotNull(context) { "ScopeScreen 未注入 Context" }

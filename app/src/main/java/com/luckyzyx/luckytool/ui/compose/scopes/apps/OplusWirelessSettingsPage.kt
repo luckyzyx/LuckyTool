@@ -14,7 +14,6 @@ object OplusWirelessSettingsPage {
         prefsName = ModulePrefs,
         packName = "com.oplus.wirelesssettings",
         scopes = arrayOf("com.oplus.wirelesssettings"),
-        restartEnabled = false,
     ) {
         val c = requireNotNull(context) { "ScopeScreen 未注入 Context" }
         switch(

@@ -14,7 +14,6 @@ object OplusSearchBoxPage {
         prefsName = ModulePrefs,
         packName = "com.heytap.quicksearchbox",
         scopes = arrayOf("com.heytap.quicksearchbox"),
-        restartEnabled = false,
     ) {
         val c = requireNotNull(context) { "ScopeScreen 未注入 Context" }
         switch(

@@ -140,7 +140,7 @@ class ScopePageAction(
  * @param packName       宿主包名（sendPrefsValue 通知目标）
  * @param displayPackName 功能树标题/图标来源包名（默认 = packName；通知目标与显示 App 不同时单独指定）
  * @param scopes         Xposed 作用域包名列表（重启作用域对话框用）
- * @param restartEnabled 是否显示"重启作用域"菜单
+ * @param restartEnabled 是否显示"重启作用域"菜单（默认显示；仅没有可重启作用域的页面显式关闭）
  * @param isVisible      页面级可见性：false 时功能树、搜索与子页入口均不出现此页
  * @param onRefresh      下拉刷新回调（null = 无下拉刷新；如 OTA 提取、捐赠数据页）
  * @param content        页面内容 DSL（每次重组重跑，条件可见性写 Kotlin if）
@@ -162,7 +162,7 @@ class ScopePageSpec(
      */
     val displayPackName: String? = null,
     val scopes: Array<String>,
-    val restartEnabled: Boolean,
+    val restartEnabled: Boolean = true,
     /**
      * 页面级可见性：
      * false 时功能树、搜索与子页入口均不出现此页；默认恒可见。

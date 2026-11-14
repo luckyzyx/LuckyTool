@@ -15,7 +15,6 @@ object OplusScreenshotPage {
         prefsName = ModulePrefs,
         packName = "com.oplus.screenshot",
         scopes = arrayOf("com.oplus.screenshot"),
-        restartEnabled = false,
     ) {
         val c = requireNotNull(context) { "ScopeScreen 未注入 Context" }
         switch(

@@ -15,7 +15,6 @@ object OplusWeatherPage {
         prefsName = ModulePrefs,
         packName = "com.coloros.weather2",
         scopes = arrayOf("com.coloros.weather2"),
-        restartEnabled = false,
     ) {
         val c = requireNotNull(context) { "ScopeScreen 未注入 Context" }
         switch(

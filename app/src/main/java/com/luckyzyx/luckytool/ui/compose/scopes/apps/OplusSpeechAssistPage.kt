@@ -15,7 +15,6 @@ object OplusSpeechAssistPage {
         prefsName = ModulePrefs,
         packName = "com.heytap.speechassist",
         scopes = arrayOf("com.heytap.speechassist"),
-        restartEnabled = false,
     ) {
         val c = requireNotNull(context) { "ScopeScreen 未注入 Context" }
         if (getOSVersionCode >= 30) {

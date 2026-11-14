@@ -6,7 +6,6 @@ import com.luckyzyx.luckytool.utils.ModulePrefs
 
 /**
  * 手机管家页：去掉病毒风险通知与加入白名单倒计时的开关。
- * 本页不显示重启菜单（restartEnabled = false）。
  */
 object OplusPhoneManagerPage {
 
@@ -15,7 +14,6 @@ object OplusPhoneManagerPage {
         prefsName = ModulePrefs,
         packName = "com.coloros.phonemanager",
         scopes = arrayOf("com.coloros.phonemanager"),
-        restartEnabled = false,
     ) {
         val c = requireNotNull(context) { "ScopeScreen 未注入 Context" }
         switch(

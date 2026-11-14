@@ -16,7 +16,6 @@ object OplusLinkerPage {
         prefsName = ModulePrefs,
         packName = "com.oplus.linker",
         scopes = arrayOf("com.oplus.linker", "com.android.contacts", "com.android.bluetooth"),
-        restartEnabled = false,
     ) {
         val c = requireNotNull(context) { "ScopeScreen 未注入 Context" }
         if (getOSVersionCode >= 37) {
