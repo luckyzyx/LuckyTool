@@ -66,6 +66,9 @@ object HookLauncher : YukiBaseHooker() {
             if (preferences(ModulePrefs).getBoolean("launcher_layout_enable", false)) {
                 loadHooker(LauncherLayoutRowColume(dexKitBridge))
             }
+
+            //桌面图标相关（图标尺寸在 17.x 需要 DexKit 定位混淆后的类）
+            loadHooker(HookOplusBubbleTextView(dexKitBridge))
         }
 
         //HookLauncherFeatureFlags
@@ -79,9 +82,6 @@ object HookLauncher : YukiBaseHooker() {
 
         //堆叠布局
 //        loadHooker(StackedTaskLayout)
-
-        //桌面图标相关
-        loadHooker(HookOplusBubbleTextView)
 
 
         //移除文件夹名称输入限制

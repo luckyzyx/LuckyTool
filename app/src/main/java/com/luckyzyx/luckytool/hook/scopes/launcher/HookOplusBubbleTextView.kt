@@ -2,16 +2,19 @@ package com.luckyzyx.luckytool.hook.scopes.launcher
 
 import android.widget.TextView
 import com.highcapable.kavaref.KavaRef.Companion.resolve
+import com.highcapable.kavaref.extension.classOf
 import com.highcapable.yukihookapi.extension.kavaref.hook
 import com.highcapable.yukihookapi.extension.kavaref.toClass
 import com.highcapable.yukihookapi.hook.entity.YukiBaseHooker
+import com.luckyzyx.luckytool.utils.DexkitUtils.checkDataList
 import com.luckyzyx.luckytool.utils.ModulePrefs
 import com.luckyzyx.luckytool.utils.dp
 import com.luckyzyx.luckytool.utils.getOSVersionCode
 import org.lsposed.lsparanoid.Obfuscate
+import org.luckypray.dexkit.DexKitBridge
 
 @Obfuscate
-object HookOplusBubbleTextView : YukiBaseHooker() {
+class HookOplusBubbleTextView(val dexKitBridge: DexKitBridge) : YukiBaseHooker() {
 
     override fun onHook() {
         val osCode = getOSVersionCode
@@ -45,19 +48,32 @@ object HookOplusBubbleTextView : YukiBaseHooker() {
             }
         }
 
-        // C17 起 IconParam 混淆为 j4.j、getIconSizePx 混淆为 d()，旧 hook 无法命中；
-        // 两版图标尺寸的构造源头都是 LauncherIconConfig.calculateIconSizeByUxDesign()
-        // 无参版本，hook 源头等价于替换 getIconSizePx 的读取结果。
-        //（secondary 分支不经过该方法，C16 走 SecondaryLauncherUtils、C17 固定 72）
+        if (iconSize <= 0) return
         //Source LauncherIconConfig
-        "com.android.launcher.theme.LauncherIconConfig".toClass().resolve().apply {
-            firstMethod {
-                name = "calculateIconSizeByUxDesign"
-                emptyParameters()
-            }.hook {
-                before {
-                    if (iconSize > 0) result = iconSize.dp
+        // 图标尺寸的构造源头是 calculateIconSizeByUxDesign，17.0.1 起类名与方法名一起被混淆，
+        // 类靠自己的日志标签定位，方法优先取 int[] 入参那个重载（17.x 只剩它），
+        // secondary 分支不经过该方法（C16 走 SecondaryLauncherUtils、C17 固定 72）
+        dexKitBridge.findClass {
+            matcher {
+                usingStrings("LauncherIconConfig")
+            }
+        }.apply {
+            checkDataList("LauncherIconConfig")
+
+            (findMethod {
+                matcher {
+                    paramTypes(classOf<IntArray>())
+                    returnType(classOf<Int>())
                 }
+            }.firstOrNull() ?: findMethod {
+                matcher {
+                    paramCount(0)
+                    returnType(classOf<Int>())
+                }
+            }.apply {
+                checkDataList("calculateIconSizeByUxDesign")
+            }.single()).getMethodInstance(hostClassLoader!!).hook {
+                before { result = iconSize.dp }
             }
         }
     }
