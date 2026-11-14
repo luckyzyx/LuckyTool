@@ -221,21 +221,24 @@ object RestartMenuUtils {
             }
             onDismiss()
         }
+        val title = stringResource(R.string.restart_scope)
         when (LocalUiMode.current) {
-            UiMode.Material -> MaterialConfirmRestartScopeDialog(message, onConfirm, onDismiss)
-            UiMode.Coui -> CouiConfirmRestartScopeDialog(message, onConfirm, onDismiss)
+            UiMode.Material -> MaterialConfirmRestartScopeDialog(title, message, onConfirm, onDismiss)
+            UiMode.Coui -> CouiConfirmRestartScopeDialog(title, message, onConfirm, onDismiss)
         }
     }
 
-    /** Material 线：只有一句提示，正文用 material3 弹窗的原生文本槽 */
+    /** Material 线：标题点明操作对象，提示文案用 material3 弹窗的原生文本槽 */
     @Composable
     private fun MaterialConfirmRestartScopeDialog(
+        title: String,
         message: String,
         onConfirm: () -> Unit,
         onDismiss: () -> Unit,
     ) {
         AlertDialog(
             onDismissRequest = onDismiss,
+            title = { Text(title) },
             text = { Text(message) },
             confirmButton = {
                 TextButton(onClick = onConfirm) { Text(stringResource(android.R.string.ok)) }
@@ -248,12 +251,14 @@ object RestartMenuUtils {
     /** Coui 线：确认是主操作，取消放取消位 */
     @Composable
     private fun CouiConfirmRestartScopeDialog(
+        title: String,
         message: String,
         onConfirm: () -> Unit,
         onDismiss: () -> Unit,
     ) {
         CouiAlertDialog(
             onDismissRequest = onDismiss,
+            title = title,
             message = message,
             confirmAction = CouiDialogAction(
                 text = stringResource(android.R.string.ok),
@@ -279,21 +284,24 @@ object RestartMenuUtils {
             restartHooker(context, xposedScope)
             onDismiss()
         }
+        val title = stringResource(R.string.reload_hooker)
         when (LocalUiMode.current) {
-            UiMode.Material -> MaterialConfirmRestartHookerDialog(message, onConfirm, onDismiss)
-            UiMode.Coui -> CouiConfirmRestartHookerDialog(message, onConfirm, onDismiss)
+            UiMode.Material -> MaterialConfirmRestartHookerDialog(title, message, onConfirm, onDismiss)
+            UiMode.Coui -> CouiConfirmRestartHookerDialog(title, message, onConfirm, onDismiss)
         }
     }
 
-    /** Material 线：只有一句提示，正文用 material3 弹窗的原生文本槽 */
+    /** Material 线：标题点明操作对象，提示文案用 material3 弹窗的原生文本槽 */
     @Composable
     private fun MaterialConfirmRestartHookerDialog(
+        title: String,
         message: String,
         onConfirm: () -> Unit,
         onDismiss: () -> Unit,
     ) {
         AlertDialog(
             onDismissRequest = onDismiss,
+            title = { Text(title) },
             text = { Text(message) },
             confirmButton = {
                 TextButton(onClick = onConfirm) { Text(stringResource(android.R.string.ok)) }
@@ -306,12 +314,14 @@ object RestartMenuUtils {
     /** Coui 线：确认是主操作，取消放取消位 */
     @Composable
     private fun CouiConfirmRestartHookerDialog(
+        title: String,
         message: String,
         onConfirm: () -> Unit,
         onDismiss: () -> Unit,
     ) {
         CouiAlertDialog(
             onDismissRequest = onDismiss,
+            title = title,
             message = message,
             confirmAction = CouiDialogAction(
                 text = stringResource(android.R.string.ok),
@@ -435,15 +445,18 @@ object RestartMenuUtils {
         }
         when (stage) {
             OptimizeStage.Confirm -> {
+                val title = stringResource(R.string.re_optimize_dex)
                 val message = stringResource(R.string.re_optimize_dex_message)
                 when (LocalUiMode.current) {
                     UiMode.Material -> MaterialOptimizeConfirmDialog(
+                        title = title,
                         message = message,
                         onConfirm = { launch(current) },
                         onDismiss = onDismiss,
                     )
 
                     UiMode.Coui -> CouiOptimizeConfirmDialog(
+                        title = title,
                         message = message,
                         onConfirm = { launch(current) },
                         onDismiss = onDismiss,
@@ -495,15 +508,17 @@ object RestartMenuUtils {
         }
     }
 
-    /** Material 线：执行前的确认弹窗 */
+    /** Material 线：执行前的确认弹窗，标题点明操作对象 */
     @Composable
     private fun MaterialOptimizeConfirmDialog(
+        title: String,
         message: String,
         onConfirm: () -> Unit,
         onDismiss: () -> Unit,
     ) {
         AlertDialog(
             onDismissRequest = onDismiss,
+            title = { Text(title) },
             text = { Text(message) },
             confirmButton = {
                 TextButton(onClick = onConfirm) { Text(stringResource(android.R.string.ok)) }
@@ -516,12 +531,14 @@ object RestartMenuUtils {
     /** Coui 线：执行前的确认弹窗，开始是主操作，取消放取消位 */
     @Composable
     private fun CouiOptimizeConfirmDialog(
+        title: String,
         message: String,
         onConfirm: () -> Unit,
         onDismiss: () -> Unit,
     ) {
         CouiAlertDialog(
             onDismissRequest = onDismiss,
+            title = title,
             message = message,
             confirmAction = CouiDialogAction(
                 text = stringResource(android.R.string.ok),
