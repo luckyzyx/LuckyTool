@@ -81,8 +81,6 @@ object EnableDockerBackground : YukiBaseHooker() {
             containerOf(any)?.background = null
         }
 
-        YLog.info("dock 背景：新版入口 background=$background blur=$blur")
-
         // 宿主每帧开头会跑这个入口，判定关掉时把已经建好的背景清空；背景由本 hooker 管理，
         // 这里接管它，只保留「dock 上没有图标就清掉」的行为
         runCatching {
@@ -122,7 +120,6 @@ object EnableDockerBackground : YukiBaseHooker() {
                     updateBounds.copy().of(instance).invoke()
                     setAlpha.copy().of(instance).invoke(1.0f)
                 }.isSuccess
-                YLog.info("dock 背景：绘制前生成，blurBuilt=$blurBuilt")
                 if (blurBuilt) return@before
                 runCatching { setBackground.copy().of(instance).invoke() }
                     .onFailure { YLog.error("生成 dock 背景失败", it) }
