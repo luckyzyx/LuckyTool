@@ -5,8 +5,6 @@ import android.os.Process
 import android.os.RemoteException
 import androidx.collection.ArrayMap
 import androidx.collection.arrayMapOf
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -22,21 +20,16 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.Dialog
-import androidx.compose.ui.window.DialogProperties
 import com.highcapable.betterandroid.ui.extension.view.toast
 import com.highcapable.yukihookapi.YukiHook
 import com.highcapable.yukihookapi.hook.xposed.reload.entity.ModuleReloadStatus
 import com.itos.coui.dialog.CouiDialogAction
 import com.itos.coui.dialog.CouiDialogActionStyle
 import com.itos.coui.dialog.CouiDialogDefaults
-import com.itos.coui.shape.CouiShape
-import com.itos.coui.text.CouiTextKind
-import com.itos.coui.text.Text as CouiText
+import com.itos.coui.dialog.LoadingDialog
 import com.itos.coui.theme.CouiTheme
 import com.luckyzyx.luckytool.IPackageServiceController
 import com.luckyzyx.luckytool.R
@@ -46,7 +39,6 @@ import com.luckyzyx.luckytool.service.PowerService
 import com.luckyzyx.luckytool.ui.compose.components.ActionListDialog
 import com.luckyzyx.luckytool.ui.compose.components.ChoiceItem
 import com.luckyzyx.luckytool.ui.compose.components.coui.CouiAlertDialog
-import com.luckyzyx.luckytool.ui.compose.components.coui.CouiCircularProgressIndicator
 import com.luckyzyx.luckytool.ui.theme.LocalUiMode
 import com.luckyzyx.luckytool.ui.theme.UiMode
 import com.topjohnwu.superuser.Shell
@@ -569,42 +561,19 @@ object RestartMenuUtils {
     }
 
     /**
-     * Coui 线：执行中的进度弹窗。
+     * Coui 线：执行中的进度弹窗，交给 COUI 的加载弹窗承载。
      *
-     * COUI 弹窗要求确认按钮必填，而执行期间没有任何可点动作，所以用裸 Dialog 承载一张 COUI 配色卡片：
-     * 标题、进度圈、进度文字纵向排列，进度文字随包序号实时刷新；执行期间点外部也不关闭。
+     * 加载弹窗只有一个不确定进度圈和一行提示，没有可点动作，正好是执行期间的语义：
+     * 不传 onDismissRequest，返回键与外点都不关闭。提示文案不允许为空，
+     * 第一帧还没有进度时退回标题，避免加载弹窗构造时直接抛异常。
      */
     @Composable
     private fun CouiOptimizeRunningDialog(title: String, progressText: String) {
-        val colors = CouiTheme.colorScheme
-        Dialog(
-            onDismissRequest = {},
-            properties = DialogProperties(usePlatformDefaultWidth = false),
-        ) {
-            Column(
-                modifier = Modifier
-                    .padding(horizontal = 24.dp)
-                    .fillMaxWidth()
-                    .clip(CouiShape(24.dp, 2f))
-                    .background(colors.container)
-                    .padding(horizontal = 20.dp, vertical = 24.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(16.dp),
-            ) {
-                CouiText(
-                    text = title,
-                    kind = CouiTextKind.ItemTitle,
-                    color = colors.onSurface,
-                )
-                CouiCircularProgressIndicator(color = colors.accent)
-                CouiText(
-                    text = progressText,
-                    kind = CouiTextKind.Search,
-                    textAlign = TextAlign.Start,
-                    color = colors.onSurfaceVariant,
-                )
-            }
-        }
+        LoadingDialog(
+            visible = true,
+            message = progressText.ifBlank { title },
+            dark = CouiTheme.isDark,
+        )
     }
 
     /** Material 线：有失败应用时列出包名，确认后重新执行 */
