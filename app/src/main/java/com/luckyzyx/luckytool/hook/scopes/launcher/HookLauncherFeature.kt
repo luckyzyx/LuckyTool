@@ -110,6 +110,8 @@ class HookLauncherFeature(val dexKitBridge: DexKitBridge) : YukiBaseHooker() {
                 preferences(ModulePrefs).getBoolean("enable_display_app_update_dot", false)
             val disableDockerMax =
                 preferences(ModulePrefs).getBoolean("remove_docker_max_number_limit", false)
+            val allowWidget =
+                preferences(ModulePrefs).getBoolean("remove_widgets_add_request_whitelist", false)
 
             //Source FeatureOption
             // 17.0.1 起这个功能总闸连类名带成员名一起混淆进默认包（探针：反编译后是 rp3），
@@ -126,6 +128,14 @@ class HookLauncherFeature(val dexKitBridge: DexKitBridge) : YukiBaseHooker() {
                     }
                     if (disableDockerMax) {
                         firstMethodOrNull { name = "isDockerMax5" }?.hook {
+                            intercept(false)
+                        }
+                    }
+                    // 组件添加请求的白名单总闸：宿主把它判定为「不支持白名单控制」时
+                    // 才放行所有 App 的添加请求（isAllowedAddWidget 里 !这个值 就直接 return true），
+                    // 所以这里要给 false，而不是 true
+                    if (allowWidget) {
+                        firstMethodOrNull { name = "isSupportWhiteListControl" }?.hook {
                             intercept(false)
                         }
                     }
