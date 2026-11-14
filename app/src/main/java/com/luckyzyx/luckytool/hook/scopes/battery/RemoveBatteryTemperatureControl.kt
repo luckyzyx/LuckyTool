@@ -21,7 +21,7 @@ class RemoveBatteryTemperatureControl(val dexKitBridge: DexKitBridge) : YukiBase
         //Source ThermalControlHandler / ThermalControllHandler
         dexKitBridge.findClass {
             matcher {
-            addFieldForType(classOf<Context>())
+                addFieldForType(classOf<Context>())
 //                addFieldForType(Looper::class.java)
                 addMethod { name("handleMessage") }
 //                usingStrings("ThermalControllHandler")

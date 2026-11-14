@@ -85,7 +85,7 @@ class VoipRecorderWhitelist(val dexKitBridge: DexKitBridge) : YukiBaseHooker() {
         dexKitBridge.findClass {
             matcher {
                 fields {
-                addForType(classOf<Context>())
+                    addForType(classOf<Context>())
                     addForType(classOf<String>())
                     addForType(classOf<Boolean>())
                 }
@@ -115,7 +115,7 @@ class VoipRecorderWhitelist(val dexKitBridge: DexKitBridge) : YukiBaseHooker() {
         //Source SwitchApp
         dexKitBridge.findClass {
             matcher {
-            addFieldForType(classOf<String>())
+                addFieldForType(classOf<String>())
                 addFieldForType(classOf<Boolean>())
                 addMethod { name("equals") }
                 addMethod { name("hashCode") }

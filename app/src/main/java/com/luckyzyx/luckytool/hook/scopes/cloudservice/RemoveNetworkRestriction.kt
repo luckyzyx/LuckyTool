@@ -28,16 +28,16 @@ class RemoveNetworkRestriction(val dexKitBridge: DexKitBridge) : YukiBaseHooker(
                         usingNumbers(0, 1, 2)
                     }
                     add {
-                    paramTypes(classOf<Int>())
+                        paramTypes(classOf<Int>())
                         returnType(classOf<Boolean>())
                     }
                     add {
-                    paramTypes(classOf<Context>())
+                        paramTypes(classOf<Context>())
                         returnType(classOf<Boolean>())
                         usingStrings("NetworkUtil", "connectivity", "isMobileDataNetwork")
                     }
                     add {
-                    paramTypes(classOf<Context>())
+                        paramTypes(classOf<Context>())
                         returnType(classOf<Boolean>())
                         usingStrings("NetworkUtil", "connectivity", "isNetworkConnected")
                     }
