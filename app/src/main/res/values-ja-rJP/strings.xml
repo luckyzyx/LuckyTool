@@ -763,10 +763,6 @@
     <string name="Screenshot">スクリーンショット</string>
     <string name="remove_system_screenshot_delay">システムからスクリーンショットの遅延を削除</string>
     <string name="remove_system_screenshot_delay_summary">最初のスクリーンショットが反映されない場合があります</string>
-    <string name="remove_screenshot_privacy_limit">スクリーンショットのプライバシー制限を削除</string>
-    <string name="remove_screenshot_privacy_limit_summary">傍受できないプライバシーの制限を解除します。効果がない場合は FLAG_SECURE を無効化してください</string>
-    <string name="disable_flag_secure">FLAG_SECUREを無効化</string>
-    <string name="disable_flag_secure_summary">スクリーンショット、画面共有、または画面録画ができないアプリでの問題を大抵解決します\nLSPosed 1.8.6以上が必要です</string>
     <string name="remove_page_limit_for_long_screenshots">ロングスクリーンショットのページ上限を削除</string>
     <string name="remove_page_limit_for_long_screenshots_summary">一部の状況にのみ対応しています。どうなるかは自分でテストしてください</string>
     <string name="enable_png_save_format">PNG 保存形式を有効化</string>

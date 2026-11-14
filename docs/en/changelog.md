@@ -126,3 +126,4 @@ Entries for versions before `1.3.5_beta` are currently only available in the
 - Removed "Notification Center two-side alignment"
 - Removed the secure payment scope, its restrictions can be turned off in the system secure payment settings
 - Removed the super volume mode and its call variant
+- Removed "Disable FLAG_SECURE" and the never-shown "Remove screenshot privacy limit" item

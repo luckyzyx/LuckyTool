@@ -903,10 +903,6 @@
     <string name="Screenshot">截屏相关</string>
     <string name="remove_system_screenshot_delay">移除系统截屏延迟</string>
     <string name="remove_system_screenshot_delay_summary">首次截屏可能会不生效</string>
-    <string name="remove_screenshot_privacy_limit">移除截屏隐私限制</string>
-    <string name="remove_screenshot_privacy_limit_summary">移除涉及隐私无法截屏的限制, 若此项不生效可开启“禁用FLAG_SECURE”</string>
-    <string name="disable_flag_secure">禁用FLAG_SECURE</string>
-    <string name="disable_flag_secure_summary">解决大部分APP无法截图、屏幕共享或录制的限制\n需要 LSPosed 1.8.6+</string>
     <string name="remove_page_limit_for_long_screenshots">移除长截图页数限制</string>
     <string name="remove_page_limit_for_long_screenshots_summary">仅支持部分场景，具体情况请自行测试</string>
     <string name="enable_png_save_format">启用 PNG 保存格式</string>

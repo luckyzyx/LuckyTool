@@ -900,10 +900,6 @@
     <string name="Screenshot">Ekran Görüntüsü</string>
     <string name="remove_system_screenshot_delay">Sistem ekran görüntüsü gecikmesini kaldır</string>
     <string name="remove_system_screenshot_delay_summary">İlk ekran görüntüsünde etki etmeyebilir</string>
-    <string name="remove_screenshot_privacy_limit">Ekran görüntüsü gizlilik limitini kaldır</string>
-    <string name="remove_screenshot_privacy_limit_summary">Ekran görüntüsü alınamayan yerlerdeki (banka uygulamaları vs.) gizlilik kısıtlamalarını kaldırır. Etki etmezse \'FLAG_SECURE Devre Dışı Bırak\' seçeneğini deneyin</string>
-    <string name="disable_flag_secure">FLAG SECURE\'u Devre Dışı Bırak</string>
-    <string name="disable_flag_secure_summary">Çoğu uygulamanın ekranı kaydetme, ekran/görüntü paylaşma sınırlarını çözer\nLSPosed 1.8.6+ gerektirir</string>
     <string name="remove_page_limit_for_long_screenshots">Uzun ekran görüntüleri için sayfa sınırını (20 sayfa sınırı) kaldır</string>
     <string name="remove_page_limit_for_long_screenshots_summary">Yalnızca bazı senaryolarda desteklenir, lütfen özel durumu kendiniz test edin</string>
     <string name="enable_png_save_format">PNG kaydetme biçimini etkinleştir</string>

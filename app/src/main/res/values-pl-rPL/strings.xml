@@ -765,10 +765,6 @@
     <string name="Screenshot">Zrzut ekranu</string>
     <string name="remove_system_screenshot_delay">Usuń opóźnienie</string>
     <string name="remove_system_screenshot_delay_summary">Być może nie zadziała na pierwszym zrzucie ekranu</string>
-    <string name="remove_screenshot_privacy_limit">Usuń ograniczenie prywatności</string>
-    <string name="remove_screenshot_privacy_limit_summary">Zezwól na wykonywanie zrzutów ekranu w aplikacjach, które na to nie pozwalają. Wyłącz FLAG_SECURE, jeśli to nie zadziała</string>
-    <string name="disable_flag_secure">Wyłącz FLAG_SECURE</string>
-    <string name="disable_flag_secure_summary">Rozwiązuje problemy z niemożliwością wykonywania zrzutów i nagrywania ekranu w aplikacjach.\nWymagany LSPosed 1.8.6+.</string>
     <string name="remove_page_limit_for_long_screenshots">Remove the page limit for long screenshots</string>
     <string name="remove_page_limit_for_long_screenshots_summary">Only some scenarios are supported, please test the specific situation by yourself</string>
     <string name="enable_png_save_format">Enable PNG save format</string>

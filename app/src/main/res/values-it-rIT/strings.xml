@@ -763,10 +763,6 @@
     <string name="Screenshot">Cattura Schermo</string>
     <string name="remove_system_screenshot_delay">Rimuovi ritardo Screenshot</string>
     <string name="remove_system_screenshot_delay_summary">Sul primo Screenshot potrebbe non avere effetto</string>
-    <string name="remove_screenshot_privacy_limit">Rimuovi limite privacy Screenshot</string>
-    <string name="remove_screenshot_privacy_limit_summary">Rimuovi le restrizioni sulla privacy che non possono essere intercettate. Disabilita FLAG_SECURE se questo non ha effetto</string>
-    <string name="disable_flag_secure">Disabilita FLAG_SECURE</string>
-    <string name="disable_flag_secure_summary">Risolvere la maggior parte delle APP non può catturare, condividere o registrare i limiti\nRichiede LSPosed 1.8.6+</string>
     <string name="remove_page_limit_for_long_screenshots">Rimuovi il limite di pagina per Screenshot lunghi</string>
     <string name="remove_page_limit_for_long_screenshots_summary">Solo alcuni scenari sono supportati, si prega di verificare la situazione specifica da soli</string>
     <string name="enable_png_save_format">Abilita formato di salvataggio PNG</string>

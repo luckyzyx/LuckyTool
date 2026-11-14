@@ -765,10 +765,6 @@
     <string name="Screenshot">Скриншот экрана</string>
     <string name="remove_system_screenshot_delay">Убрать задержку скриншота системы</string>
     <string name="remove_system_screenshot_delay_summary">Первый скриншот может не работать</string>
-    <string name="remove_screenshot_privacy_limit">Удалить ограничения конфиденциальности скриншотов</string>
-    <string name="remove_screenshot_privacy_limit_summary">Снимает ограничения на конфиденциальность, которые не могут быть перехвачены. Отключите FLAG_SECURE, если это никак не повлияет</string>
-    <string name="disable_flag_secure">Отключить FLAG_SECURE</string>
-    <string name="disable_flag_secure_summary">Большинство приложений не могут снимать, делиться скриншотом или ограничивают запись\nТребуется LSPosed 1.8.6+</string>
     <string name="remove_page_limit_for_long_screenshots">Удалить ограничение на количество страниц для длинных скриншотов</string>
     <string name="remove_page_limit_for_long_screenshots_summary">Поддерживаются только некоторые сценарии, пожалуйста, проверьте конкретную ситуацию самостоятельно</string>
     <string name="enable_png_save_format">Включить формат сохранения PNG</string>

@@ -764,10 +764,6 @@
     <string name="Screenshot">Snímky obrazovky</string>
     <string name="remove_system_screenshot_delay">Odstranit zpoždění snímku systémové obrazovky</string>
     <string name="remove_system_screenshot_delay_summary">První snímek obrazovky se nemusí zaznamenat</string>
-    <string name="remove_screenshot_privacy_limit">Odstranit limit ochrany osobních údajů na snímku obrazovky</string>
-    <string name="remove_screenshot_privacy_limit_summary">Odstranit omezení ochrany osobních údajů, která nelze zachytit. Pokud se toto neprojeví, zakažte FLAG_SECURE</string>
-    <string name="disable_flag_secure">Zakázat FLAG_SECURE</string>
-    <string name="disable_flag_secure_summary">Vyřešit většinu problémů aplikací s nahráváním, sdílením obrazovky nebo limity nahrávání\nVyžaduje LSPosed 1.8.6.+</string>
     <string name="remove_page_limit_for_long_screenshots">Odstranit limit stránek pro dlouhé snímky obrazovky</string>
     <string name="remove_page_limit_for_long_screenshots_summary">Jsou podporovány pouze některé scénáře, prosím vyzkoušejte specifickou situaci sami</string>
     <string name="enable_png_save_format">Povolit PNG formát ukládání</string>

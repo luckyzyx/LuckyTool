@@ -18,8 +18,6 @@ import com.luckyzyx.luckytool.hook.hookers.HookClaw
 import com.luckyzyx.luckytool.hook.hookers.HookCloudService
 import com.luckyzyx.luckytool.hook.hookers.HookCorePatch
 import com.luckyzyx.luckytool.hook.hookers.HookDirectUI
-import com.luckyzyx.luckytool.hook.hookers.HookDisableFlagSecure
-import com.luckyzyx.luckytool.hook.hookers.HookDisableFlagSecureApp
 import com.luckyzyx.luckytool.hook.hookers.HookEngineerMode
 import com.luckyzyx.luckytool.hook.hookers.HookExternalStorage
 import com.luckyzyx.luckytool.hook.hookers.HookFileManager
@@ -175,11 +173,9 @@ class MainHook : YukiHookXposedModule {
         loadSystem(HookAndroid)
         //核心破解
         loadSystem(HookCorePatch)
-        //禁用安全标记（system_server 侧）
-        loadSystem(HookDisableFlagSecure)
 
         //系统界面
-        loadApp("com.android.systemui", HookSystemUI, HookDisableFlagSecureApp)
+        loadApp("com.android.systemui", HookSystemUI)
 
         //经典主题 Clock
         loadApp("com.oplus.keyguard.clock.base", HookKeyguardClock)
@@ -199,9 +195,7 @@ class MainHook : YukiHookXposedModule {
         loadApp("com.oplus.uiengine", HookUIEngine)
 
         //截屏
-        loadApp("com.oplus.screenshot", HookScreenshot, HookDisableFlagSecureApp)
-        //应用平台服务（截图安全标记）
-        loadApp("com.oplus.appplatform", HookDisableFlagSecureApp)
+        loadApp("com.oplus.screenshot", HookScreenshot)
 
         //安全中心
         loadApp("com.oplus.safecenter", HookSafeCenter)

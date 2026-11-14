@@ -766,10 +766,6 @@
     <string name="Screenshot">Ảnh chụp màn hình</string>
     <string name="remove_system_screenshot_delay">Xóa độ trễ ảnh chụp màn hình hệ thống</string>
     <string name="remove_system_screenshot_delay_summary">Ảnh chụp màn hình đầu tiên có thể không có hiệu lực</string>
-    <string name="remove_screenshot_privacy_limit">Xóa giới hạn quyền riêng tư của ảnh chụp màn hình</string>
-    <string name="remove_screenshot_privacy_limit_summary">Xóa các hạn chế về quyền riêng tư không thể bị chặn. Vô hiệu hóa FLAG_SECURE nếu điều này không có hiệu lực</string>
-    <string name="disable_flag_secure">Vô hiệu hóa FLAG_SECURE</string>
-    <string name="disable_flag_secure_summary">Giải quyết hầu hết các ứng dụng không thể chụp, chia sẻ màn hình hoặc giới hạn ghi, thêm các trường ứng dụng tương ứng+</string>
     <string name="remove_page_limit_for_long_screenshots">Xóa giới hạn số trang cho ảnh chụp màn hình dài</string>
     <string name="remove_page_limit_for_long_screenshots_summary">Chỉ hỗ trợ một số trường hợp, vui lòng tự kiểm tra các tình huống cụ thể</string>
     <string name="enable_png_save_format">Bật định dạng lưu PNG</string>

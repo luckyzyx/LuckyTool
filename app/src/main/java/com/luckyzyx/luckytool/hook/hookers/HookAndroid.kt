@@ -135,9 +135,6 @@ object HookAndroid : YukiBaseHooker() {
         //视频动态插帧
         loadHooker(EnableVideoMemcFrameInsertion)
 
-        //安全窗口标志
-//        loadHooker(OplusWindowSecureFlag)
-
         //App图标更新圆点
         if (osCode >= 33) loadHooker(SetAppUpdateDotDisplayMode)
 
