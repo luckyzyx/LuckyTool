@@ -566,6 +566,8 @@ object RestartMenuUtils {
      * 加载弹窗只有一个不确定进度圈和一行提示，没有可点动作，正好是执行期间的语义：
      * 不传 onDismissRequest，返回键与外点都不关闭。提示文案不允许为空，
      * 第一帧还没有进度时退回标题，避免加载弹窗构造时直接抛异常。
+     * 提示是单行且宽度固定在 152dp，超出部分走省略号，所以进度文案把计数写在应用名前，
+     * 长应用名只会截掉名字，看不出「还剩多少」的计数不会被吃掉。
      */
     @Composable
     private fun CouiOptimizeRunningDialog(title: String, progressText: String) {
@@ -654,7 +656,8 @@ object RestartMenuUtils {
             scopes.keys.forEachIndexed { index, pack ->
                 val name = scopes[pack] ?: pack
                 withContext(Dispatchers.Main) {
-                    onProgress("$name (${index + 1}/${scopes.size})")
+                    // 计数放在最前：COUI 加载弹窗的提示是单行、超长省略号，长应用名会把末尾的计数吃掉
+                    onProgress("${index + 1}/${scopes.size} $name")
                 }
                 val success = try {
                     controller?.clearApplicationProfileData(pack)
