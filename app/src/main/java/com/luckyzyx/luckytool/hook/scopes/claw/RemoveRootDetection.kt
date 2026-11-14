@@ -49,6 +49,10 @@ class RemoveRootDetection(val dexKitBridge: DexKitBridge) : YukiBaseHooker() {
             }
         }.singleOrNull()
 
+        //按版本只有一条 query 会命中，空集本身是正常分支，所以两条都不加 checkDataList；
+        //两条都落空说明宿主又改了检测结构，必须留痕，否则会静默不生效
+        if (modern == null && legacy == null) YLog.error("RemoveRootDetection -> modern/legacy 均未命中")
+
         when {
             modern != null -> modern.className.toClass().resolve().firstMethodOrNull {
                 name = modern.methodName

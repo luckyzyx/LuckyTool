@@ -28,12 +28,15 @@ class EnableGameRunInBackground(
         //Source HangUpUtil.isSupportBackgroundHangUp
         //新版把支持判定内联进后台挂机面板项(GameHungUpItemState)的构造函数，结果写进该类唯一的 boolean 字段
         //该类的 d() 用 !isSupport 算出 mHide，把字段置 true 面板项就不会被隐藏
+        //两个锚点串各自至少要命中一个类，空了说明宿主改结构，各自报错后再由下面的交集判定兜底
         val supportNameList = dexKitBridge.findClass {
             matcher { usingStrings("isSupportBackgroundHangUp") }
-        }.map { it.name }
+        }.checkDataList("EnableGameRunInBackground isSupportBackgroundHangUp", onlyOne = false)
+            .map { it.name }
         val itemNameList = dexKitBridge.findClass {
             matcher { usingStrings("GameHungUpItemState") }
-        }.map { it.name }
+        }.checkDataList("EnableGameRunInBackground GameHungUpItemState", onlyOne = false)
+            .map { it.name }
         val supportClassList = supportNameList.filter { itemNameList.contains(it) }
         if (supportClassList.size != 1) {
             YLog.error("EnableGameRunInBackground Support Class -> $supportClassList")

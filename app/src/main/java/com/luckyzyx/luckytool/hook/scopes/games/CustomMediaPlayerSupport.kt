@@ -7,6 +7,7 @@ import com.highcapable.yukihookapi.extension.kavaref.hook
 import com.highcapable.yukihookapi.extension.kavaref.toClass
 import com.highcapable.yukihookapi.hook.entity.YukiBaseHooker
 import com.highcapable.yukihookapi.hook.log.YLog
+import com.luckyzyx.luckytool.utils.DexkitUtils.checkDataList
 import com.luckyzyx.luckytool.utils.ModulePrefs
 import org.lsposed.lsparanoid.Obfuscate
 import org.luckypray.dexkit.DexKitBridge
@@ -20,12 +21,15 @@ class CustomMediaPlayerSupport(val dexKitBridge: DexKitBridge) : YukiBaseHooker(
         //Source MediaSessionHelper
         //V10.43+ 本体类名已被混淆（com.oplus.games.musicplayer.main.c），靠类名硬编码下次更新就会失效
         //这里改用类里必然存在的两个字符串定位：配置键 media_controller_config + 日志里的 isOpenedNotification
+        //两个锚点串各自至少要命中一个类，空了说明宿主换了特征，先留错误再回落硬编码类名
         val configClassList = dexKitBridge.findClass {
             matcher { usingStrings("media_controller_config") }
-        }.map { it.name }
+        }.checkDataList("CustomMediaPlayerSupport media_controller_config", onlyOne = false)
+            .map { it.name }
         val tagClassList = dexKitBridge.findClass {
             matcher { usingStrings("isOpenedNotification") }
-        }.map { it.name }
+        }.checkDataList("CustomMediaPlayerSupport isOpenedNotification", onlyOne = false)
+            .map { it.name }
         val mediaSessionHelperList = configClassList.filter { tagClassList.contains(it) }
         val clazz = if (mediaSessionHelperList.size == 1) {
             mediaSessionHelperList.first().toClass()

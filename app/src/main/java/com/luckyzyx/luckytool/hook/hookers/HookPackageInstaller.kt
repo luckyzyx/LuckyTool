@@ -18,6 +18,8 @@ object HookPackageInstaller : YukiBaseHooker() {
 
         DexkitUtils.create(appInfo.sourceDir) { dexKitBridge ->
             //Source FeatureOption
+            //这里刻意不做 checkDataList：用户可用 zygisk 模块替换安装器，那时这些类本来就不存在，
+            //按报错处理只会变成误报；反过来新版官方安装器若移除了这些字符串，会静默跳过全部子 hooker
             dexKitBridge.findClass {
                 matcher {
                     usingStrings(
