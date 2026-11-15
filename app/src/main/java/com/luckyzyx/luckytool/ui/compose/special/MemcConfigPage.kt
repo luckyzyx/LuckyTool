@@ -54,6 +54,7 @@ import com.luckyzyx.luckytool.data.MemcConfigPackage
 import com.luckyzyx.luckytool.ui.compose.components.ActionListDialog
 import com.luckyzyx.luckytool.ui.compose.components.AppPickerDialog
 import com.luckyzyx.luckytool.ui.compose.components.ChoiceItem
+import com.luckyzyx.luckytool.ui.compose.components.ConfirmDialog
 import com.luckyzyx.luckytool.ui.compose.components.PrefCard
 import com.luckyzyx.luckytool.ui.compose.components.AppItem
 import com.luckyzyx.luckytool.ui.compose.components.AppListItem
@@ -360,7 +361,7 @@ internal fun LazyItemScope.MemcConfigContent() {
     }
 
     if (showResetConfirm) {
-        MemcConfirmDialog(
+        ConfirmDialog(
             message = stringResource(R.string.restore_frame_insertion_configuration_data),
             onDismiss = { showResetConfirm = false },
             onConfirm = {
@@ -427,48 +428,6 @@ private fun MemcTabRow(selected: Int, onSelect: (Int) -> Unit) {
     }
 }
 
-/**
- * 一句正文 + 确定/取消的确认弹窗。
- *
- * 正文由组件自己画，调用方只决定文案与两个动作；确定按钮是主操作，
- * 取消贴在取消位（COUI 的中性位固定按警示色渲染，不适合「点它只是关掉」）。
- */
-@Composable
-private fun MemcConfirmDialog(
-    message: String,
-    onDismiss: () -> Unit,
-    onConfirm: () -> Unit,
-) {
-    when (LocalUiMode.current) {
-        UiMode.Material -> AlertDialog(
-            onDismissRequest = onDismiss,
-            text = { Text(message) },
-            confirmButton = {
-                TextButton(onClick = onConfirm) { Text(stringResource(android.R.string.ok)) }
-            },
-            dismissButton = {
-                TextButton(onClick = onDismiss) {
-                    Text(stringResource(android.R.string.cancel))
-                }
-            },
-        )
-
-        UiMode.Coui -> CouiAlertDialog(
-            onDismissRequest = onDismiss,
-            message = message,
-            confirmAction = CouiDialogAction(
-                text = stringResource(android.R.string.ok),
-                onClick = onConfirm,
-                style = CouiDialogActionStyle.Primary,
-                colors = CouiDialogDefaults.primaryActionColors(CouiTheme.colorScheme.accent),
-            ),
-            dismissAction = CouiDialogAction(
-                text = stringResource(android.R.string.cancel),
-                onClick = onDismiss,
-            ),
-        )
-    }
-}
 
 /** 面板搜索框：仅搜索（无排序按钮）。 */
 @Composable
@@ -909,7 +868,7 @@ internal fun MemcPackageDialog(
     }
 
     if (showDeleteConfirm && initial != null) {
-        MemcConfirmDialog(
+        ConfirmDialog(
             message = stringResource(
                 R.string.confirm_to_delete_this_configuration,
                 initial.packName,
@@ -1265,7 +1224,7 @@ internal fun MemcActivityDialog(
     }
 
     if (showDeleteConfirm && initial != null) {
-        MemcConfirmDialog(
+        ConfirmDialog(
             message = stringResource(
                 R.string.confirm_to_delete_this_configuration,
                 initial.activity,

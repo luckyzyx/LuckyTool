@@ -37,6 +37,7 @@ import com.luckyzyx.luckytool.service.PackagesService
 import com.luckyzyx.luckytool.service.PowerService
 import com.luckyzyx.luckytool.ui.compose.components.ActionListDialog
 import com.luckyzyx.luckytool.ui.compose.components.ChoiceItem
+import com.luckyzyx.luckytool.ui.compose.components.ConfirmDialog
 import com.luckyzyx.luckytool.ui.compose.components.coui.CouiAlertDialog
 import com.luckyzyx.luckytool.ui.compose.components.coui.CouiProgressDialog
 import com.luckyzyx.luckytool.ui.theme.LocalUiMode
@@ -216,7 +217,7 @@ object RestartMenuUtils {
             }
             onDismiss()
         }
-        ConfirmRestartActionDialog(
+        ConfirmDialog(
             title = stringResource(R.string.restart_scope),
             message = message,
             onConfirm = onConfirm,
@@ -231,7 +232,7 @@ object RestartMenuUtils {
      */
     @Composable
     private fun ConfirmRebootDialog(context: Context, onDismiss: () -> Unit) {
-        ConfirmRestartActionDialog(
+        ConfirmDialog(
             title = stringResource(R.string.reboot),
             message = stringResource(R.string.reboot_message),
             onConfirm = {
@@ -251,7 +252,7 @@ object RestartMenuUtils {
      */
     @Composable
     private fun ConfirmFastRebootDialog(onDismiss: () -> Unit) {
-        ConfirmRestartActionDialog(
+        ConfirmDialog(
             title = stringResource(R.string.fast_reboot),
             message = stringResource(R.string.fast_reboot_message),
             onConfirm = {
@@ -269,7 +270,7 @@ object RestartMenuUtils {
     private fun ConfirmRestartAllHookerDialog(context: Context, onDismiss: () -> Unit) {
         val xposedScope = remember { context.resources.getStringArray(R.array.xposed_scope) }
         val message = stringResource(R.string.reload_hooker_message)
-        ConfirmRestartActionDialog(
+        ConfirmDialog(
             title = stringResource(R.string.reload_hooker),
             message = message,
             onConfirm = {
@@ -280,68 +281,6 @@ object RestartMenuUtils {
         )
     }
 
-    /**
-     * 二次确认弹窗，两条 UI 线共用同一份标题、文案与动作
-     *
-     * 调用方只描述「确认做什么」，按钮排布与配色交给各线自己的实现。
-     */
-    @Composable
-    private fun ConfirmRestartActionDialog(
-        title: String,
-        message: String,
-        onConfirm: () -> Unit,
-        onDismiss: () -> Unit,
-    ) {
-        when (LocalUiMode.current) {
-            UiMode.Material -> MaterialConfirmActionDialog(title, message, onConfirm, onDismiss)
-            UiMode.Coui -> CouiConfirmActionDialog(title, message, onConfirm, onDismiss)
-        }
-    }
-
-    /** Material 线：标题点明操作对象，提示文案用 material3 弹窗的原生文本槽 */
-    @Composable
-    private fun MaterialConfirmActionDialog(
-        title: String,
-        message: String,
-        onConfirm: () -> Unit,
-        onDismiss: () -> Unit,
-    ) {
-        AlertDialog(
-            onDismissRequest = onDismiss,
-            title = { Text(title) },
-            text = { Text(message) },
-            confirmButton = {
-                TextButton(onClick = onConfirm) { Text(stringResource(android.R.string.ok)) }
-            },
-            dismissButton = {
-                TextButton(onClick = onDismiss) { Text(stringResource(android.R.string.cancel)) }
-            })
-    }
-
-    /** Coui 线：确认是主操作，取消放取消位 */
-    @Composable
-    private fun CouiConfirmActionDialog(
-        title: String,
-        message: String,
-        onConfirm: () -> Unit,
-        onDismiss: () -> Unit,
-    ) {
-        CouiAlertDialog(
-            onDismissRequest = onDismiss,
-            title = title,
-            message = message,
-            confirmAction = CouiDialogAction(
-                text = stringResource(android.R.string.ok),
-                onClick = onConfirm,
-                style = CouiDialogActionStyle.Primary,
-                colors = CouiDialogDefaults.primaryActionColors(CouiTheme.colorScheme.accent),
-            ),
-            dismissAction = CouiDialogAction(
-                text = stringResource(android.R.string.cancel),
-                onClick = onDismiss,
-            ),
-        )
-    }
 
     /**
      * 重启部分作用域
@@ -452,7 +391,7 @@ object RestartMenuUtils {
         }
         when (stage) {
             OptimizeStage.Confirm -> {
-                ConfirmRestartActionDialog(
+                ConfirmDialog(
                     title = stringResource(R.string.re_optimize_dex),
                     message = stringResource(R.string.re_optimize_dex_message),
                     onConfirm = { launch(current) },

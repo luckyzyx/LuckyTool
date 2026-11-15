@@ -55,6 +55,7 @@ import com.luckyzyx.luckytool.R
 import com.luckyzyx.luckytool.ui.activity.MainActivity
 import com.luckyzyx.luckytool.ui.compose.components.ActionListDialog
 import com.luckyzyx.luckytool.ui.compose.components.ChoiceItem
+import com.luckyzyx.luckytool.ui.compose.components.ConfirmDialog
 import com.luckyzyx.luckytool.ui.compose.components.LocalScopeTopInset
 import com.luckyzyx.luckytool.ui.compose.components.ScopeScreen
 import com.luckyzyx.luckytool.ui.compose.components.PrefIcon
@@ -377,36 +378,15 @@ fun SettingPage(activity: MainActivity, onOpenTheme: () -> Unit = {}) {
     }
 
     if (showClearDialog) {
-        when (LocalUiMode.current) {
-            UiMode.Material -> AlertDialog(
-                onDismissRequest = { showClearDialog = false },
-                text = { Text(stringResource(R.string.clear_all_data_message)) },
-                confirmButton = {
-                    TextButton(onClick = {
-                        showClearDialog = false
-                        context.clearAllPrefs(ModulePrefs, IntentPrefs, SettingsPrefs, OtherPrefs)
-                        exitProcess(0)
-                    }) { Text(stringResource(android.R.string.ok)) }
-                },
-                dismissButton = {
-                    TextButton(onClick = { showClearDialog = false }) {
-                        Text(stringResource(android.R.string.cancel))
-                    }
-                },
-            )
-
-            UiMode.Coui -> CouiConfirmDialog(
-                message = stringResource(R.string.clear_all_data_message),
-                confirmText = stringResource(android.R.string.ok),
-                onConfirm = {
-                    showClearDialog = false
-                    context.clearAllPrefs(ModulePrefs, IntentPrefs, SettingsPrefs, OtherPrefs)
-                    exitProcess(0)
-                },
-                onDismissRequest = { showClearDialog = false },
-                dismissText = stringResource(android.R.string.cancel),
-            )
-        }
+        ConfirmDialog(
+            message = stringResource(R.string.clear_all_data_message),
+            onConfirm = {
+                showClearDialog = false
+                context.clearAllPrefs(ModulePrefs, IntentPrefs, SettingsPrefs, OtherPrefs)
+                exitProcess(0)
+            },
+            onDismiss = { showClearDialog = false },
+        )
     }
 
     if (showFeedbackDialog) {
@@ -459,34 +439,15 @@ fun SettingPage(activity: MainActivity, onOpenTheme: () -> Unit = {}) {
             stringResource(R.string.data_prefs_targets_title) + "\n" + statusLines.joinToString("\n"),
             stringResource(R.string.data_backup_status_tips),
         ).joinToString("\n\n")
-        when (LocalUiMode.current) {
-            UiMode.Material -> AlertDialog(
-                onDismissRequest = { showBackupDialog = false },
-                text = { Text(message) },
-                confirmButton = {
-                    TextButton(onClick = {
-                        showBackupDialog = false
-                        startBackup()
-                    }) { Text(stringResource(R.string.backup_data)) }
-                },
-                dismissButton = {
-                    TextButton(onClick = { showBackupDialog = false }) {
-                        Text(stringResource(android.R.string.cancel))
-                    }
-                },
-            )
-
-            UiMode.Coui -> CouiConfirmDialog(
-                message = message,
-                confirmText = stringResource(R.string.backup_data),
-                onConfirm = {
-                    showBackupDialog = false
-                    startBackup()
-                },
-                onDismissRequest = { showBackupDialog = false },
-                dismissText = stringResource(android.R.string.cancel),
-            )
-        }
+        ConfirmDialog(
+            message = message,
+            onConfirm = {
+                showBackupDialog = false
+                startBackup()
+            },
+            onDismiss = { showBackupDialog = false },
+            confirmLabel = stringResource(R.string.backup_data),
+        )
     }
 
     pendingRestoreJson?.let { json ->
@@ -529,66 +490,18 @@ fun SettingPage(activity: MainActivity, onOpenTheme: () -> Unit = {}) {
             add(targetsSummary)
             if (remoteUnwritable) add(stringResource(R.string.data_remote_unavailable_tips))
         }.joinToString("\n\n")
-        when (LocalUiMode.current) {
-            UiMode.Material -> AlertDialog(
-                onDismissRequest = { pendingRestoreJson = null },
-                text = { Text(restoreMessage) },
-                confirmButton = {
-                    TextButton(onClick = {
-                        pendingRestoreJson = null
-                        writeRestoreData(activity, json)
-                    }) { Text(stringResource(R.string.restore_data)) }
-                },
-                dismissButton = {
-                    TextButton(onClick = { pendingRestoreJson = null }) {
-                        Text(stringResource(android.R.string.cancel))
-                    }
-                },
-            )
-
-            UiMode.Coui -> CouiConfirmDialog(
-                message = restoreMessage,
-                confirmText = stringResource(R.string.restore_data),
-                onConfirm = {
-                    pendingRestoreJson = null
-                    writeRestoreData(activity, json)
-                },
-                onDismissRequest = { pendingRestoreJson = null },
-                dismissText = stringResource(android.R.string.cancel),
-            )
-        }
+        ConfirmDialog(
+            message = restoreMessage,
+            onConfirm = {
+                pendingRestoreJson = null
+                writeRestoreData(activity, json)
+            },
+            onDismiss = { pendingRestoreJson = null },
+            confirmLabel = stringResource(R.string.restore_data),
+        )
     }
 }
 
-/**
- * Coui 线的二次确认弹窗：一句正文 + 确定/取消。
- *
- * 清空、备份、恢复三处结构相同，摆位集中在这里只维护一份；各处的正文与按钮文案由调用方给，
- * 因为正文里的路径、落点、版本行都是调用方现算的。
- *
- * 注意：确定键用 Primary 样式时必须显式传 colors（CouiDialogAction 的 init 会校验，缺了直接抛异常），
- * 取消放 dismissAction —— 中性位固定按警示色渲染，与「点它只是关掉」的语义不符。
- */
-@Composable
-private fun CouiConfirmDialog(
-    message: String,
-    confirmText: String,
-    onConfirm: () -> Unit,
-    onDismissRequest: () -> Unit,
-    dismissText: String,
-) {
-    CouiAlertDialog(
-        onDismissRequest = onDismissRequest,
-        message = message,
-        confirmAction = CouiDialogAction(
-            text = confirmText,
-            onClick = onConfirm,
-            style = CouiDialogActionStyle.Primary,
-            colors = CouiDialogDefaults.primaryActionColors(CouiTheme.colorScheme.accent),
-        ),
-        dismissAction = CouiDialogAction(text = dismissText, onClick = onDismissRequest),
-    )
-}
 
 /**
  * Download/LuckyTool 在「外部存储」文档 provider 里的 document uri。
