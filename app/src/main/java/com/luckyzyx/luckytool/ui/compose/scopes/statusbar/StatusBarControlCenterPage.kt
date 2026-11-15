@@ -19,6 +19,7 @@ import com.luckyzyx.luckytool.ui.compose.components.PrefRow
 import com.luckyzyx.luckytool.ui.compose.components.PrefRowInset
 import com.luckyzyx.luckytool.ui.compose.scopes.ScopePageSpec
 import com.luckyzyx.luckytool.utils.A13
+import com.luckyzyx.luckytool.utils.A16
 import com.luckyzyx.luckytool.utils.ModulePrefs
 import com.luckyzyx.luckytool.utils.SDK
 import com.luckyzyx.luckytool.utils.arraySummaryLine
@@ -282,18 +283,21 @@ object StatusBarControlCenterPage {
             summary = c.getString(R.string.current_mode) + ": %s",
             notify = true,
         )
-        list(
-            key = "remove_control_center_networkwarn",
-            title = c.getString(R.string.remove_control_center_networkwarn),
-            entries = c.resources.getStringArray(R.array.statusbar_control_center_networkwarn_entries),
-            entryValues = arrayOf("0", "1", "2"),
-            default = "0",
-            summary = arraySummaryLine(
-                c.getString(R.string.current_mode) + ": %s",
-                c.getString(R.string.remove_control_center_networkwarn_summary)
-            ),
-            notify = true,
-        )
+        // Android 16 起宿主改由控制中心底栏的协程流程驱动，这个功能只保留到 16 以下
+        if (SDK < A16) {
+            list(
+                key = "remove_control_center_networkwarn",
+                title = c.getString(R.string.remove_control_center_networkwarn),
+                entries = c.resources.getStringArray(R.array.statusbar_control_center_networkwarn_entries),
+                entryValues = arrayOf("0", "1", "2"),
+                default = "0",
+                summary = arraySummaryLine(
+                    c.getString(R.string.current_mode) + ": %s",
+                    c.getString(R.string.remove_control_center_networkwarn_summary)
+                ),
+                notify = true,
+            )
+        }
         if (osCode < 34) {
             slider(
                 key = "custom_control_center_background_transparency",

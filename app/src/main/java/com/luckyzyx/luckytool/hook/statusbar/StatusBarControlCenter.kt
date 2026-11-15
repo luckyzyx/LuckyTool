@@ -11,7 +11,9 @@ import com.luckyzyx.luckytool.hook.scopes.systemui.RemoveControlCenterCarriers
 import com.luckyzyx.luckytool.hook.scopes.systemui.RemoveControlCenterUserSwitcher
 import com.luckyzyx.luckytool.hook.scopes.systemui.RemoveSeparateControlCenterButton
 import com.luckyzyx.luckytool.hook.scopes.systemui.RemoveStatusBarBottomNetworkWarn
+import com.luckyzyx.luckytool.utils.A16
 import com.luckyzyx.luckytool.utils.ModulePrefs
+import com.luckyzyx.luckytool.utils.SDK
 import com.luckyzyx.luckytool.utils.getOSVersionCode
 import org.lsposed.lsparanoid.Obfuscate
 
@@ -34,8 +36,8 @@ object StatusBarControlCenter : YukiBaseHooker() {
         if (preferences(ModulePrefs).getBoolean("remove_control_center_user_switcher", false)) {
             if (osCode < 26) loadHooker(RemoveControlCenterUserSwitcher)
         }
-        //控制中心底部网络警告
-        loadHooker(RemoveStatusBarBottomNetworkWarn)
+        //控制中心底部网络警告（Android 16 起宿主改由 QS 底栏的协程流程驱动，此功能只保留到 16 以下）
+        if (SDK < A16) loadHooker(RemoveStatusBarBottomNetworkWarn)
 
         //通知背景透明度
 //        loadHooker(CustomNotificationBackgroundTransparency)
