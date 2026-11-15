@@ -29,17 +29,30 @@ class LauncherLayoutRowColume(val dexKitBridge: DexKitBridge) : YukiBaseHooker()
             val maxRows = preferences(ModulePrefs).getInt("launcher_layout_max_rows", 6)
             val maxColumns = preferences(ModulePrefs).getInt("launcher_layout_max_columns", 4)
 
-            //Source UiConfig (混淆类名逐版本变化, 用源文件名做锚点)
+            //Source UiConfig (混淆类名逐版本变化): 优先用源文件名定位, 新版本已剥离 .source 信息, 回落到打印布局日志的那个方法
             //isSupportLayout(II)Z 校验行列数组合, getSupportLayout() 返回支持的组合列表
-            val uiConfig = dexKitBridge.findClass {
+            var uiConfigList = dexKitBridge.findClass {
                 matcher { source("UiConfig.java") }
-            }.apply { checkDataList("LauncherLayoutRowColume UiConfig") }.singleOrNull() ?: return
-            //同类中 static + 无参返回 ArrayList 的方法有多个, 只有被桌面布局设置弹窗适配器直接调用的那个是 getSupportLayout()
+            }
+            if (uiConfigList.isNullOrEmpty()) {
+                uiConfigList = dexKitBridge.findClass {
+                    matcher { usingStrings("getLayoutTablet : isUseSmallLayout = ") }
+                }
+            }
+            val uiConfig = uiConfigList.apply {
+                checkDataList("LauncherLayoutRowColume UiConfig")
+            }.singleOrNull() ?: return
+            //同类中 static + 无参返回 ArrayList 的方法有多个, 只有被行列校验方法 (II)Z 调用的那个是 getSupportLayout()
+            //调用方钉死到本类而不是弹窗适配器: 适配器那类调用方同样依赖 .source, 新版本一样会断
             val supportLayout = uiConfig.findMethod {
                 matcher {
                     paramCount(0)
                     returnType(classOf<ArrayList<*>>())
-                    addCaller { declaredClass { source("ToggleBarDialogLayoutAdapter.kt") } }
+                    addCaller {
+                        declaredClass { descriptor(uiConfig.descriptor) }
+                        paramTypes(classOf<Int>(), classOf<Int>())
+                        returnType(classOf<Boolean>())
+                    }
                 }
             }.apply { checkDataList("LauncherLayoutRowColume getSupportLayout") }.singleOrNull() ?: return
             //同类中 static + (II)Z 的方法有两个, 只有内部调用 getSupportLayout() 的那个是 isSupportLayout()
@@ -49,7 +62,7 @@ class LauncherLayoutRowColume(val dexKitBridge: DexKitBridge) : YukiBaseHooker()
                     returnType(classOf<Boolean>())
                     //被调方钉死到已解析的 UiConfig 类与形状: 这里同为 0 参同名的还有 x0.h()Z, 只按名字匹配会被误接受
                     addInvoke {
-                        declaredClass { source("UiConfig.java") }
+                        declaredClass { descriptor(uiConfig.descriptor) }
                         name(supportLayout.methodName)
                         paramCount(0)
                         returnType(classOf<ArrayList<*>>())
@@ -117,16 +130,17 @@ class LauncherLayoutRowColume(val dexKitBridge: DexKitBridge) : YukiBaseHooker()
                 }
             }
 
-            //Source IconFallenUtils (混淆类名逐版本变化, 用源文件名做锚点)
-            //getLogicCellX(ItemInfo)I 计算桌面图标所在列数
-            val iconFallenUtils = dexKitBridge.findClass {
-                matcher { source("IconFallenUtils.java") }
-            }.apply { checkDataList("LauncherLayoutRowColume IconFallenUtils") }.singleOrNull() ?: return
-            //同类中 static + 单参返回 int 的只有这一个 (同名同参的 g(ItemInfo)Z 靠返回类型排除)
-            val getLogicCellX = iconFallenUtils.findMethod {
+            //Source IconFallenUtils (混淆类名逐版本变化, 新版本已剥离 .source, 改用调用点锚定)
+            //getLogicCellX(ItemInfo)I 计算桌面图标所在列数, 只被图标掉落动画管理器调用(同类同参的 g(ItemInfo)Z 靠返回类型排除)
+            val getLogicCellX = dexKitBridge.findMethod {
                 matcher {
-                    paramCount(1)
+                    paramTypes("com.android.launcher3.model.data.ItemInfo".toClass())
                     returnType(classOf<Int>())
+                    addCaller {
+                        declaredClass {
+                            className("com.android.launcher3.util.OplusIconFallenAnimationManager")
+                        }
+                    }
                 }
             }.apply { checkDataList("LauncherLayoutRowColume getLogicCellX") }.singleOrNull() ?: return
 
