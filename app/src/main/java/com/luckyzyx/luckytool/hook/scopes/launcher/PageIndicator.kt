@@ -51,19 +51,33 @@ object PageIndicator : YukiBaseHooker() {
 
         if (SDK < A13) return
 
-        // C17 起 PageIndicatorTouchHelper 混淆为 pageindicators/p，onActionMove 内联进
-        // 其 a(MotionEvent) 入口；两版共用的滑动切换点是
-        // OplusPageIndicator.getSwitchTargetPage，返回 -1 时新旧版均跳过页面切换，
-        // 且不影响按压反馈动画与统计。
-        //Source OplusPageIndicator getSwitchTargetPage
-        "com.android.launcher.pageindicators.OplusPageIndicator".toClass().resolve().apply {
-            firstMethod {
-                name = "getSwitchTargetPage"
-                parameters(MotionEvent::class)
-            }.hook {
-                if (disableSliding) {
-                    intercept(-1)
-                }
+        // 滑动指示器切换页面：旧版走 OplusPageIndicator.getSwitchTargetPage（返回 -1 跳过切换），
+        // 17.x 起该入口被去掉，改为在 OplusDragLayer 持有的手势 helper 上拦 onScroll / onFling，
+        // 只挡滑动、点击与按压反馈保持原样
+        val indicator = "com.android.launcher.pageindicators.OplusPageIndicator".toClass().resolve()
+        val switchTargetPage = indicator.firstMethodOrNull {
+            name = "getSwitchTargetPage"
+            parameters(MotionEvent::class)
+        }
+        if (switchTargetPage != null) {
+            switchTargetPage.hook {
+                if (disableSliding) intercept(-1)
+            }
+        } else {
+            // 手势 helper 类名是混淆的，按 OplusDragLayer 上那个固定字段的类型取；
+            // 翻页判定写在它那个 void(MotionEvent) 入口里，同签名的另两个是 GestureDetector
+            // 回调（onLongPress / onShowPress，名字不会被混淆），入口则只剩一两个字符
+            val helper = "com.android.launcher3.OplusDragLayer".toClass().resolve()
+                .firstFieldOrNull { name = "mPageIndicatorTouchHelper" }
+                ?.self?.type
+            helper?.resolve()?.apply {
+                method { parameters(MotionEvent::class) }
+                    .firstOrNull { it.self.returnType == Void.TYPE && it.self.name.length <= 3 }
+                    ?.hook { if (disableSliding) intercept() }
+            }
+            // 指示器自己也要吃掉触摸：它不消费时事件会落到底下的工作区，由工作区完成翻页
+            indicator.firstMethodOrNull { name = "onTouchEvent"; parameters(MotionEvent::class) }?.hook {
+                if (disableSliding) intercept(true)
             }
         }
 
