@@ -9,13 +9,18 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.CornerRadius
@@ -25,9 +30,16 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.rotate
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
+import com.itos.coui.dialog.CouiDialogDefaults
 import com.itos.coui.shape.CouiCapsuleShape
+import com.itos.coui.text.CouiTextKind
+import com.itos.coui.text.Text as CouiText
 import com.itos.coui.theme.CouiTheme
 
 /**
@@ -128,6 +140,71 @@ internal fun CouiLinearProgressIndicator(
                     .fillMaxHeight()
                     .background(color),
             )
+        }
+    }
+}
+
+/** 进度弹窗的最大宽度：比加载弹窗的 152dp 正文宽，容得下一行应用名加计数 */
+private val ProgressDialogMaxWidth = 280.dp
+
+/**
+ * COUI 线的进度弹窗：标题在上，中间不确定进度环，下面一行进度说明，没有按钮。
+ *
+ * COUI 的加载弹窗只有一行提示放不下标题，COUI 弹窗本体的确认位又是必填项，画不出零按钮的进度层，
+ * 所以用裸 Dialog 承载一张 COUI 弹窗配色的卡片。执行期间不响应返回键与外点：
+ * 弹层一关，后台的进度就没有地方显示，用户会以为任务已经结束。
+ * [message] 允许为空，第一帧还没有进度时不画说明行。
+ */
+@Composable
+internal fun CouiProgressDialog(
+    title: String,
+    modifier: Modifier = Modifier,
+    message: String = "",
+) {
+    val colors = CouiDialogDefaults.themeColors(CouiTheme.isDark)
+    Dialog(
+        onDismissRequest = {},
+        properties = DialogProperties(
+            dismissOnBackPress = false,
+            dismissOnClickOutside = false,
+            usePlatformDefaultWidth = false,
+        ),
+    ) {
+        Column(
+            modifier = modifier
+                .padding(horizontal = CouiDialogDefaults.horizontalMargin)
+                .widthIn(max = ProgressDialogMaxWidth)
+                .clip(CouiDialogDefaults.shape)
+                .background(colors.surface)
+                .padding(
+                    start = CouiDialogDefaults.contentPadding,
+                    end = CouiDialogDefaults.contentPadding,
+                    top = CouiDialogDefaults.titleTop,
+                    bottom = CouiDialogDefaults.contentPadding,
+                ),
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
+            CouiText(
+                text = title,
+                kind = CouiTextKind.ItemTitle,
+                color = colors.title,
+                textAlign = TextAlign.Center,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis,
+            )
+            Spacer(Modifier.height(20.dp))
+            CouiCircularProgressIndicator(Modifier.size(36.dp))
+            if (message.isNotBlank()) {
+                Spacer(Modifier.height(12.dp))
+                CouiText(
+                    text = message,
+                    kind = CouiTextKind.ItemSummary,
+                    color = colors.message,
+                    textAlign = TextAlign.Center,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            }
         }
     }
 }

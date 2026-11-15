@@ -29,7 +29,6 @@ import com.highcapable.yukihookapi.hook.xposed.reload.entity.ModuleReloadStatus
 import com.itos.coui.dialog.CouiDialogAction
 import com.itos.coui.dialog.CouiDialogActionStyle
 import com.itos.coui.dialog.CouiDialogDefaults
-import com.itos.coui.dialog.LoadingDialog
 import com.itos.coui.theme.CouiTheme
 import com.luckyzyx.luckytool.IPackageServiceController
 import com.luckyzyx.luckytool.R
@@ -39,6 +38,7 @@ import com.luckyzyx.luckytool.service.PowerService
 import com.luckyzyx.luckytool.ui.compose.components.ActionListDialog
 import com.luckyzyx.luckytool.ui.compose.components.ChoiceItem
 import com.luckyzyx.luckytool.ui.compose.components.coui.CouiAlertDialog
+import com.luckyzyx.luckytool.ui.compose.components.coui.CouiProgressDialog
 import com.luckyzyx.luckytool.ui.theme.LocalUiMode
 import com.luckyzyx.luckytool.ui.theme.UiMode
 import com.topjohnwu.superuser.Shell
@@ -578,21 +578,14 @@ object RestartMenuUtils {
     }
 
     /**
-     * Coui 线：执行中的进度弹窗，交给 COUI 的加载弹窗承载。
+     * Coui 线：执行中的进度弹窗，标题写明在做什么，进度文案放在标题下面。
      *
-     * 加载弹窗只有一个不确定进度圈和一行提示，没有可点动作，正好是执行期间的语义：
-     * 不传 onDismissRequest，返回键与外点都不关闭。提示文案不允许为空，
-     * 第一帧还没有进度时退回标题，避免加载弹窗构造时直接抛异常。
-     * 提示是单行且宽度固定在 152dp，超出部分走省略号，所以进度文案把计数写在应用名前，
-     * 长应用名只会截掉名字，看不出「还剩多少」的计数不会被吃掉。
+     * 没有可点动作，返回键与外点都不关闭：优化还在跑，弹层不该消失。
+     * 进度文案把计数写在应用名前，长应用名只会截掉名字，看不出「还剩多少」的计数不会被吃掉。
      */
     @Composable
     private fun CouiOptimizeRunningDialog(title: String, progressText: String) {
-        LoadingDialog(
-            visible = true,
-            message = progressText.ifBlank { title },
-            dark = CouiTheme.isDark,
-        )
+        CouiProgressDialog(title = title, message = progressText)
     }
 
     /** Material 线：有失败应用时列出包名，确认后重新执行 */
