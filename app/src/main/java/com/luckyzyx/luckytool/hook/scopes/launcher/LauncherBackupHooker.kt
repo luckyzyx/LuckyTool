@@ -1040,15 +1040,19 @@ object LauncherBackupHooker : YukiBaseHooker() {
         }
     }
 
-    /** 当前桌面模式（Standard 0 / Drawer 2 / Simple 3）；取不到返回 null */
-    private fun currentLauncherMode(): Int? = runCatching {
-        LAUNCHER_MODE_MANAGER.toClass(launcherClassLoader()).resolve()
-            .firstMethodOrNull { name = "getInstance"; emptyParameters() }?.invoke()?.asResolver()
-            ?.firstMethodOrNull { name = "getCurType"; superclass() }
-            ?.invoke() as? Int
-    }.getOrElse {
-        YLog.debug("$TAG 读取 launcher_mode 失败", it)
-        null
+    /**
+     * 当前桌面模式（Standard 0 / Drawer 2 / Simple 3）；取不到返回 null。
+     *
+     * 模式由 launcher 自己持久化在 [LAUNCHER_PREFS_NAME] 的 [LAUNCHER_MODE_KEY] 键上，切模式时由桌面写回，
+     * 所以直接读 prefs 即可，不必再反射读取类：负责读它的 LauncherModeManager 在新版 launcher 里已被移除，
+     * 按类名解析会一直 ClassNotFoundException。
+     */
+    private fun currentLauncherMode(): Int? {
+        val context = hostContext ?: return null
+        return runCatching {
+            context.getSharedPreferences(LAUNCHER_PREFS_NAME, Context.MODE_PRIVATE)
+                .getInt(LAUNCHER_MODE_KEY, -1)
+        }.getOrNull()?.takeIf { it >= 0 }
     }
 
     /** 宿主（launcher）的类加载器：YukiHookAPI 提供 hostClassLoader（appClassLoader 已废弃）；兜底用 hook 类自己的 */
@@ -1060,7 +1064,8 @@ object LauncherBackupHooker : YukiBaseHooker() {
     private const val DEEP_PROTECTED_MANAGER =
         "com.android.launcher.filter.DeepProtectedAppsManager"
     private const val LAUNCHER_APP_STATE = "com.android.launcher3.LauncherAppState"
-    private const val LAUNCHER_MODE_MANAGER = "com.android.launcher.mode.LauncherModeManager"
+    private const val LAUNCHER_PREFS_NAME = "com.android.launcher_unique_shared_prefs"
+    private const val LAUNCHER_MODE_KEY = "launcher_mode"
 
     /**
      * 单表写回：DELETE 全表后按备份行逐条 INSERT。
