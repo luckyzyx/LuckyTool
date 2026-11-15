@@ -170,6 +170,8 @@
     <string name="reload_only_this_page_hooker">仅重载此页Hooker</string>
     <string name="reboot">重启系统</string>
     <string name="fast_reboot">快速重启</string>
+    <string name="reboot_message">确定要重启系统？\n设备会立即重启，未保存的内容会丢失。</string>
+    <string name="fast_reboot_message">确定要快速重启？\n所有应用会被关闭，系统在不开机的情况下重新启动。</string>
     <string name="menu_versioninfo">版本信息</string>
     <string name="menu_more">更多</string>
     <string name="action_optimize_apps">优化应用</string>

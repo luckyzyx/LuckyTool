@@ -46,6 +46,7 @@ Entries for versions before `1.3.5_beta` are currently only available in the
 - Show the declared OS version range (minOsdkVersion / maxOsdkVersion) in the package information
 - Very dark mode control page (a replacement when the system page renders empty)
 - Remove forced automatic entry into super power saving mode (@RealmeOS)
+- Confirmation dialog before restarting the system and before a fast reboot
 
 #### Optimized
 

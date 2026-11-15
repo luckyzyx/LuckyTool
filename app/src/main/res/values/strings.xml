@@ -181,6 +181,8 @@
     <string name="reload_only_this_page_hooker">Reload only this page hooker</string>
     <string name="reboot">Restart System</string>
     <string name="fast_reboot">Fast reboot</string>
+    <string name="reboot_message">Restart the system now?\nThe device restarts immediately and anything unsaved is lost.</string>
+    <string name="fast_reboot_message">Fast restart now?\nAll apps are closed and the system restarts without a full reboot.</string>
     <string name="menu_versioninfo">Version Information</string>
     <string name="back">Back</string>
     <string name="clear">Clear</string>

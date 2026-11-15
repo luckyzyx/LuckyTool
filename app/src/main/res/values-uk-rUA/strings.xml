@@ -99,6 +99,8 @@
     <string name="restart_only_this_page_scope">Перезавантажити лише цю область</string>
     <string name="reboot">Перезавантажити систему</string>
     <string name="fast_reboot">Швидке перезавантаження</string>
+    <string name="reboot_message">Перезавантажити систему?\nПристрій перезавантажиться негайно, незбережені дані буде втрачено.</string>
+    <string name="fast_reboot_message">Швидке перезавантаження?\nУсі застосунки закриються, система перезапуститься без вимкнення.</string>
     <string name="menu_versioninfo">Інформація про версію</string>
     <string name="scope_version_info">Показати інформацію про версію</string>
     <string name="show_system_app">Показати системні додатки</string>

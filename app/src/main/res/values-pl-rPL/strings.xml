@@ -99,6 +99,8 @@
     <string name="restart_only_this_page_scope">Zastosuj zmiany dokonane na tej stronie</string>
     <string name="reboot">Zrestartuj urządzenie</string>
     <string name="fast_reboot">Szybki restart</string>
+    <string name="reboot_message">Zrestartować system?\nUrządzenie zrestartuje się natychmiast, a niezapisane zmiany przepadną.</string>
+    <string name="fast_reboot_message">Szybki restart?\nWszystkie aplikacje zostaną zamknięte, a system zrestartuje się bez wyłączania.</string>
     <string name="menu_versioninfo">Informacje o wersji</string>
     <string name="scope_version_info">Informacje o aplikacjach objętych kontrolą</string>
     <string name="show_system_app">Show system APP</string>

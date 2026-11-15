@@ -99,6 +99,8 @@
     <string name="restart_only_this_page_scope">Riavvia solo questa pagina</string>
     <string name="reboot">Riavvia il sistema</string>
     <string name="fast_reboot">Riavvio veloce</string>
+    <string name="reboot_message">Riavviare il sistema?\nIl dispositivo si riavvia subito e i dati non salvati vanno persi.</string>
+    <string name="fast_reboot_message">Riavvio rapido?\nTutte le app vengono chiuse e il sistema si riavvia senza spegnersi.</string>
     <string name="menu_versioninfo">Informazioni sulla versione</string>
     <string name="scope_version_info">Informazioni Versione</string>
     <string name="show_system_app">Mostra App di Sistema</string>

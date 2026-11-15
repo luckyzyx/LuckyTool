@@ -99,6 +99,8 @@
     <string name="restart_only_this_page_scope">このページのスコープのみを再起動する</string>
     <string name="reboot">システムを再起動</string>
     <string name="fast_reboot">高速な再起動</string>
+    <string name="reboot_message">システムを再起動しますか？\n端末はすぐに再起動し、保存していない内容は失われます。</string>
+    <string name="fast_reboot_message">クイック再起動しますか？\nすべてのアプリが終了し、電源を切らずにシステムが再起動します。</string>
     <string name="menu_versioninfo">バージョンの情報</string>
     <string name="scope_version_info">スコープのバージョンの情報</string>
     <string name="show_system_app">システムアプリを表示</string>

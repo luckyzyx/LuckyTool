@@ -46,6 +46,7 @@ in [TG Channel’s associated groups](https://t.me/LuckyTool)**
 - 添加极暗模式控制页
 - 阻止电池组件切断 Google 服务网络 C16+
 - 移除强制进入超级省电模式 (@RealmeOS)
+- 重启系统与快速重启增加二次确认
 
 #### 优化
 

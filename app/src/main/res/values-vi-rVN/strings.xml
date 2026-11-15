@@ -101,6 +101,8 @@
     <string name="restart_only_this_page_scope">Chỉ khởi động lại phạm vi trang này</string>
     <string name="reboot">Khởi động lại hệ thống</string>
     <string name="fast_reboot">Khởi động nhanh</string>
+    <string name="reboot_message">Khởi động lại hệ thống?\nThiết bị sẽ khởi động lại ngay và dữ liệu chưa lưu sẽ mất.</string>
+    <string name="fast_reboot_message">Khởi động lại nhanh?\nMọi ứng dụng sẽ đóng và hệ thống khởi động lại mà không tắt máy.</string>
     <string name="menu_versioninfo">Thông tin phiên bản</string>
     <string name="scope_version_info">Thông tin phiên bản</string>
     <string name="show_system_app">Hiển thị ứng dụng hệ thống</string>

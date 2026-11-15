@@ -99,6 +99,8 @@
     <string name="restart_only_this_page_scope">Перезагрузить только эту область</string>
     <string name="reboot">Перезагрузить</string>
     <string name="fast_reboot">Быстрая перезагрузка</string>
+    <string name="reboot_message">Перезагрузить систему?\nУстройство перезагрузится сразу, несохранённые данные будут потеряны.</string>
+    <string name="fast_reboot_message">Быстрая перезагрузка?\nВсе приложения закроются, система перезапустится без выключения.</string>
     <string name="menu_versioninfo">Информация о версии</string>
     <string name="scope_version_info">Информация о версии</string>
     <string name="show_system_app">Показать системные приложения</string>

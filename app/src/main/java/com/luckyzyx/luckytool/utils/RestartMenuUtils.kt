@@ -72,9 +72,13 @@ object RestartMenuUtils {
         var showConfirmScope by remember { mutableStateOf(false) }
         var showConfirmHooker by remember { mutableStateOf(false) }
         var showOptimize by remember { mutableStateOf(false) }
+        var showConfirmReboot by remember { mutableStateOf(false) }
+        var showConfirmFastReboot by remember { mutableStateOf(false) }
         when {
             showConfirmScope -> ConfirmRestartAllScopeDialog(context, onDismiss)
             showConfirmHooker -> ConfirmRestartAllHookerDialog(context, onDismiss)
+            showConfirmReboot -> ConfirmRebootDialog(context, onDismiss)
+            showConfirmFastReboot -> ConfirmFastRebootDialog(onDismiss)
             showOptimize -> OptimizeDexDialog(
                 context,
                 buildScopeMaps(context, context.resources.getStringArray(R.array.xposed_scope)),
@@ -82,7 +86,7 @@ object RestartMenuUtils {
                 onDismiss
             )
 
-            // 点行执行动作、关闭由动作自己决定：前三项只把本层换成另一层对话框，后两项执行完再关
+            // 点行只把本层换成下一层对话框：重启、快速重启不可撤销，执行前都要再确认一次
             else -> ActionListDialog(
                 title = stringResource(R.string.menu_reboot),
                 items = items,
@@ -92,17 +96,8 @@ object RestartMenuUtils {
                         "restart_scope" -> showConfirmScope = true
                         "re_optimize_dex" -> showOptimize = true
                         "reload_hooker" -> showConfirmHooker = true
-                        "reboot" -> {
-                            PowerService.get(context) { controller ->
-                                controller?.reboot(false, null, false)
-                            }
-                            onDismiss()
-                        }
-
-                        else -> {
-                            ShellUtils.fastCmd(CommandUtils.killzygote)
-                            onDismiss()
-                        }
+                        "reboot" -> showConfirmReboot = true
+                        else -> showConfirmFastReboot = true
                     }
                 },
             )
@@ -221,55 +216,49 @@ object RestartMenuUtils {
             }
             onDismiss()
         }
-        val title = stringResource(R.string.restart_scope)
-        when (LocalUiMode.current) {
-            UiMode.Material -> MaterialConfirmRestartScopeDialog(title, message, onConfirm, onDismiss)
-            UiMode.Coui -> CouiConfirmRestartScopeDialog(title, message, onConfirm, onDismiss)
-        }
-    }
-
-    /** Material 线：标题点明操作对象，提示文案用 material3 弹窗的原生文本槽 */
-    @Composable
-    private fun MaterialConfirmRestartScopeDialog(
-        title: String,
-        message: String,
-        onConfirm: () -> Unit,
-        onDismiss: () -> Unit,
-    ) {
-        AlertDialog(
-            onDismissRequest = onDismiss,
-            title = { Text(title) },
-            text = { Text(message) },
-            confirmButton = {
-                TextButton(onClick = onConfirm) { Text(stringResource(android.R.string.ok)) }
-            },
-            dismissButton = {
-                TextButton(onClick = onDismiss) { Text(stringResource(android.R.string.cancel)) }
-            })
-    }
-
-    /** Coui 线：确认是主操作，取消放取消位 */
-    @Composable
-    private fun CouiConfirmRestartScopeDialog(
-        title: String,
-        message: String,
-        onConfirm: () -> Unit,
-        onDismiss: () -> Unit,
-    ) {
-        CouiAlertDialog(
-            onDismissRequest = onDismiss,
-            title = title,
+        ConfirmRestartActionDialog(
+            title = stringResource(R.string.restart_scope),
             message = message,
-            confirmAction = CouiDialogAction(
-                text = stringResource(android.R.string.ok),
-                onClick = onConfirm,
-                style = CouiDialogActionStyle.Primary,
-                colors = CouiDialogDefaults.primaryActionColors(CouiTheme.colorScheme.accent),
-            ),
-            dismissAction = CouiDialogAction(
-                text = stringResource(android.R.string.cancel),
-                onClick = onDismiss,
-            ),
+            onConfirm = onConfirm,
+            onDismiss = onDismiss,
+        )
+    }
+
+    /**
+     * 重启系统二次确认对话框
+     *
+     * 重启不可撤销，确认后才交给 PowerService，随后关掉整层菜单。
+     */
+    @Composable
+    private fun ConfirmRebootDialog(context: Context, onDismiss: () -> Unit) {
+        ConfirmRestartActionDialog(
+            title = stringResource(R.string.reboot),
+            message = stringResource(R.string.reboot_message),
+            onConfirm = {
+                PowerService.get(context) { controller ->
+                    controller?.reboot(false, null, false)
+                }
+                onDismiss()
+            },
+            onDismiss = onDismiss,
+        )
+    }
+
+    /**
+     * 快速重启二次确认对话框
+     *
+     * 快速重启只重起框架进程，所有应用都会掉线，同样需要先确认。
+     */
+    @Composable
+    private fun ConfirmFastRebootDialog(onDismiss: () -> Unit) {
+        ConfirmRestartActionDialog(
+            title = stringResource(R.string.fast_reboot),
+            message = stringResource(R.string.fast_reboot_message),
+            onConfirm = {
+                ShellUtils.fastCmd(CommandUtils.killzygote)
+                onDismiss()
+            },
+            onDismiss = onDismiss,
         )
     }
 
@@ -280,20 +269,38 @@ object RestartMenuUtils {
     private fun ConfirmRestartAllHookerDialog(context: Context, onDismiss: () -> Unit) {
         val xposedScope = remember { context.resources.getStringArray(R.array.xposed_scope) }
         val message = stringResource(R.string.reload_hooker_message)
-        val onConfirm = {
-            restartHooker(context, xposedScope)
-            onDismiss()
-        }
-        val title = stringResource(R.string.reload_hooker)
+        ConfirmRestartActionDialog(
+            title = stringResource(R.string.reload_hooker),
+            message = message,
+            onConfirm = {
+                restartHooker(context, xposedScope)
+                onDismiss()
+            },
+            onDismiss = onDismiss,
+        )
+    }
+
+    /**
+     * 二次确认弹窗，两条 UI 线共用同一份标题、文案与动作
+     *
+     * 调用方只描述「确认做什么」，按钮排布与配色交给各线自己的实现。
+     */
+    @Composable
+    private fun ConfirmRestartActionDialog(
+        title: String,
+        message: String,
+        onConfirm: () -> Unit,
+        onDismiss: () -> Unit,
+    ) {
         when (LocalUiMode.current) {
-            UiMode.Material -> MaterialConfirmRestartHookerDialog(title, message, onConfirm, onDismiss)
-            UiMode.Coui -> CouiConfirmRestartHookerDialog(title, message, onConfirm, onDismiss)
+            UiMode.Material -> MaterialConfirmActionDialog(title, message, onConfirm, onDismiss)
+            UiMode.Coui -> CouiConfirmActionDialog(title, message, onConfirm, onDismiss)
         }
     }
 
     /** Material 线：标题点明操作对象，提示文案用 material3 弹窗的原生文本槽 */
     @Composable
-    private fun MaterialConfirmRestartHookerDialog(
+    private fun MaterialConfirmActionDialog(
         title: String,
         message: String,
         onConfirm: () -> Unit,
@@ -313,7 +320,7 @@ object RestartMenuUtils {
 
     /** Coui 线：确认是主操作，取消放取消位 */
     @Composable
-    private fun CouiConfirmRestartHookerDialog(
+    private fun CouiConfirmActionDialog(
         title: String,
         message: String,
         onConfirm: () -> Unit,
@@ -445,23 +452,12 @@ object RestartMenuUtils {
         }
         when (stage) {
             OptimizeStage.Confirm -> {
-                val title = stringResource(R.string.re_optimize_dex)
-                val message = stringResource(R.string.re_optimize_dex_message)
-                when (LocalUiMode.current) {
-                    UiMode.Material -> MaterialOptimizeConfirmDialog(
-                        title = title,
-                        message = message,
-                        onConfirm = { launch(current) },
-                        onDismiss = onDismiss,
-                    )
-
-                    UiMode.Coui -> CouiOptimizeConfirmDialog(
-                        title = title,
-                        message = message,
-                        onConfirm = { launch(current) },
-                        onDismiss = onDismiss,
-                    )
-                }
+                ConfirmRestartActionDialog(
+                    title = stringResource(R.string.re_optimize_dex),
+                    message = stringResource(R.string.re_optimize_dex_message),
+                    onConfirm = { launch(current) },
+                    onDismiss = onDismiss,
+                )
             }
 
             OptimizeStage.Running -> {
@@ -508,50 +504,6 @@ object RestartMenuUtils {
         }
     }
 
-    /** Material 线：执行前的确认弹窗，标题点明操作对象 */
-    @Composable
-    private fun MaterialOptimizeConfirmDialog(
-        title: String,
-        message: String,
-        onConfirm: () -> Unit,
-        onDismiss: () -> Unit,
-    ) {
-        AlertDialog(
-            onDismissRequest = onDismiss,
-            title = { Text(title) },
-            text = { Text(message) },
-            confirmButton = {
-                TextButton(onClick = onConfirm) { Text(stringResource(android.R.string.ok)) }
-            },
-            dismissButton = {
-                TextButton(onClick = onDismiss) { Text(stringResource(android.R.string.cancel)) }
-            })
-    }
-
-    /** Coui 线：执行前的确认弹窗，开始是主操作，取消放取消位 */
-    @Composable
-    private fun CouiOptimizeConfirmDialog(
-        title: String,
-        message: String,
-        onConfirm: () -> Unit,
-        onDismiss: () -> Unit,
-    ) {
-        CouiAlertDialog(
-            onDismissRequest = onDismiss,
-            title = title,
-            message = message,
-            confirmAction = CouiDialogAction(
-                text = stringResource(android.R.string.ok),
-                onClick = onConfirm,
-                style = CouiDialogActionStyle.Primary,
-                colors = CouiDialogDefaults.primaryActionColors(CouiTheme.colorScheme.accent),
-            ),
-            dismissAction = CouiDialogAction(
-                text = stringResource(android.R.string.cancel),
-                onClick = onDismiss,
-            ),
-        )
-    }
 
     /** Material 线：执行中的进度弹窗，只有居中的进度圈和一行进度文字 */
     @Composable

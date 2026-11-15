@@ -110,6 +110,8 @@
     <string name="restart_only_this_page_scope">Yalnızca bu sayfanın kapsamını yeniden başlat</string>
     <string name="reboot">Sistemi Yeniden Başlat</string>
     <string name="fast_reboot">Hızlı yeniden başlat (Fast Reboot)</string>
+    <string name="reboot_message">Sistem yeniden başlatılsın mı?\nCihaz hemen yeniden başlar ve kaydedilmemiş veriler kaybolur.</string>
+    <string name="fast_reboot_message">Hızlı yeniden başlatma?\nTüm uygulamalar kapanır ve sistem cihazı kapatmadan yeniden başlar.</string>
     <string name="menu_versioninfo">Sürüm Bilgisi</string>
     <string name="scope_version_info">Kapsam sürüm bilgisi</string>
     <string name="show_system_app">Sistem uygulamalarını (APP) göster</string>

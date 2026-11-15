@@ -178,6 +178,8 @@
     <string name="reload_only_this_page_hooker">僅重載此頁Hooker</string>
     <string name="reboot">重啟系統</string>
     <string name="fast_reboot">快速重啟</string>
+    <string name="reboot_message">確定要重啟系統？\n裝置會立即重啟，未儲存的內容會遺失。</string>
+    <string name="fast_reboot_message">確定要快速重啟？\n所有應用程式會被關閉，系統在不開機的情況下重新啟動。</string>
     <string name="menu_versioninfo">版本資訊</string>
     <string name="back">返回</string>
     <string name="clear">清除</string>

@@ -99,6 +99,8 @@
     <string name="restart_only_this_page_scope">Restartovat pouze tento scope</string>
     <string name="reboot">Restartovat systém</string>
     <string name="fast_reboot">Rychlý reboot</string>
+    <string name="reboot_message">Restartovat systém?\nZařízení se okamžitě restartuje a neuložená data se ztratí.</string>
+    <string name="fast_reboot_message">Rychlý restart?\nVšechny aplikace se zavřou a systém se restartuje bez vypnutí.</string>
     <string name="menu_versioninfo">Informace o verzi</string>
     <string name="scope_version_info">Informace o verzi rozsahu</string>
     <string name="show_system_app">Zobrazit systémové aplikace</string>

@@ -99,6 +99,8 @@
     <string name="restart_only_this_page_scope">Repornește doar procesele modificate pe această pagină</string>
     <string name="reboot">Repornește sistemul</string>
     <string name="fast_reboot">Repornire rapidă</string>
+    <string name="reboot_message">Repornești sistemul?\nDispozitivul se repornește imediat, iar modificările nesalvate se pierd.</string>
+    <string name="fast_reboot_message">Repornire rapidă?\nToate aplicațiile se închid, iar sistemul repornește fără oprirea dispozitivului.</string>
     <string name="menu_versioninfo">Informații versiune</string>
     <string name="scope_version_info">Informații versiune Scop</string>
     <string name="show_system_app">Arată aplicațiile de sistem</string>
