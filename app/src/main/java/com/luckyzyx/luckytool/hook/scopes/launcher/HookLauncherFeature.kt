@@ -16,7 +16,9 @@ class HookLauncherFeature(val dexKitBridge: DexKitBridge) : YukiBaseHooker() {
     override fun onHook() {
         val osCode = getOSVersionCode
         loadHooker(HookFeatureOption(dexKitBridge))
-        loadHooker(HookLauncherSettings(dexKitBridge))
+        // 17 起应用更新红点不需要再挂钩，宿主自身开关已经生效；且 LauncherSettingsUtils 整类混淆、
+        // 成员名全是单字母，查下去只会白跑一次 DexKit 查询并报「匹配到多个类」
+        if (osCode < 40) loadHooker(HookLauncherSettings(dexKitBridge))
         if (osCode >= 34) loadHooker(HookAppFeature(dexKitBridge))
     }
 
