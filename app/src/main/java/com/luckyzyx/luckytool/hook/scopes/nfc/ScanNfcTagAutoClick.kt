@@ -27,12 +27,17 @@ object ScanNfcTagAutoClick : YukiBaseHooker() {
 
             //Source OplusNotificationManager
             "com.oplus.nfc.dispatch.OplusNotificationManager".toClass().resolve().apply {
-                firstMethod { name = "showNotificationIfNeeded"; parameterCount = 4 }.hook {
+                //参数表会随版本增删（17 起在头部多了一个候选列表，Intent 不再是固定的第 4 个），
+                //所以只按名字 + 参数里出现 Intent 定位，取参也按类型取
+                firstMethod {
+                    name = "showNotificationIfNeeded"
+                    parameters { it.contains(Intent::class.java) }
+                }.hook {
                     after {
                         if (!isEnable || result != true) return@after
                         val context = firstField { name = "mContext" }.of(instance).get<Context>()
                             ?: return@after
-                        val intent = arg(3).get<Intent>() ?: return@after
+                        val intent = args.firstOrNull { it is Intent } as? Intent ?: return@after
                         sendProcessTagBroadcast(context, intent)
                     }
                 }
