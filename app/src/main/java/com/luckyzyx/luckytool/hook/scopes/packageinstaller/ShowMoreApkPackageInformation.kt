@@ -4,8 +4,14 @@ import android.annotation.SuppressLint
 import android.content.Context
 import android.content.pm.PackageInfo
 import android.content.pm.PackageManager
+import android.graphics.Rect
 import android.view.Gravity
+import android.view.View
+import android.view.ViewGroup
+import android.view.ViewTreeObserver
+import android.widget.FrameLayout
 import android.widget.LinearLayout
+import android.widget.ScrollView
 import androidx.collection.ArrayMap
 import androidx.collection.arrayMapOf
 import com.highcapable.betterandroid.ui.extension.view.child
@@ -25,6 +31,13 @@ import java.io.File
 
 @Obfuscate
 class ShowMoreApkPackageInformation(val dexKitBridge: DexKitBridge) : YukiBaseHooker() {
+
+    companion object {
+        private const val TAG_CONTENT = "LuckyTool.ApkDetailsContent"
+
+        // 宿主自己在信息区下面排了「应用权限」行与按钮行，找不到兄弟视图时按这个高度给它们留位置
+        private const val RESERVED_HEIGHT_DP = 120
+    }
 
     lateinit var loadApkInfo: MethodData
 
@@ -133,20 +146,28 @@ class ShowMoreApkPackageInformation(val dexKitBridge: DexKitBridge) : YukiBaseHo
                     // every other action, but use LinearLayout's normal measurement here instead
                     // of its ConstraintLayout integration. The incoming/current comparison only
                     // makes sense on install, so pass incoming as null otherwise.
-                    val tag = "LuckyTool.ClassicApkDetails"
-                    val panel = apkInfoView.findViewWithTag(tag) ?: ApkDetailsView(context, module.resources).also {
-                        it.tag = tag
-                        apkInfoView.addView(
-                            it, LinearLayout.LayoutParams(
-                                LinearLayout.LayoutParams.MATCH_PARENT,
-                                LinearLayout.LayoutParams.WRAP_CONTENT
+                    val scroller = apkInfoView.findViewWithTag<ContentScroller>(TAG_CONTENT)
+                        ?: ContentScroller(context).apply {
+                            tag = TAG_CONTENT
+                            apkInfoView.addView(
+                                this, LinearLayout.LayoutParams(
+                                    LinearLayout.LayoutParams.MATCH_PARENT,
+                                    LinearLayout.LayoutParams.WRAP_CONTENT
+                                )
                             )
-                        )
-                    }
+                        }
+                    val panel = (scroller.getChildAt(0) as? ApkDetailsView)
+                        ?: ApkDetailsView(context, module.resources).also {
+                            scroller.addView(
+                                it, FrameLayout.LayoutParams(
+                                    FrameLayout.LayoutParams.MATCH_PARENT,
+                                    FrameLayout.LayoutParams.WRAP_CONTENT
+                                )
+                            )
+                        }
                     for (i in 0 until apkInfoView.childCount) {
                         val child = apkInfoView.child(i)
-                        child.visibility =
-                            if (child === panel) android.view.View.VISIBLE else android.view.View.GONE
+                        child.visibility = if (child === scroller) View.VISIBLE else View.GONE
                     }
                     apkInfoView.orientation = LinearLayout.VERTICAL
                     apkInfoView.gravity = Gravity.TOP or Gravity.START
@@ -171,12 +192,67 @@ class ShowMoreApkPackageInformation(val dexKitBridge: DexKitBridge) : YukiBaseHo
                         if (isInstall) versionName else curVersionName ?: versionName,
                         getApkSizeFormat(context, curPackInfo, apkSize, isUninstall)
                     )
+                    limitContentHeight(apkInfoView, scroller, panel)
 
                     cacheApkInfoMap.clear()
                     cacheSourceInfoMap.clear()
                 }
             }
         }
+    }
+
+    /**
+     * 把信息区的高度限制在窗口剩余空间之内，超出部分改为在 [scroller] 里滚动。
+     *
+     * 宿主底部确认面板按内容高度排布，横屏时窗口更矮，信息区一旦超过一屏，
+     * 排在下方的「应用权限」行和安装按钮就会被推到屏幕外，按钮只剩一条边。
+     * 这里不改宿主容器，只把自己测量出来的高度压回可用高度；监听会一直保留，
+     * 旋转后内容与可用高度都变了，下一次布局就能重新算。
+     */
+    private fun limitContentHeight(container: View, scroller: ContentScroller, content: View) {
+        if (scroller.heightLimiterAttached) return
+        scroller.heightLimiterAttached = true
+        // 监听跟着视图树一起结束，不需要移除；每次布局都会重算，旋转后同样能修正
+        container.viewTreeObserver.addOnGlobalLayoutListener(object :
+            ViewTreeObserver.OnGlobalLayoutListener {
+            override fun onGlobalLayout() {
+                // 窗口可见区域与自身位置都按屏幕坐标算，避开状态栏与导航栏
+                val frame = Rect()
+                container.rootView.getWindowVisibleDisplayFrame(frame)
+                val location = IntArray(2)
+                container.getLocationOnScreen(location)
+                val padding = container.paddingTop + container.paddingBottom
+                val reserved =
+                    maxOf(siblingHeightBelow(container), container.context.dp(RESERVED_HEIGHT_DP))
+                val limit = frame.bottom - location[1] - reserved - padding
+                if (limit <= 0 || content.measuredHeight <= 0) return
+                // 内容高度在内容区宽度不变时是稳定值，改完高度下一次布局就不会再变
+                val params = scroller.layoutParams ?: return
+                val target = minOf(content.measuredHeight, limit)
+                if (params.height == target) return
+                params.height = target
+                scroller.requestLayout()
+            }
+        })
+    }
+
+    // 信息区下面还排着宿主自己的行，量出它们占掉的可见高度，用来给信息区留出位置
+    private fun siblingHeightBelow(view: View): Int {
+        val parent = view.parent as? ViewGroup ?: return 0
+        var height = parent.paddingBottom
+        for (i in parent.indexOfChild(view) + 1 until parent.childCount) {
+            val sibling = parent.getChildAt(i)
+            if (sibling.visibility == View.VISIBLE) height += sibling.measuredHeight
+        }
+        return height
+    }
+
+    private fun Context.dp(value: Int) =
+        (value * resources.displayMetrics.density + 0.5f).toInt()
+
+    // 记录高度限制是否已经在当前视图树上登记过，避免重复绑定同一页面时叠加监听
+    private class ContentScroller(context: Context) : ScrollView(context) {
+        var heightLimiterAttached = false
     }
 
     private fun getApkSizeFormat(
