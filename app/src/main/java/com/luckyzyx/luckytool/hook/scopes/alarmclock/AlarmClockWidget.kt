@@ -120,6 +120,7 @@ class AlarmClockWidget(val dexKitBridge: DexKitBridge) : YukiBaseHooker() {
         }
     }
 
+    @Obfuscate
     private class AlarmClock130(val dexKitBridge: DexKitBridge) : YukiBaseHooker() {
         override fun onHook() {
             //OnePlusWidget setTextViewText -> local_hour_txt -> SpannableStringBuilder -> CharSequence
@@ -166,6 +167,7 @@ class AlarmClockWidget(val dexKitBridge: DexKitBridge) : YukiBaseHooker() {
         }
     }
 
+    @Obfuscate
     private object AlarmClock12 : YukiBaseHooker() {
         override fun onHook() {
             //Source OnePlusWidget

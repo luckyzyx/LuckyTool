@@ -51,6 +51,7 @@ object HookFloatMirageWindow : YukiBaseHooker() {
             var task: Any? = null
 
             //宿主在任务进入可调整大小的分屏 / 小窗状态时回调，借此记下 taskId 与对应 Task
+            //Source FlexibleTaskController
             "com.android.server.wm.FlexibleTaskController".toClass().resolve().apply {
                 firstMethod { name = "notifyFlexibleTaskEvent" }.hook {
                     before {
@@ -69,6 +70,7 @@ object HookFloatMirageWindow : YukiBaseHooker() {
             }
 
             //宿主在悬浮球进入 / 任务最小化时回调，借此把挂起任务接到后台串流（mirage）上
+            //Source OplusFlexibleDCSManager
             "com.android.server.wm.OplusFlexibleDCSManager".toClass().resolve().apply {
                 (firstMethodOrNull { name = "onFloatHandleEnter" }
                     ?: firstMethod { name = "startMinimize" }).hook {
@@ -99,6 +101,7 @@ object HookFloatMirageWindow : YukiBaseHooker() {
             }
 
             //挂起期间拦下退后台，别让任务真的被移走
+            //Source OplusMirageWindowManagerService
             "com.android.server.wm.OplusMirageWindowManagerService".toClass().resolve().apply {
                 firstMethod { name = "moveTaskToBack" }.hook {
                     before {
@@ -119,6 +122,7 @@ object HookFloatMirageWindow : YukiBaseHooker() {
             val OPLUS_MIRAGE_CAR_DUMMY_ACTION = "android.intent.action.OPLUS_MIRAGE_CAR_DUMMY"
 
             //把启动请求改投到 mirage 虚拟屏上，实现多个应用同时后台运行
+            //Source OplusMirageWindowManagerService
             "com.android.server.wm.OplusMirageWindowManagerService".toClass().resolve().apply {
                 firstMethod { name = "startActivityToMirageDisplay" }.hook {
                     before {
@@ -257,6 +261,7 @@ object HangUpKeepAlive : YukiBaseHooker() {
     //自愈：宿主释放虚拟屏或把任务搬回主屏后挂起态已经结束，清掉残留状态，
     //否则同一个任务再次贴边会被 displayId 判定成「已在挂起中」而永远跳过
     private fun hookSelfHeal() {
+        //Source MIRAGE_DISPLAY_MANAGER
         MIRAGE_DISPLAY_MANAGER.toClass().resolve().apply {
             firstMethodOrNull { name = "releaseVirtualDisplayDevice";parameterCount = 1 }?.intercept {
                 val result = proceed()
@@ -270,6 +275,7 @@ object HangUpKeepAlive : YukiBaseHooker() {
             }
             LogUtils.d(TAG, "hookSelfHeal", "hooked display release")
         }
+        //Source MIRAGE_WINDOW_MANAGER_SERVICE
         MIRAGE_WINDOW_MANAGER_SERVICE.toClass().resolve().apply {
             firstMethodOrNull { name = "moveStacksToDefaultDisplay" }?.intercept {
                 val result = proceed()
@@ -280,6 +286,7 @@ object HangUpKeepAlive : YukiBaseHooker() {
                 result
             }
         }
+        //Source MIRAGE_KEEP_ALIVE_POLICY
         MIRAGE_KEEP_ALIVE_POLICY.toClass().resolve().apply {
             firstMethodOrNull { name = "onStartFromPrimaryScreenRecents" }?.intercept {
                 val result = proceed()
@@ -300,6 +307,7 @@ object HangUpKeepAlive : YukiBaseHooker() {
 
     //挂起入口：贴边最小化时宿主调用 startMinimize
     private fun hookMinimize() {
+        //Source FLEXIBLE_DCS_MANAGER
         FLEXIBLE_DCS_MANAGER.toClass().resolve().apply {
             //startMinimize 是实测入口，onFloatHandleEnter 只是同族兜底
             val method = firstMethodOrNull { name = "startMinimize" }
@@ -324,6 +332,7 @@ object HangUpKeepAlive : YukiBaseHooker() {
         //C15+ 有 startMinimize，C13- 走 SystemUI 的 zoom 状态机（那边已验证可用），这条只给 C14 兜底；
         //C13 上同一个类也存在，但那条链路已验证能用，不在这里重复挂
         if (getOSVersionCode != 34) return
+        //Source ZOOM_STATE_MANAGER
         ZOOM_STATE_MANAGER.toClass().resolve().apply {
             val methods = listOfNotNull(
                 firstMethodOrNull { name = "onZoomEnter";parameterCount = 4 },
@@ -363,6 +372,7 @@ object HangUpKeepAlive : YukiBaseHooker() {
 
     //挂起中的任务不允许退到后台
     private fun hookMoveTaskToBack() {
+        //Source MIRAGE_WINDOW_MANAGER_SERVICE
         MIRAGE_WINDOW_MANAGER_SERVICE.toClass().resolve().apply {
             firstMethodOrNull { name = "moveTaskToBack" }?.intercept {
                 if (!MirageHangUpState.isHangUp(MirageHangUpState.taskIdOf(firstArg()))) {
@@ -380,6 +390,7 @@ object HangUpKeepAlive : YukiBaseHooker() {
 
     //挂起瞬间系统会立刻删掉悬浮球，保留窗口内压住这次删除
     private fun hookKeepFloatHandle() {
+        //Source FLOAT_HANDLE_CONTROLLER
         FLOAT_HANDLE_CONTROLLER.toClass().resolve().apply {
             firstMethodOrNull { name = "removeFloatHandle" }?.intercept {
                 if (!MirageHangUpState.shouldKeepFloat(args)) return@intercept proceed()
@@ -396,6 +407,7 @@ object HangUpKeepAlive : YukiBaseHooker() {
 
     //从贴边视图/悬浮球恢复任务时清掉挂起标记，虚拟屏等宿主把任务搬回主屏之后再放
     private fun hookReleaseOnRestore() {
+        //Source FLOAT_HANDLE_CONTROLLER
         FLOAT_HANDLE_CONTROLLER.toClass().resolve().apply {
             firstMethodOrNull { name = "startActivityByFloatInfo" }?.intercept {
                 val taskId = MirageHangUpState.taskIdFromArgs(args)
@@ -510,6 +522,7 @@ object HangUpKeepAlive : YukiBaseHooker() {
     private fun launchIntentOf(pkgName: String?): Intent? {
         if (pkgName.isNullOrEmpty()) return null
         return runCatching {
+            //Source APP_GLOBALS
             val application = APP_GLOBALS.toClass().resolve()
                 .firstMethodOrNull { name = "getInitialApplication";emptyParameters() }
                 ?.invoke<Context>() ?: return@runCatching null

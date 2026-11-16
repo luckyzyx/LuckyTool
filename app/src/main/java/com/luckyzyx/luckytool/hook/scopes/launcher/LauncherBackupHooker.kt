@@ -295,6 +295,7 @@ object LauncherBackupHooker : YukiBaseHooker() {
         if (mountInstalled) return
         mountInstalled = true
         runCatching {
+            //Source LauncherApplication
             "com.android.common.LauncherApplication".toClass().resolve()
                 .firstMethodOrNull { name = "onCreate"; emptyParameters() } ?: error("no onCreate")
         }.onSuccess { method ->
