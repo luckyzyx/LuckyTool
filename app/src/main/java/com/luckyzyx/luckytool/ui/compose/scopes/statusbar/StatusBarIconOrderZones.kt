@@ -41,6 +41,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.PointerInputChange
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.LayoutCoordinates
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInWindow
 import androidx.compose.ui.platform.LocalContext
@@ -433,8 +434,9 @@ fun StatusBarIconOrderZones(
     val autoScrollEdge = with(density) { AutoScrollEdge.toPx() }
     val autoScrollSpeed = with(density) { AutoScrollMaxSpeed.toPx() }
 
-    // 每行的窗口 Y（跨偏好更新保留实测全局坐标，避免松手重组后未位移的行丢失坐标）
-    val rowTops = remember { HashMap<String, Float>() }
+    // 每行的 LayoutCoordinates（跨偏好更新保留：未位移的行不会重新回调，缓存坐标对象而不是窗口 Y，
+    // positionInWindow 读数在拖动开始那一刻是实时的，页面滚动后不会整体旧一个滚动量）
+    val rowCoords = remember { HashMap<String, LayoutCoordinates>() }
 
     /** 拖动开始时全部行的窗口 Y 快照；页面滚动期间统一减去 [scrolledBy] 即得当前位置 */
     val startTops = remember(session) { HashMap<String, Float>() }
@@ -530,7 +532,7 @@ fun StatusBarIconOrderZones(
         Modifier
             .then(
                 if (afterLongPress) {
-                    Modifier.onGloballyPositioned { rowTops[item] = it.positionInWindow().y }
+                    Modifier.onGloballyPositioned { rowCoords[item] = it }
                 } else Modifier
             )
             .pointerInput(item, afterLongPress) {
@@ -540,7 +542,13 @@ fun StatusBarIconOrderZones(
                     dragFrom = from
                     dragDelta.floatValue = 0f
                     scrolledBy[0] = 0f
-                    val (targetTop, extrapolated) = extrapolateRowTops(items, rowTops, item, step)
+                    // 行在页面滚动后不会重发 onGloballyPositioned，缓存的窗口 Y 会整体旧一个滚动量；
+                    // 拖动开始前从 LayoutCoordinates 现读，得到此刻真实位置，自动滚动才不会被误触发。
+                    val liveTops = HashMap<String, Float>(rowCoords.size)
+                    rowCoords.forEach { (key, coords) ->
+                        if (coords.isAttached) liveTops[key] = coords.positionInWindow().y
+                    }
+                    val (targetTop, extrapolated) = extrapolateRowTops(items, liveTops, item, step)
                     dragRowTop[0] = targetTop
                     startTops.clear()
                     startTops.putAll(extrapolated)
@@ -612,7 +620,7 @@ fun StatusBarIconOrderZones(
                 // 左区被搬空时的占位行：占住下标 0，让左区始终可见、右区第一位置（下标 1）照常可用
                 LeftZoneEmptyRow(
                     modifier = Modifier.onGloballyPositioned {
-                        rowTops[STATUS_BAR_ICON_ORDER_LEFT_EMPTY_MARKER] = it.positionInWindow().y
+                        rowCoords[STATUS_BAR_ICON_ORDER_LEFT_EMPTY_MARKER] = it
                     },
                     highlighted = draggingItem != null && dragTarget == index,
                 )
@@ -748,7 +756,7 @@ private fun ZoneDivider(modifier: Modifier = Modifier) {
  * 左区被搬空时的占位行：让「左侧区域」始终可见，并充当「把图标拖回左侧」的落位区。
  *
  * [highlighted] 由拖动状态传入：落位下标为 0 时高亮，与普通行的落位槽高亮同色。
- * [modifier] 由调用点传入（用于把占位行的窗口位置登记进 rowTops，落位计算按实测位置走）。
+ * [modifier] 由调用点传入（用于把占位行的 LayoutCoordinates 登记进 rowCoords，落位计算按实测位置走）。
  */
 @Composable
 private fun LeftZoneEmptyRow(modifier: Modifier, highlighted: Boolean) {
