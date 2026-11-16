@@ -337,6 +337,57 @@ internal fun zoneDrop(items: MutableList<String>, leftCount: Int, from: Int, to:
 }
 
 /**
+ * 列表区域条目展示数（排除左区占位条目）。
+ */
+internal fun zoneDisplayCounts(items: List<String>, leftCount: Int): Pair<Int, Int> {
+    val hasMarker = items.firstOrNull() == STATUS_BAR_ICON_ORDER_LEFT_EMPTY_MARKER
+    val left = if (hasMarker) 0 else leftCount
+    val right = items.size - leftCount
+    return left to right
+}
+
+/**
+ * 拖动坐标快照与外推补齐。
+ *
+ * 当某行未发生视觉位移且未被 Compose 重新派发 [onGloballyPositioned] 时，
+ * 借助已知锚点行的实测 Y 与行高 [step] 线性推算全部行的窗口 Y，保证落位判断覆盖所有槽位。
+ */
+internal fun extrapolateRowTops(
+    items: List<String>,
+    rowTops: Map<String, Float>,
+    targetItem: String,
+    step: Float,
+): Pair<Float, Map<String, Float>> {
+    val snapshot = HashMap<String, Float>(items.size)
+    snapshot.putAll(rowTops)
+    val from = items.indexOf(targetItem)
+    val baseTop = rowTops[targetItem]
+    val estimatedTargetTop: Float
+    if (baseTop != null && from in items.indices) {
+        estimatedTargetTop = baseTop
+        for (i in items.indices) {
+            if (items[i] !in snapshot) {
+                snapshot[items[i]] = baseTop + (i - from) * step
+            }
+        }
+    } else {
+        val anchor = items.indices.firstOrNull { items[it] in snapshot }
+        if (anchor != null && from in items.indices) {
+            val anchorTop = snapshot[items[anchor]]!!
+            estimatedTargetTop = anchorTop + (from - anchor) * step
+            for (i in items.indices) {
+                if (items[i] !in snapshot) {
+                    snapshot[items[i]] = anchorTop + (i - anchor) * step
+                }
+            }
+        } else {
+            estimatedTargetTop = rowTops[targetItem] ?: 0f
+        }
+    }
+    return estimatedTargetTop to snapshot
+}
+
+/**
  * 两区域排序列表（左区 / 右区，各自带序号）。
  *
  * 拖动方式两种，走同一套状态机：按住右侧手柄立即拖动（48dp 热区），或长按任意一行拖动。
@@ -382,8 +433,8 @@ fun StatusBarIconOrderZones(
     val autoScrollEdge = with(density) { AutoScrollEdge.toPx() }
     val autoScrollSpeed = with(density) { AutoScrollMaxSpeed.toPx() }
 
-    // 每行的窗口 Y（普通 map，不参与快照，避免逐帧重组）
-    val rowTops = remember(session) { HashMap<String, Float>() }
+    // 每行的窗口 Y（跨偏好更新保留实测全局坐标，避免松手重组后未位移的行丢失坐标）
+    val rowTops = remember { HashMap<String, Float>() }
 
     /** 拖动开始时全部行的窗口 Y 快照；页面滚动期间统一减去 [scrolledBy] 即得当前位置 */
     val startTops = remember(session) { HashMap<String, Float>() }
@@ -403,7 +454,7 @@ fun StatusBarIconOrderZones(
     fun targetFromPosition(fingerY: Float): Int {
         var count = 0
         for (index in items.indices) {
-            // 快照在拖动开始时由 onGloballyPositioned 填满；缺失的行跳过（宁可少算也不给错位置）
+            // 快照在拖动开始时由 onGloballyPositioned 与行距推算填满；缺失的行跳过
             val top = (startTops[items[index]] ?: continue) - scrolledBy[0]
             if (fingerY > top + step / 2f) count++
         }
@@ -433,11 +484,10 @@ fun StatusBarIconOrderZones(
         derivedStateOf {
             val from = dragFrom
             val item = draggingItem
+            val (baseLeft, baseRight) = zoneDisplayCounts(items, leftCount)
             val hasMarker = items.firstOrNull() == STATUS_BAR_ICON_ORDER_LEFT_EMPTY_MARKER
-            // 右区实际项数（占位条目不计入任何一区）
-            val rightSize = items.size - leftCount - (if (hasMarker) 1 else 0)
             if (item == null || from !in items.indices) {
-                (if (hasMarker) 0 else leftCount) to rightSize
+                baseLeft to baseRight
             } else {
                 val to = dragTarget
                 val left = when {
@@ -449,7 +499,7 @@ fun StatusBarIconOrderZones(
                 }
                 // 被拖项从右区落入左区（含占位槽）时右区少一项
                 val leavesRight = leftCount in (to + 1)..from
-                left to (rightSize - if (leavesRight) 1 else 0)
+                left to (baseRight - if (leavesRight) 1 else 0)
             }
         }
     }
@@ -474,20 +524,26 @@ fun StatusBarIconOrderZones(
     }
 
     // afterLongPress = true：长按整行开始拖动；false：按住手柄立即拖动。
-    // pointerInput 的 key 与位置无关，拖动期间即使发生重组也不会重启手势检测器。
+    // pointerInput 绑定 item 与手势模式，避免外部重组或偏好回调打断手势检测器。
+    // onGloballyPositioned 仅挂在整行（afterLongPress=true），手柄 48dp 内部 Box 不重复挂载，避免测量高度偏差。
     val dragModifierFor: (String, Boolean) -> Modifier = { item, afterLongPress ->
         Modifier
-            // 记住每一行的窗口 Y：拖动开始时快照全部行位置，落位下标按实测位置计算
-            .onGloballyPositioned { rowTops[item] = it.positionInWindow().y }
-            .pointerInput(session, afterLongPress) {
+            .then(
+                if (afterLongPress) {
+                    Modifier.onGloballyPositioned { rowTops[item] = it.positionInWindow().y }
+                } else Modifier
+            )
+            .pointerInput(item, afterLongPress) {
                 val onStart = {
                     draggingItem = item
-                    dragFrom = items.indexOf(item)
+                    val from = items.indexOf(item)
+                    dragFrom = from
                     dragDelta.floatValue = 0f
-                    dragRowTop[0] = rowTops[item] ?: 0f
                     scrolledBy[0] = 0f
+                    val (targetTop, extrapolated) = extrapolateRowTops(items, rowTops, item, step)
+                    dragRowTop[0] = targetTop
                     startTops.clear()
-                    startTops.putAll(rowTops)
+                    startTops.putAll(extrapolated)
                 }
                 val onDrag: (PointerInputChange, Offset) -> Unit = { change, amount ->
                     change.consume()
