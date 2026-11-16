@@ -89,12 +89,11 @@ object HookOplusGames : YukiBaseHooker() {
         }
 
         //Source GameEyeProtectionFeature cosa_version_not_support
-//        "business.module.gameeyeprotection.GameEyeProtectionFeature".toClass().apply {
-//            method { name = "I";param(StringClass);returnType = BooleanType }.hook {
-//                after {
-//                    YLog.debug("isSupportGameEyeProtect -> $result")
-//                    result = true
-//                }
+//        "business.module.gameeyeprotection.GameEyeProtectionFeature".toClass().resolve().apply {
+//            firstMethod { name = "I"; parameters(String::class); returnType = Boolean::class }.intercept {
+//                val result = proceed()
+//                YLog.debug("isSupportGameEyeProtect -> $result")
+//                true
 //            }
 //        }
 
@@ -106,13 +105,12 @@ object HookOplusGames : YukiBaseHooker() {
 
         //oplus.software.performance_setting_extension
         //Source GameCpuSettingViewModel -> isSupportCpuFreqCtrlPanel
-//            "business.module.cpusetting.GameCpuSettingViewModel".toClass().apply {
-//                method { param(StringClass);returnType = BooleanType }.hook {
-//                    after {
-//                        val key = firstArg().get<String>() ?: ""
-//                        YLog.debug("isSupportCpuFreqCtrlPanel ($key) -> $result")
-//                        result = true
-//                    }
+//            "business.module.cpusetting.GameCpuSettingViewModel".toClass().resolve().apply {
+//                firstMethod { parameters(String::class); returnType = Boolean::class }.intercept {
+//                    val key = firstArg<String>() ?: ""
+//                    val result = proceed()
+//                    YLog.debug("isSupportCpuFreqCtrlPanel ($key) -> $result")
+//                    true
 //                }
 //            }
 

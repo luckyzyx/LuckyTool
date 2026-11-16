@@ -150,7 +150,7 @@ object LauncherBackupHooker : YukiBaseHooker() {
      * 为什么不能像以前那样「hostApplication 为空就直接 return」：onHook 常常早于 Application#onCreate
      * 执行（模块在 app_process 阶段装载，Application 还没创建），此时 hostApplication 还是空，
      * 一旦直接返回，指令通道就再也不会注册 —— 重启后点备份必然等到超时的直接原因。
-     * 所以这里先等 hostApplication，等不到就短间隔重试；App 实例真正的来源是挂载点
+     * 所以这里先等 hostApplication，等不到就短间隔重试；真正的 App 实例由挂载点
      * [installProcessStartMountPoint]：桌面 Application#onCreate 里拿到的就是 Application 自己，
      * 不再自己反射 ActivityThread.currentApplication()。
      */

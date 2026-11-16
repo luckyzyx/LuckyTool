@@ -3,7 +3,7 @@ package com.luckyzyx.luckytool.hook.scopes.opluskeyboard
 import com.highcapable.kavaref.KavaRef.Companion.resolve
 import com.highcapable.kavaref.extension.classOf
 import com.highcapable.yukihookapi.extension.kavaref.hook
-import com.highcapable.yukihookapi.extension.kavaref.hookAll
+import com.highcapable.yukihookapi.extension.kavaref.intercept
 import com.highcapable.yukihookapi.extension.kavaref.interceptAll
 import com.highcapable.yukihookapi.extension.kavaref.toClass
 import com.highcapable.yukihookapi.hook.entity.YukiBaseHooker
@@ -126,7 +126,7 @@ class ForceEnableOplusKeyboardBlur(private val dexKitBridge: DexKitBridge) : Yuk
 
         materialBlurSetting.className.toClass().resolve().apply {
             firstMethod { name = materialBlurSetting.methodName; emptyParameters() }
-                .hook { intercept(true) }
+                .intercept { true }
         }
 
         //Source Settings
@@ -149,14 +149,13 @@ class ForceEnableOplusKeyboardBlur(private val dexKitBridge: DexKitBridge) : Yuk
             }
             //诊断日志：框架是否给了模糊 drawable（null 表示框架层拒绝出模糊，与宿主逻辑无关）
             runCatching {
-                firstMethod { name = "getBackgroundBlurDrawable" }.hook {
-                    after {
-                        val drawable = result
-                        if (!loggedDrawable) {
-                            loggedDrawable = true
-                            YLog.info("ForceEnableOplusKeyboardBlur: blur drawable = $drawable")
-                        }
+                firstMethod { name = "getBackgroundBlurDrawable" }.intercept {
+                    val drawable = proceed()
+                    if (!loggedDrawable) {
+                        loggedDrawable = true
+                        YLog.info("ForceEnableOplusKeyboardBlur: blur drawable = $drawable")
                     }
+                    drawable
                 }
             }.onFailure {
                 YLog.warn("ForceEnableOplusKeyboardBlur: hook drawable failed: $it")
@@ -175,11 +174,11 @@ class ForceEnableOplusKeyboardBlur(private val dexKitBridge: DexKitBridge) : Yuk
     private fun hookSettingGetInt(className: String, key: String, value: Int) {
         runCatching {
             className.toClass().resolve().apply {
-                method { name = "getInt" }.hookAll {
-                    before { if (args.size > 1 && args[1] == key) result = value }
+                method { name = "getInt" }.interceptAll {
+                    if (args.size > 1 && args[1] == key) value else proceed()
                 }
-                method { name = "getIntForUser" }.hookAll {
-                    before { if (args.size > 1 && args[1] == key) result = value }
+                method { name = "getIntForUser" }.interceptAll {
+                    if (args.size > 1 && args[1] == key) value else proceed()
                 }
             }
         }.onFailure {
