@@ -4,6 +4,7 @@ import android.animation.ObjectAnimator
 import android.animation.ValueAnimator
 import com.highcapable.kavaref.KavaRef.Companion.resolve
 import com.highcapable.yukihookapi.extension.kavaref.hook
+import com.highcapable.yukihookapi.extension.kavaref.intercept
 import com.highcapable.yukihookapi.extension.kavaref.toClass
 import com.highcapable.yukihookapi.hook.entity.YukiBaseHooker
 import com.highcapable.yukihookapi.hook.log.YLog
@@ -29,16 +30,14 @@ class RemoveStartupAnimation(val dexKitBridge: DexKitBridge) : YukiBaseHooker() 
         val setDuration = ObjectAnimator::class.resolve().firstMethodOrNull { name = "setDuration" }
             ?: ValueAnimator::class.resolve().firstMethodOrNull { name = "setDuration" }
         if (setDuration == null) YLog.error("RemoveStartupAnimation -> setDuration is null")
-        else setDuration.hook {
-            before {
-                val animator = instanceOrNull<ObjectAnimator>() ?: return@before
-                if ((firstArg().get<Long>() ?: 0L) != 500L) return@before
-                if (animator.propertyName != "translationX") return@before
-                if (animator.target?.javaClass?.name != "business.secondarypanel.view.GameOptimizedNewView") {
-                    return@before
-                }
-                firstArg().set(0L)
+        else setDuration.intercept {
+            val animator = instanceOrNull<ObjectAnimator>() ?: return@intercept proceed()
+            if ((firstArg<Long>() ?: 0L) != 500L) return@intercept proceed()
+            if (animator.propertyName != "translationX") return@intercept proceed()
+            if (animator.target?.javaClass?.name != "business.secondarypanel.view.GameOptimizedNewView") {
+                return@intercept proceed()
             }
+            proceed(arrayOf(0L))
         }
 
         //启动动画弹窗是另一条链路：StartupAnimationFeature 在 initialize 的协程里创建弹窗，创建动作全在那段 lambda 里

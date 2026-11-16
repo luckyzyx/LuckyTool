@@ -11,9 +11,7 @@ import com.highcapable.kavaref.condition.type.Modifiers
 import com.highcapable.kavaref.extension.classOf
 import com.highcapable.yukihookapi.extension.kavaref.intercept
 import com.highcapable.yukihookapi.extension.kavaref.toClass
-import com.highcapable.yukihookapi.extension.kavaref.toClassOrNull
 import com.highcapable.yukihookapi.hook.entity.YukiBaseHooker
-import com.highcapable.yukihookapi.hook.log.YLog
 import com.luckyzyx.luckytool.utils.DexkitUtils.checkDataList
 import com.luckyzyx.luckytool.utils.ModulePrefs
 import org.lsposed.lsparanoid.Obfuscate
@@ -77,11 +75,7 @@ class AlarmClockWidget(val dexKitBridge: DexKitBridge) : YukiBaseHooker() {
 
     /** 没有红 layout 的版本：拦截组件生成时间的 CharSequence，把 "1" 上色 */
     private fun hookTextRedOne() {
-        val onePlusWidget = OnePlusWidget.toClassOrNull()?.resolve()
-        if (onePlusWidget == null) {
-            YLog.debug("AlarmClockTextRedOne -> 未找到 OnePlusWidget，跳过")
-            return
-        }
+        val onePlusWidget = OnePlusWidget.toClass().resolve()
         when {
             onePlusWidget.firstMethodOrNull {
                 parameters(String::class, String::class)
@@ -99,7 +93,7 @@ class AlarmClockWidget(val dexKitBridge: DexKitBridge) : YukiBaseHooker() {
             gates.forEach { gate ->
                 //宿主布局选择点走的是 O() { if (k()) return false; return i() } 这类包装方法，k() 恒为 false，
                 //最终都会落到这里拦的开关方法上，所以只拦一个方法就能覆盖全部布局选择点
-                val clazz = gate.className.toClassOrNull() ?: return@forEach
+                val clazz = gate.className.toClass()
                 clazz.resolve().method {
                     name = gate.methodName
                     parameterCount = 0
@@ -110,8 +104,12 @@ class AlarmClockWidget(val dexKitBridge: DexKitBridge) : YukiBaseHooker() {
                         when (redMode) {
                             //跟随系统
                             "0" -> proceed()
-                            //强制红一，宿主缺 OplusTextClock 时选中红 layout 会 inflate 崩溃，退回原逻辑
-                            "1" -> if (OplusTextClock.toClassOrNull() != null) true else proceed()
+                            //强制红一；宿主缺 OplusTextClock 时选中红 layout 会 inflate 崩溃，
+                            //先用 toClass 确认类存在，缺类时直接抛错暴露问题
+                            "1" -> {
+                                OplusTextClock.toClass()
+                                true
+                            }
                             //强制普通
                             "2" -> false
                             else -> proceed()

@@ -10,6 +10,7 @@ import android.widget.TextView
 import com.highcapable.kavaref.KavaRef.Companion.asResolver
 import com.highcapable.kavaref.KavaRef.Companion.resolve
 import com.highcapable.yukihookapi.extension.kavaref.hook
+import com.highcapable.yukihookapi.extension.kavaref.intercept
 import com.highcapable.yukihookapi.extension.kavaref.toClass
 import com.highcapable.yukihookapi.hook.entity.YukiBaseHooker
 import com.highcapable.yukihookapi.hook.log.YLog
@@ -174,29 +175,28 @@ object HookAppDetails : YukiBaseHooker() {
                             }
                         }
                     }
-                    firstMethod { name = "onOptionsItemSelected" }.hook {
-                        before {
-                            val menuItem = firstArg().get<MenuItem>() ?: return@before
-                            val context = firstMethod {
-                                name = "getContext"
-                                superclass()
-                            }.of(instance).invoke<Context>() ?: return@before
-                            val packageInfo = firstField { type = PackageInfo::class }.of(instance)
-                                .get<PackageInfo>() ?: return@before
-                            val packName = packageInfo.packageName
+                    firstMethod { name = "onOptionsItemSelected" }.intercept {
+                        val menuItem = firstArg<MenuItem>() ?: return@intercept proceed()
+                        val context = firstMethod {
+                            name = "getContext"
+                            superclass()
+                        }.of(instance).invoke<Context>() ?: return@intercept proceed()
+                        val packageInfo = firstField { type = PackageInfo::class }.of(instance)
+                            .get<PackageInfo>() ?: return@intercept proceed()
+                        val packName = packageInfo.packageName
 
-                            when (menuItem.itemId) {
-                                900 -> if (quickMarket) AppUtils(context).openMarketIntent(packName)
-                                999 -> if (osCode >= 27 && quickClone && !packageInfo.isSystem()) {
-                                    val appLabel = AppUtils(context).getAppLabel(packName)
-                                    try {
-                                        AppUtils(context).openMultiAppIntent(appLabel, packName)
-                                    } catch (e: Throwable) {
-                                        YLog.debug("EnableAppCloneQuickJump startActivity error", e = e)
-                                    }
+                        when (menuItem.itemId) {
+                            900 -> if (quickMarket) AppUtils(context).openMarketIntent(packName)
+                            999 -> if (osCode >= 27 && quickClone && !packageInfo.isSystem()) {
+                                val appLabel = AppUtils(context).getAppLabel(packName)
+                                try {
+                                    AppUtils(context).openMultiAppIntent(appLabel, packName)
+                                } catch (e: Throwable) {
+                                    YLog.debug("EnableAppCloneQuickJump startActivity error", e = e)
                                 }
                             }
                         }
+                        proceed()
                     }
                 }
         }

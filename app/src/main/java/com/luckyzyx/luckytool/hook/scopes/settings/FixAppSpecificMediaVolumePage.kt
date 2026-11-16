@@ -5,6 +5,7 @@ import android.content.Context
 import com.highcapable.kavaref.KavaRef.Companion.resolve
 import com.highcapable.kavaref.extension.classOf
 import com.highcapable.yukihookapi.extension.kavaref.hook
+import com.highcapable.yukihookapi.extension.kavaref.intercept
 import com.highcapable.yukihookapi.extension.kavaref.toClass
 import com.highcapable.yukihookapi.hook.entity.YukiBaseHooker
 import com.luckyzyx.luckytool.BuildConfig
@@ -36,31 +37,31 @@ class FixAppSpecificMediaVolumePage(val dexKitBridge: DexKitBridge) : YukiBaseHo
                     //fromAssetSync
                     name = single().methodName
                     parameters(Context::class, String::class, String::class)
-                }.hook {
-                    before {
-                        val context = firstArg().get<Context>() ?: return@before
-                        val path = arg(1).get<String>() ?: ""
-                        val key = lastArg().get<String>() ?: ""
-                        if (path.contains("multi_app_volume").not()) return@before
+                }.intercept {
+                    val context = firstArg<Context>() ?: return@intercept proceed()
+                    val path = arg<String>(1) ?: ""
+                    val key = lastArg<String>() ?: ""
+                    if (path.contains("multi_app_volume").not()) return@intercept proceed()
 
-                        val assetsInputStream = safeOfNull { context.assets.open(path) }
-                        if (assetsInputStream != null) return@before
+                    val assetsInputStream = safeOfNull { context.assets.open(path) }
+                    if (assetsInputStream != null) return@intercept proceed()
 
-                        if (!path.endsWith(".zip") && !path.endsWith(".lottie")) {
-                            val resName = path.substringAfter("/").substringBefore(".json")
-                            val resId = module.resources.getIdentifier(
-                                resName, "raw", BuildConfig.APPLICATION_ID
-                            )
-                            if (resId == 0) return@before
-                            val rawInputStream = safeOfNull {
-                                module.resources.openRawResource(resId)
-                            } ?: return@before
-                            result = firstMethod {
+                    if (!path.endsWith(".zip") && !path.endsWith(".lottie")) {
+                        val resName = path.substringAfter("/").substringBefore(".json")
+                        val resId = module.resources.getIdentifier(
+                            resName, "raw", BuildConfig.APPLICATION_ID
+                        )
+                        if (resId == 0) return@intercept proceed()
+                        val rawInputStream = safeOfNull {
+                            module.resources.openRawResource(resId)
+                        } ?: return@intercept proceed()
+                        firstMethod {
 //                                name = "fromJsonInputStreamSync"
-                                parameters(InputStream::class, String::class)
-                                returnType = method.returnType
-                            }.invoke(rawInputStream, key) ?: return@before
-                        }
+                            parameters(InputStream::class, String::class)
+                            returnType = method.returnType
+                        }.invoke(rawInputStream, key) ?: return@intercept proceed()
+                    } else {
+                        proceed()
                     }
                 }
             }

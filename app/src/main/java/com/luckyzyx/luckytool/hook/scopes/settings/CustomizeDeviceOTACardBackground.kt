@@ -243,10 +243,8 @@ object CustomizeDeviceOTACardBackground : YukiBaseHooker() {
                             firstArg().set(null)
                         }
                     }
-                    firstMethod { name = "getColorOSVideoPath" }.hook {
-                        after {
-                            result = "/sdcard/DNA/1.mp4"
-                        }
+                    firstMethod { name = "getColorOSVideoPath" }.intercept {
+                        "/sdcard/DNA/1.mp4"
                     }
                 }
             }
@@ -276,22 +274,21 @@ object CustomizeDeviceOTACardBackground : YukiBaseHooker() {
                     name = "onOptionsItemSelected"
                     parameters(MenuItem::class)
                     returnType = Boolean::class
-                }.hook {
-                    after {
-                        val context = firstMethod { name = "getContext"; superclass() }
-                            .of(instance).invoke<Context>() ?: return@after
-                        val menuItem = firstArg().get<MenuItem>() ?: return@after
-                        val shareId = context.resources.getIdentifier(
-                            "about_share", "id",
-                            this@CustomizeDeviceOTACardBackground.packageName
-                        )
-                        if (menuItem.itemId != shareId) return@after
-                        context.startActivity(
-                            "com.android.settings",
-                            "com.oplus.settings.feature.deviceinfo.aboutphone.ShareAboutPhoneActivity",
-                            false
-                        )
-                    }
+                }.intercept {
+                    val context = firstMethod { name = "getContext"; superclass() }
+                        .of(instance).invoke<Context>() ?: return@intercept proceed()
+                    val menuItem = firstArg<MenuItem>() ?: return@intercept proceed()
+                    val shareId = context.resources.getIdentifier(
+                        "about_share", "id",
+                        this@CustomizeDeviceOTACardBackground.packageName
+                    )
+                    if (menuItem.itemId != shareId) return@intercept proceed()
+                    context.startActivity(
+                        "com.android.settings",
+                        "com.oplus.settings.feature.deviceinfo.aboutphone.ShareAboutPhoneActivity",
+                        false
+                    )
+                    proceed()
                 }
             }
 
