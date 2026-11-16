@@ -14,6 +14,7 @@ import android.os.Looper
 import android.os.SystemClock
 import android.view.View
 import android.view.ViewGroup
+import android.view.ViewParent
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.core.view.isVisible
@@ -67,6 +68,10 @@ object WiFiDataIconRelated : YukiBaseHooker() {
         // 当前用来取标准号的主 WiFi 网络：别的 WiFi 网络断开时不能连带清掉状态
         @Volatile
         private var wifiNetwork: Network? = null
+
+        // 诊断日志去重键，状态没变就不重复打
+        @Volatile
+        private var logStateKey: String? = null
 
         @Volatile
         private var wifiLeftId = 0
@@ -152,6 +157,11 @@ object WiFiDataIconRelated : YukiBaseHooker() {
                 slotSets += LeftSlots(viewGroup, textView, imageView)
                 ensureObservers(viewGroup)
             }
+            YLog.debug(
+                "wifi left capture: group=${Integer.toHexString(System.identityHashCode(viewGroup))}" +
+                    " left=$wifiLeftId tv=$wifiLeftTvId" +
+                    " image=${imageView != null} text=${textView != null} sets=${slotSets.size}"
+            )
             onGroupLaidOut(viewGroup)
         }
 
@@ -220,6 +230,11 @@ object WiFiDataIconRelated : YukiBaseHooker() {
             if (slotSets.isEmpty()) return
             dropSlots { it.group() == null }
             val digit = lowStandardDigitOf(wifiStandard)
+            val state = describeSets()
+            logState("apply $wifiStandard|$wifiConnected|$digit|$state") {
+                "wifi standard apply: standard=$wifiStandard connected=$wifiConnected" +
+                    " digit=$digit sets=${slotSets.size} [$state]"
+            }
             if (digit == null) return
             if (!wifiConnected) return
             slotSets.forEach { paintLowDigit(it, digit) }
@@ -386,6 +401,38 @@ object WiFiDataIconRelated : YukiBaseHooker() {
             applyLowStandardDigit()
         }
 
+        //补画前每份容器的状态：group:isShown-textVisibility-imageVisibility。
+        //容器不显示（isShown=0）时补画进去是看不见的，靠这行区分「补错容器」和「容器被宿主收起」
+        private fun describeSets(): String = slotSets.joinToString(" ") { slots ->
+            val group = slots.group()
+            val shown = group?.isShown == true
+            buildString {
+                append(Integer.toHexString(System.identityHashCode(group)))
+                append(if (shown) ":1" else ":0")
+                append('-').append(slots.text()?.visibility ?: -1)
+                append('-').append(slots.image()?.visibility ?: -1)
+                if (!shown) append('(').append(hiddenAncestorOf(slots.text() ?: slots.image())).append(')')
+            }
+        }
+
+        //槽位自己 visible=0、用户还是看不到，差别就在某个祖先被收起了：打出这层才知道是补错了容器还是整条状态栏被收起
+        private fun hiddenAncestorOf(view: View?): String {
+            var parent: ViewParent? = view?.parent
+            while (parent is View) {
+                if (parent.visibility != View.VISIBLE) {
+                    return "${parent.javaClass.simpleName}#${parent.id} vis=${parent.visibility}"
+                }
+                parent = parent.parent
+            }
+            return "none"
+        }
+
+        //布局每帧都会回调，同一组状态只打一行，状态变了才再打
+        private inline fun logState(key: String, message: () -> String) {
+            if (key == logStateKey) return
+            logStateKey = key
+            YLog.debug(message())
+        }
     }
 
     @Obfuscate
