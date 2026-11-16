@@ -55,8 +55,8 @@ object EnableRunInBackground : YukiBaseHooker() {
                     result = null
                 }
             }
-            firstMethod { name = "isToolAvailable" }.hook {
-                intercept(true)
+            firstMethod { name = "isToolAvailable" }.intercept {
+                true
             }
         }
 

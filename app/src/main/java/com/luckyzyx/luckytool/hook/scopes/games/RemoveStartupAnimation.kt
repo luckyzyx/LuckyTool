@@ -59,10 +59,10 @@ class RemoveStartupAnimation(val dexKitBridge: DexKitBridge) : YukiBaseHooker() 
             YLog.error("RemoveStartupAnimation -> ${lambdaClass.name}#$INVOKE_SUSPEND is null")
             return
         }
-        invokeSuspend.hook {
+        invokeSuspend.intercept {
             //该 lambda 内部没有挂起点，正常返回就是协程完成，所以直接返回 kotlin.Unit 而不调原实现
             //返回值必须是 kotlin.Unit：调用方把这段 lambda 的结果当协程结果解包，返回 null 会在解包处抛异常
-            intercept(Unit)
+            Unit
         }
     }
 

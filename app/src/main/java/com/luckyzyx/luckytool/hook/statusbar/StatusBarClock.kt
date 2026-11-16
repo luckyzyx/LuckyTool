@@ -144,8 +144,7 @@ class StatusBarClock : YukiBaseHooker() {
         ).toClass().resolve().apply {
             firstMethod {
                 name { it.startsWith("onConfig") && it.endsWith("Changed") }
-            }.hook {
-                intercept()
+            }.intercept {
             }
             if (osCode >= 33) {
                 //StatClock 未开秒时把整段文本交给 paint.measureText 测量，多排文本（双排或自定义格式里带换行）的
