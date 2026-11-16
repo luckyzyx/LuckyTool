@@ -69,6 +69,10 @@ object WiFiDataIconRelated : YukiBaseHooker() {
         @Volatile
         private var wifiNetwork: Network? = null
 
+        // 诊断日志去重键，状态没变就不重复打
+        @Volatile
+        private var logStateKey: String? = null
+
         @Volatile
         private var wifiLeftId = 0
 
