@@ -4,10 +4,8 @@ import android.view.View
 import android.view.ViewGroup
 import com.highcapable.kavaref.KavaRef.Companion.resolve
 import com.highcapable.kavaref.extension.VariousClass
-import com.highcapable.yukihookapi.extension.kavaref.hook
 import com.highcapable.yukihookapi.extension.kavaref.intercept
 import com.highcapable.yukihookapi.extension.kavaref.toClass
-import com.highcapable.yukihookapi.extension.kavaref.toClassOrNull
 import com.highcapable.yukihookapi.hook.entity.YukiBaseHooker
 import com.luckyzyx.luckytool.hook.utils.sysui.MediaPlayerDataUtils
 import com.luckyzyx.luckytool.hook.utils.sysui.QSFeatureOptionUtils
@@ -101,14 +99,14 @@ object ControlCenterTiles : YukiBaseHooker() {
                     //ColorOS17 移除了 updateMaxRows：行数改由 PagedTileLayout.onMeasure 按可用高度计算，
                     //再夹取到 [mMinRows, mMaxAllowedRows]，故测量前临时改写首页这两个字段，测量后还原
                     //mMinRows/mMaxAllowedRows 声明在 TileLayout，页面实例本身是 TileLayout 子类，
-                    //故这两个字段从 TileLayout 取，只有 mPages 来自 PagedTileLayout
+                    //故这两个字段从 TileLayout 取，只有 mPages 声明在 PagedTileLayout
                     val mMinRows = firstFieldOrNull { name = "mMinRows" } ?: return@apply
                     val mMaxAllowedRows =
                         firstFieldOrNull { name = "mMaxAllowedRows" } ?: return@apply
                     val pagedScope = VariousClass(
                         "com.android.systemui.qs.PagedTileLayout",
                         "com.android.systemui.qs.deprecated.PagedTileLayout"
-                    ).toClassOrNull()?.resolve() ?: return@apply
+                    ).toClass().resolve()
                     val mPages = pagedScope.firstFieldOrNull { name = "mPages" } ?: return@apply
                     pagedScope.firstMethod { name = "onMeasure" }.intercept {
                         //onMeasure 无返回值，恒走原实现，仅在测量期间临时改字段
@@ -167,29 +165,32 @@ object ControlCenterTiles : YukiBaseHooker() {
 
             //Source QuickQSPanel
             "com.android.systemui.qs.QuickQSPanel".toClass().resolve().apply {
-                firstMethod { name = "getNumQuickTiles" }.hook {
-                    before {
-                        getScreenOrientation(instance<View>()) {
-                            result = if (it) columnUnexpandedVertical
-                            else columnUnexpandedHorizontal
-                        }
+                firstMethod { name = "getNumQuickTiles" }.intercept {
+                    var orientation: Boolean? = null
+                    getScreenOrientation(instance<View>()) { orientation = it }
+                    when (orientation) {
+                        true -> columnUnexpandedVertical
+                        false -> columnUnexpandedHorizontal
+                        else -> proceed()
                     }
                 }
             }
 
             //Source TileLayout
             "com.android.systemui.qs.TileLayout".toClass().resolve().apply {
-                firstMethod { name = "updateColumns" }.hook {
-                    before {
-                        instance<ViewGroup>().apply {
-                            getScreenOrientation(this) {
-                                val mColumns =
-                                    firstField { name = "mColumns" }.of(instance).get<Int>()
-                                val newColumns = if (it) columnExpandedVertical
-                                else columnExpandedHorizontal
-                                firstField { name = "mColumns" }.of(instance).set(newColumns)
-                                result = mColumns != newColumns
-                            }
+                firstMethod { name = "updateColumns" }.intercept {
+                    val view = instance<ViewGroup>()
+                    var orientation: Boolean? = null
+                    getScreenOrientation(view) { orientation = it }
+                    when (orientation) {
+                        null -> proceed()
+                        else -> {
+                            val field = firstField { name = "mColumns" }.of(view)
+                            val oldColumns = field.get<Int>()
+                            val newColumns = if (orientation == true) columnExpandedVertical
+                            else columnExpandedHorizontal
+                            field.set(newColumns)
+                            oldColumns != newColumns
                         }
                     }
                 }

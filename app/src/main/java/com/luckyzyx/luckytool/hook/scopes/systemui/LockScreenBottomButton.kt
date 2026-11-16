@@ -11,6 +11,7 @@ import com.highcapable.kavaref.KavaRef.Companion.asResolver
 import com.highcapable.kavaref.KavaRef.Companion.resolve
 import com.highcapable.kavaref.extension.isSubclassOf
 import com.highcapable.yukihookapi.extension.kavaref.hook
+import com.highcapable.yukihookapi.extension.kavaref.intercept
 import com.highcapable.yukihookapi.extension.kavaref.toClass
 import com.highcapable.yukihookapi.hook.entity.YukiBaseHooker
 import com.luckyzyx.luckytool.R
@@ -42,13 +43,13 @@ object LockScreenBottomButton : YukiBaseHooker() {
             //Source OplusFlashlightQuickAffordanceConfig
             "com.oplus.systemui.keyguard.data.quickaffordance.OplusFlashlightQuickAffordanceConfig".toClass()
                 .resolve().apply {
-                    firstMethod { name = "onTriggered" }.hook {
-                        after {
-                            if (!autoCloseScreen) return@after
-                            val context = firstField { name = "context"; superclass() }.of(instance)
-                                .get<Context>() ?: return@after
-                            closeScreen(context)
-                        }
+                    firstMethod { name = "onTriggered" }.intercept {
+                        val original = proceed()
+                        if (!autoCloseScreen) return@intercept original
+                        val context = firstField { name = "context"; superclass() }.of(instance)
+                            .get<Context>() ?: return@intercept original
+                        closeScreen(context)
+                        original
                     }
                 }
         }
@@ -102,13 +103,13 @@ object LockScreenBottomButton : YukiBaseHooker() {
             //Source OplusFlashlightQuickAffordanceConfig
             "com.oplus.systemui.keyguard.data.quickaffordance.OplusFlashlightQuickAffordanceConfig".toClass()
                 .resolve().apply {
-                    firstMethod { name = "onTriggered" }.hook {
-                        after {
-                            if (rmLeft || !autoCloseScreen) return@after
-                            val context = firstField { name = "context"; superclass() }.of(instance)
-                                .get<Context>() ?: return@after
-                            closeScreen(context)
-                        }
+                    firstMethod { name = "onTriggered" }.intercept {
+                        val original = proceed()
+                        if (rmLeft || !autoCloseScreen) return@intercept original
+                        val context = firstField { name = "context"; superclass() }.of(instance)
+                            .get<Context>() ?: return@intercept original
+                        closeScreen(context)
+                        original
                     }
                 }
         }

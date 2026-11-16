@@ -452,12 +452,12 @@ object WiFiDataIconRelated : YukiBaseHooker() {
                             false
                     }
                 }
-                firstMethod { name = "updateState" }.hook {
-                    after {
-                        if (!removeInout) return@after
-                        firstField { name = "mWifiActivity" }.of(instance).get<View>()?.isVisible =
-                            false
-                    }
+                firstMethod { name = "updateState" }.intercept {
+                    val original = proceed()
+                    if (!removeInout) return@intercept original
+                    firstField { name = "mWifiActivity" }.of(instance).get<View>()?.isVisible =
+                        false
+                    original
                 }
             }
         }

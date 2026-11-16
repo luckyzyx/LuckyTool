@@ -107,21 +107,20 @@ class StatusBarClock : YukiBaseHooker() {
                     }, 1000 - System.currentTimeMillis() % 1000, 1000)
                 }
             }
-            firstMethod { name = "getSmallTime"; returnType = CharSequence::class }.hook {
-                after {
-                    val clockView = instance<TextView>().apply {
-                        val clockName = safeOfNull { resources.getResourceEntryName(id) }
-                        if (clockName != "clock") return@after
-                        initView()
-                    }
-                    val context = clockView.context
-                    val mCalendar = firstField { name = "mCalendar" }.of(instance).get<Calendar>()
-                    val nowTime = mCalendar?.time ?: Date()
-                    result = when (clockMode) {
-                        "1" -> getDate(context, nowTime) + newline + getTime(context, nowTime)
-                        "2" -> formatDate(getFormat(context, customFormat, nowTime), nowTime)
-                        else -> return@after
-                    }
+            firstMethod { name = "getSmallTime"; returnType = CharSequence::class }.intercept {
+                val original = proceed()
+                val clockView = instance<TextView>().apply {
+                    val clockName = safeOfNull { resources.getResourceEntryName(id) }
+                    if (clockName != "clock") return@intercept original
+                    initView()
+                }
+                val context = clockView.context
+                val mCalendar = firstField { name = "mCalendar" }.of(instance).get<Calendar>()
+                val nowTime = mCalendar?.time ?: Date()
+                when (clockMode) {
+                    "1" -> getDate(context, nowTime) + newline + getTime(context, nowTime)
+                    "2" -> formatDate(getFormat(context, customFormat, nowTime), nowTime)
+                    else -> original
                 }
             }
             firstMethodOrNull { name = "onMeasure" }?.hook {
