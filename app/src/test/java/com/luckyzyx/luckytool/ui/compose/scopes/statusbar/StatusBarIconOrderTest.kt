@@ -299,4 +299,49 @@ class StatusBarIconOrderTest {
         assertEquals(0f, autoScrollStep(10f, 2000f, 0f, 40f), 0.001f)
         assertEquals(0f, autoScrollStep(10f, 2000f, 300f, 0f), 0.001f)
     }
+
+    @Test
+    fun `zone display counts accurately reports item counts and ignores empty marker`() {
+        val marker = STATUS_BAR_ICON_ORDER_LEFT_EMPTY_MARKER
+        val default49 = StatusBarIconSlots.defaultOrder
+
+        // 默认状态：左区时钟+通知（2项），右区49项
+        val defaultList = listOf("clock", STATUS_BAR_ICON_ORDER_NOTIFY_ITEM) + default49
+        assertEquals(2 to 49, zoneDisplayCounts(defaultList, 2))
+
+        // 左区清空：占位条目占住下标 0，展示计数应为左 0、右 49，不可重复扣减占位符
+        val leftEmptyList = listOf(marker) + default49
+        assertEquals(0 to 49, zoneDisplayCounts(leftEmptyList, 1))
+
+        // 时钟挪到右区且左区为空：右区共 50 项（49 + 时钟），展示计数为左 0、右 50
+        val clockInRightList = listOf(marker, "clock") + default49
+        assertEquals(0 to 50, zoneDisplayCounts(clockInRightList, 1))
+    }
+
+    @Test
+    fun `extrapolateRowTops linearly populates coordinates for all undisturbed rows`() {
+        val items = listOf("clock", "notifications", "wifi", "battery")
+        val step = 100f
+
+        // 目标行有实测坐标（如 "wifi" 在 300f），其余未位移的行应全部被推算补齐
+        val measured = mapOf("wifi" to 300f)
+        val (targetTop, extrapolated) = extrapolateRowTops(items, measured, "wifi", step)
+        assertEquals(300f, targetTop, 0.001f)
+        assertEquals(100f, extrapolated["clock"]!!, 0.001f)
+        assertEquals(200f, extrapolated["notifications"]!!, 0.001f)
+        assertEquals(300f, extrapolated["wifi"]!!, 0.001f)
+        assertEquals(400f, extrapolated["battery"]!!, 0.001f)
+
+        // 目标行未测量（如 "battery" 为 null），但列表中存在已有锚点（"clock" 在 100f）
+        val anchorOnly = mapOf("clock" to 100f)
+        val (targetEstimated, extrapolated2) = extrapolateRowTops(items, anchorOnly, "battery", step)
+        assertEquals(400f, targetEstimated, 0.001f)
+        assertEquals(400f, extrapolated2["battery"]!!, 0.001f)
+        assertEquals(200f, extrapolated2["notifications"]!!, 0.001f)
+
+        // 全部行均未测量：安全回退为 0f，不抛异常
+        val (targetFallback, emptyResult) = extrapolateRowTops(items, emptyMap(), "ghost", step)
+        assertEquals(0f, targetFallback, 0.001f)
+        assertTrue(emptyResult.isEmpty())
+    }
 }
