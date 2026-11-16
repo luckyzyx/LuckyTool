@@ -132,11 +132,11 @@ class CustomRotateScreenButtonSize(val dexKitBridge: DexKitBridge) : YukiBaseHoo
                     hasLoggedScaledSize = true
                     YLog.debug(
                         "CustomRotateScreenButtonSize scaled: $originalDiameter -> " +
-                            "$scaledDiameter ($percent%)", tag = "LuckyTool"
+                            "$scaledDiameter ($percent%)"
                     )
                 }
             }
         }
-        YLog.debug("CustomRotateScreenButtonSize hook success: $percent%", tag = "LuckyTool")
+        YLog.debug("CustomRotateScreenButtonSize hook success: $percent%")
     }
 }

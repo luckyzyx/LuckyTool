@@ -15,8 +15,7 @@ object HookOplusKeyboard : YukiBaseHooker() {
             preferences(ModulePrefs).getBoolean("force_enable_oplus_keyboard_blur", false)
         //诊断日志：确认 hooker 是否进到键盘进程、读到的开关值以及宿主 APK 路径
         YLog.info(
-            "OplusKeyboard hook: forceEnableBlur = $forceEnableBlur, sourceDir = ${appInfo.sourceDir}",
-            tag = "LuckyTool"
+            "OplusKeyboard hook: forceEnableBlur = $forceEnableBlur, sourceDir = ${appInfo.sourceDir}"
         )
         if (forceEnableBlur) {
             DexkitUtils.create(appInfo.sourceDir) { loadHooker(ForceEnableOplusKeyboardBlur(it)) }

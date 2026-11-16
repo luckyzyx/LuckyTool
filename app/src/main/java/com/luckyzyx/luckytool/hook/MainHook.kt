@@ -145,11 +145,9 @@ import java.io.File
 @Obfuscate
 class MainHook : YukiHookXposedModule {
 
-    override fun onInit() {
-        configure {
-            logging {
-                tag = MainHook.TAG
-            }
+    override fun onInit() = configure {
+        logging {
+            tag = MainHook.TAG
         }
     }
 

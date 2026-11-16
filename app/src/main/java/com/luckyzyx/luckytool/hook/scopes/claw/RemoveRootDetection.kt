@@ -9,7 +9,6 @@ import com.highcapable.yukihookapi.extension.kavaref.intercept
 import com.highcapable.yukihookapi.extension.kavaref.toClass
 import com.highcapable.yukihookapi.hook.entity.YukiBaseHooker
 import com.highcapable.yukihookapi.hook.log.YLog
-import com.luckyzyx.luckytool.utils.DexkitUtils
 import com.luckyzyx.luckytool.utils.ModulePrefs
 import org.lsposed.lsparanoid.Obfuscate
 import org.luckypray.dexkit.DexKitBridge
@@ -83,7 +82,7 @@ class RemoveRootDetection(val dexKitBridge: DexKitBridge) : YukiBaseHooker() {
                 }
             }
 
-            else -> YLog.error("RemoveRootDetection -> findMethod isNullOrEmpty", tag = DexkitUtils.tag)
+            else -> YLog.error("RemoveRootDetection -> findMethod isNullOrEmpty")
         }
     }
 }

@@ -5,10 +5,9 @@ import com.highcapable.yukihookapi.extension.kavaref.hook
 import com.highcapable.yukihookapi.extension.kavaref.toClass
 import com.highcapable.yukihookapi.hook.entity.YukiBaseHooker
 import com.highcapable.yukihookapi.hook.log.YLog
-import com.luckyzyx.luckytool.utils.DexkitUtils
+import org.lsposed.lsparanoid.Obfuscate
 import org.luckypray.dexkit.DexKitBridge
 import org.luckypray.dexkit.query.enums.StringMatchType
-import org.lsposed.lsparanoid.Obfuscate
 
 /**
  * 移除健康 App 检测到设备已 Root 后弹出的对话框。
@@ -27,7 +26,7 @@ class RemoveHealthRootCheck(private val dexKitBridge: DexKitBridge) : YukiBaseHo
 
         //两种签名都落空说明宿主又改了检测结构，必须留痕，否则功能静默失效
         if (check == null) {
-            YLog.error("RemoveHealthRootCheck -> findMethod isNullOrEmpty", tag = DexkitUtils.tag)
+            YLog.error("RemoveHealthRootCheck -> findMethod isNullOrEmpty")
             return
         }
 

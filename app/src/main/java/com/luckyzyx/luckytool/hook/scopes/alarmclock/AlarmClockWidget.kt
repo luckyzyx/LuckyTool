@@ -79,7 +79,7 @@ class AlarmClockWidget(val dexKitBridge: DexKitBridge) : YukiBaseHooker() {
     private fun hookTextRedOne() {
         val onePlusWidget = OnePlusWidget.toClassOrNull()?.resolve()
         if (onePlusWidget == null) {
-            YLog.debug("AlarmClockTextRedOne -> 未找到 OnePlusWidget，跳过", tag = "AlarmClockWidget")
+            YLog.debug("AlarmClockTextRedOne -> 未找到 OnePlusWidget，跳过")
             return
         }
         when {

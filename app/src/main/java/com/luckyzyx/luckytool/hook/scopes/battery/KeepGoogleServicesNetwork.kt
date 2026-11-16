@@ -1,14 +1,13 @@
 package com.luckyzyx.luckytool.hook.scopes.battery
 
 import com.highcapable.kavaref.KavaRef.Companion.resolve
+import com.highcapable.kavaref.extension.isStatic
 import com.highcapable.yukihookapi.extension.kavaref.intercept
 import com.highcapable.yukihookapi.extension.kavaref.toClass
 import com.highcapable.yukihookapi.hook.entity.YukiBaseHooker
 import com.highcapable.yukihookapi.hook.log.YLog
 import com.highcapable.yukihookapi.hook.param.HookChain
-import com.luckyzyx.luckytool.utils.DexkitUtils
 import org.lsposed.lsparanoid.Obfuscate
-import java.lang.reflect.Modifier
 
 /**
  * 阻止电池组件在 Google 连通性探测失败后给 Google 服务禁网。
@@ -36,8 +35,7 @@ object KeepGoogleServicesNetwork : YukiBaseHooker() {
         val controller = runCatching { CONTROLLER_CLASS.toClass().resolve() }.onFailure {
             YLog.error(
                 msg = "KeepGoogleServicesNetwork -> $CONTROLLER_CLASS not found",
-                e = it,
-                tag = DexkitUtils.tag
+                e = it
             )
         }.getOrNull() ?: return
 
@@ -50,14 +48,12 @@ object KeepGoogleServicesNetwork : YukiBaseHooker() {
         }.onFailure {
             YLog.error(
                 msg = "KeepGoogleServicesNetwork -> maybeInformListeners not found",
-                e = it,
-                tag = DexkitUtils.tag
+                e = it
             )
-        }.getOrDefault(emptyList()).filterNot { Modifier.isStatic(it.self.modifiers) }
+        }.getOrDefault(emptyList()).filterNot { it.self.isStatic }
         if (inform.size == 1) inform.single().intercept { liftRestriction() } else YLog.error(
             msg = "KeepGoogleServicesNetwork -> maybeInformListeners not unique (${inform.size}) " +
-                    "[${inform.joinToString { it.self.name }}]",
-            tag = DexkitUtils.tag
+                    "[${inform.joinToString { it.self.name }}]"
         )
 
         //禁网入口二：changeGmsControlState(boolean restricted, Set userChangedPackages)
@@ -69,14 +65,12 @@ object KeepGoogleServicesNetwork : YukiBaseHooker() {
         }.onFailure {
             YLog.error(
                 msg = "KeepGoogleServicesNetwork -> changeGmsControlState not found",
-                e = it,
-                tag = DexkitUtils.tag
+                e = it
             )
-        }.getOrDefault(emptyList()).filterNot { Modifier.isStatic(it.self.modifiers) }
+        }.getOrDefault(emptyList()).filterNot { it.self.isStatic }
         if (control.size == 1) control.single().intercept { liftRestriction() } else YLog.error(
             msg = "KeepGoogleServicesNetwork -> changeGmsControlState not unique (${control.size}) " +
-                    "[${control.joinToString { it.self.name }}]",
-            tag = DexkitUtils.tag
+                    "[${control.joinToString { it.self.name }}]"
         )
     }
 
@@ -89,7 +83,7 @@ object KeepGoogleServicesNetwork : YukiBaseHooker() {
      */
     private fun HookChain.liftRestriction(): Any? {
         if (arg<Boolean>(0) != true) return proceed()
-        YLog.debug("KeepGoogleServicesNetwork -> ${method.name} restricted true -> false", tag = DexkitUtils.tag)
+        YLog.debug("KeepGoogleServicesNetwork -> ${method.name} restricted true -> false")
         return proceed(args.toTypedArray().also { it[0] = false })
     }
 }
