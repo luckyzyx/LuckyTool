@@ -62,6 +62,11 @@ object HookLauncher : YukiBaseHooker() {
                 loadHooker(UnlockTaskLocks(dexKitBridge))
             }
 
+            //允许锁定或解锁已排除活动（C17 起 AppLock 类名与方法名都被混淆，需要 DexKit 按签名定位）
+            if (preferences(ModulePrefs).getBoolean("allow_locking_unlocking_of_excluded_activity", false)) {
+                loadHooker(AllowLockingUnLockingOfExcludedActivity(dexKitBridge))
+            }
+
             //设置桌面布局行列数
             if (preferences(ModulePrefs).getBoolean("launcher_layout_enable", false)) {
                 loadHooker(LauncherLayoutRowColume(dexKitBridge))
@@ -109,10 +114,6 @@ object HookLauncher : YukiBaseHooker() {
             preferences(ModulePrefs).getBoolean("force_enable_docker_background_blur", false)
         ) {
             if (osCode >= 26) loadHooker(EnableDockerBackground)
-        }
-        //允许锁定或解锁已排除活动
-        if (preferences(ModulePrefs).getBoolean("allow_locking_unlocking_of_excluded_activity", false)) {
-            loadHooker(AllowLockingUnLockingOfExcludedActivity)
         }
         //移除App更新圆点
         if (osCode >= 33) loadHooker(RemoveAppUpdateGreenDot)

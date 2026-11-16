@@ -84,6 +84,7 @@ in [TG Channel’s associated groups](https://t.me/LuckyTool)**
 - 修复「移除启动动画」未去除游戏助手启动弹窗动画 V10.43
 - 修复未授予 Root 的新设备跳过应用权限页，直接进主页弹「无 Root」提示
 - 修复「启用Docker背景显示」与「强制启用Docker背景模糊」在 C17 上不生效
+- 修复「允许锁定或解锁已排除活动」不生效 C17
 
 #### 适配
 
