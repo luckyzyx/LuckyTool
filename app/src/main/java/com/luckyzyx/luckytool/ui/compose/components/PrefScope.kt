@@ -3,6 +3,7 @@
 package com.luckyzyx.luckytool.ui.compose.components
 
 import android.content.Context
+
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -15,6 +16,7 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
@@ -872,6 +874,7 @@ class PrefScopeBuilder internal constructor(
                                     modifier = Modifier
                                         .weight(1f, fill = false)
                                         .fillMaxWidth()
+                                        .heightIn(max = dialogBodyMaxHeight(chrome = 200.dp))
                                         .verticalScroll(rememberScrollState()),
                                 ) {
                                     Text(

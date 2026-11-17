@@ -1,10 +1,17 @@
 package com.luckyzyx.luckytool.ui.compose.components
 
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.DialogProperties
 import com.itos.coui.dialog.CouiDialogAction
 import com.itos.coui.dialog.CouiDialogActionStyle
@@ -64,7 +71,16 @@ fun GateDialog(
                 dismissOnClickOutside = false,
             ),
             title = { Text(spec.title) },
-            text = { Text(spec.message) },
+            text = {
+                Column(
+                    Modifier
+                        .fillMaxWidth()
+                        .heightIn(max = dialogBodyMaxHeight(chrome = 160.dp))
+                        .verticalScroll(rememberScrollState()),
+                ) {
+                    Text(spec.message)
+                }
+            },
             confirmButton = {
                 TextButton(onClick = onConfirm) {
                     Text(stringResource(android.R.string.ok))

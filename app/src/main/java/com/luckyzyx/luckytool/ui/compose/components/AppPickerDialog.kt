@@ -292,7 +292,7 @@ private fun MaterialAppPickerDialog(
                         modifier = Modifier
                             .fillMaxWidth()
                             .weight(1f, fill = false)
-                            .heightIn(max = PickerListMaxHeight),
+                            .heightIn(max = dialogListMaxHeight(PickerListMaxHeight, chrome = 280.dp)),
                         verticalArrangement = Arrangement.spacedBy(2.dp),
                     ) {
                         itemsIndexed(filtered, key = { _, app -> app.packageName }) { index, app ->

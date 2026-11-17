@@ -2,8 +2,12 @@ package com.luckyzyx.luckytool.ui.compose.pages
 
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Text
@@ -33,6 +37,7 @@ import com.luckyzyx.luckytool.ui.activity.MainActivity
 import com.luckyzyx.luckytool.ui.compose.components.ActionListDialog
 import com.luckyzyx.luckytool.ui.compose.components.ChoiceItem
 import com.luckyzyx.luckytool.ui.compose.components.MainPageActivationEffect
+import com.luckyzyx.luckytool.ui.compose.components.dialogBodyMaxHeight
 import com.luckyzyx.luckytool.ui.compose.components.coui.CouiAlertDialog
 import com.luckyzyx.luckytool.ui.service.XposedServiceBridge
 import com.luckyzyx.luckytool.ui.shell.ShellBadgeState
@@ -210,16 +215,23 @@ fun HomePage(activity: MainActivity, isCurrentPage: Boolean = true) {
                 onDismissRequest = { showAbout = false },
                 title = { Text(stringResource(R.string.about_author)) },
                 text = {
-                    Text(
-                        text = aboutText,
-                        modifier = Modifier
+                    Column(
+                        Modifier
                             .fillMaxWidth()
-                            .padding(20.dp)
-                            .combinedClickable(
-                                onClick = {},
-                                onLongClick = { toggleHiddenFunction() },
-                            ),
-                    )
+                            .heightIn(max = dialogBodyMaxHeight(chrome = 160.dp))
+                            .verticalScroll(rememberScrollState()),
+                    ) {
+                        Text(
+                            text = aboutText,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(20.dp)
+                                .combinedClickable(
+                                    onClick = {},
+                                    onLongClick = { toggleHiddenFunction() },
+                                ),
+                        )
+                    }
                 },
                 confirmButton = {
                     TextButton(onClick = { showAbout = false }) {
@@ -245,7 +257,16 @@ fun HomePage(activity: MainActivity, isCurrentPage: Boolean = true) {
         when (LocalUiMode.current) {
             UiMode.Material -> AlertDialog(
                 onDismissRequest = { dexDialogVisible = false },
-                text = { Text(stringResource(R.string.optimize_dex_after_system_update)) },
+                text = {
+                    Column(
+                        Modifier
+                            .fillMaxWidth()
+                            .heightIn(max = dialogBodyMaxHeight(chrome = 128.dp))
+                            .verticalScroll(rememberScrollState()),
+                    ) {
+                        Text(stringResource(R.string.optimize_dex_after_system_update))
+                    }
+                },
                 confirmButton = {
                     TextButton(onClick = {
                         dexDialogVisible = false

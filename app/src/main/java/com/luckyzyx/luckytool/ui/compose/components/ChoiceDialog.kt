@@ -341,7 +341,7 @@ private fun MaterialChoiceDialog(
                         modifier = Modifier
                             .fillMaxWidth()
                             .weight(1f, fill = false)
-                            .heightIn(max = ChoiceListMaxHeight),
+                            .heightIn(max = dialogListMaxHeight(ChoiceListMaxHeight, chrome = 160.dp)),
                         verticalArrangement = Arrangement.spacedBy(2.dp),
                     ) {
                         itemsIndexed(rows, key = { _, row -> row.item.key }) { index, row ->

@@ -14,6 +14,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalWindowInfo
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 
 /**
@@ -53,10 +54,7 @@ fun DialogScrollBody(
     actions: (@Composable () -> Unit)? = null,
     content: @Composable ColumnScope.() -> Unit,
 ) {
-    val density = LocalDensity.current
-    val windowHeight = LocalWindowInfo.current.containerDpSize.height
-    val imeHeight = with(density) { WindowInsets.ime.getBottom(this).toDp() }
-    val maxBodyHeight = (windowHeight - imeHeight - HeightReserve).coerceAtLeast(MinBodyHeight)
+    val maxBodyHeight = dialogBodyMaxHeight(HeightReserve)
 
     Column(modifier = modifier.fillMaxWidth()) {
         val bodyModifier = if (scrollable) {
@@ -84,3 +82,45 @@ private val HeightReserve = 140.dp
 
 /** 正文上限的下限，避免输入法占满屏幕时正文被算成 0 高度而无法滚动。 */
 private val MinBodyHeight = 160.dp
+
+/**
+ * 弹层正文（Material AlertDialog 的 text 槽等）可用的最大高度。
+ *
+ * 与 [dialogListMaxHeight] 的差别：列表有「设计上限」，这里的内容没有设计上限，只按窗口可用
+ * 高度收敛；超出部分由调用方加 verticalScroll 滚动。横屏/分屏窗口变矮时，标题 + 正文 + 按钮
+ * 若还用内容自然高度会把按钮顶出屏幕，这里算出正文最多能占的高度。
+ *
+ * @param chrome 弹层里除正文外占用的高度：标题、按钮行与弹层内外边距，按调用点结构传，宁可偏大别偏小。
+ * @param min 正文高度下限，窗口极矮时至少保留这个高度可滚动，而不是塌成 0。
+ */
+@Composable
+fun dialogBodyMaxHeight(chrome: Dp, min: Dp = MinBodyHeight): Dp =
+    (windowBodyBudget() - chrome).coerceAtLeast(min)
+
+/** 弹层正文可用高度预算：窗口高度减去键盘高度（edge-to-edge 下有效）。 */
+@Composable
+internal fun windowBodyBudget(): Dp {
+    val density = LocalDensity.current
+    val windowHeight = LocalWindowInfo.current.containerDpSize.height
+    val imeHeight = with(density) { WindowInsets.ime.getBottom(this).toDp() }
+    return windowHeight - imeHeight
+}
+
+/**
+ * 弹层内列表的高度上限：设计上限与「窗口可用高度」取较小值。
+ *
+ * 横屏 / 分屏等窗口变矮时，正文列表若还用固定上限（如 360/420.dp），标题 + 列表 + 按钮
+ * 会超出屏幕、底部 item 被裁掉。这里按窗口高度动态收敛，让列表自己滚动，保证弹层整体
+ * 不超出屏幕；竖屏窗口足够高时仍用设计上限，行为不变。
+ *
+ * @param designMax 设计上的列表最大高度（竖屏等窗口足够高时生效的上限）。
+ * @param chrome 弹层里除列表外占用的高度：标题、搜索/状态行、按钮行与弹层内外边距，
+ *   每个调用点按自己的结构传；宁可偏大别偏小，偏小会把按钮顶出屏幕。
+ * @param min 列表高度下限，窗口极矮时也至少保留这个高度可滚动，而不是塌成 0。
+ */
+@Composable
+fun dialogListMaxHeight(designMax: Dp, chrome: Dp, min: Dp = MinListHeight): Dp =
+    (windowBodyBudget() - chrome).coerceIn(min, designMax)
+
+/** 弹层内列表的高度下限，避免窗口极矮时列表被算成 0 高度而无法滚动。 */
+private val MinListHeight = 120.dp

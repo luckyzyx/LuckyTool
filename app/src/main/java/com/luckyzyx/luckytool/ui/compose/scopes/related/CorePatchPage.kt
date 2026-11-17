@@ -1,6 +1,11 @@
 package com.luckyzyx.luckytool.ui.compose.scopes.related
 
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -20,6 +25,7 @@ import com.luckyzyx.luckytool.R
 import com.luckyzyx.luckytool.ui.compose.components.PrefCard
 import com.luckyzyx.luckytool.ui.compose.components.PrefRowInset
 import com.luckyzyx.luckytool.ui.compose.components.PrefSwitchRow
+import com.luckyzyx.luckytool.ui.compose.components.dialogBodyMaxHeight
 import com.luckyzyx.luckytool.ui.compose.components.coui.CouiAlertDialog
 import com.luckyzyx.luckytool.ui.compose.scopes.ScopePageSpec
 import com.luckyzyx.luckytool.ui.theme.LocalUiMode
@@ -104,7 +110,16 @@ object CorePatchPage {
                 when (LocalUiMode.current) {
                     UiMode.Material -> AlertDialog(
                         onDismissRequest = { showWarning = false },
-                        text = { Text(stringResource(R.string.use_previous_signatures_warning)) },
+                        text = {
+                            Column(
+                                Modifier
+                                    .fillMaxWidth()
+                                    .heightIn(max = dialogBodyMaxHeight(chrome = 128.dp))
+                                    .verticalScroll(rememberScrollState()),
+                            ) {
+                                Text(stringResource(R.string.use_previous_signatures_warning))
+                            }
+                        },
                         confirmButton = {
                             TextButton(onClick = { showWarning = false }) {
                                 Text(stringResource(android.R.string.ok))

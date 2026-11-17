@@ -11,11 +11,14 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyItemScope
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -53,6 +56,7 @@ import com.luckyzyx.luckytool.data.MemcConfigActivity
 import com.luckyzyx.luckytool.data.MemcConfigPackage
 import com.luckyzyx.luckytool.ui.compose.components.ActionListDialog
 import com.luckyzyx.luckytool.ui.compose.components.AppPickerDialog
+import com.luckyzyx.luckytool.ui.compose.components.dialogBodyMaxHeight
 import com.luckyzyx.luckytool.ui.compose.components.ChoiceItem
 import com.luckyzyx.luckytool.ui.compose.components.ConfirmDialog
 import com.luckyzyx.luckytool.ui.compose.components.PrefCard
@@ -905,7 +909,12 @@ private fun MaterialMemcPackageDialog(
     AlertDialog(
         onDismissRequest = onDismiss,
         text = {
-            Column {
+            Column(
+                Modifier
+                    .fillMaxWidth()
+                    .heightIn(max = dialogBodyMaxHeight(chrome = 128.dp))
+                    .verticalScroll(rememberScrollState()),
+            ) {
                 PickerField(onClick = onPickPackage) {
                     OutlinedTextField(
                         value = packName,
@@ -1261,7 +1270,12 @@ private fun MaterialMemcActivityDialog(
     AlertDialog(
         onDismissRequest = onDismiss,
         text = {
-            Column {
+            Column(
+                Modifier
+                    .fillMaxWidth()
+                    .heightIn(max = dialogBodyMaxHeight(chrome = 128.dp))
+                    .verticalScroll(rememberScrollState()),
+            ) {
                 PickerField(onClick = onPickPackage) {
                     OutlinedTextField(
                         value = packName,
