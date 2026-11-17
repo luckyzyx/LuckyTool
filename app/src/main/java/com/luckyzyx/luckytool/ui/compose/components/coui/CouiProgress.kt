@@ -17,7 +17,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -144,7 +144,7 @@ internal fun CouiLinearProgressIndicator(
     }
 }
 
-/** 进度弹窗的最大宽度：比加载弹窗的 152dp 正文宽，容得下一行应用名加计数 */
+/** 进度弹窗的宽度：固定为最大值，避免宽度随应用名长度来回抖动 */
 private val ProgressDialogMaxWidth = 280.dp
 
 /**
@@ -173,7 +173,7 @@ internal fun CouiProgressDialog(
         Column(
             modifier = modifier
                 .padding(horizontal = CouiDialogDefaults.horizontalMargin)
-                .widthIn(max = ProgressDialogMaxWidth)
+                .width(ProgressDialogMaxWidth)
                 .clip(CouiDialogDefaults.shape)
                 .background(colors.surface)
                 .padding(
