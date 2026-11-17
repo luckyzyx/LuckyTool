@@ -29,6 +29,7 @@ import com.luckyzyx.luckytool.hook.scopes.android.HookWindowManagerService
 import com.luckyzyx.luckytool.hook.scopes.android.LTPODynamicRefreshRate
 import com.luckyzyx.luckytool.hook.scopes.android.MediaVolumeLevel
 import com.luckyzyx.luckytool.hook.scopes.android.MultiAppConfig
+import com.luckyzyx.luckytool.hook.scopes.android.PanoramaWorkStation
 import com.luckyzyx.luckytool.hook.scopes.android.RemoveAccessDeviceLogDialog
 import com.luckyzyx.luckytool.hook.scopes.android.RemoveAlwaysAllowAppStartList
 import com.luckyzyx.luckytool.hook.scopes.android.RemoveAppUninstallButtonBlackList
@@ -98,6 +99,11 @@ object HookAndroid : YukiBaseHooker() {
 
         //浮窗
         loadHooker(ZoomWindowConfig())
+
+        //全景工作台（平板三分屏）
+        if (preferences(ModulePrefs).getBoolean("panorama_work_station", false)) {
+            loadHooker(PanoramaWorkStation)
+        }
 
         //暗色模式服务
         loadHooker(DarkModeService)
