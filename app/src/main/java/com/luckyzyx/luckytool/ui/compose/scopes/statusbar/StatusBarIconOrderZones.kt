@@ -105,7 +105,7 @@ internal const val STATUS_BAR_ICON_ORDER_LEFT_EMPTY_MARKER = "__left_zone_empty_
 private val OrderItemHeight = 64.dp
 
 /** 被拖行进入距列表可视区上下边缘这个范围时开始自动滚动 */
-private val AutoScrollEdge = 150.dp
+private val AutoScrollEdge = 48.dp
 
 /** 自动滚动最快时每帧的位移（贴住边缘时） */
 private val AutoScrollMaxSpeed = 12.dp
@@ -113,8 +113,9 @@ private val AutoScrollMaxSpeed = 12.dp
 /**
  * 自动滚动的每帧位移（纯函数，便于单测）。
  *
- * [visualTop] 是此刻被拖行的窗口 Y，[viewportHeight] 是窗口高度，[edge] 是触发自动滚动的边缘宽度，
- * [maxSpeed] 是贴住边缘时的每帧位移。返回值正 = 向列表下方滚（内容上移），负 = 向上滚，0 = 不滚。
+ * [visualTop] 是被拖行视觉中心的窗口 Y（长按整行和手柄拖动时手指都在行中心附近），
+ * [viewportHeight] 是窗口高度，[edge] 是触发自动滚动的边缘宽度，[maxSpeed] 是贴住边缘时的每帧位移。
+ * 返回值正 = 向列表下方滚（内容上移），负 = 向上滚，0 = 不滚。
  */
 internal fun autoScrollStep(
     visualTop: Float,
@@ -584,9 +585,10 @@ fun StatusBarIconOrderZones(
         if (draggingItem == null || viewportHeight <= 0f) return@LaunchedEffect
         while (isActive && draggingItem != null) {
             withFrameNanos { }
-            // 窗口 Y = 拖动开始时的行位置 + 手指位移（自动滚动的补偿量在两者里抵消）
-            val visualTop = dragRowTop[0] + (dragDelta.floatValue - scrolledBy[0])
-            val dy = autoScrollStep(visualTop, viewportHeight, autoScrollEdge, autoScrollSpeed)
+            // 视觉中心窗口 Y = 拖动开始时的行中心 + 手指位移（自动滚动的补偿量在两者里抵消）；
+            // 用中心而不是行顶判定，否则行顶还没进边缘区、手指却已经在区里时会误触发滚动。
+            val visualCenter = dragRowTop[0] + step / 2f + (dragDelta.floatValue - scrolledBy[0])
+            val dy = autoScrollStep(visualCenter, viewportHeight, autoScrollEdge, autoScrollSpeed)
             if (dy == 0f) continue
             val consumed = listState.scrollBy(dy)
             if (consumed != 0f) {
