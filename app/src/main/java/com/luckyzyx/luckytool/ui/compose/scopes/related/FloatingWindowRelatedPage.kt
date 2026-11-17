@@ -87,14 +87,5 @@ object FloatingWindowRelatedPage {
             summary = c.getString(R.string.need_restart_system),
             onChange = { c.sendPrefsValue("system", "panorama_work_station", it) },
         )
-        if (state.getBoolean("panorama_work_station")) {
-            slider(
-                key = "panorama_max_win_num",
-                title = c.getString(R.string.panorama_max_win_num),
-                valueRange = 0..20,
-                default = 3,
-                onChange = { c.sendPrefsValue("system", "panorama_max_win_num", it) },
-            )
-        }
     }
 }

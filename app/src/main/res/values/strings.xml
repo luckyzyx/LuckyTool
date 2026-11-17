@@ -632,7 +632,6 @@
     <string name="FloatingWindow">Floating Window / Split Screen</string>
     <string name="PanoramaWorkStation">Panorama Work Station</string>
     <string name="panorama_work_station">Enable panorama work station</string>
-    <string name="panorama_max_win_num">Panorama work station window limit</string>
     
     <string name="launcher_drawer_layout_related">Drawer Layout Related</string>
     <string name="enable_drawer_layout_double_line_names">Enable drawer layout double line names</string>

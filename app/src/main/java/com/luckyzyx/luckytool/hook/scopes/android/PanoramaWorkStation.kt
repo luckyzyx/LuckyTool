@@ -17,9 +17,8 @@ object PanoramaWorkStation : YukiBaseHooker() {
 
     override fun onHook() {
         if (!preferences(ModulePrefs).getBoolean("panorama_work_station", false)) return
-        val maxNum = preferences(ModulePrefs).getInt("panorama_max_win_num", 3)
         loadHooker(HookPanoramaWorkBranch())
-        loadHooker(HookFlexibleWindow(maxNum))
+        loadHooker(HookFlexibleWindow())
         loadHooker(HookMiniWindowFeature())
         loadHooker(HookZoomWindow())
         loadHooker(HookCanvasLayout())
@@ -72,9 +71,9 @@ object PanoramaWorkStation : YukiBaseHooker() {
         }
     }
 
-    /** 布局策略固定为平板 + 窗口数上限 + 收起 12 号 zoom 窗口 */
+    /** 布局策略固定为平板 + 收起 12 号 zoom 窗口 */
     @Obfuscate
-    class HookFlexibleWindow(private val maxNum: Int) : YukiBaseHooker() {
+    class HookFlexibleWindow : YukiBaseHooker() {
         override fun onHook() {
             "com.android.server.wm.FlexibleWindowManagerService".toClassOrNull()?.resolve()?.apply {
                 firstMethodOrNull {
@@ -88,14 +87,6 @@ object PanoramaWorkStation : YukiBaseHooker() {
                                 superclass()
                             }.of(instance).get<Any>()
                         }.getOrNull()?.let { result = it }
-                    }
-                }
-                firstMethodOrNull {
-                    name = "getMaxWinNum"
-                    returnType = Int::class
-                }?.hook {
-                    after {
-                        if (maxNum > 0) result = maxNum
                     }
                 }
             }
