@@ -1,14 +1,18 @@
 package com.luckyzyx.luckytool.hook.scopes.launcher
 
+import android.os.Process
 import android.widget.TextView
 import androidx.core.view.isVisible
 import com.highcapable.kavaref.KavaRef.Companion.resolve
 import com.highcapable.kavaref.extension.classOf
+import com.highcapable.yukihookapi.extension.kavaref.hook
 import com.highcapable.yukihookapi.extension.kavaref.toClass
+import com.highcapable.yukihookapi.extension.kavaref.toClassOrNull
 import com.highcapable.yukihookapi.hook.entity.YukiBaseHooker
 import com.luckyzyx.luckytool.utils.DexkitUtils.checkDataList
 import org.lsposed.lsparanoid.Obfuscate
 import org.luckypray.dexkit.DexKitBridge
+import java.lang.reflect.Method
 
 @Obfuscate
 class ForceEnableRecentTaskMemoryDisplay(val dexKitBridge: DexKitBridge) : YukiBaseHooker() {
@@ -16,6 +20,8 @@ class ForceEnableRecentTaskMemoryDisplay(val dexKitBridge: DexKitBridge) : YukiB
     private companion object {
         const val PANEL = "com.oplus.quickstep.views.OplusClearAllPanelView"
     }
+
+    private val memoryReadState = ThreadLocal<MemoryReadState>()
 
     override fun onHook() {
         //Source MemoryInfoManager
@@ -45,6 +51,22 @@ class ForceEnableRecentTaskMemoryDisplay(val dexKitBridge: DexKitBridge) : YukiB
                 }.single().getMethodInstance(hostClassLoader!!).hook { intercept(true) }
                 return
             }
+
+            // 17.x 真实可用内存：只替换官方内存计算方法内第二次 getUnitValue 的入参
+            findMethod {
+                matcher {
+                    paramTypes(classOf<Boolean>())
+                    usingStrings(
+                        "persist.sys.oplus.nandswap.condition",
+                        "get_rom2ram_pinned_bytes", "MemAvailable:"
+                    )
+                    addInvoke {
+                        name("readProcLines")
+                        paramTypes(classOf<String>(), classOf<Array<String>>(), classOf<LongArray>())
+                    }
+                }
+            }.checkDataList("getMemoryInfo").singleOrNull()
+                ?.getMethodInstance(hostClassLoader!!)?.let { hookPhysicalMemory(it) }
 
             // 17.x：面板通过 getIsMem 读这个布尔字段，决定要不要留出内存那一行
             val displaySwitch = dexKitBridge.findField {
@@ -145,7 +167,45 @@ class ForceEnableRecentTaskMemoryDisplay(val dexKitBridge: DexKitBridge) : YukiB
             }.singleOrNull()?.getMethodInstance(hostClassLoader!!)?.hook {
                 after { showMemoryInfo(instance<Any>()) }
             }
-
         }
+    }
+
+    private fun hookPhysicalMemory(memoryMethod: Method) {
+        val loader = hostClassLoader ?: return
+        val conversionMethod = "com.oplus.util.OplusUnitConversionUtils".toClassOrNull(loader)
+            ?.resolve()?.firstMethodOrNull {
+                name = "getUnitValue"
+                parameters(Long::class)
+                returnType = String::class
+            } ?: return
+        val readProcLines = Process::class.java.resolve().firstMethodOrNull {
+            name = "readProcLines"
+            parameters(String::class, Array<String>::class, LongArray::class)
+        } ?: return
+
+        readProcLines.hook {
+            after {
+                val state = memoryReadState.get() ?: return@after
+                val values = arg(2).get<LongArray>() ?: return@after
+                state.availableBytes = values[0] * 1024L
+            }
+        }
+
+        conversionMethod.hook {
+            before {
+                val state = memoryReadState.get() ?: return@before
+                if (++state.conversionIndex == 2) firstArg().set(state.availableBytes)
+            }
+        }
+
+        memoryMethod.hook {
+            before { memoryReadState.set(MemoryReadState()) }
+            after { memoryReadState.remove() }
+        }
+    }
+
+    private class MemoryReadState {
+        var availableBytes = 0L
+        var conversionIndex = 0
     }
 }
