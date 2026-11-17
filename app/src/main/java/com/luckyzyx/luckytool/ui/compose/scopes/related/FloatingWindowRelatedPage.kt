@@ -45,13 +45,6 @@ object FloatingWindowRelatedPage {
                 summary = c.getString(R.string.zoom_window_support_list_summary),
             )
         }
-        if (osCode >= 26) {
-            switch(
-                key = "disable_duplicate_floating_window",
-                title = c.getString(R.string.disable_duplicate_floating_window),
-                summary = c.getString(R.string.disable_duplicate_floating_window_summary),
-            )
-        }
         //27..34 走 SystemUI 侧 zoom 状态机；35+ 走 system_server 侧后台保活
         if (osCode >= 27) {
             switch(
