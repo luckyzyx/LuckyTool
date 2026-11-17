@@ -629,6 +629,10 @@
     <string name="custom_multi_window_display_upper_limit">Custom multi window display upper limit</string>
     <string name="zoom_window_support_list_summary">Enable according to your needs, otherwise there will be irreparable problems</string>
     <string name="force_all_apps_support_split_screen">Force all apps to support split screen</string>
+    <string name="FloatingWindow">Floating Window / Split Screen</string>
+    <string name="PanoramaWorkStation">Panorama Work Station</string>
+    <string name="panorama_work_station">Enable panorama work station</string>
+    <string name="panorama_max_win_num">Panorama work station window limit</string>
     
     <string name="launcher_drawer_layout_related">Drawer Layout Related</string>
     <string name="enable_drawer_layout_double_line_names">Enable drawer layout double line names</string>

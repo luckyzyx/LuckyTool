@@ -8,6 +8,7 @@ import androidx.compose.material.icons.filled.BrightnessMedium
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.MoreHoriz
+import androidx.compose.material.icons.filled.PictureInPictureAlt
 import androidx.compose.material.icons.filled.SignalCellularAlt
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -64,6 +65,7 @@ internal val categoryBadges: Map<String, CategoryBadge> = mapOf(
     "lock_screen" to CategoryBadge(Icons.Filled.Lock, Color(0xFF00BCD4)),
     "application" to CategoryBadge(Icons.Filled.Apps, Color(0xFF3F51B5)),
     "miscellaneous" to CategoryBadge(Icons.Filled.MoreHoriz, Color(0xFF607D8B)),
+    "floating_window" to CategoryBadge(Icons.Filled.PictureInPictureAlt, Color(0xFF00897B)),
 )
 
 /** 页标题：登记在覆盖表的页取固定字符串资源，其余取宿主 App 标签（android_related 取 "android" 的标签） */

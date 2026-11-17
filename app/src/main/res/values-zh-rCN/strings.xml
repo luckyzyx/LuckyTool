@@ -563,6 +563,10 @@
     <string name="custom_multi_window_display_upper_limit">自定义多浮窗显示上限</string>
     <string name="zoom_window_support_list_summary">按需启用，否则将出现其他异常问题</string>
     <string name="force_all_apps_support_split_screen">强制所有应用支持分屏</string>
+    <string name="FloatingWindow">浮窗/分屏</string>
+    <string name="PanoramaWorkStation">全景工作台</string>
+    <string name="panorama_work_station">启用全景工作台</string>
+    <string name="panorama_max_win_num">全景工作台窗口数上限</string>
     <string name="launcher_drawer_layout_related">抽屉布局相关</string>
     <string name="enable_drawer_layout_double_line_names">启用抽屉布局双行名称</string>
     <string name="enable_drawer_layout_adjustment">启用抽屉布局调整</string>

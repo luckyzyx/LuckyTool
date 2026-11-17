@@ -21,13 +21,6 @@ object DialogRelatedPage {
         restartEnabled = true,
     ) {
         val c = requireNotNull(context) { "ScopeScreen 未注入 Context" }
-        if (getOSVersionCode >= 26) {
-            switch(
-                key = "disable_duplicate_floating_window",
-                title = c.getString(R.string.disable_duplicate_floating_window),
-                summary = c.getString(R.string.disable_duplicate_floating_window_summary),
-            )
-        }
         switch(
             key = "remove_low_battery_dialog_warning",
             title = c.getString(R.string.remove_low_battery_dialog_warning),
@@ -42,15 +35,6 @@ object DialogRelatedPage {
             switch(
                 key = "remove_access_device_log_dialog",
                 title = c.getString(R.string.remove_access_device_log_dialog),
-            )
-        }
-        //27..34 走 SystemUI 侧的 zoom 状态机；35+ 走 system_server 侧的后台保活（挂起即上虚拟屏）
-        if (getOSVersionCode >= 27) {
-            switch(
-                key = "run_floating_window_tasks_in_foreground",
-                title = c.getString(R.string.run_floating_window_tasks_in_foreground),
-                summary = c.getString(R.string.need_restart_system),
-                notify = true,
             )
         }
         switch(

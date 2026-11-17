@@ -77,6 +77,7 @@ import com.luckyzyx.luckytool.ui.compose.scopes.related.ApplicationRelatedPage
 import com.luckyzyx.luckytool.ui.compose.scopes.related.CorePatchPage
 import com.luckyzyx.luckytool.ui.compose.scopes.related.DialogRelatedPage
 import com.luckyzyx.luckytool.ui.compose.scopes.related.FingerPrintRelatedPage
+import com.luckyzyx.luckytool.ui.compose.scopes.related.FloatingWindowRelatedPage
 import com.luckyzyx.luckytool.ui.compose.scopes.related.LauncherBackupPage
 import com.luckyzyx.luckytool.ui.compose.scopes.related.LauncherRelatedPage
 import com.luckyzyx.luckytool.ui.compose.scopes.related.LockScreenRelatedPage
@@ -451,6 +452,7 @@ object ScopePageRegistry {
         "android_related",
         "statusbar",
         "launcher",
+        "floating_window",
         "aod",
         "lock_screen",
         "application",
@@ -510,6 +512,7 @@ object ScopePageRegistry {
         "statusbar" to R.string.StatusBar,
         "launcher" to R.string.Desktop,
         "launcher_backup" to R.string.launcher_backup,
+        "floating_window" to R.string.FloatingWindow,
         "aod" to R.string.AodRelated,
         "lock_screen" to R.string.LockScreen,
         "application" to R.string.Application,
@@ -572,6 +575,7 @@ object ScopePageRegistry {
         "androidRelated" to "android_related",
         "launcher" to "launcher",
         "launcherBackup" to "launcher_backup",
+        "floatingWindow" to "floating_window",
         "lockScreen" to "lock_screen",
         "application" to "application",
         "miscellaneous" to "miscellaneous",
@@ -659,6 +663,7 @@ object ScopePageRegistry {
         register(CorePatchPage.spec)
         register(DialogRelatedPage.spec)
         register(FingerPrintRelatedPage.spec)
+        register(FloatingWindowRelatedPage.spec)
         register(LauncherRelatedPage.spec)
         register(LauncherBackupPage.spec)
         register(LockScreenRelatedPage.spec)
