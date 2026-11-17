@@ -66,7 +66,7 @@ object StatusBarBatteryView : YukiBaseHooker() {
 
             //Source StatBatteryMeterView
             "com.oplus.systemui.statusbar.pipeline.battery.ui.view.StatBatteryMeterView".toClass()
-                .resolve().apply {
+                .resolve().optional().apply {
                     (firstMethodOrNull { name = "setTextTypeface" }
                         ?: firstMethod { name = "setFontTypeface" }).hook {
                         if (userTypeface) intercept()

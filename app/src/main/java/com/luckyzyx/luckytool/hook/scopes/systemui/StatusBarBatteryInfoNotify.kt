@@ -50,6 +50,7 @@ object StatusBarBatteryInfoNotify : YukiBaseHooker() {
     private var wirelessCur: Int = 0
 
     private var isCharging: Boolean = false
+    private var isChargingBySystem: Boolean = false
     private var isWireless: Boolean = false
 
     //oplus battery
@@ -142,7 +143,10 @@ object StatusBarBatteryInfoNotify : YukiBaseHooker() {
 
         registerAppLifecycle {
             //BatteryService
-            registerReceiver(Intent.ACTION_BATTERY_CHANGED) { context: Context, _: Intent ->
+            registerReceiver(Intent.ACTION_BATTERY_CHANGED) { context: Context, intent: Intent ->
+                val status = intent.getIntExtra(BatteryManager.EXTRA_STATUS, -1)
+                isChargingBySystem = status == BatteryManager.BATTERY_STATUS_CHARGING ||
+                        status == BatteryManager.BATTERY_STATUS_FULL
                 initInfo()
                 initSend(context)
             }
@@ -170,7 +174,7 @@ object StatusBarBatteryInfoNotify : YukiBaseHooker() {
                 5 -> safeOf("Full") { module.resources.getString(R.string.battery_status_full) }
                 else -> safeOf("Unknown") { module.resources.getString(R.string.battery_status_unknown) }
             }
-            isCharging = statusValue == 2 || statusValue == 5
+            isCharging = isChargingBySystem
             plugged = when (getPlugType(chargeInfo)) {
                 0 -> "Battery"
                 BatteryManager.BATTERY_PLUGGED_AC -> "AC"
@@ -384,6 +388,7 @@ object StatusBarBatteryInfoNotify : YukiBaseHooker() {
             autoCancel(false)
             ongoing(true)
         }
+        NotifyUtils.createChannel(context, channel.instance)
         NotifyUtils.sendNotification(context, NOTIFY_ID, notify.instance)
     }
 
