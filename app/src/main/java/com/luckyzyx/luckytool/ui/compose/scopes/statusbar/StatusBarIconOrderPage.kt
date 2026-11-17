@@ -38,9 +38,11 @@ object StatusBarIconOrderPage {
                 "\n" + c.getString(R.string.need_restart_scope),
         )
         if (state.getBoolean(STATUS_BAR_ICON_ORDER_ENABLED_KEY, false)) {
+            // bare：跳过 COUI 卡片包装——卡片自带的 clip 图层会让约 8192px 之后的内容命中不到
+            // 指针（右区第 39 行往后拖不动），卡片视觉改由 Zones 在自己的 Column 上绘制。
             // 排列：左右两个区域的拖拽列表，松手即写回偏好，宿主侧经 dataChannel 实时生效
             category(c.getString(R.string.statusbar_icon_order_category_arrange))
-            custom {
+            custom(bare = true) {
                 val left by state.stringFlow(STATUS_BAR_ICON_ORDER_LEFT_KEY, "")
                     .collectAsStateWithLifecycle()
                 val right by state.stringFlow(STATUS_BAR_ICON_ORDER_RIGHT_KEY, "")

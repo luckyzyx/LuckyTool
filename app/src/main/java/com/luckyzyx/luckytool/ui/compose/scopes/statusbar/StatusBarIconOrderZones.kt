@@ -516,7 +516,8 @@ fun StatusBarIconOrderZones(
     /** 松手落位：换位（跨区时区界同步增减），然后写回偏好（占位条目不落偏好），宿主侧实时生效 */
     fun commitDrag() {
         val from = dragFrom
-        val to = targetFromPosition(dragRowTop[0] + (dragDelta.floatValue - scrolledBy[0]))
+        val fingerY = dragRowTop[0] + (dragDelta.floatValue - scrolledBy[0])
+        val to = targetFromPosition(fingerY)
         resetDrag()
         if (from !in items.indices || to !in items.indices || from == to) return
         leftCount = zoneDrop(items, leftCount, from, to)
@@ -595,7 +596,15 @@ fun StatusBarIconOrderZones(
         }
     }
 
-    Column(modifier = Modifier.fillMaxWidth()) {
+    Column(
+        modifier = Modifier
+            .padding(horizontal = CouiPageDefaults.horizontalMargin)
+            .fillMaxWidth()
+            .background(
+                CouiPageDefaults.themeColors().card,
+                CouiPageDefaults.shape,
+            ),
+    ) {
         OrderResetRow(
             onReset = {
                 // 重置 = 全新安装状态：左区「时钟 + 通知图标」、右区宿主默认顺序。
