@@ -1,6 +1,5 @@
 package com.luckyzyx.luckytool.ui.compose.components
 
-import android.content.res.Configuration
 import android.os.Build
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
@@ -19,8 +18,7 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.ime
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.rememberScrollState
@@ -51,16 +49,12 @@ import androidx.compose.ui.graphics.TileMode
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.platform.LocalConfiguration
-import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.core.graphics.toColorInt
@@ -92,34 +86,6 @@ private val BarHeight = 28.dp
 
 /** SV 面板圆角：面板裁切与指示圈避让共用同一值，否则圆角会把指示圈咬掉一块 */
 private val PanelCornerRadius = 16.dp
-
-/**
- * 面板滚动区之外、由「标题 + 按钮区 + 模式切换行(40dp) + 切换与面板间距(12dp)」占用的高度。
- * 宁可偏大：偏大只是面板可用高度略小（多滚一点），偏小会把模式切换或按钮挤出可视区。
- */
-private val PickerPanelsChrome = 176.dp
-
-/** 面板滚动区的高度下限：窗口极矮时至少保留这个高度可滚动，而不是塌成 0。 */
-private val MinPickerPanelsHeight = 120.dp
-
-/**
- * 面板（SV/ARGB 面板 + 渐变条 + 预览色块 + 十六进制框）可用的最大高度。
- *
- * 横屏下 COUI 弹窗被 landscapeMaxHeight 压矮，正文整体超窗会滚走顶部的模式切换；这里把模式切换
- * 钉在滚动区外，面板自己按「窗口可用高度」收敛滚动。COUI 线横屏时上限额外受
- * CouiDialogDefaults.landscapeMaxHeight 约束（弹窗实际就这点高）；其余情况按窗口预算收敛。
- */
-@Composable
-private fun pickerPanelsMaxHeight(): Dp {
-    val budget = windowBodyBudget()
-    val landscape = LocalConfiguration.current.orientation == Configuration.ORIENTATION_LANDSCAPE
-    val capped = if (landscape && LocalUiMode.current == UiMode.Coui) {
-        minOf(budget, CouiDialogDefaults.landscapeMaxHeight)
-    } else {
-        budget
-    }
-    return (capped - PickerPanelsChrome).coerceAtLeast(MinPickerPanelsHeight)
-}
 
 /**
  * 指示圈与容器边缘之间保留的可见间隙（含发丝线）。
@@ -160,6 +126,14 @@ private val HexKeyboardOptions = KeyboardOptions(
  */
 private const val MODE_SV_LABEL = "SV"
 private const val MODE_ARGB_LABEL = "ARGB"
+
+/**
+ * 取色模式切换分段选择器的最小宽度。
+ *
+ * "ARGB" 四个字符按标签自然宽度分配段宽时会恰好不够，被 `TextOverflow.Ellipsis` 截成 "AR…"；
+ * 给一个足够大的最小宽度让两段按等宽分配，"ARGB" 就有富余，不会被截断。
+ */
+private val PickerModeSwitchMinWidth = 140.dp
 
 /**
  * ARGB 四通道在颜色 int 中的位偏移（与存储格式 `#AARRGGBB` 一致）。
@@ -309,10 +283,14 @@ private fun MaterialColorPickerDialog(
         onDismissRequest = onDismiss,
         title = { Text(stringResource(R.string.select_color)) },
         text = {
-            ColorPickerBody(
-                state = state,
-                panelsMaxHeight = pickerPanelsMaxHeight(),
-            )
+            Column(
+                Modifier
+                    .fillMaxWidth()
+                    .heightIn(max = dialogBodyMaxHeight(chrome = 160.dp))
+                    .verticalScroll(rememberScrollState()),
+            ) {
+                ColorPickerBody(state = state)
+            }
         },
         confirmButton = {
             TextButton(onClick = { onColorSelected(state.colorInt, formatHex(state.colorInt)) }) {
@@ -354,10 +332,7 @@ private fun CouiColorPickerDialog(
     ) {
         // 正文槽没有内边距，左右留白由调用方补，否则自绘的 SV 面板会顶到弹窗边缘
         Box(Modifier.padding(horizontal = CouiDialogDefaults.contentPadding)) {
-            ColorPickerBody(
-                state = state,
-                panelsMaxHeight = pickerPanelsMaxHeight(),
-            )
+            ColorPickerBody(state = state)
         }
     }
 }
@@ -369,34 +344,12 @@ private fun CouiColorPickerDialog(
 @Composable
 private fun ColorPickerBody(
     state: ColorPickerUiState,
-    panelsMaxHeight: Dp,
 ) {
     Column(Modifier.fillMaxWidth()) {
         PickerModeSwitch(state = state)
 
         Spacer(Modifier.height(12.dp))
 
-        ColorPickerPanels(state = state, maxHeight = panelsMaxHeight)
-    }
-}
-
-/**
- * 面板区（SV/ARGB 面板 + 渐变条 + 预览色块 + 十六进制框）：在模式切换下方内部滚动。
- *
- * 横屏/键盘弹出等窗口变矮时，若模式切换与面板一起滚，切换行会被顶出可视区；这里把切换行留在
- * 外面，面板按 [pickerPanelsMaxHeight] 收敛后自己滚，保证顶部切换行始终可见。
- */
-@Composable
-private fun ColorPickerPanels(
-    state: ColorPickerUiState,
-    maxHeight: Dp,
-) {
-    Column(
-        Modifier
-            .fillMaxWidth()
-            .heightIn(max = maxHeight)
-            .verticalScroll(rememberScrollState()),
-    ) {
         when (state.mode) {
             PickerMode.Sv -> SvPickers(state = state)
             PickerMode.Argb -> ArgbChannelBars(state = state)
@@ -461,7 +414,7 @@ private fun PickerModeSwitch(
 /**
  * COUI 线：API 34 起用官方分段选择器（胶囊容器 + 滑动指示器，可按住拖动切换）。
  *
- * 控件按标签自然宽度收窄，外层居中；低版本取不到该控件（[SegmentedControl] 标注 @RequiresApi(34)），
+ * 控件给一个最小宽度（[PickerModeSwitchMinWidth]）让两段等宽，避免 "ARGB" 被截断，外层居中；低版本取不到该控件（[SegmentedControl] 标注 @RequiresApi(34)），
  * 退回同一组互斥的 COUI 筛选标签，选中态同样由 [ColorPickerUiState.mode] 持有。
  */
 @Composable
@@ -475,6 +428,7 @@ private fun CouiPickerModeSwitch(
         }
         Box(modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
             SegmentedControl(
+                modifier = Modifier.widthIn(min = PickerModeSwitchMinWidth),
                 labels = labels,
                 selectedIndex = state.mode.ordinal,
                 onSelected = { index -> state.mode = PickerMode.entries[index] },

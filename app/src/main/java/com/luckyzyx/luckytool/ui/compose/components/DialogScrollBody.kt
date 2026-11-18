@@ -99,7 +99,7 @@ fun dialogBodyMaxHeight(chrome: Dp, min: Dp = MinBodyHeight): Dp =
 
 /** 弹层正文可用高度预算：窗口高度减去键盘高度（edge-to-edge 下有效）。 */
 @Composable
-internal fun windowBodyBudget(): Dp {
+private fun windowBodyBudget(): Dp {
     val density = LocalDensity.current
     val windowHeight = LocalWindowInfo.current.containerDpSize.height
     val imeHeight = with(density) { WindowInsets.ime.getBottom(this).toDp() }

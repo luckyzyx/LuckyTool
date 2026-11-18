@@ -45,7 +45,6 @@ import com.itos.coui.checkbox.Checkbox as CouiCheckbox
 import com.itos.coui.dialog.CouiDialogAction
 import com.itos.coui.dialog.CouiDialogActionStyle
 import com.itos.coui.dialog.CouiDialogDefaults
-import com.itos.coui.dialog.Dialog as CouiDialog
 import com.itos.coui.radiobutton.RadioButton as CouiRadioButton
 import com.itos.coui.shape.CouiShape
 import com.itos.coui.text.CouiTextKind
@@ -54,6 +53,7 @@ import com.itos.coui.theme.CouiTheme
 import com.luckyzyx.luckytool.R
 import com.luckyzyx.luckytool.ui.compose.components.AppItem
 import com.luckyzyx.luckytool.ui.compose.components.AppListItem
+import com.luckyzyx.luckytool.ui.compose.components.coui.CouiAlertDialog
 import com.luckyzyx.luckytool.ui.theme.LocalUiMode
 import com.luckyzyx.luckytool.ui.theme.UiMode
 
@@ -417,7 +417,7 @@ private fun CouiChoiceDialog(
         )
         return
     }
-    CouiDialog(
+    CouiAlertDialog(
         modifier = modifier,
         onDismissRequest = onDismiss,
         title = title,
