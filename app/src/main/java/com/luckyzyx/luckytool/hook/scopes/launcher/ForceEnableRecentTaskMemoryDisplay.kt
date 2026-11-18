@@ -46,7 +46,7 @@ class ForceEnableRecentTaskMemoryDisplay(val dexKitBridge: DexKitBridge) : YukiB
                 return
             }
 
-            // 17.x：面板通过 getIsMem 读这个布尔字段，决定要不要留出内存那一行
+            // 17.0.1 的 getIsMem 直接读这个布尔字段；17.0.0 的 getIsMem 调一个 0 参 boolean 方法，由后者读字段
             val displaySwitch = dexKitBridge.findField {
                 matcher {
                     declaredClass(memoryManager)
@@ -55,9 +55,22 @@ class ForceEnableRecentTaskMemoryDisplay(val dexKitBridge: DexKitBridge) : YukiB
                         name("getIsMem")
                     }
                 }
+            }.singleOrNull()?.name ?: dexKitBridge.findField {
+                matcher {
+                    declaredClass(memoryManager)
+                    type(classOf<Boolean>())
+                    addReadMethod {
+                        paramCount(0)
+                        returnType(classOf<Boolean>())
+                        addCaller {
+                            declaredClass(PANEL)
+                            name("getIsMem")
+                        }
+                    }
+                }
             }.apply {
                 checkDataList("displaySwitch")
-            }.single().name
+            }.singleOrNull()?.name ?: return
             val switchField = memoryManager.toClass().resolve().firstField { name = displaySwitch }
 
             // 单例可能在本 hook 安装前就创建好，先定位它（类里唯一的自引用静态字段）
