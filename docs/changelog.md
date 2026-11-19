@@ -47,6 +47,7 @@ in [TG Channel’s associated groups](https://t.me/LuckyTool)**
 - 阻止电池组件切断 Google 服务网络 C16+
 - 移除强制进入超级省电模式 (@RealmeOS)
 - 重启系统与快速重启增加二次确认
+- 添加全景工作台三分屏 (@天伞桜)
 
 #### 优化
 
@@ -115,6 +116,11 @@ in [TG Channel’s associated groups](https://t.me/LuckyTool)**
 - 移除电池限制插件 C17
 - 移除保存与重命名文件字数限制 v17.9.16 (064a5da)
 - 移除乐划锁屏图片保存水印 v40.10.15.2 (4e15fb0)
+
+#### 更改
+
+- 「自动释放应用空间」默认关闭
+- 分离浮窗/分屏功能到单独页面
 
 #### 移除
 

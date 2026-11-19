@@ -47,6 +47,7 @@ Entries for versions before `1.3.5_beta` are currently only available in the
 - Very dark mode control page (a replacement when the system page renders empty)
 - Remove forced automatic entry into super power saving mode (@RealmeOS)
 - Confirmation dialog before restarting the system and before a fast reboot
+- Add the panorama work station 3-split view (@天伞桜)
 
 #### Optimized
 
@@ -122,6 +123,7 @@ Entries for versions before `1.3.5_beta` are currently only available in the
 #### Changed
 
 - "Auto app archiving" is now disabled by default
+- Split the floating window / split screen features into a separate page
 
 #### Removed
 
