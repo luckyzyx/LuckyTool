@@ -199,6 +199,8 @@
     <string name="replace_system_root_state_detection">替換系統Root狀態檢測</string>
     <string name="allow_untrusted_touch">允許不受信任的觸控</string>
     <string name="allow_untrusted_touch_summary">解決部分視窗或頁面被遮擋導致無法觸控問題</string>
+    <string name="usb_debugging_auto_authorize">USB偵錯自動授權</string>
+    <string name="usb_debugging_auto_authorize_summary">需要在開發人員選項開啟USB偵錯</string>
     <string name="customized_gaussian_blur_effect_level">自定義高斯模糊效果級別</string>
     <string name="disable_temperature_control_listener">禁用溫度控制監聽器</string>
     <string name="set_ltpo_refresh_rate_mode">設定 LTPO 刷新率模式</string>

@@ -40,6 +40,7 @@ import com.luckyzyx.luckytool.hook.scopes.android.ReplaceSystemRootStateDetectio
 import com.luckyzyx.luckytool.hook.scopes.android.ScrollToTopWhiteList
 import com.luckyzyx.luckytool.hook.scopes.android.SetAppUpdateDotDisplayMode
 import com.luckyzyx.luckytool.hook.scopes.android.SystemEnableVolumeKeyControlFlashlight
+import com.luckyzyx.luckytool.hook.scopes.android.UsbDebuggingAutoAuthorize
 import com.luckyzyx.luckytool.hook.scopes.android.ZoomWindowConfig
 import com.luckyzyx.luckytool.utils.A13
 import com.luckyzyx.luckytool.utils.ModulePrefs
@@ -84,6 +85,9 @@ object HookAndroid : YukiBaseHooker() {
 
         //USB安装确认
         loadHooker(ADBInstallConfirm)
+
+        //USB调试自动授权
+        loadHooker(UsbDebuggingAutoAuthorize)
 
         //移除72小时密码验证
         loadHooker(RemovePasswordTimeoutVerification)

@@ -114,6 +114,8 @@
     <string name="replace_system_root_state_detection">Înlocuiți detectarea stării de root a sistemului</string>
     <string name="allow_untrusted_touch">Permite atingeri nesigure</string>
     <string name="allow_untrusted_touch_summary">Rezolvă problema că unele ferestre sau pagini sunt blocate și nu pot fi atinse</string>
+    <string name="usb_debugging_auto_authorize">Autorizare automată a depanării USB</string>
+    <string name="usb_debugging_auto_authorize_summary">Activați depanarea USB în opțiunile pentru dezvoltatori</string>
     <string name="customized_gaussian_blur_effect_level">Efect de blur gaussian personalizat</string>
     <string name="disable_temperature_control_listener">Dezactivează ascultătorul de control al temperaturii</string>
     <string name="set_ltpo_refresh_rate_mode">Setați modul de reîmprospătare LTPO</string>

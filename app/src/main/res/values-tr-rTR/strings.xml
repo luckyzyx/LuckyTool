@@ -129,6 +129,8 @@
     <string name="replace_system_root_state_detection">Sistem Root durumu algılamasını değiştir</string>
     <string name="allow_untrusted_touch">Güvenilmeyen dokunmalara izin ver</string>
     <string name="allow_untrusted_touch_summary">Bazı pencerelerin veya sayfaların engellenerek dokunulamaz hale gelmesi sorununu çözer</string>
+    <string name="usb_debugging_auto_authorize">USB hata ayıklama otomatik yetkilendirme</string>
+    <string name="usb_debugging_auto_authorize_summary">Geliştirici seçeneklerinde USB hata ayıklamayı etkinleştirin</string>
     <string name="customized_gaussian_blur_effect_level">Özelleştirilmiş gauss bulanıklığı efekt seviyesi</string>
     <string name="disable_temperature_control_listener">Sıcaklık kontrolü dinleyicisini devre dışı bırak</string>
     <string name="set_ltpo_refresh_rate_mode">LTPO yenileme hızı modunu ayarla</string>

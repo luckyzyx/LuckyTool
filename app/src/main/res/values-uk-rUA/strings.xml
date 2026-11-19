@@ -114,6 +114,8 @@
     <string name="replace_system_root_state_detection">Replace system root state detection</string>
     <string name="allow_untrusted_touch">Дозволити небажані торкання</string>
     <string name="allow_untrusted_touch_summary">Solve the problem that some windows or pages are blocked and cannot be touched</string>
+    <string name="usb_debugging_auto_authorize">Автоматична авторизація налагодження USB</string>
+    <string name="usb_debugging_auto_authorize_summary">Увімкніть налагодження USB у параметрах розробника</string>
     <string name="customized_gaussian_blur_effect_level">Customized gaussian blur effect level</string>
     <string name="disable_temperature_control_listener">Disable temperature control listener</string>
     <string name="set_ltpo_refresh_rate_mode">Set LTPO refresh rate mode</string>

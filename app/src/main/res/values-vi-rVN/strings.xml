@@ -116,6 +116,8 @@
     <string name="replace_system_root_state_detection">Thay thế phát hiện trạng thái root của hệ thống</string>
     <string name="allow_untrusted_touch">Cho phép chạm không đáng tin cậy</string>
     <string name="allow_untrusted_touch_summary">Giải quyết vấn đề một số cửa sổ hoặc trang bị chặn không thể chạm vào</string>
+    <string name="usb_debugging_auto_authorize">Tự động cấp quyền gỡ lỗi USB</string>
+    <string name="usb_debugging_auto_authorize_summary">Hãy bật gỡ lỗi USB trong tùy chọn nhà phát triển</string>
     <string name="customized_gaussian_blur_effect_level">Tùy chỉnh mức độ hiệu ứng nhòe Gaussian</string>
     <string name="disable_temperature_control_listener">Tắt trình nghe kiểm soát nhiệt độ</string>
     <string name="set_ltpo_refresh_rate_mode">Đặt chế độ tốc độ làm mới LTPO</string>

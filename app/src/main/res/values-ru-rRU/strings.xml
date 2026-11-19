@@ -114,6 +114,8 @@
     <string name="replace_system_root_state_detection">Заменить определение состояния root системы</string>
     <string name="allow_untrusted_touch">Разрешить нежелательные касания</string>
     <string name="allow_untrusted_touch_summary">Решите проблему, связанную с тем, что некоторые окна или страницы заблокированы и их нельзя коснуться</string>
+    <string name="usb_debugging_auto_authorize">Автоматическая авторизация отладки USB</string>
+    <string name="usb_debugging_auto_authorize_summary">Включите отладку USB в параметрах разработчика</string>
     <string name="customized_gaussian_blur_effect_level">Настраиваемый уровень эффекта размытия гауса</string>
     <string name="disable_temperature_control_listener">Отключить обработчик контроля температуры</string>
     <string name="set_ltpo_refresh_rate_mode">Установить режим частоты обновления LTPO</string>

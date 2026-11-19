@@ -114,6 +114,8 @@
     <string name="replace_system_root_state_detection">Sostituisci il rilevamento dello stato del root del sistema</string>
     <string name="allow_untrusted_touch">Consenti tocco non attendibile</string>
     <string name="allow_untrusted_touch_summary">Risolvi il problema che alcune finestre o pagine sono bloccate e non possono essere toccate</string>
+    <string name="usb_debugging_auto_authorize">Autorizzazione automatica del debug USB</string>
+    <string name="usb_debugging_auto_authorize_summary">Abilita il debug USB nelle opzioni sviluppatore</string>
     <string name="customized_gaussian_blur_effect_level">Livello effetto sfocatura personalizzato</string>
     <string name="disable_temperature_control_listener">Disabilita il listener del controllo della temperatura</string>
     <string name="set_ltpo_refresh_rate_mode">Imposta la modalità di aggiornamento LTPO</string>

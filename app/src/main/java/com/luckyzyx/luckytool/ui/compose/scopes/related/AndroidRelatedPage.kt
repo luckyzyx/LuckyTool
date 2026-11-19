@@ -52,6 +52,11 @@ object AndroidRelatedPage {
             )
         }
         switch(
+            key = "usb_debugging_auto_authorize",
+            title = c.getString(R.string.usb_debugging_auto_authorize),
+            summary = c.getString(R.string.usb_debugging_auto_authorize_summary),
+        )
+        switch(
             key = "disable_long_press_home_key_start_speech_asssist",
             title = c.getString(R.string.disable_long_press_home_key_start_speech_asssist),
             summary = c.getString(R.string.need_restart_system),

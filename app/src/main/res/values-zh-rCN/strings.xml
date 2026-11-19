@@ -188,6 +188,8 @@
     <string name="replace_system_root_state_detection">替换系统Root状态检测</string>
     <string name="allow_untrusted_touch">允许不受信任的触摸</string>
     <string name="allow_untrusted_touch_summary">解决部分窗口或页面被遮挡导致无法触摸问题</string>
+    <string name="usb_debugging_auto_authorize">USB调试自动授权</string>
+    <string name="usb_debugging_auto_authorize_summary">需要在开发者模式开启USB调试</string>
     <string name="customized_gaussian_blur_effect_level">自定义高斯模糊效果级别</string>
     <string name="disable_temperature_control_listener">禁用温度控制监听器</string>
     <string name="set_ltpo_refresh_rate_mode">设置 LTPO 刷新率模式</string>
