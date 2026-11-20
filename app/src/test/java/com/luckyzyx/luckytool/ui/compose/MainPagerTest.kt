@@ -41,10 +41,6 @@ import com.luckyzyx.luckytool.ui.shell.LocalEnableBlur
 import com.luckyzyx.luckytool.ui.shell.ShellBadgeState
 import com.luckyzyx.luckytool.ui.shell.LocalEnableFloatingBottomBar
 import com.luckyzyx.luckytool.ui.shell.LocalFloatingBottomBarStyle
-import com.luckyzyx.luckytool.ui.shell.LocalPagerInterceptionMode
-import com.luckyzyx.luckytool.ui.shell.PagerModeCrossAxis
-import com.luckyzyx.luckytool.ui.shell.PagerModeIosLike
-import com.luckyzyx.luckytool.ui.shell.PagerModeNative
 import com.luckyzyx.luckytool.ui.theme.AppSettings
 import com.luckyzyx.luckytool.ui.theme.ColorMode
 import com.luckyzyx.luckytool.ui.theme.LocalUiMode
@@ -110,13 +106,13 @@ class MainPagerTest {
 
     @Test
     @Config(sdk = [35])
-    fun `liquid glass bottom bar shares the same pager navigation`() {
+    fun `coui switches directly and ignores horizontal page drags`() {
         PagerHost(UiMode.Coui, floating = true, floatingStyle = FloatingBottomBarStyle.IosLike, blur = true).use { h ->
             h.ui.clickLabel("其他")
             h.ui.advance()
             h.assertSettled(0)
             h.ui.drag(700f, 800f, 120f, 800f)
-            h.assertSettled(1)
+            h.assertSettled(0)
             h.ui.clickLabel("设置")
             h.ui.advance()
             h.assertSettled(4)
@@ -124,10 +120,10 @@ class MainPagerTest {
     }
 
     @Test
-    fun `all gesture modes allow resting horizontal paging and leave vertical scroll to the list`() {
-        for (mode in listOf(PagerModeNative, PagerModeCrossAxis, PagerModeIosLike)) {
+    fun `default gestures allow horizontal paging and leave vertical scroll to the list`() {
+        for (mode in listOf(UiMode.Material)) {
             PagerHost().use { h ->
-                h.gestureMode = mode
+                h.mode = mode
                 h.ui.advance()
                 h.ui.drag(410f, 300f, 410f, 300f)
                 assertEquals("Paging must not consume row taps", 1, h.clicks[MainTab.Home])
@@ -140,38 +136,6 @@ class MainPagerTest {
                 h.assertSettled(2)
                 assertTrue("Returning must preserve the list position", h.lists.getValue(MainTab.Home).firstVisibleItemIndex > 0)
             }
-        }
-    }
-
-    @Test
-    fun `cross-axis interrupts list momentum while iOS mode requires a second horizontal swipe`() {
-        for (appearance in UiMode.entries) {
-            for (mode in listOf(PagerModeCrossAxis, PagerModeIosLike)) {
-                PagerHost(appearance).use { h ->
-                    h.gestureMode = mode
-                    h.ui.advance()
-                    h.ui.drag(410f, 1400f, 410f, 350f, holdBeforeUp = false, settle = false)
-                    assertTrue("The scenario must start with list momentum", h.lists.getValue(MainTab.Home).isScrollInProgress)
-                    h.ui.drag(700f, 800f, 120f, 800f)
-                    if (mode == PagerModeCrossAxis) {
-                        h.assertSettled(3)
-                    } else {
-                        h.assertSettled(2)
-                        assertFalse(h.lists.getValue(MainTab.Home).isScrollInProgress)
-                        h.ui.drag(700f, 800f, 120f, 800f)
-                        h.assertSettled(3)
-                    }
-                }
-            }
-        }
-    }
-
-    @Test
-    fun `cross-axis can change pages while a Coui list rebounds at its top edge`() {
-        PagerHost(UiMode.Coui).use { h ->
-            h.ui.drag(410f, 450f, 410f, 1300f, holdBeforeUp = false, settle = false)
-            h.ui.drag(700f, 800f, 120f, 800f)
-            h.assertSettled(3)
         }
     }
 
@@ -441,7 +405,6 @@ class MainPagerTest {
         var blur by mutableStateOf(blur)
         var mode by mutableStateOf(mode)
         var floating by mutableStateOf(floating)
-        var gestureMode by mutableIntStateOf(PagerModeCrossAxis)
         var active by mutableStateOf(true)
         lateinit var state: MainPagerState
         val lists = mutableMapOf<MainTab, LazyListState>()
@@ -461,7 +424,6 @@ class MainPagerTest {
                     LocalEnableFloatingBottomBar provides this.floating,
                     LocalFloatingBottomBarStyle provides this.floatingStyle,
                     LocalEnableBlur provides this.blur,
-                    LocalPagerInterceptionMode provides gestureMode,
                 ) {
                     AppTheme(AppSettings(colorMode = color, dynamicColor = false), uiMode = this.mode) {
                         val pager = rememberPagerState(initialPage = 2) { MainTab.entries.size }
@@ -521,8 +483,8 @@ class MainPagerTest {
             assertFalse(state.isNavigating)
             assertFalse(state.pagerState.isScrollInProgress)
             assertEquals(page, state.selectedPage)
-            assertEquals(page, state.pagerState.currentPage)
-            assertEquals(page, state.pagerState.settledPage)
+            if (mode != UiMode.Coui) assertEquals(page, state.pagerState.currentPage)
+            assertEquals(page, state.settledPage)
         }
 
         override fun close() = ui.close()
