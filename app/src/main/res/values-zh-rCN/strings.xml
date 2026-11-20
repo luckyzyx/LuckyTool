@@ -309,6 +309,12 @@
     <string name="remove_mobile_data_inout">移除移动数据箭头</string>
     <string name="remove_mobile_data_type">移除移动数据类型</string>
     <string name="hide_non_network_card_icon">隐藏非上网卡图标</string>
+    <string name="mobile_signal_display">移动信号显示</string>
+    <string name="mobile_signal_system_default">系统默认</string>
+    <string name="mobile_signal_stack_both">双卡信号叠加</string>
+    <string name="mobile_signal_stack_rotated">双卡信号叠加（逆时针旋转 90°）</string>
+    <string name="mobile_signal_display_restart">重启系统界面后生效。</string>
+    <string name="mobile_signal_secondary_description">副卡信号：4 格中的 %1$d 格</string>
     <string name="hide_inactive_signal_labels_gen2x2">隐藏非活动信号标签 Gen2x2</string>
     <string name="hide_nosim_noservice">隐藏 SIM 卡无服务图标</string>
     <string name="StatusBarBluetoothIcon">蓝牙图标</string>

@@ -336,6 +336,12 @@
     <string name="remove_mobile_data_inout">Remove Mobile data inout</string>
     <string name="remove_mobile_data_type">Remove Mobile data type</string>
     <string name="hide_non_network_card_icon">Hide non-network card icons</string>
+    <string name="mobile_signal_display">Mobile signal display</string>
+    <string name="mobile_signal_system_default">System default</string>
+    <string name="mobile_signal_stack_both">Stack both SIMs</string>
+    <string name="mobile_signal_stack_rotated">Stack both SIMs (rotated 90°)</string>
+    <string name="mobile_signal_display_restart">Restart System UI to apply.</string>
+    <string name="mobile_signal_secondary_description">Second SIM: %1$d of 4 signal bars</string>
     <string name="hide_inactive_signal_labels_gen2x2">Hide inactive signal labels Gen2x2</string>
     <string name="hide_nosim_noservice">Hide SIM card no service icon</string>
     
