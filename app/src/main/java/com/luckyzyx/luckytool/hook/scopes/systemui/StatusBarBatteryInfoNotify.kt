@@ -8,8 +8,10 @@ import android.os.SystemProperties
 import android.util.TypedValue
 import android.widget.RemoteViews
 import androidx.core.graphics.drawable.IconCompat
+import com.highcapable.betterandroid.ui.component.notification.NotificationPoster
 import com.highcapable.betterandroid.ui.component.notification.factory.Notification
 import com.highcapable.betterandroid.ui.component.notification.factory.NotificationChannel
+import com.highcapable.betterandroid.ui.component.notification.factory.asPoster
 import com.highcapable.betterandroid.ui.component.notification.type.NotificationImportance
 import com.highcapable.yukihookapi.hook.entity.YukiBaseHooker
 import com.highcapable.yukihookapi.hook.log.YLog
@@ -20,7 +22,6 @@ import com.luckyzyx.luckytool.hook.utils.sysui.BatteryControllerUtils
 import com.luckyzyx.luckytool.utils.DeviceUtils.calcLocalHealth
 import com.luckyzyx.luckytool.utils.DevicesConfigUtils
 import com.luckyzyx.luckytool.utils.ModulePrefs
-import com.luckyzyx.luckytool.utils.NotifyUtils
 import com.luckyzyx.luckytool.utils.formatDate
 import com.luckyzyx.luckytool.utils.formatDecimals
 import com.luckyzyx.luckytool.utils.getBooleanProperty
@@ -84,6 +85,7 @@ object StatusBarBatteryInfoNotify : YukiBaseHooker() {
     private const val CHANNEL_ID = "luckytool_notify"
     private const val CHANNEL_NAME = "LuckyTool"
 
+    private var notifyPoster: NotificationPoster? = null
     private val channel = NotificationChannel(
         channelId = CHANNEL_ID, importance = NotificationImportance.DEFAULT
     ) {
@@ -227,9 +229,9 @@ object StatusBarBatteryInfoNotify : YukiBaseHooker() {
 
             "2" -> if (isCharging) sendNotification(
                 context, showChargerInfo, showUpdateTime, isSimple, showVolMode
-            ) else clearNotification(context)
+            ) else notifyPoster?.cancel()
 
-            else -> clearNotification(context)
+            else -> notifyPoster?.cancel()
         }
     }
 
@@ -253,7 +255,7 @@ object StatusBarBatteryInfoNotify : YukiBaseHooker() {
         val powerCalc = if (isSeriesDual || isParallelDual) {
             (voltage + voltage2) * electricCurrent / 1000.0
         } else voltage * electricCurrent / 1000.0
-        
+
         val batteryIcon = safeOf(android.R.drawable.sym_def_app_icon) {
             if (isCharging) R.drawable.ic_round_battery_charging_full_24
             else when (level) {
@@ -384,11 +386,7 @@ object StatusBarBatteryInfoNotify : YukiBaseHooker() {
             autoCancel(false)
             ongoing(true)
         }
-        NotifyUtils.sendNotification(context, NOTIFY_ID, notify.instance)
-    }
-
-    private fun clearNotification(context: Context) {
-        NotifyUtils.clearNotification(context, NOTIFY_ID)
+        notifyPoster = notify.asPoster().post(NOTIFY_ID)
     }
 
     private fun getChargeInfo(): Properties {
