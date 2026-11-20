@@ -48,6 +48,7 @@ in [TG Channel’s associated groups](https://t.me/LuckyTool)**
 - 移除强制进入超级省电模式 (@RealmeOS)
 - 重启系统与快速重启增加二次确认
 - 添加全景工作台三分屏 (@天伞桜)
+- 添加 USB 调试自动授权 (@RealmeOS)
 
 #### 优化
 
