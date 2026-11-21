@@ -83,6 +83,7 @@
         <activity
                 android:name=".ui.activity.ShortcutActivity"
                 android:excludeFromRecents="true"
+                android:taskAffinity="${applicationId}.shortcut"
                 android:exported="false"
                 android:theme="@android:style/Theme.Translucent">
             <intent-filter>
