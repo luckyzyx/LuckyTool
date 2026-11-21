@@ -49,8 +49,7 @@ class HookAppBadge(val dexKitBridge: DexKitBridge) : YukiBaseHooker() {
                         if ((creationFlags and 2) != 0) return@before
                         val userHandle = userField.copy().of(instance).get<UserHandle>()
                         val userId = userHandle?.hashCode() ?: -1
-                        val apiResult = runCatching { OplusMultiAppManager.getInstance().isMultiAppUserId(userId) }.getOrNull()
-                        val isCloneUser = apiResult == true
+                        val isCloneUser = OplusMultiAppManager.getInstance().isMultiAppUserId(userId)
                         val needClearBadge = when {
                             isClone && isCloneUser -> true
                             isWork && userId != 0 && !isCloneUser -> true
