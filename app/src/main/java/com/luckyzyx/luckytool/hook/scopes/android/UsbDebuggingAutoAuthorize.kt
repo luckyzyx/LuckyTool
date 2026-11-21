@@ -2,9 +2,8 @@ package com.luckyzyx.luckytool.hook.scopes.android
 
 import com.highcapable.kavaref.KavaRef.Companion.resolve
 import com.highcapable.yukihookapi.extension.kavaref.hook
-import com.highcapable.yukihookapi.extension.kavaref.toClassOrNull
+import com.highcapable.yukihookapi.extension.kavaref.toClass
 import com.highcapable.yukihookapi.hook.entity.YukiBaseHooker
-import com.highcapable.yukihookapi.hook.log.YLog
 import com.luckyzyx.luckytool.utils.ModulePrefs
 import org.lsposed.lsparanoid.Obfuscate
 import java.util.concurrent.atomic.AtomicBoolean
@@ -25,27 +24,22 @@ object UsbDebuggingAutoAuthorize : YukiBaseHooker() {
         dataChannel.wait<Boolean>(PREF_KEY) { enabled.set(it) }
 
         //Source AdbDebuggingManager -> startConfirmationForKey
-        "com.android.server.adb.AdbDebuggingManager".toClassOrNull()?.resolve()?.apply {
-            firstMethodOrNull {
+        "com.android.server.adb.AdbDebuggingManager".toClass().resolve().apply {
+            firstMethod {
                 name = "startConfirmationForKey"
                 parameters(String::class, String::class)
-            }?.hook {
+            }.hook {
                 before {
                     if (!enabled.get()) return@before
                     val key = firstArg().get<String>() ?: return@before
-                    val allowDebugging = firstMethodOrNull {
+                    val allowDebugging = firstMethod {
                         name = "allowDebugging"
                         parameters(Boolean::class, String::class)
                     }
-                    if (allowDebugging == null) {
-                        YLog.warn("$TAG: allowDebugging not found")
-                        return@before
-                    }
                     allowDebugging.of(instance).invoke(true, key)
-                    YLog.debug("$TAG: auto authorize new adb key")
                     result = null
                 }
-            } ?: YLog.warn("$TAG: startConfirmationForKey not found")
-        } ?: YLog.warn("$TAG: AdbDebuggingManager not found")
+            }
+        }
     }
 }
