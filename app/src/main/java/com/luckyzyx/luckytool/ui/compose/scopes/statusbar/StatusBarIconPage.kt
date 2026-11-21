@@ -3,6 +3,7 @@ package com.luckyzyx.luckytool.ui.compose.scopes.statusbar
 import com.luckyzyx.luckytool.R
 import com.luckyzyx.luckytool.ui.compose.scopes.ScopePageSpec
 import com.luckyzyx.luckytool.utils.A13
+import com.luckyzyx.luckytool.utils.MobileSignalDisplay
 import com.luckyzyx.luckytool.utils.ModulePrefs
 import com.luckyzyx.luckytool.utils.SDK
 import com.luckyzyx.luckytool.utils.getOSVersionCode
@@ -46,6 +47,23 @@ object StatusBarIconPage {
         }
         // 移动数据
         category(c.getString(R.string.StatusBarMobileDataIcon))
+        val stackSupported = MobileSignalDisplay.isSupported(osCode)
+        val stacked = stackSupported &&
+            MobileSignalDisplay.isStacked(state.getString(MobileSignalDisplay.KEY, MobileSignalDisplay.SYSTEM))
+        if (stackSupported) {
+            list(
+                key = MobileSignalDisplay.KEY,
+                title = c.getString(R.string.mobile_signal_display),
+                entries = arrayOf(
+                    c.getString(R.string.mobile_signal_system_default),
+                    c.getString(R.string.mobile_signal_stack_both),
+                    c.getString(R.string.mobile_signal_stack_rotated),
+                ),
+                entryValues = arrayOf(MobileSignalDisplay.SYSTEM, MobileSignalDisplay.STACKED, MobileSignalDisplay.ROTATED),
+                default = MobileSignalDisplay.SYSTEM,
+                summary = c.getString(R.string.mobile_signal_display_restart),
+            )
+        }
         switch(
             key = "remove_mobile_data_inout",
             title = c.getString(R.string.remove_mobile_data_inout),
@@ -54,11 +72,13 @@ object StatusBarIconPage {
             key = "remove_mobile_data_type",
             title = c.getString(R.string.remove_mobile_data_type),
         )
-        switch(
-            key = "hide_non_network_card_icon",
-            title = c.getString(R.string.hide_non_network_card_icon),
-            notify = true,
-        )
+        if (!stacked) {
+            switch(
+                key = "hide_non_network_card_icon",
+                title = c.getString(R.string.hide_non_network_card_icon),
+                notify = true,
+            )
+        }
         if (osCode < 34) {
             switch(
                 key = "hide_inactive_signal_labels_gen2x2",
