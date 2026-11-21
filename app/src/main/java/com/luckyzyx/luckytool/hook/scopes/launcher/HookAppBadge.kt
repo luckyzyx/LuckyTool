@@ -33,7 +33,7 @@ class HookAppBadge(val dexKitBridge: DexKitBridge) : YukiBaseHooker() {
             // 直接调用框架的 OplusMultiAppManager 分身判定接口
 
             // 宿主给桌面图标补徽标的统一入口是 BitmapInfo.applyFlags：
-            // 它按 this.flags 的位决定画工作/分身徽标。分身用户(990..999)在图标 flags
+            // 它按 this.flags 的位决定画工作/分身徽标。分身用户在图标 flags
             // 重算时可能被误判成工作资料，从而带上工作位画出工作徽标。
             // 这里用经典 before 模式而不是拦截器，是因为要改写原方法的 int 参数：
             // 给创建 flags 置 bit2 是宿主自身的跳过徽标位(OplusBubbleTextView.mHideBadge 同款)，
@@ -50,7 +50,7 @@ class HookAppBadge(val dexKitBridge: DexKitBridge) : YukiBaseHooker() {
                         val userHandle = userField.copy().of(instance).get<UserHandle>()
                         val userId = userHandle?.hashCode() ?: -1
                         val apiResult = runCatching { OplusMultiAppManager.getInstance().isMultiAppUserId(userId) }.getOrNull()
-                        val isCloneUser = userId in 990..999 || apiResult == true
+                        val isCloneUser = apiResult == true
                         val needClearBadge = when {
                             isClone && isCloneUser -> true
                             isWork && userId != 0 && !isCloneUser -> true
