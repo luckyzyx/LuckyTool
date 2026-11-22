@@ -35,7 +35,13 @@ class CustomRotateScreenButtonSize(val dexKitBridge: DexKitBridge) : YukiBaseHoo
 
         //Source FloatingRotationButton C13+
         //通过窗口标题和公开 API 定位, 不依赖混淆后的类名、方法名和字段名。
-        val layoutData = dexKitBridge.findMethod {
+        val layoutData = dexKitBridge.findClass {
+            matcher {
+                usingStrings("FloatingRotationButton")
+            }
+        }.apply {
+            checkDataList("CustomRotateScreenButtonSize layoutMethod class")
+        }.findMethod {
             matcher {
                 paramCount(0)
                 returnType(classOf<WindowManager.LayoutParams>())

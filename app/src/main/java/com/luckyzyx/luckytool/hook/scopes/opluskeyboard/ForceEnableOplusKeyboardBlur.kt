@@ -70,7 +70,13 @@ class ForceEnableOplusKeyboardBlur(private val dexKitBridge: DexKitBridge) : Yuk
         // - 旧版本把「跟随系统深浅色」这个条件写在自己身上，只有 c() 是无参、返回 boolean 且使用 key_day_night_mode 的方法；
         // - 键盘 1.8.35.17 起该条件被拆进主题工具的内部类（f$a），总闸类里只剩一次对它的调用。
         // 先按旧特征找，找不到再顺着「谁调用了主题读取方法」找总闸类。
-        val oldGate = dexKitBridge.findMethod {
+        val oldGate = dexKitBridge.findClass {
+            matcher {
+                usingStrings("key_day_night_mode")
+            }
+        }.apply {
+            checkDataList("ForceEnableOplusKeyboardBlur Gate class")
+        }.findMethod {
             matcher {
                 paramCount(0)
                 returnType(classOf<Boolean>())
@@ -81,13 +87,35 @@ class ForceEnableOplusKeyboardBlur(private val dexKitBridge: DexKitBridge) : Yuk
         val gateClass = if (oldGate.isNotEmpty()) {
             oldGate.checkDataList("ForceEnableOplusKeyboardBlur Gate").single().className
         } else {
-            val dayNightModeGetter = dexKitBridge.findMethod {
+            val dayNightModeGetter = dexKitBridge.findClass {
+                matcher {
+                    usingStrings("key_day_night_mode")
+                }
+            }.apply {
+                checkDataList("ForceEnableOplusKeyboardBlur DayNightMode class")
+            }.findMethod {
                 matcher {
                     paramCount(0)
                     usingStrings("key_day_night_mode")
                 }
             }.checkDataList("ForceEnableOplusKeyboardBlur DayNightMode").single()
-            dexKitBridge.findMethod {
+            dexKitBridge.findClass {
+                matcher {
+                    methods {
+                        add {
+                            paramCount(0)
+                            returnType(classOf<Boolean>())
+                            addInvoke {
+                                paramCount(0)
+                                name(dayNightModeGetter.methodName)
+                                declaredClass(dayNightModeGetter.className)
+                            }
+                        }
+                    }
+                }
+            }.apply {
+                checkDataList("ForceEnableOplusKeyboardBlur Gate class")
+            }.findMethod {
                 matcher {
                     paramCount(0)
                     returnType(classOf<Boolean>())
@@ -115,7 +143,13 @@ class ForceEnableOplusKeyboardBlur(private val dexKitBridge: DexKitBridge) : Yuk
 
         //Source SettingsPrefs
         // 系统「质感模糊」开关，驱动 f11731a 这个 LiveData
-        val materialBlurSetting = dexKitBridge.findMethod {
+        val materialBlurSetting = dexKitBridge.findClass {
+            matcher {
+                usingStrings("SettingsPrefs", SYSTEM_MATERIAL_BLUR)
+            }
+        }.apply {
+            checkDataList("ForceEnableOplusKeyboardBlur MaterialBlurSetting class")
+        }.findMethod {
             matcher {
                 paramCount(0)
                 returnType(classOf<Boolean>())

@@ -22,40 +22,69 @@ class RemoveAdsAtDownloadPageBottom(val dexKitBridge: DexKitBridge) : YukiBaseHo
         ).toClass()
 
         //Source AppRecommendManager -> LinearLayout setVisibility 0/8 500L
-        dexKitBridge.findMethod {
+        dexKitBridge.findClass {
             matcher {
-                paramCount(0)
-                returnType(Void.TYPE)
-                usingNumbers(0, 8, 500L)
-                usingFields {
+                methods {
                     add {
-                        type(recommendConfig)
-                        addWriteMethod {
-                            paramTypes(recommendConfig)
-                            returnType(Void.TYPE)
-                        }
-                    }
-                    add {
-                        type(classOf<LinearLayout>())
-                        addWriteMethod {
-                            paramCount(0)
-                            returnType(Void.TYPE)
+                        paramCount(0)
+                        returnType(Void.TYPE)
+                        usingNumbers(0, 8, 500L)
+                        usingFields {
+                            add {
+                                type(recommendConfig)
+                                addWriteMethod {
+                                    paramTypes(recommendConfig)
+                                    returnType(Void.TYPE)
+                                }
+                            }
+                            add {
+                                type(classOf<LinearLayout>())
+                                addWriteMethod {
+                                    paramCount(0)
+                                    returnType(Void.TYPE)
+                                }
+                            }
                         }
                     }
                 }
             }
         }.apply {
-            checkDataList("RemoveAdsAtDownloadPageBottom")
-            single().className.toClass().resolve().apply {
-                firstMethod {
-                    name = single().methodName
-                    emptyParameters()
+            checkDataList("RemoveAdsAtDownloadPageBottom class")
+            findMethod {
+                matcher {
+                    paramCount(0)
                     returnType(Void.TYPE)
-                }.hook {
-                    before {
-                        firstField { type(LinearLayout::class) }.of(instance).get<View>()
-                            ?.isVisible = false
-                        result = null
+                    usingNumbers(0, 8, 500L)
+                    usingFields {
+                        add {
+                            type(recommendConfig)
+                            addWriteMethod {
+                                paramTypes(recommendConfig)
+                                returnType(Void.TYPE)
+                            }
+                        }
+                        add {
+                            type(classOf<LinearLayout>())
+                            addWriteMethod {
+                                paramCount(0)
+                                returnType(Void.TYPE)
+                            }
+                        }
+                    }
+                }
+            }.apply {
+                checkDataList("RemoveAdsAtDownloadPageBottom")
+                single().className.toClass().resolve().apply {
+                    firstMethod {
+                        name = single().methodName
+                        emptyParameters()
+                        returnType(Void.TYPE)
+                    }.hook {
+                        before {
+                            firstField { type(LinearLayout::class) }.of(instance).get<View>()
+                                ?.isVisible = false
+                            result = null
+                        }
                     }
                 }
             }

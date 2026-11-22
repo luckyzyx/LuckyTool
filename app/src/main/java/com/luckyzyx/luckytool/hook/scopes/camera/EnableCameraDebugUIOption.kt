@@ -17,61 +17,71 @@ import java.util.concurrent.ExecutorService
 class EnableCameraDebugUIOption(val dexKitBridge: DexKitBridge) : YukiBaseHooker() {
     override fun onHook() {
         //Source ConfigSetUtils
-        dexKitBridge.findMethod {
+        dexKitBridge.findClass {
             matcher {
-                declaredClass {
-                    addFieldForType(classOf<ExecutorService>())
-                    addMethod {
-                        paramCount(0)
-                        returnType(classOf<Boolean>())
-                    }
+                addFieldForType(classOf<ExecutorService>())
+                addMethod {
+                    paramCount(0)
+                    returnType(classOf<Boolean>())
                 }
-                paramCount(0)
-                returnType(classOf<Boolean>())
                 usingStrings("iq_config_set", "hal_config_set")
             }
         }.apply {
-            checkDataList("EnableCameraDebugUIOption ConfigSet")
-            single().className.toClass().resolve().apply {
-                firstMethod {
-                    name = single().methodName
-                    emptyParameters()
-                    returnType = Boolean::class
-                }.hook {
-                    intercept(true)
+            checkDataList("EnableCameraDebugUIOption ConfigSet class")
+            findMethod {
+                matcher {
+                    paramCount(0)
+                    returnType(classOf<Boolean>())
+                    usingStrings("iq_config_set", "hal_config_set")
+                }
+            }.apply {
+                checkDataList("EnableCameraDebugUIOption ConfigSet")
+                single().className.toClass().resolve().apply {
+                    firstMethod {
+                        name = single().methodName
+                        emptyParameters()
+                        returnType = Boolean::class
+                    }.hook {
+                        intercept(true)
+                    }
                 }
             }
         }
 
         //Source NetworkAuthenticationUtils
-        dexKitBridge.findMethod {
+        dexKitBridge.findClass {
             matcher {
-                declaredClass {
-                    addFieldForType(classOf<Context>())
-                    addFieldForType(classOf<LongArray>())
-                    addMethod {
-                        paramTypes(classOf<Long>())
-                        returnType(classOf<Boolean>())
-                    }
-                    addMethod {
-                        paramTypes(classOf<String>())
-                        returnType(classOf<Boolean>())
-                    }
+                addFieldForType(classOf<Context>())
+                addFieldForType(classOf<LongArray>())
+                addMethod {
+                    paramTypes(classOf<Long>())
+                    returnType(classOf<Boolean>())
                 }
-                paramTypes(classOf<Long>())
-                returnType(classOf<Boolean>())
-                usingNumbers(3600000)
+                addMethod {
+                    paramTypes(classOf<String>())
+                    returnType(classOf<Boolean>())
+                }
                 usingStrings("NetworkAuthenticationUtils")
             }
         }.apply {
-            checkDataList("EnableCameraDebugUIOption NetworkAuthentication")
-            single().className.toClass().resolve().apply {
-                firstMethod {
-                    name = single().methodName
-                    parameters(Long::class)
-                    returnType = Boolean::class
-                }.hook {
-                    intercept(false)
+            checkDataList("EnableCameraDebugUIOption NetworkAuthentication class")
+            findMethod {
+                matcher {
+                    paramTypes(classOf<Long>())
+                    returnType(classOf<Boolean>())
+                    usingNumbers(3600000)
+                    usingStrings("NetworkAuthenticationUtils")
+                }
+            }.apply {
+                checkDataList("EnableCameraDebugUIOption NetworkAuthentication")
+                single().className.toClass().resolve().apply {
+                    firstMethod {
+                        name = single().methodName
+                        parameters(Long::class)
+                        returnType = Boolean::class
+                    }.hook {
+                        intercept(false)
+                    }
                 }
             }
         }

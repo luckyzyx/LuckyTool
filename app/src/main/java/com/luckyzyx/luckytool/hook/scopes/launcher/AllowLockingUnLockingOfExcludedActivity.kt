@@ -43,13 +43,25 @@ class AllowLockingUnLockingOfExcludedActivity(val dexKitBridge: DexKitBridge) : 
 
     override fun onHook() {
         //DexKit 查的是 dex 文件，只给类名与方法名；可 hook 的 Method 要在宿主类加载器里查，链式三步省不掉
-        val entry = dexKitBridge.findMethod {
+        val entry = dexKitBridge.findClass {
+            matcher {
+                methods {
+                    add {
+                        paramTypes(classOf<String>(), classOf<String>(), classOf<Intent>())
+                        returnType(classOf<Boolean>())
+                    }
+                }
+            }
+        }.apply {
+            checkDataList("AllowLockingUnLockingOfExcludedActivity AppLockSupportLock class")
+        }.findMethod {
             matcher {
                 paramTypes(classOf<String>(), classOf<String>(), classOf<Intent>())
                 returnType(classOf<Boolean>())
             }
-        }.checkDataList("AllowLockingUnLockingOfExcludedActivity AppLockSupportLock")
-            .singleOrNull { it.className.startsWith("$APP_LOCK_PACKAGE.") }
+        }.apply {
+            checkDataList("AllowLockingUnLockingOfExcludedActivity AppLockSupportLock")
+        }.singleOrNull { it.className.startsWith("$APP_LOCK_PACKAGE.") }
             ?: return hookByKnownClassNames()
 
         entry.className.toClass().resolve().firstMethodOrNull {

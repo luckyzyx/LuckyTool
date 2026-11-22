@@ -30,21 +30,28 @@ class RiderModeAppListWhitelist(val dexKitBridge: DexKitBridge) : YukiBaseHooker
 
     /** 旧版支持应用名单：SupportAppHelper.a(Context) 返回「名称,包名,图标名」数组。 */
     private fun hookSupportAppHelper() {
-        dexKitBridge.findMethod {
+        dexKitBridge.findClass {
             matcher {
-                paramTypes(classOf<Context>())
-                usingStrings("system properties country")
+                usingStrings("SupportAppHelper", "country")
             }
         }.apply {
-            checkDataList("RiderModeAppListWhitelist SupportAppHelper")
-            single().className.toClass().resolve().apply {
-                firstMethod {
-                    name = single().methodName
-                    parameters(Context::class)
-                    returnType = ArrayClass(classOf<String>())
-                }.intercept {
-                    val context = firstArg<Context>() ?: return@intercept proceed()
-                    buildSupportApps(context)
+            checkDataList("RiderModeAppListWhitelist SupportAppHelper class")
+            findMethod {
+                matcher {
+                    paramTypes(classOf<Context>())
+                    usingStrings("country")
+                }
+            }.apply {
+                checkDataList("RiderModeAppListWhitelist SupportAppHelper")
+                single().className.toClass().resolve().apply {
+                    firstMethod {
+                        name = single().methodName
+                        parameters(Context::class)
+                        returnType = ArrayClass(classOf<String>())
+                    }.intercept {
+                        val context = firstArg<Context>() ?: return@intercept proceed()
+                        buildSupportApps(context)
+                    }
                 }
             }
         }
@@ -56,28 +63,35 @@ class RiderModeAppListWhitelist(val dexKitBridge: DexKitBridge) : YukiBaseHooker
      * 再交给原解析逻辑生成最终列表。
      */
     private fun hookWorkbenchConfigParser() {
-        dexKitBridge.findMethod {
+        dexKitBridge.findClass {
             matcher {
-                paramTypes(classOf<Map<*, *>>())
-                usingStrings("parseAppConfigList: input=")
+                usingStrings("AppOpenModeUtils", "parseAppConfigList")
             }
         }.apply {
-            checkDataList("RiderModeAppListWhitelist AppOpenModeUtils.parseAppConfigList")
-            single().className.toClass().resolve().apply {
-                firstMethod {
-                    name = single().methodName
-                    parameters(Map::class)
-                    returnType = List::class
-                }.intercept {
-                    val configMap = firstArg<Map<*, *>>() ?: return@intercept proceed()
-                    val merged = LinkedHashMap<String, Any?>()
-                    configMap.forEach { (key, value) -> merged[key as String] = value }
-                    val existing = merged.keys.map { it.substringBefore('#') }.toHashSet()
-                    val context = hostApplication ?: return@intercept proceed()
-                    queryLaunchablePackages(context).forEach { pkg ->
-                        if (pkg !in existing) merged[pkg] = 0
+            checkDataList("RiderModeAppListWhitelist AppOpenModeUtils.parseAppConfigList class")
+            findMethod {
+                matcher {
+                    paramTypes(classOf<Map<*, *>>())
+                    usingStrings("parseAppConfigList")
+                }
+            }.apply {
+                checkDataList("RiderModeAppListWhitelist AppOpenModeUtils.parseAppConfigList")
+                single().className.toClass().resolve().apply {
+                    firstMethod {
+                        name = single().methodName
+                        parameters(Map::class)
+                        returnType = List::class
+                    }.intercept {
+                        val configMap = firstArg<Map<*, *>>() ?: return@intercept proceed()
+                        val merged = LinkedHashMap<String, Any?>()
+                        configMap.forEach { (key, value) -> merged[key as String] = value }
+                        val existing = merged.keys.map { it.substringBefore('#') }.toHashSet()
+                        val context = hostApplication ?: return@intercept proceed()
+                        queryLaunchablePackages(context).forEach { pkg ->
+                            if (pkg !in existing) merged[pkg] = 0
+                        }
+                        proceed(arrayOf(merged))
                     }
-                    proceed(arrayOf(merged))
                 }
             }
         }

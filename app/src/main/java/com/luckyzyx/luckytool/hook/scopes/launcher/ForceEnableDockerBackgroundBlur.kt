@@ -1,6 +1,7 @@
 package com.luckyzyx.luckytool.hook.scopes.launcher
 
 import com.highcapable.kavaref.KavaRef.Companion.resolve
+import com.highcapable.kavaref.extension.classOf
 import com.highcapable.yukihookapi.extension.kavaref.hook
 import com.highcapable.yukihookapi.extension.kavaref.interceptAll
 import com.highcapable.yukihookapi.extension.kavaref.toClass
@@ -23,9 +24,8 @@ class ForceEnableDockerBackgroundBlur(private val dexKitBridge: DexKitBridge) : 
         private const val BLUR_PROPERTIES_COMPANION =
             "com.android.launcher3.uioverrides.states.blurdrawable.OplusBlurProperties\$Companion"
 
-        /** C17 混淆后的 ScreenUtils 里 setCurrentDisplayRotation 的日志字符串，DexKit 用它定位类 */
-        private const val SCREEN_UTILS_ROTATION_LOG =
-            "ScreenUtils#setCurrentDisplayRotation rotation="
+        /** C17 混淆后的 ScreenUtils 的 LOG TAG，DexKit 用它定位类 */
+        private const val SCREEN_UTILS_ROTATION_LOG = "ScreenUtils"
     }
 
     override fun onHook() {
@@ -60,11 +60,20 @@ class ForceEnableDockerBackgroundBlur(private val dexKitBridge: DexKitBridge) : 
                 before { if (forcing.get() == true) result = true }
             }
         // C17 的 large display 判定在混淆后的 ScreenUtils 里；类名与方法名都被混淆，
-        // 按日志字符串用 DexKit 定位类，再按结构挂所有无参 boolean 方法
+        // 按 LOG TAG 用 DexKit 定位类，再按结构挂所有无参 boolean 方法
         runCatching {
-            val screenUtilsClass = dexKitBridge.findMethod {
+            val screenUtilsClass = dexKitBridge.findClass {
                 matcher { usingStrings(SCREEN_UTILS_ROTATION_LOG) }
-            }.checkDataList("ForceEnableDockerBackgroundBlur ScreenUtils").single().className
+            }.apply {
+                checkDataList("ForceEnableDockerBackgroundBlur ScreenUtils class")
+            }.findMethod {
+                matcher {
+                    usingStrings(SCREEN_UTILS_ROTATION_LOG)
+                    paramTypes(classOf<Int>())
+                }
+            }.apply {
+                checkDataList("ForceEnableDockerBackgroundBlur ScreenUtils")
+            }.single().className
             screenUtilsClass.toClass().resolve().apply {
                 method { emptyParameters(); returnType = Boolean::class }.interceptAll {
                     if (forcing.get() == true) true else proceed()

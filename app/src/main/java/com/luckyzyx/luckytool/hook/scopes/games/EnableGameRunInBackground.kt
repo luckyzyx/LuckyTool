@@ -58,7 +58,7 @@ class EnableGameRunInBackground(
         //Source HangUpUtil.startBackgroundHangUp
         //开始挂机被内联进一个多用途 Runnable，靠 byte 动作值选分支，这里只接管开始挂机那一支
         dexKitBridge.findClass {
-            matcher { usingStrings("startBackgroundHangUp not in game, return") }
+            matcher { usingStrings("startBackgroundHangUp") }
         }.apply {
             checkDataList("EnableGameRunInBackground HangUp Runnable")
             val clazz = single().name.toClass()

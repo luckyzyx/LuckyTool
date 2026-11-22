@@ -76,17 +76,29 @@ class HookAppBadge(val dexKitBridge: DexKitBridge) : YukiBaseHooker() {
             // getUserBadgeForDensity，分身资料运行时会拿到工作徽标，所以这里把返回值置空。
             // C16 及以下类名与方法名均未混淆，按名字定位；C17 起方法被混淆为 b(UserHandle)，只能经 DexKit 定位。
             if (osCode >= 40) {
-                dexKitBridge.findMethod {
+                dexKitBridge.findClass {
                     matcher {
-                        paramTypes(classOf<UserHandle>())
-                        returnType(classOf<Drawable>())
+                        methods {
+                            add {
+                                paramTypes(classOf<UserHandle>())
+                                returnType(classOf<Drawable>())
+                            }
+                        }
                     }
                 }.apply {
-                    checkDataList("getCloneAppDrawable")
-                }.single().getMethodInstance(hostClassLoader!!).hook {
-                    after {
-                        if (!isClone) return@after
-                        result = null
+                    checkDataList("getCloneAppDrawable class")
+                    findMethod {
+                        matcher {
+                            paramTypes(classOf<UserHandle>())
+                            returnType(classOf<Drawable>())
+                        }
+                    }.apply {
+                        checkDataList("getCloneAppDrawable")
+                    }.single().getMethodInstance(hostClassLoader!!).hook {
+                        after {
+                            if (!isClone) return@after
+                            result = null
+                        }
                     }
                 }
             } else {

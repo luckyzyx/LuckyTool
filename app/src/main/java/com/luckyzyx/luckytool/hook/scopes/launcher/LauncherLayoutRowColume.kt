@@ -36,7 +36,7 @@ class LauncherLayoutRowColume(val dexKitBridge: DexKitBridge) : YukiBaseHooker()
             }
             if (uiConfigList.isNullOrEmpty()) {
                 uiConfigList = dexKitBridge.findClass {
-                    matcher { usingStrings("getLayoutTablet : isUseSmallLayout = ") }
+                    matcher { usingStrings("isUseSmallLayout") }
                 }
             }
             val uiConfig = uiConfigList.apply {
@@ -132,7 +132,23 @@ class LauncherLayoutRowColume(val dexKitBridge: DexKitBridge) : YukiBaseHooker()
 
             //Source IconFallenUtils (混淆类名逐版本变化, 新版本已剥离 .source, 改用调用点锚定)
             //getLogicCellX(ItemInfo)I 计算桌面图标所在列数, 只被图标掉落动画管理器调用(同类同参的 g(ItemInfo)Z 靠返回类型排除)
-            val getLogicCellX = dexKitBridge.findMethod {
+            val getLogicCellX = dexKitBridge.findClass {
+                matcher {
+                    methods {
+                        add {
+                            paramTypes("com.android.launcher3.model.data.ItemInfo".toClass())
+                            returnType(classOf<Int>())
+                            addCaller {
+                                declaredClass {
+                                    className("com.android.launcher3.util.OplusIconFallenAnimationManager")
+                                }
+                            }
+                        }
+                    }
+                }
+            }.apply {
+                checkDataList("LauncherLayoutRowColume getLogicCellX class")
+            }.findMethod {
                 matcher {
                     paramTypes("com.android.launcher3.model.data.ItemInfo".toClass())
                     returnType(classOf<Int>())

@@ -14,26 +14,30 @@ import org.luckypray.dexkit.DexKitBridge
 class RemoveAdsFromDownloadDialog(val dexKitBridge: DexKitBridge) : YukiBaseHooker() {
     override fun onHook() {
         //Source DownloadCardAdProvider
-        dexKitBridge.findMethod {
+        dexKitBridge.findClass {
             matcher {
-                declaredClass {
                 addFieldForType(classOf<Context>())
-                    addFieldForType(classOf<String>())
-                    addMethod {
+                addFieldForType(classOf<String>())
+                addMethod {
                     paramTypes(classOf<Context>(), classOf<Int>())
-                        returnType(Void.TYPE)
-                    }
-                    usingStrings("DownloadCardAdProvider")
+                    returnType(Void.TYPE)
                 }
                 usingStrings("DownloadCardAdProvider", "createAdRequest", "appName", "posIds")
             }
         }.apply {
-            checkDataList("RemoveAdsFromDownloadDialog")
-            single().className.toClass().resolve().apply {
-                firstMethod {
-                    name = single().methodName
-                }.hook {
-                    intercept()
+            checkDataList("RemoveAdsFromDownloadDialog class")
+            findMethod {
+                matcher {
+                    usingStrings("DownloadCardAdProvider", "createAdRequest", "appName", "posIds")
+                }
+            }.apply {
+                checkDataList("RemoveAdsFromDownloadDialog")
+                single().className.toClass().resolve().apply {
+                    firstMethod {
+                        name = single().methodName
+                    }.hook {
+                        intercept()
+                    }
                 }
             }
         }

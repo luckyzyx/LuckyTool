@@ -57,22 +57,41 @@ class HookLauncherFeature(val dexKitBridge: DexKitBridge) : YukiBaseHooker() {
                 // DisplayController.hasNavigationBar()」的方法，调用方覆盖 StackPagedViewEx、
                 // getToRecentsFocusPage、AppToOverviewAnimationProvider（判定失败时打
                 // "getFocusToNextPageTarget fail, no support"）与卡片优先策略
-                dexKitBridge.findMethod {
+                dexKitBridge.findClass {
                     matcher {
-                        paramCount(1)
-                        paramTypes(classOf<Boolean>())
-                        returnType(classOf<Boolean>())
-                        addInvoke {
-                            name("hasNavigationBar")
-                            declaredClass("com.android.launcher3.util.DisplayController")
+                        methods {
+                            add {
+                                paramCount(1)
+                                paramTypes(classOf<Boolean>())
+                                returnType(classOf<Boolean>())
+                                addInvoke {
+                                    name("hasNavigationBar")
+                                    declaredClass("com.android.launcher3.util.DisplayController")
+                                }
+                            }
                         }
                     }
                 }.apply {
                     checkDataList(
-                        "find method AppFeatureUtils.isSupportAutoFocusToNextPageInOverviewState"
+                        "find method AppFeatureUtils.isSupportAutoFocusToNextPageInOverviewState class"
                     )
-                }.singleOrNull()?.getMethodInstance(hostClassLoader!!)?.hook {
-                    intercept(false)
+                    findMethod {
+                        matcher {
+                            paramCount(1)
+                            paramTypes(classOf<Boolean>())
+                            returnType(classOf<Boolean>())
+                            addInvoke {
+                                name("hasNavigationBar")
+                                declaredClass("com.android.launcher3.util.DisplayController")
+                            }
+                        }
+                    }.apply {
+                        checkDataList(
+                            "find method AppFeatureUtils.isSupportAutoFocusToNextPageInOverviewState"
+                        )
+                    }.singleOrNull()?.getMethodInstance(hostClassLoader!!)?.hook {
+                        intercept(false)
+                    }
                 }
             }
 
@@ -155,20 +174,26 @@ class HookLauncherFeature(val dexKitBridge: DexKitBridge) : YukiBaseHooker() {
             // 总闸类靠它自己的调试输出（FeatureOption 全量开关表）定位，字符串只出现在该类上
             val featureOptionClass = dexKitBridge.findClass {
                 matcher {
-                    usingStrings("Features:\n\tisLayout4x4: ")
+                    usingStrings("isLayout4x4")
                 }
             }.checkDataList("find class FeatureOption").singleOrNull()?.name ?: return
-            dexKitBridge.findMethod {
+            dexKitBridge.findClass {
                 matcher {
-                    declaredClass(featureOptionClass)
-                    paramCount(0)
-                    returnType(classOf<Boolean>())
-                    callerMethods { add { declaredClass("com.android.common.util.c") } }
+                    className(featureOptionClass)
                 }
             }.apply {
-                checkDataList("find method FeatureOption isDockerMax5")
-            }.singleOrNull()?.getMethodInstance(hostClassLoader!!)?.hook {
-                intercept(false)
+                checkDataList("find method FeatureOption isDockerMax5 class")
+                findMethod {
+                    matcher {
+                        paramCount(0)
+                        returnType(classOf<Boolean>())
+                        callerMethods { add { declaredClass("com.android.common.util.c") } }
+                    }
+                }.apply {
+                    checkDataList("find method FeatureOption isDockerMax5")
+                }.singleOrNull()?.getMethodInstance(hostClassLoader!!)?.hook {
+                    intercept(false)
+                }
             }
         }
     }

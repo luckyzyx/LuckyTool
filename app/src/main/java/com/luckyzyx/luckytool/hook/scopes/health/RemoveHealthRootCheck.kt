@@ -43,9 +43,12 @@ class RemoveHealthRootCheck(private val dexKitBridge: DexKitBridge) : YukiBaseHo
      * 必须排掉构造器：同包里 d 的构造器 <init>(Activity) 签名完全一样，钩上它会在弹窗出现时炸掉监听器。
      * 同一份代码可能落在多个 dex 里，按「类名+方法名」去重后再要求唯一。
      */
-    private fun findCheck(paramType: String) = dexKitBridge.findMethod {
+    private fun findCheck(paramType: String) = dexKitBridge.findClass {
         matcher {
-            declaredClass("com.heytap.health.safety.safetycheck", StringMatchType.StartsWith)
+            className("com.heytap.health.safety.safetycheck", StringMatchType.StartsWith)
+        }
+    }.findMethod {
+        matcher {
             paramTypes(paramType)
             returnType(Void.TYPE)
         }

@@ -20,29 +20,33 @@ class UnlockStartupLimit(val dexKitBridge: DexKitBridge) : YukiBaseHooker() {
 
         //Source StartupManager.java
         //Search -> ? 5 : 20; -> Method
-        dexKitBridge.findMethod {
+        dexKitBridge.findClass {
             matcher {
-                declaredClass {
-                    addFieldForType(classOf<Context>())
-                    addFieldForType(recordDatabase)
-                    usingStrings("StartupManager")
-                    addMethod { paramCount(0);returnType(classOf<Int>()) }
-                    addMethod { paramTypes(classOf<Intent>());returnType(Void.TYPE) }
-                    addMethod { paramTypes(classOf<Bundle>());returnType(Void.TYPE) }
-                }
-                paramCount(0)
-                returnType(classOf<Int>())
-                usingNumbers(5, 20)
+                addFieldForType(classOf<Context>())
+                addFieldForType(recordDatabase)
+                usingStrings("StartupManager")
+                addMethod { paramCount(0);returnType(classOf<Int>()) }
+                addMethod { paramTypes(classOf<Intent>());returnType(Void.TYPE) }
+                addMethod { paramTypes(classOf<Bundle>());returnType(Void.TYPE) }
             }
         }.apply {
-            checkDataList("UnlockStartupLimit")
-            single().className.toClass().resolve().apply {
-                firstMethod {
-                    name = single().methodName
-                    emptyParameters()
-                    returnType = Int::class
-                }.hook {
-                    intercept(999)
+            checkDataList("UnlockStartupLimit class")
+            findMethod {
+                matcher {
+                    paramCount(0)
+                    returnType(classOf<Int>())
+                    usingNumbers(5, 20)
+                }
+            }.apply {
+                checkDataList("UnlockStartupLimit")
+                single().className.toClass().resolve().apply {
+                    firstMethod {
+                        name = single().methodName
+                        emptyParameters()
+                        returnType = Int::class
+                    }.hook {
+                        intercept(999)
+                    }
                 }
             }
         }

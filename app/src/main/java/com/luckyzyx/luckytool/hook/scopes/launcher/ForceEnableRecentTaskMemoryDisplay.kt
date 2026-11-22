@@ -89,11 +89,18 @@ class ForceEnableRecentTaskMemoryDisplay(val dexKitBridge: DexKitBridge) : YukiB
                 singletonSwitch?.get<Any?>()?.let { switchField.copy().of(it).set(true) }
 
             // 内存信息对象与其中那串文本：方法按 boolean 入参定位，返回类里取唯一的 String 字段
-            val memInfo = dexKitBridge.findMethod {
+            val memInfo = dexKitBridge.findClass {
                 matcher {
-                    declaredClass(memoryManager)
+                    className(memoryManager)
+                }
+            }.apply {
+                checkDataList("ForceEnableRecentTaskMemoryDisplay memInfo class")
+            }.findMethod {
+                matcher {
                     paramTypes(classOf<Boolean>())
                 }
+            }.apply {
+                checkDataList("ForceEnableRecentTaskMemoryDisplay memInfo")
             }.singleOrNull()?.let { method ->
                 val owner = memoryManager.toClass().resolve()
                 owner.firstMethod { name = method.methodName; parameters(Boolean::class) } to
@@ -110,12 +117,19 @@ class ForceEnableRecentTaskMemoryDisplay(val dexKitBridge: DexKitBridge) : YukiB
                 }
             }
 
-            val panelUpdate = dexKitBridge.findMethod {
+            val panelUpdate = dexKitBridge.findClass {
                 matcher {
-                    declaredClass(PANEL)
+                    className(PANEL)
+                }
+            }.apply {
+                checkDataList("ForceEnableRecentTaskMemoryDisplay panelUpdate class")
+            }.findMethod {
+                matcher {
                     paramTypes(classOf<Boolean>())
                     returnType(Void.TYPE)
                 }
+            }.apply {
+                checkDataList("ForceEnableRecentTaskMemoryDisplay panelUpdate")
             }.singleOrNull()?.getMethodInstance(hostClassLoader!!)
             val memText = dexKitBridge.findField {
                 matcher {
@@ -142,21 +156,37 @@ class ForceEnableRecentTaskMemoryDisplay(val dexKitBridge: DexKitBridge) : YukiB
             }
 
             // 宿主只在面板重建时填文本，已存在的面板会一直隐藏，所以读开关与显示动画时各补一次
-            dexKitBridge.findMethod {
+            dexKitBridge.findClass {
                 matcher {
-                    declaredClass(PANEL)
-                    name("getIsMem")
+                    className(PANEL)
                 }
-            }.singleOrNull()?.getMethodInstance(hostClassLoader!!)?.hook {
-                before { showMemoryInfo(instance<Any>()) }
+            }.apply {
+                checkDataList("ForceEnableRecentTaskMemoryDisplay getIsMem class")
+                findMethod {
+                    matcher {
+                        name("getIsMem")
+                    }
+                }.apply {
+                    checkDataList("ForceEnableRecentTaskMemoryDisplay getIsMem")
+                }.singleOrNull()?.getMethodInstance(hostClassLoader!!)?.hook {
+                    before { showMemoryInfo(instance<Any>()) }
+                }
             }
-            dexKitBridge.findMethod {
+            dexKitBridge.findClass {
                 matcher {
-                    declaredClass(PANEL)
-                    name("setVisibilityAlpha")
+                    className(PANEL)
                 }
-            }.singleOrNull()?.getMethodInstance(hostClassLoader!!)?.hook {
-                after { showMemoryInfo(instance<Any>()) }
+            }.apply {
+                checkDataList("ForceEnableRecentTaskMemoryDisplay setVisibilityAlpha class")
+                findMethod {
+                    matcher {
+                        name("setVisibilityAlpha")
+                    }
+                }.apply {
+                    checkDataList("ForceEnableRecentTaskMemoryDisplay setVisibilityAlpha")
+                }.singleOrNull()?.getMethodInstance(hostClassLoader!!)?.hook {
+                    after { showMemoryInfo(instance<Any>()) }
+                }
             }
 
         }
