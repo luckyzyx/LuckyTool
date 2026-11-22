@@ -7,6 +7,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.luckyzyx.luckytool.R
+import com.luckyzyx.luckytool.hook.scopes.systemui.NOTIFICATION_PROGRESS_KEY
+import com.luckyzyx.luckytool.hook.scopes.systemui.NOTIFICATION_PROGRESS_MIN_OS
 import com.luckyzyx.luckytool.ui.compose.components.AppPickerDialog
 import com.luckyzyx.luckytool.ui.compose.components.PrefRow
 import com.luckyzyx.luckytool.ui.compose.components.PrefRowInset
@@ -37,6 +39,13 @@ object StatusBarNotifyPage {
     ) {
         val c = requireNotNull(context) { "ScopeScreen 未注入 Context" }
         val osCode = getOSVersionCode
+        if (osCode >= NOTIFICATION_PROGRESS_MIN_OS) {
+            switch(
+                key = NOTIFICATION_PROGRESS_KEY,
+                title = c.getString(R.string.notification_progress_title),
+                summary = c.getString(R.string.notification_progress_summary),
+            )
+        }
         // 状态栏通知移除子页入口
         page(c.getString(R.string.RemoveStatusBarNotifications), "statusBarNotifyRemoval")
         if (osCode <= 30) {

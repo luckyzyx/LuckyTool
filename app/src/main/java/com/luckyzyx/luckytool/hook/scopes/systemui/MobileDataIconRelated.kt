@@ -12,6 +12,7 @@ import com.highcapable.yukihookapi.extension.kavaref.toClass
 import com.highcapable.yukihookapi.hook.entity.YukiBaseHooker
 import com.luckyzyx.luckytool.hook.utils.FlowUtils
 import com.luckyzyx.luckytool.utils.A13
+import com.luckyzyx.luckytool.utils.MobileSignalDisplay
 import com.luckyzyx.luckytool.utils.ModulePrefs
 import com.luckyzyx.luckytool.utils.SDK
 import com.luckyzyx.luckytool.utils.getOSVersionCode
@@ -34,7 +35,11 @@ object MobileDataIconRelated : YukiBaseHooker() {
 //            val removeIcon = preferences(ModulePrefs).getBoolean("remove_mobile_data_icon", false)
             val removeInout = preferences(ModulePrefs).getBoolean("remove_mobile_data_inout", false)
             val removeType = preferences(ModulePrefs).getBoolean("remove_mobile_data_type", false)
-            val hideNonNetwork = preferences(ModulePrefs).getBoolean("hide_non_network_card_icon", false)
+            val prefs = preferences(ModulePrefs)
+            val display = prefs.getString(MobileSignalDisplay.KEY, MobileSignalDisplay.SYSTEM)
+            val stacked = MobileSignalDisplay.isSupported(getOSVersionCode) && MobileSignalDisplay.isStacked(display)
+            if (stacked) loadHooker(StackedMobileSignal(rotated = display == MobileSignalDisplay.ROTATED))
+            val hideNonNetwork = !stacked && prefs.getBoolean("hide_non_network_card_icon", false)
             var hideNoSS = preferences(ModulePrefs).getBoolean("hide_nosim_noservice", false)
             dataChannel.wait<Boolean>("hide_nosim_noservice") { hideNoSS = it }
 
