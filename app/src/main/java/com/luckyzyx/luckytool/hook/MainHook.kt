@@ -46,6 +46,7 @@ import com.luckyzyx.luckytool.hook.hookers.HookPhoneManager
 import com.luckyzyx.luckytool.hook.hookers.HookPictorial
 import com.luckyzyx.luckytool.hook.hookers.HookPscanvas
 import com.luckyzyx.luckytool.hook.hookers.HookQuickSearchBox
+import com.luckyzyx.luckytool.hook.hookers.HookRiderMode
 import com.luckyzyx.luckytool.hook.hookers.HookSafeCenter
 import com.luckyzyx.luckytool.hook.hookers.HookScreenshot
 import com.luckyzyx.luckytool.hook.hookers.HookSecuritypPermission
@@ -102,6 +103,7 @@ import java.io.File
         "com.android.externalstorage",
         "com.heytap.browser",
         "com.oplus.gesture",
+        "com.oplus.riderMode",
         "com.android.permissioncontroller",
         "com.coloros.directui",
         "com.heytap.quicksearchbox",
@@ -250,6 +252,9 @@ class MainHook : YukiHookXposedModule {
 
         //手势体感
         loadApp("com.oplus.gesture", HookGesture)
+
+        //高能户外模式
+        loadApp("com.oplus.riderMode", HookRiderMode)
 
         //权限控制器
         loadApp("com.android.permissioncontroller", HookPermissionController)

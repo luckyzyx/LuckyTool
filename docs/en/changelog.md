@@ -48,6 +48,7 @@ Entries for versions before `1.3.5_beta` are currently only available in the
 - Remove forced automatic entry into super power saving mode (@RealmeOS)
 - Confirmation dialog before restarting the system and before a fast reboot
 - Add the panorama work station 3-split view (@天伞桜)
+- Remove the app list whitelist for the high-energy outdoor mode (Rider Mode)
 
 #### Optimized
 

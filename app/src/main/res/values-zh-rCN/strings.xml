@@ -1022,6 +1022,8 @@
     <string name="app_start_dialog_use_old_version">使用旧版跳转应用对话框</string>
     <string name="enable_always_allow_app_start_dialog">启用始终允许启动应用对话框</string>
     <string name="remove_always_allow_app_start_list">移除始终允许启动应用列表</string>
+    <string name="remove_rider_mode_whitelist">移除App列表白名单</string>
+    <string name="remove_rider_mode_whitelist_summary">开启后高能户外模式可运行任意App</string>
     <string name="auto_unlock_app_ecm_permission_restrict">自动解锁应用权限管理授权限制</string>
     <string name="force_enable_iphone_shared_support">强制启用iPhone互联</string>
     <string name="unlock_some_hidden_options">解锁部分隐藏选项</string>

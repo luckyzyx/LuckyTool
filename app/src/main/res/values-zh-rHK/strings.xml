@@ -1153,6 +1153,8 @@
     <string name="app_start_dialog_use_old_version">使用舊版跳轉應用對話方塊</string>
     <string name="enable_always_allow_app_start_dialog">啟用始終允許啟動應用對話方塊</string>
     <string name="remove_always_allow_app_start_list">移除始終允許啟動應用列表</string>
+    <string name="remove_rider_mode_whitelist">移除App列表白名單</string>
+    <string name="remove_rider_mode_whitelist_summary">開啟後高能戶外模式可運行任意App</string>
     <string name="auto_unlock_app_ecm_permission_restrict">自動解鎖應用權限管理授權限制</string>
 
     <!--OplusLinker-->

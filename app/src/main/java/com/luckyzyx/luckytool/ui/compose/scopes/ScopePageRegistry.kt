@@ -55,6 +55,7 @@ import com.luckyzyx.luckytool.ui.compose.scopes.apps.OplusOTAPage
 import com.luckyzyx.luckytool.ui.compose.scopes.apps.OplusPermissionControllerPage
 import com.luckyzyx.luckytool.ui.compose.scopes.apps.OplusPhoneManagerPage
 import com.luckyzyx.luckytool.ui.compose.scopes.apps.OplusPictorialPage
+import com.luckyzyx.luckytool.ui.compose.scopes.apps.OplusRiderModePage
 import com.luckyzyx.luckytool.ui.compose.scopes.apps.OplusScreenshotPage
 import com.luckyzyx.luckytool.ui.compose.scopes.apps.OplusSearchBoxPage
 import com.luckyzyx.luckytool.ui.compose.scopes.apps.OplusSecuritypPermissionPage
@@ -447,7 +448,7 @@ object ScopePageRegistry {
         }
     }
 
-    /** 功能树页面顺序（功能树按此固定排序，共 51 页） */
+    /** 功能树页面顺序（功能树按此固定排序，共 52 页） */
     val treeOrder: List<String> = listOf(
         "android_related",
         "statusbar",
@@ -468,6 +469,7 @@ object ScopePageRegistry {
         "oplus_camera",
         "oplus_gallery",
         "oplus_games",
+        "oplus_rider_mode",
         "theme_store",
         "oplus_market",
         "oplus_cloud_service",
@@ -636,6 +638,7 @@ object ScopePageRegistry {
         register(OplusPermissionControllerPage.spec)
         register(OplusPhoneManagerPage.spec)
         register(OplusPictorialPage.spec)
+        register(OplusRiderModePage.spec)
         register(OplusScreenshotPage.spec)
         register(OplusSearchBoxPage.spec)
         register(OplusSecuritypPermissionPage.spec)

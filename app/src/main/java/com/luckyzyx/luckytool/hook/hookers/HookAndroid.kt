@@ -34,6 +34,7 @@ import com.luckyzyx.luckytool.hook.scopes.android.RemoveAccessDeviceLogDialog
 import com.luckyzyx.luckytool.hook.scopes.android.RemoveAlwaysAllowAppStartList
 import com.luckyzyx.luckytool.hook.scopes.android.RemoveAppUninstallButtonBlackList
 import com.luckyzyx.luckytool.hook.scopes.android.RemovePasswordTimeoutVerification
+import com.luckyzyx.luckytool.hook.scopes.android.RemoveRiderModeWhitelist
 import com.luckyzyx.luckytool.hook.scopes.android.RemoveStatusBarTopNotification
 import com.luckyzyx.luckytool.hook.scopes.android.RemoveVPNActiveNotification
 import com.luckyzyx.luckytool.hook.scopes.android.ReplaceSystemRootStateDetection
@@ -138,6 +139,9 @@ object HookAndroid : YukiBaseHooker() {
 
         //移除应用禁止卸载黑名单
         if (osCode >= 26) loadHooker(RemoveAppUninstallButtonBlackList)
+
+        //移除高能户外模式App列表白名单
+        loadHooker(RemoveRiderModeWhitelist)
 
         //三方应用通话录音保护
         if (osCode == 30) loadHooker(HookMediaProjectionManager)

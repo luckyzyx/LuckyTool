@@ -49,6 +49,7 @@ in [TG Channel’s associated groups](https://t.me/LuckyTool)**
 - 重启系统与快速重启增加二次确认
 - 添加全景工作台三分屏 (@天伞桜)
 - 添加 USB 调试自动授权 (@RealmeOS)
+- 移除高能户外模式App列表白名单
 
 #### 优化
 
