@@ -191,6 +191,7 @@ dependencies {
 
     //Test
     testImplementation(libs.junit)
+    testImplementation(libs.libxposed.api)
     testImplementation(libs.robolectric)
     testImplementation(libs.androidx.test.core)
 }
