@@ -328,10 +328,10 @@ class MainHook : YukiHookXposedModule {
         //小布Next
         loadApp("com.oplus.claw", HookClaw)
 
-        //流体云
+        //智慧决策服务
         loadApp("com.oplus.metis", HookMetis)
 
-        //全景工作台
+        //多窗口
         loadApp("com.oplus.pscanvas", HookPscanvas)
 
         //其他APP
