@@ -267,7 +267,7 @@ internal fun ScopePageHost(
     }
 
     if (showRestartScope) {
-        RestartMenuUtils.RestartScopeDialog(context, spec?.scopes ?: emptyArray(), isSystem = true) {
+        RestartMenuUtils.RestartScopeDialog(context, spec?.scopes ?: emptyArray()) {
             showRestartScope = false
         }
     }

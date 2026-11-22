@@ -8,6 +8,7 @@ import com.luckyzyx.luckytool.ui.compose.components.PrefScopeBuilder
 import com.luckyzyx.luckytool.ui.compose.scopes.ScopePageRegistry
 import com.luckyzyx.luckytool.ui.compose.scopes.ScopePageSpec
 import com.luckyzyx.luckytool.ui.compose.scopes.related.ApplicationRelatedPage
+import com.luckyzyx.luckytool.ui.compose.scopes.related.FloatingWindowRelatedPage
 import com.luckyzyx.luckytool.ui.compose.scopes.related.LauncherRelatedPage
 import com.luckyzyx.luckytool.utils.ModulePrefs
 import com.luckyzyx.luckytool.utils.PrefState
@@ -135,8 +136,8 @@ class ScopePageReachabilityTest {
         }
         assertTrue("应用分身入口行缺失：$multiApp", "page:multiAppFragment" in multiApp)
 
-        // 启动器页：自定义浮窗支持列表仅在显示模式 == "3" 时发射
-        val zoomWindow = buildIndexKeys(LauncherRelatedPage.spec) {
+        // 浮窗页：自定义浮窗支持列表仅在显示模式 == "3" 时发射
+        val zoomWindow = buildIndexKeys(FloatingWindowRelatedPage.spec) {
             putString("custom_app_floating_window_display_mode", "3")
         }
         assertTrue("自定义浮窗入口行缺失：$zoomWindow", "page:zoomWindowFragment" in zoomWindow)

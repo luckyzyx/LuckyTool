@@ -51,6 +51,24 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.lsposed.lsparanoid.Obfuscate
 
+/**
+ * 可 force-stop 重启的作用域：system/android 属框架作用域，重启/优化动作不覆盖它们，只留给重载 Hooker。
+ */
+internal fun scopesToRestart(scopes: Array<String>): Array<String> =
+    scopes.filterNot { it == "system" || it == "android" }.toTypedArray()
+
+/**
+ * 重载 Hooker 的作用域匹配名：框架作用域在不同框架里可能叫 system 或 android，
+ * 两个名字都保留，保证重载全部作用域（xposed_scope 里的 android）与页面作用域（system）都能匹配到框架进程。
+ */
+internal fun scopesForReload(scopes: Array<String>): Set<String> =
+    scopes.flatMap { scope ->
+        when (scope) {
+            "system", "android" -> listOf("system", "android")
+            else -> listOf(scope)
+        }
+    }.toSet()
+
 @Obfuscate
 object RestartMenuUtils {
 
@@ -107,15 +125,20 @@ object RestartMenuUtils {
 
     /**
      * 重启部分作用域 Compose 对话框
+     *
+     * 「重启作用域」只作用于可 force-stop 的应用作用域，system/android 属框架作用域不能重启；
+     * system 与 App 混合的页面仍显示完整菜单，但重启/优化只覆盖可重启的那部分作用域，
+     * 重载 Hooker 仍覆盖页面声明的全部作用域（含 system）。
      * @param scopes Array<String>
      */
     @Composable
     fun RestartScopeDialog(
-        context: Context, scopes: Array<String>, isSystem: Boolean = false, onDismiss: () -> Unit
+        context: Context, scopes: Array<String>, onDismiss: () -> Unit
     ) {
         if (scopes.isEmpty()) return
-        val isSystemPage = isSystem && scopes.first() == "system"
-        val items = if (isSystemPage) {
+        val restartableScopes = scopesToRestart(scopes)
+        val systemOnly = restartableScopes.isEmpty()
+        val items = if (systemOnly) {
             listOf(
                 ChoiceItem(key = "reload_hooker", title = stringResource(R.string.reload_hooker)),
                 ChoiceItem(
@@ -160,7 +183,7 @@ object RestartMenuUtils {
                 items = items,
                 onDismiss = onDismiss,
                 onSelect = { item ->
-                    if (isSystemPage) {
+                    if (systemOnly) {
                         when (item.key) {
                             "reload_hooker" -> showConfirmHooker = true
                             else -> {
@@ -182,12 +205,12 @@ object RestartMenuUtils {
 
                             "reload_hooker" -> showConfirmHooker = true
                             "restart_page_scope" -> {
-                                restartScope(context, scopes)
+                                restartScope(context, restartableScopes)
                                 onDismiss()
                             }
 
                             "optimize_page_scope" -> {
-                                optimizeScopes = buildScopeMaps(context, scopes)
+                                optimizeScopes = buildScopeMaps(context, restartableScopes)
                                 optimizeConfirmFirst = false
                                 showOptimize = true
                             }
@@ -288,11 +311,14 @@ object RestartMenuUtils {
      * @param scopes Array<String>
      */
     private fun restartScope(context: Context, scopes: Array<String>) {
-        val killSystemUI = scopes.contains("com.android.systemui")
-        AppUtils(context).getAllAppVerInfo(scopes)
+        // 统一过滤框架作用域：主菜单「重启作用域」传的是完整 xposed_scope（含 android），不能把框架进程 force-stop 掉
+        val restartableScopes = scopesToRestart(scopes)
+        if (restartableScopes.isEmpty()) return
+        val killSystemUI = restartableScopes.contains("com.android.systemui")
+        AppUtils(context).getAllAppVerInfo(restartableScopes)
         ActivityManagerService.get(context) { controller ->
-            scopes.forEachIndexed { _, packName ->
-                if (packName == "com.android.systemui") return@forEachIndexed
+            restartableScopes.forEach { packName ->
+                if (packName == "com.android.systemui") return@forEach
                 val uid = Process.myUid() / 100000
                 controller?.forceStopPackage(packName, uid)
                 LogUtils.d("restartScope", "forceStopPackage", packName, true)
@@ -313,8 +339,9 @@ object RestartMenuUtils {
             LogUtils.e("restartHooker", "query reload targets failed", "$it", true)
         }.getOrDefault(emptyList())
         runCatching {
+            val scopeNames = scopesForReload(scopes)
             targets.filter {
-                scopes.contains(it.processName.substringBefore(":"))
+                scopeNames.contains(it.processName.substringBefore(":"))
             }.forEach { target ->
                 // skippedIfUpToDate = false：不做「代码已是最新」的跳过，无论目标进程的 jar 是否变化都重新加载
                 reload.request(target, skippedIfUpToDate = false) { result ->
