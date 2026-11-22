@@ -116,11 +116,10 @@ class EnableOpexLocalInstall(val dexKitBridge: DexKitBridge) : YukiBaseHooker() 
                         if (!opexDir.exists()) opexDir.mkdirs()
 
                         val opexFile = File(opexDir, name)
-                        if (!opexFile.exists()) {
-                            activity.showToast("$name file is not found")
+                        if (FileUtils.copyUriToFile(activity, uri, opexFile) == null) {
+                            activity.showToast("$name copy failed")
                             return@before
                         }
-                        FileUtils.copyUriToFile(activity, uri, opexFile)
 
                         val fileList = opexDir.listFiles {
                             it.name.startsWith("ovl_update")
@@ -129,10 +128,14 @@ class EnableOpexLocalInstall(val dexKitBridge: DexKitBridge) : YukiBaseHooker() 
                         val info = opexPackageHelper.resolve().firstMethod {
                             parameters(String::class)
                             returnType = packageListInfo
-                        }.invoke(opexDir.path) ?: return@before
+                        }.invoke(opexDir.path)
+                        if (info == null) {
+                            activity.showToast("resolve OpexPackageHelper failed")
+                            return@before
+                        }
 
                         fileList.forEachIndexed { index, file ->
-                            val name = file.nameWithoutExtension.substringAfterLast("/")
+                            val fileName = file.nameWithoutExtension.substringAfterLast("/")
                             val copy = opexPackageHelper.resolve().firstMethod {
                                 parameterCount { it in 3..4 }
                                 parameters {
@@ -145,8 +148,14 @@ class EnableOpexLocalInstall(val dexKitBridge: DexKitBridge) : YukiBaseHooker() 
                             } else {
                                 copy.invoke(activity, info, index, false)
                             }
-                            YLog.debug("$name -> $code")
-                            activity.showToast("$name -> $code")
+                            YLog.debug("$fileName -> $code")
+                            val codeText = code?.toString() ?: "null"
+                            val success = codeText.equals("SUCCESS", true) ||
+                                codeText.contains("SUCCESS", true)
+                            activity.showToast(
+                                if (success) "$fileName install success"
+                                else "$fileName install failed: $codeText"
+                            )
                         }
 
                         FileUtils.deleteFile(opexDir)

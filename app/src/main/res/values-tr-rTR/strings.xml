@@ -919,6 +919,7 @@
     <string name="unlock_local_upgrade_summary">Tıkladıktan sonra ilgili işlemler otomatik olarak gerçekleştirilecektir, lütfen birkaç saniye sabırla bekleyiniz.</string>
     <string name="remove_ota_local_update_verity">OTA (Güncelleme) dosyadan yerel güncelleme doğrulamasını kaldır</string>
     <string name="enable_opex_local_install">Opex yerel kurulumunu etkinleştir</string>
+    <string name="enable_opex_local_install_summary">Etkinleştirdikten sonra, Sistem Güncelleme sayfasının sağ üst menüsünden Opex\'e dokunun ve dosya adı ovl_update ile başlayan bir arşiv seçin.</string>
     <string name="disable_dm_verity_verification">dm-verity doğrulamasını devre dışı bırak</string>
     <string name="restore_ota_update_verity">OTA (Güncelleme) güncellemesi verity doğrulamasını devam ettir</string>
     <string name="restore_ota_update_verity_summary">Geçerli Durum: [%1$s]\nEğer OTA (Güncelleme) doğrulaması başarısız uyarısı veya dm-verity uyarısı veriyorsa bu işlevi kullanmayı deneyin\nÖzelliğin sistemde varsayılan olarak zaten devrede olduğunu unutmayın ve neden gri durduğunu (seçilemediğini) sormayın\nDoğrulama kapalıyken güncelleme (OTA) başarısız olduğundan, bu işlev tekrar açılarak bu özellik kilitlenir.</string>

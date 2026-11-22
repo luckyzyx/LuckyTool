@@ -1027,6 +1027,7 @@
     <string name="unlock_local_upgrade_summary">點選後將自動執行相關操作，請耐心等待幾秒</string>
     <string name="remove_ota_local_update_verity">移除OTA本地更新校驗</string>
     <string name="enable_opex_local_install">啟用Opex本地安裝</string>
+    <string name="enable_opex_local_install_summary">開啟後，在系統更新頁面右上角選單點 Opex，選擇檔名以 ovl_update 開頭的壓縮檔即可本機安裝</string>
     <string name="disable_dm_verity_verification">禁用 dm-verity 校驗</string>
     <string name="restore_ota_update_verity">恢復 OTA 更新驗證</string>
     <string name="restore_ota_update_verity_summary">當前狀態：%1$s\n如果 OTA 更新提示驗證失敗或者提示 dm-verity，可以嘗試使用此功能\n不要詢問為什麼功能顯示灰色，因為系統預設啟用更新驗證\n當驗證關閉後就會導致 OTA 更新失敗，所以當功能開啟後就會鎖定此功能</string>

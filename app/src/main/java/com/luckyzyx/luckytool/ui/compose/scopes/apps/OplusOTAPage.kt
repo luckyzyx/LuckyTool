@@ -99,6 +99,7 @@ object OplusOTAPage {
             switch(
                 key = "enable_opex_local_install",
                 title = c.getString(R.string.enable_opex_local_install),
+                summary = c.getString(R.string.enable_opex_local_install_summary),
             )
         }
         switch(
