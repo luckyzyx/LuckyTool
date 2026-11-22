@@ -9,6 +9,7 @@ import com.luckyzyx.luckytool.hook.scopes.launcher.DisableLongPressAppIconSecond
 import com.luckyzyx.luckytool.hook.scopes.launcher.EnableAutoCloseFolder
 import com.luckyzyx.luckytool.hook.scopes.launcher.EnableDockerBackground
 import com.luckyzyx.luckytool.hook.scopes.launcher.EnableLauncherIndicatorEntry
+import com.luckyzyx.luckytool.hook.scopes.launcher.ForceEnableDockerBackgroundBlur
 import com.luckyzyx.luckytool.hook.scopes.launcher.ForceEnableRecentTaskMemoryDisplay
 import com.luckyzyx.luckytool.hook.scopes.launcher.HookAppBadge
 import com.luckyzyx.luckytool.hook.scopes.launcher.HookDeviceProfileOption
@@ -74,6 +75,19 @@ object HookLauncher : YukiBaseHooker() {
 
             //桌面图标相关（图标尺寸在 17.x 需要 DexKit 定位混淆后的类）
             loadHooker(HookOplusBubbleTextView(dexKitBridge))
+
+            //启用Docker背景显示（模糊没有背景可模糊，所以只开模糊时也加载它补建）
+            val dockerBackgroundEnabled =
+                preferences(ModulePrefs).getBoolean("enable_docker_background", false)
+            val dockerBackgroundBlurEnabled =
+                preferences(ModulePrefs).getBoolean("force_enable_docker_background_blur", false)
+            if (osCode >= 26 && (dockerBackgroundEnabled || dockerBackgroundBlurEnabled)) {
+                loadHooker(EnableDockerBackground)
+            }
+            //强制启用Docker背景模糊（C17 起 ScreenUtils 类名与方法名被混淆，需要 DexKit 定位）
+            if (osCode >= 26 && dockerBackgroundBlurEnabled) {
+                loadHooker(ForceEnableDockerBackgroundBlur(dexKitBridge))
+            }
         }
 
         //HookLauncherFeatureFlags
@@ -108,12 +122,6 @@ object HookLauncher : YukiBaseHooker() {
         //移除最近任务列表底部APP图标
         if (preferences(ModulePrefs).getBoolean("remove_bottom_app_icon_of_recent_task_list", false)) {
             loadHooker(RemoveBottomAppIconOfRecentTaskList)
-        }
-        //启用Docker背景显示 / 强制启用Docker背景模糊（各开关只装自己需要的 hook，模糊没有背景可模糊时由这里补建）
-        if (preferences(ModulePrefs).getBoolean("enable_docker_background", false) ||
-            preferences(ModulePrefs).getBoolean("force_enable_docker_background_blur", false)
-        ) {
-            if (osCode >= 26) loadHooker(EnableDockerBackground)
         }
         //移除App更新圆点
         if (osCode >= 33) loadHooker(RemoveAppUpdateGreenDot)
