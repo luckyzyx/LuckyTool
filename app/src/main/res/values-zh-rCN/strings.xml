@@ -264,6 +264,11 @@
     <string name="statusbar_network_no_space">移除网速空格</string>
     <string name="set_network_speed_double_row_spacing">设置网速双行间距</string>
     <!--StatusBarNotify-->
+    <string name="notification_progress_title">在状态栏显示进度</string>
+    <string name="notification_progress_summary">一次显示一个应用的最多四个进度条。点按打开通知或通知面板。重启系统界面后生效。</string>
+    <string name="notification_progress_value">%1$s，已完成 %2$d%%</string>
+    <string name="notification_progress_indeterminate">%1$s，正在进行</string>
+    <string name="notification_progress_count">%1$s，有 %2$d 个任务正在进行</string>
     <string name="StatusBarNotice">状态栏通知</string>
     <string name="StatusBarNotice_summary">状态栏通知相关</string>
     <string name="RemoveStatusBarNotifications">移除状态栏通知</string>
@@ -292,6 +297,9 @@
     <string name="remove_small_window_reply_whitelist">移除浮窗回复白名单</string>
     <string name="set_small_window_reply_blacklist">设置浮窗回复黑名单</string>
     <string name="set_small_window_reply_blacklist_message">填写需要添加到黑名单的包名</string>
+    <string name="dynamic_island_category">流体云</string>
+    <string name="dynamic_island_ring_title">前置摄像头进度环</string>
+    <string name="dynamic_island_ring_summary">显示当前流体云活动的进度，例如音乐播放进度。重启系统界面后生效。</string>
     <string name="custom_music_fluid_cloud_whitelist">自定义音乐流体云白名单</string>
     <string name="disable_music_fluid_cloud_display">禁用音乐流体云显示</string>
     <string name="set_custom_music_fluid_cloud_whitelist">设置音乐流体云白名单</string>

@@ -13,6 +13,8 @@ import com.itos.coui.text.CouiTextKind
 import com.itos.coui.text.Text as CouiText
 import com.itos.coui.theme.CouiTheme
 import com.luckyzyx.luckytool.R
+import com.luckyzyx.luckytool.hook.scopes.systemui.DYNAMIC_ISLAND_RING_KEY
+import com.luckyzyx.luckytool.hook.scopes.systemui.DYNAMIC_ISLAND_RING_MIN_OS
 import com.luckyzyx.luckytool.ui.compose.components.AppPickerDialog
 import com.luckyzyx.luckytool.ui.compose.components.AppListItem
 import com.luckyzyx.luckytool.ui.compose.components.PrefRowInset
@@ -80,6 +82,14 @@ object StatusBarRelatedPage {
         }
         // 音乐流体云
         if (getOSVersionCode >= 33) {
+            if (getOSVersionCode >= DYNAMIC_ISLAND_RING_MIN_OS) {
+                category(c.getString(R.string.dynamic_island_category))
+                switch(
+                    key = DYNAMIC_ISLAND_RING_KEY,
+                    title = c.getString(R.string.dynamic_island_ring_title),
+                    summary = c.getString(R.string.dynamic_island_ring_summary),
+                )
+            }
             switch(
                 key = "custom_music_fluid_cloud_whitelist",
                 title = c.getString(R.string.custom_music_fluid_cloud_whitelist),

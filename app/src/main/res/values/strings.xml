@@ -287,6 +287,11 @@
     <string name="set_network_speed_double_row_spacing">Set network speed double row spacing</string>
     
     <!--StatusBarNotify-->
+    <string name="notification_progress_title">Progress in status bar</string>
+    <string name="notification_progress_summary">Show up to four progress bars for one app at a time. Tap to open its notification or the notification shade. Restart System UI to apply.</string>
+    <string name="notification_progress_value">%1$s, %2$d%% complete</string>
+    <string name="notification_progress_indeterminate">%1$s, in progress</string>
+    <string name="notification_progress_count">%1$s, %2$d tasks in progress</string>
     <string name="StatusBarNotice">StatusBar Notifications</string>
     <string name="StatusBarNotice_summary">Status bar notification related</string>
     <string name="RemoveStatusBarNotifications">Remove status bar notifications</string>
@@ -317,6 +322,9 @@
     <string name="remove_small_window_reply_whitelist">Remove small window reply whitelist</string>
     <string name="set_small_window_reply_blacklist">Set small window reply blacklist</string>
     <string name="set_small_window_reply_blacklist_message">Fill in the package name that needs to be added to the blacklist</string>
+    <string name="dynamic_island_category">Dynamic Island</string>
+    <string name="dynamic_island_ring_title">Progress ring around the front camera</string>
+    <string name="dynamic_island_ring_summary">Show progress for the active Dynamic Island activity, such as music playback. Restart System UI to apply.</string>
     <string name="custom_music_fluid_cloud_whitelist">Custom music fluid cloud whitelist</string>
     <string name="disable_music_fluid_cloud_display">Disable music fluid cloud display</string>
     <string name="set_custom_music_fluid_cloud_whitelist">Set up music fluid cloud whitelist</string>

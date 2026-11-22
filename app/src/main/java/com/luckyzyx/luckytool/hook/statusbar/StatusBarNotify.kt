@@ -3,6 +3,8 @@ package com.luckyzyx.luckytool.hook.statusbar
 import com.highcapable.yukihookapi.hook.entity.YukiBaseHooker
 import com.luckyzyx.luckytool.hook.scopes.systemui.DisableHighVolumeWarningNotifications
 import com.luckyzyx.luckytool.hook.scopes.systemui.EnableGlobalNotificationSimpleBannerMode
+import com.luckyzyx.luckytool.hook.scopes.systemui.NOTIFICATION_PROGRESS_KEY
+import com.luckyzyx.luckytool.hook.scopes.systemui.NOTIFICATION_PROGRESS_MIN_OS
 import com.luckyzyx.luckytool.hook.scopes.systemui.RemoveChargingCompleted
 import com.luckyzyx.luckytool.hook.scopes.systemui.RemoveDanmakuNotificationWhitelist
 import com.luckyzyx.luckytool.hook.scopes.systemui.RemoveDoNotDisturbModeNotification
@@ -11,6 +13,7 @@ import com.luckyzyx.luckytool.hook.scopes.systemui.RemoveGTModeNotification
 import com.luckyzyx.luckytool.hook.scopes.systemui.RemoveNotificationCleanupButton
 import com.luckyzyx.luckytool.hook.scopes.systemui.RemoveNotificationForMuteNotifications
 import com.luckyzyx.luckytool.hook.scopes.systemui.RemoveSmallWindowReplyWhitelist
+import com.luckyzyx.luckytool.hook.scopes.systemui.StatusBarNotificationProgress
 import com.luckyzyx.luckytool.utils.A14
 import com.luckyzyx.luckytool.utils.ModulePrefs
 import com.luckyzyx.luckytool.utils.SDK
@@ -21,6 +24,12 @@ import org.lsposed.lsparanoid.Obfuscate
 object StatusBarNotify : YukiBaseHooker() {
     override fun onHook() {
         val osCode = getOSVersionCode
+
+        if (osCode >= NOTIFICATION_PROGRESS_MIN_OS &&
+            preferences(ModulePrefs).getBoolean(NOTIFICATION_PROGRESS_KEY, false)
+        ) {
+            loadHooker(StatusBarNotificationProgress)
+        }
 
         //移除充电完成通知
         if (preferences(ModulePrefs).getBoolean("remove_charging_completed", false)) {
