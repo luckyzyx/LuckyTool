@@ -17,7 +17,11 @@ lsparanoid {
 
 android {
     namespace = gropify.project.groupName
-    compileSdk = gropify.project.android.compileSdk
+    compileSdk {
+        version = release(gropify.project.android.compileSdk) {
+            minorApiLevel = gropify.project.android.compileSdkMinor
+        }
+    }
 
     defaultConfig {
         applicationId = gropify.project.groupName

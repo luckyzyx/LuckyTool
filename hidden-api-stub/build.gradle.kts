@@ -4,7 +4,11 @@ plugins {
 
 android {
     namespace = gropify.project.stub.groupName
-    compileSdk = gropify.project.android.compileSdk
+    compileSdk {
+        version = release(gropify.project.android.compileSdk) {
+            minorApiLevel = gropify.project.android.compileSdkMinor
+        }
+    }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_21
         targetCompatibility = JavaVersion.VERSION_21
