@@ -63,7 +63,7 @@ class ForceEnableDockerBackgroundBlur(private val dexKitBridge: DexKitBridge) : 
         // 按 LOG TAG 用 DexKit 定位类，再按结构挂所有无参 boolean 方法
         runCatching {
             val screenUtilsClass = dexKitBridge.findClass {
-                matcher { usingStrings(SCREEN_UTILS_ROTATION_LOG) }
+                matcher { usingStrings(SCREEN_UTILS_ROTATION_LOG, "setCurrentDisplayRotation") }
             }.apply {
                 checkDataList("ForceEnableDockerBackgroundBlur ScreenUtils class")
             }.findMethod {

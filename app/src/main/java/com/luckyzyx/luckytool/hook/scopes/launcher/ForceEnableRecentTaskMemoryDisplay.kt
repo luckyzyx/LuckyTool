@@ -127,6 +127,10 @@ class ForceEnableRecentTaskMemoryDisplay(val dexKitBridge: DexKitBridge) : YukiB
                 matcher {
                     paramTypes(classOf<Boolean>())
                     returnType(Void.TYPE)
+                    addUsingField {
+                        declaredClass(PANEL)
+                        type(classOf<TextView>())
+                    }
                 }
             }.apply {
                 checkDataList("ForceEnableRecentTaskMemoryDisplay panelUpdate")
