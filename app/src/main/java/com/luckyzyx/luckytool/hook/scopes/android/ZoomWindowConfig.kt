@@ -20,8 +20,8 @@ class ZoomWindowConfig : YukiBaseHooker() {
     var mode = "0"
     val list = ArraySet<String>()
 
-    var multiWindow = false
     var multiNum = 2
+    var multiNumSet = false
 
     fun loadData() {
         mode = preferences(ModulePrefs).getString("custom_app_floating_window_display_mode", "0")
@@ -39,10 +39,12 @@ class ZoomWindowConfig : YukiBaseHooker() {
             list.addAll(new)
         }
 
-        multiWindow = preferences(ModulePrefs).getBoolean("force_enable_multi_window_mode", false)
-        dataChannel.wait<Boolean>("force_enable_multi_window_mode") { multiWindow = it }
         multiNum = preferences(ModulePrefs).getInt("custom_multi_window_display_upper_limit", 2)
-        dataChannel.wait<Int>("custom_multi_window_display_upper_limit") { multiNum = it }
+        multiNumSet = preferences(ModulePrefs).contains("custom_multi_window_display_upper_limit")
+        dataChannel.wait<Int>("custom_multi_window_display_upper_limit") {
+            multiNum = it
+            multiNumSet = true
+        }
 
         YLog.debug("init zoom window configs success -> ${list.size}")
     }
@@ -103,6 +105,17 @@ class ZoomWindowConfig : YukiBaseHooker() {
                         }
                     }
                 }
+                firstMethodOrNull {
+                    name = "getMaxFlexibleTaskNum"
+                    emptyParameters()
+                    returnType = Int::class
+                }?.hook {
+                    after {
+                        // 折叠态等物理上限为 1 时不覆盖，保持原行为
+                        val num = result<Int>() ?: -1
+                        if (multiNumSet && multiNum > 0 && num != 1) result = multiNum
+                    }
+                }
             }
 
             //Source FlexibleWindowManagerService
@@ -115,7 +128,7 @@ class ZoomWindowConfig : YukiBaseHooker() {
 //                        val scenario = firstArg().get<Int>() ?: 0
 //                        val num = result<Int>() ?: -1
 //                        YLog.debug("${method.name} -> $scenario -> $num")
-                        if (multiWindow && multiNum > 0) result = multiNum
+                        if (multiNumSet && multiNum > 0) result = multiNum
                     }
                 }
             }
