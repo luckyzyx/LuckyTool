@@ -27,7 +27,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.luminance
+import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import com.itos.coui.effect.couiButtonFeedback
@@ -197,22 +199,27 @@ fun PrefRow(
     }
 }
 
-/** 设置入口的单色图标，使用当前外观的中性前景色和默认图标尺寸。 */
+/** 设置入口的单色图标：COUI 线用 [painter]（Lucide 资源），Material 线用 [icon]；二者至少提供一个。 */
 @Composable
-fun PrefIcon(icon: ImageVector) {
+fun PrefIcon(icon: ImageVector? = null, painter: Painter? = null) {
     if (LocalUiMode.current == UiMode.Coui) {
-        Icon(
-            imageVector = icon,
-            contentDescription = null,
-            tint = CouiTheme.colorScheme.onSurface,
-        )
+        val resolved = painter ?: icon?.let { rememberVectorPainter(it) }
+        if (resolved != null) {
+            Icon(
+                painter = resolved,
+                contentDescription = null,
+                tint = CouiTheme.colorScheme.onSurface,
+            )
+        }
     } else {
         // Material 线专用：图标前景色取 M3 主题；COUI 线在上一分支已返回
-        Icon(
-            imageVector = icon,
-            contentDescription = null,
-            tint = MaterialTheme.colorScheme.onSurface,
-        )
+        if (icon != null) {
+            Icon(
+                imageVector = icon,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onSurface,
+            )
+        }
     }
 }
 

@@ -23,12 +23,14 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.itos.coui.dialog.CouiDialogAction
 import com.itos.coui.dialog.CouiDialogActionStyle
 import com.itos.coui.dialog.CouiDialogDefaults
+import com.composables.icons.lucide.R as LucideR
 import com.itos.coui.theme.CouiTheme
 import com.luckyzyx.luckytool.R
 import com.luckyzyx.luckytool.ui.compose.components.coui.CouiAlertDialog
@@ -422,7 +424,7 @@ private fun SnapshotDeleteAction(enabled: Boolean, onClick: () -> Unit) {
             enabled = enabled,
         ) {
             Icon(
-                imageVector = Icons.Filled.Delete,
+                painter = painterResource(LucideR.drawable.lucide_ic_trash_2),
                 contentDescription = null,
                 tint = CouiTheme.colorScheme.onSurface,
             )

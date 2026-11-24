@@ -48,6 +48,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.heading
@@ -57,9 +58,11 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDirection
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.composables.icons.lucide.R as LucideR
 import com.itos.coui.layout.CouiPageDefaults
 import com.itos.coui.scroll.rememberCouiOverscrollEffect
 import com.itos.coui.text.CouiTextKind
@@ -301,7 +304,7 @@ private fun HomeDeviceCard(
                 horizontalArrangement = Arrangement.spacedBy(12.dp),
             ) {
                 HomeText(label, HomeTextRole.Body, colors.secondary, Modifier.weight(1f))
-                HomeIcon(if (expanded) HomeSymbol.Collapse else HomeSymbol.Expand, colors.secondary, Modifier.size(20.dp))
+                HomeIcon(if (expanded) HomeSymbol.Collapse else HomeSymbol.Expand, tint = if (LocalUiMode.current == UiMode.Coui) colors.foreground else colors.secondary, Modifier.size(20.dp))
             }
         }
     }
@@ -318,7 +321,7 @@ private fun HomeDeviceRow(entry: DeviceInfoEntry, colors: HomeColors) {
                 R.string.product, R.string.flash -> HomeSymbol.Hardware
                 else -> HomeSymbol.Info
             },
-            tint = colors.secondary,
+            tint = if (LocalUiMode.current == UiMode.Coui) colors.foreground else colors.secondary,
             modifier = Modifier.padding(top = 2.dp).size(22.dp),
         )
         Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
@@ -354,7 +357,7 @@ private fun HomeActionCard(
                 HomeText(title, HomeTextRole.Title, if (accent) colors.accent else colors.foreground)
                 HomeText(summary, HomeTextRole.Body, colors.secondary)
             }
-            HomeIcon(HomeSymbol.Forward, colors.secondary, Modifier.size(20.dp))
+            HomeIcon(HomeSymbol.Forward, tint = if (LocalUiMode.current == UiMode.Coui) colors.foreground else colors.secondary, Modifier.size(20.dp))
         }
     }
 }
@@ -468,19 +471,39 @@ private enum class HomeSymbol { Active, Inactive, Phone, System, Version, Hardwa
 
 @Composable
 private fun HomeIcon(symbol: HomeSymbol, tint: Color, modifier: Modifier) {
-    val vector: ImageVector = when (symbol) {
-        HomeSymbol.Active -> Icons.Rounded.CheckCircleOutline
-        HomeSymbol.Inactive -> Icons.Rounded.WarningAmber
-        HomeSymbol.Phone -> Icons.Rounded.PhoneAndroid
-        HomeSymbol.System -> Icons.Rounded.Settings
-        HomeSymbol.Version -> Icons.Rounded.Update
-        HomeSymbol.Hardware -> Icons.Rounded.Memory
-        HomeSymbol.Info -> Icons.Rounded.Info
-        HomeSymbol.Support -> Icons.Rounded.FavoriteBorder
-        HomeSymbol.Update -> Icons.Rounded.SystemUpdateAlt
-        HomeSymbol.Forward -> Icons.AutoMirrored.Rounded.KeyboardArrowRight
-        HomeSymbol.Expand -> Icons.Rounded.ExpandMore
-        HomeSymbol.Collapse -> Icons.Rounded.ExpandLess
+    if (LocalUiMode.current == UiMode.Coui) {
+        val res = when (symbol) {
+            HomeSymbol.Active -> LucideR.drawable.lucide_ic_circle_check
+            HomeSymbol.Inactive -> LucideR.drawable.lucide_ic_triangle_alert
+            HomeSymbol.Phone -> LucideR.drawable.lucide_ic_smartphone
+            HomeSymbol.System -> LucideR.drawable.lucide_ic_settings
+            HomeSymbol.Version -> LucideR.drawable.lucide_ic_refresh_cw
+            HomeSymbol.Hardware -> LucideR.drawable.lucide_ic_memory_stick
+            HomeSymbol.Info -> LucideR.drawable.lucide_ic_info
+            HomeSymbol.Support -> LucideR.drawable.lucide_ic_heart
+            HomeSymbol.Update -> LucideR.drawable.lucide_ic_hard_drive_download
+            HomeSymbol.Forward ->
+                if (LocalLayoutDirection.current == LayoutDirection.Rtl) LucideR.drawable.lucide_ic_chevron_left
+                else LucideR.drawable.lucide_ic_chevron_right
+            HomeSymbol.Expand -> LucideR.drawable.lucide_ic_chevron_down
+            HomeSymbol.Collapse -> LucideR.drawable.lucide_ic_chevron_up
+        }
+        Icon(painterResource(res), contentDescription = null, tint = tint, modifier = modifier)
+    } else {
+        val vector: ImageVector = when (symbol) {
+            HomeSymbol.Active -> Icons.Rounded.CheckCircleOutline
+            HomeSymbol.Inactive -> Icons.Rounded.WarningAmber
+            HomeSymbol.Phone -> Icons.Rounded.PhoneAndroid
+            HomeSymbol.System -> Icons.Rounded.Settings
+            HomeSymbol.Version -> Icons.Rounded.Update
+            HomeSymbol.Hardware -> Icons.Rounded.Memory
+            HomeSymbol.Info -> Icons.Rounded.Info
+            HomeSymbol.Support -> Icons.Rounded.FavoriteBorder
+            HomeSymbol.Update -> Icons.Rounded.SystemUpdateAlt
+            HomeSymbol.Forward -> Icons.AutoMirrored.Rounded.KeyboardArrowRight
+            HomeSymbol.Expand -> Icons.Rounded.ExpandMore
+            HomeSymbol.Collapse -> Icons.Rounded.ExpandLess
+        }
+        Icon(vector, contentDescription = null, tint = tint, modifier = modifier)
     }
-    Icon(vector, contentDescription = null, tint = tint, modifier = modifier)
 }

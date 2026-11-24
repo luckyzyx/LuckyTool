@@ -19,6 +19,7 @@ navigation = "2.10.2"
 
 miuix = "0.9.4"
 coui = "0.0.1-alpha16"
+lucide-icons = "2.2.1"
 libsu = "6.0.0"
 coil = "3.6.3"
 markwon = "4.6.2"
@@ -82,6 +83,7 @@ androidx-compose-material-icons-extended = { group = "androidx.compose.material"
 miuix-blur = { module = "top.yukonga.miuix.kmp:miuix-blur-android", version.ref = "miuix" }
 coui-material3 = { module = "io.github.itoseo:coui-material3", version.ref = "coui" }
 coui-icons = { module = "io.github.itoseo:coui-icons", version.ref = "coui" }
+lucide-icons = { group = "com.composables", name = "icons-lucide-android", version.ref = "lucide-icons" }
 coil-compose = { group = "io.coil-kt.coil3", name = "coil-compose", version.ref = "coil" }
 coil-network-okhttp = { group = "io.coil-kt.coil3", name = "coil-network-okhttp", version.ref = "coil" }
 appiconloader-iconloaderlib = { module = "me.zhanghai.android.appiconloader:appiconloader-iconloaderlib", version = "1.5.0" }

@@ -84,7 +84,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
@@ -92,6 +94,7 @@ import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.role
@@ -101,6 +104,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.composables.icons.lucide.R as LucideR
 import com.itos.coui.layout.CouiPageDefaults
 import com.itos.coui.text.CouiTextKind
 import com.itos.coui.text.Text as CouiText
@@ -473,6 +477,7 @@ private fun ThemeScreenList(
                             val styles = PaletteStyle.entries
                             AppDropdownItem(
                                 icon = Icons.Rounded.Style,
+                                painter = painterResource(LucideR.drawable.lucide_ic_paintbrush),
                                 title = stringResource(R.string.palette_style_title),
                                 items = styles.map { it.name },
                                 selectedIndex = styles.indexOf(state.paletteStyle),
@@ -491,6 +496,7 @@ private fun ThemeScreenList(
                             val specs = ColorSpec.SpecVersion.entries
                             AppDropdownItem(
                                 icon = Icons.Rounded.DesignServices,
+                                painter = painterResource(LucideR.drawable.lucide_ic_pencil_ruler),
                                 title = stringResource(R.string.color_spec_title),
                                 items = specs.map { it.name },
                                 selectedIndex = specs.indexOf(state.colorSpec).coerceAtLeast(0),
@@ -520,6 +526,7 @@ private fun ThemeScreenList(
                         if (isCouiLine) add {
                             AppSwitchItem(
                                 icon = Icons.Rounded.Colorize,
+                                painter = painterResource(LucideR.drawable.lucide_ic_pipette),
                                 title = stringResource(R.string.coui_follow_material_color),
                                 summary = stringResource(R.string.coui_follow_material_color_summary),
                                 checked = state.couiDynamicColor,
@@ -540,6 +547,7 @@ private fun ThemeScreenList(
                         ) add {
                             AppSwitchItem(
                                 icon = Icons.Rounded.Style,
+                                painter = painterResource(LucideR.drawable.lucide_ic_paintbrush),
                                 title = stringResource(R.string.use_dynamic_color),
                                 summary = stringResource(R.string.use_dynamic_color_summary),
                                 checked = state.dynamicColor,
@@ -621,6 +629,7 @@ private fun ThemeScreenList(
                     add {
                         AppSwitchItem(
                             icon = Icons.Rounded.Palette,
+                            painter = painterResource(LucideR.drawable.lucide_ic_palette),
                             title = stringResource(R.string.settings_category_badge_colors),
                             summary = stringResource(R.string.settings_category_badge_colors_summary),
                             checked = state.categoryBadgeColors,
@@ -639,6 +648,7 @@ private fun ThemeScreenList(
                         add {
                             AppSwitchItem(
                                 icon = Icons.AutoMirrored.Rounded.MenuOpen,
+                                painter = painterResource(LucideR.drawable.lucide_ic_panel_left_open),
                                 title = stringResource(R.string.settings_enable_predictive_back),
                                 summary = stringResource(R.string.settings_enable_predictive_back_summary),
                                 checked = state.predictiveBack,
@@ -658,6 +668,7 @@ private fun ThemeScreenList(
                     add {
                         AppSwitchItem(
                             icon = Icons.Rounded.Swipe,
+                            painter = painterResource(LucideR.drawable.lucide_ic_hand),
                             title = stringResource(R.string.settings_enable_swipe_dismiss),
                             summary = stringResource(R.string.settings_enable_swipe_dismiss_summary),
                             checked = state.swipeDismiss,
@@ -671,6 +682,7 @@ private fun ThemeScreenList(
                     add {
                         AppDropdownItem(
                             icon = Icons.Rounded.ViewCarousel,
+                            painter = painterResource(LucideR.drawable.lucide_ic_gallery_horizontal),
                             title = stringResource(R.string.settings_pager_gesture_mode),
                             items = listOf(
                                 stringResource(R.string.settings_pager_gesture_native),
@@ -693,6 +705,7 @@ private fun ThemeScreenList(
         item {
             ThemeSliderCard(
                 icon = Icons.Rounded.AspectRatio,
+                painter = painterResource(LucideR.drawable.lucide_ic_scaling),
                 title = stringResource(R.string.settings_page_scale),
                 summary = stringResource(R.string.settings_page_scale_summary),
                 valueText = "${(state.pageScale * 100).roundToInt()}%",
@@ -773,15 +786,29 @@ private fun ThemeModeSelector(state: ThemeScreenState) {
                             else -> ButtonGroupDefaults.connectedMiddleButtonShapes()
                         },
                     ) {
-                        Icon(
-                            imageVector = when (mode) {
-                                ColorMode.SYSTEM -> Icons.Filled.Brightness4
-                                ColorMode.LIGHT -> Icons.Filled.Brightness7
-                                ColorMode.DARK -> Icons.Filled.Brightness3
-                                else -> Icons.Filled.Brightness1
-                            },
-                            contentDescription = label,
-                        )
+                        if (LocalUiMode.current == UiMode.Coui) {
+                            Icon(
+                                painter = painterResource(
+                                    when (mode) {
+                                        ColorMode.SYSTEM -> LucideR.drawable.lucide_ic_sun_moon
+                                        ColorMode.LIGHT -> LucideR.drawable.lucide_ic_sun
+                                        ColorMode.DARK -> LucideR.drawable.lucide_ic_moon
+                                        else -> LucideR.drawable.lucide_ic_sun_medium
+                                    }
+                                ),
+                                contentDescription = label,
+                            )
+                        } else {
+                            Icon(
+                                imageVector = when (mode) {
+                                    ColorMode.SYSTEM -> Icons.Filled.Brightness4
+                                    ColorMode.LIGHT -> Icons.Filled.Brightness7
+                                    ColorMode.DARK -> Icons.Filled.Brightness3
+                                    else -> Icons.Filled.Brightness1
+                                },
+                                contentDescription = label,
+                            )
+                        }
                     }
                 }
             }
@@ -799,6 +826,7 @@ private fun ThemeModeSelector(state: ThemeScreenState) {
 @Composable
 private fun ThemeSliderCard(
     icon: ImageVector,
+    painter: Painter? = null,
     title: String,
     summary: String,
     valueText: String,
@@ -823,7 +851,7 @@ private fun ThemeSliderCard(
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Icon(
-                    imageVector = icon,
+                    painter = painter ?: rememberVectorPainter(icon),
                     contentDescription = title,
                     tint = iconTint,
                 )
@@ -1084,7 +1112,15 @@ private fun CouiPreviewCard(isDark: Boolean) {
                 horizontalArrangement = Arrangement.Center,
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                Icon(Icons.Filled.Home, null, tint = colors.accent)
+                if (LocalUiMode.current == UiMode.Coui) {
+                    Icon(
+                        painter = painterResource(LucideR.drawable.lucide_ic_house),
+                        contentDescription = null,
+                        tint = colors.accent,
+                    )
+                } else {
+                    Icon(Icons.Filled.Home, null, tint = colors.accent)
+                }
             }
         }
     }

@@ -47,10 +47,12 @@ import androidx.compose.ui.layout.positionInWindow
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalWindowInfo
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
+import com.composables.icons.lucide.R as LucideR
 import com.itos.coui.layout.CouiPageDefaults
 import com.itos.coui.layout.Divider as CouiDivider
 import com.itos.coui.text.CouiTextKind
@@ -721,7 +723,7 @@ private fun OrderResetRow(onReset: () -> Unit) {
                     )
                 }
                 Icon(
-                    imageVector = Icons.Filled.RestartAlt,
+                    painter = painterResource(LucideR.drawable.lucide_ic_rotate_ccw),
                     contentDescription = null,
                     tint = CouiTheme.colorScheme.onSurface,
                 )
@@ -979,7 +981,7 @@ private fun CouiOrderItemRow(
             contentAlignment = Alignment.Center,
         ) {
             Icon(
-                imageVector = Icons.Filled.Menu,
+                painter = painterResource(LucideR.drawable.lucide_ic_menu),
                 contentDescription = null,
                 tint = CouiTheme.colorScheme.onSurface,
             )

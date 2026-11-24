@@ -46,6 +46,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.composables.icons.lucide.R as LucideR
 import com.itos.coui.dialog.CouiDialogAction
 import com.itos.coui.dialog.CouiDialogActionStyle
 import com.itos.coui.dialog.CouiDialogDefaults
@@ -164,11 +165,19 @@ internal fun ScopePageHost(
         collapseEnabled = false,
         actions = {
             if (spec?.restartEnabled == true) {
-                TopBarActionButton(
-                    onClick = { showRestartScope = true },
-                    contentDescription = stringResource(R.string.menu_reboot),
-                    materialIcon = Icons.Filled.PowerSettingsNew,
-                )
+                if (LocalUiMode.current == UiMode.Coui) {
+                    TopBarActionButton(
+                        onClick = { showRestartScope = true },
+                        contentDescription = stringResource(R.string.menu_reboot),
+                        painter = painterResource(LucideR.drawable.lucide_ic_power),
+                    )
+                } else {
+                    TopBarActionButton(
+                        onClick = { showRestartScope = true },
+                        contentDescription = stringResource(R.string.menu_reboot),
+                        materialIcon = Icons.Filled.PowerSettingsNew,
+                    )
+                }
             }
             topActions.forEach { action ->
                 if (action.showAsAction && action.icon != 0) {

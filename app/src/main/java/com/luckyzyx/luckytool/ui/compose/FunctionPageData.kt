@@ -12,6 +12,7 @@ import androidx.compose.material.icons.filled.PictureInPictureAlt
 import androidx.compose.material.icons.filled.SignalCellularAlt
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import com.composables.icons.lucide.R as LucideR
 import com.luckyzyx.luckytool.ui.compose.components.PrefIndexItem
 import com.luckyzyx.luckytool.ui.compose.scopes.ScopePageRegistry
 import com.luckyzyx.luckytool.ui.compose.scopes.ScopePageSpec
@@ -40,7 +41,7 @@ internal data class TreeRow(
 internal data class SearchEntry(val pageKey: String, val pageTitle: String, val item: PrefIndexItem)
 
 /** 分类页彩色徽标配色：固定色（不随深浅色模式变化，与应用图标一致）+ 白色矢量图标 */
-internal data class CategoryBadge(val icon: ImageVector, val color: Color)
+internal data class CategoryBadge(val icon: ImageVector, val color: Color, val lucideRes: Int? = null)
 
 /**
  * 功能树行图标来源：分类页走 [categoryBadges] 彩色徽标（无包名），应用页用
@@ -59,13 +60,13 @@ internal fun rowSummary(index: List<PrefIndexItem>): String? =
 
 internal val categoryBadges: Map<String, CategoryBadge> = mapOf(
     "android_related" to CategoryBadge(Icons.Filled.Android, Color(0xFF3DDC84)),
-    "statusbar" to CategoryBadge(Icons.Filled.SignalCellularAlt, Color(0xFF4285F4)),
-    "launcher" to CategoryBadge(Icons.Filled.Home, Color(0xFFFF9800)),
-    "aod" to CategoryBadge(Icons.Filled.BrightnessMedium, Color(0xFF9C27B0)),
-    "lock_screen" to CategoryBadge(Icons.Filled.Lock, Color(0xFF00BCD4)),
-    "application" to CategoryBadge(Icons.Filled.Apps, Color(0xFF3F51B5)),
-    "miscellaneous" to CategoryBadge(Icons.Filled.MoreHoriz, Color(0xFF607D8B)),
-    "floating_window" to CategoryBadge(Icons.Filled.PictureInPictureAlt, Color(0xFF00897B)),
+    "statusbar" to CategoryBadge(Icons.Filled.SignalCellularAlt, Color(0xFF4285F4), lucideRes = LucideR.drawable.lucide_ic_signal),
+    "launcher" to CategoryBadge(Icons.Filled.Home, Color(0xFFFF9800), lucideRes = LucideR.drawable.lucide_ic_house),
+    "aod" to CategoryBadge(Icons.Filled.BrightnessMedium, Color(0xFF9C27B0), lucideRes = LucideR.drawable.lucide_ic_sun_medium),
+    "lock_screen" to CategoryBadge(Icons.Filled.Lock, Color(0xFF00BCD4), lucideRes = LucideR.drawable.lucide_ic_lock),
+    "application" to CategoryBadge(Icons.Filled.Apps, Color(0xFF3F51B5), lucideRes = LucideR.drawable.lucide_ic_layout_grid),
+    "miscellaneous" to CategoryBadge(Icons.Filled.MoreHoriz, Color(0xFF607D8B), lucideRes = LucideR.drawable.lucide_ic_ellipsis),
+    "floating_window" to CategoryBadge(Icons.Filled.PictureInPictureAlt, Color(0xFF00897B), lucideRes = LucideR.drawable.lucide_ic_picture_in_picture_2),
 )
 
 /** 页标题：登记在覆盖表的页取固定字符串资源，其余取宿主 App 标签（android_related 取 "android" 的标签） */

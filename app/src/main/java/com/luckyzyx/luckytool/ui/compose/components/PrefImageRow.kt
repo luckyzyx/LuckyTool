@@ -28,8 +28,12 @@ import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import com.composables.icons.lucide.R as LucideR
+import com.luckyzyx.luckytool.ui.theme.LocalUiMode
+import com.luckyzyx.luckytool.ui.theme.UiMode
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlin.math.roundToInt
@@ -184,14 +188,23 @@ fun PrefVideoPreview(
                 .background(Color.Black.copy(alpha = 0.32f)),
             contentAlignment = Alignment.Center,
         ) {
-            // 叠在遮罩上的播放标记：前景恒为白色、尺寸跟缩略图走，跟外观线无关，
-            // 因此直接用 material3 的 Icon（跨线共用的唯一 M3 组件），不从这里取主题色。
-            Icon(
-                imageVector = Icons.Filled.PlayArrow,
-                contentDescription = null,
-                tint = Color.White,
-                modifier = Modifier.fillMaxSize(0.6f),
-            )
+            // 叠在遮罩上的播放标记：前景恒为白色、尺寸跟缩略图走；
+            // COUI 线用 Lucide play，Material 线保留 M3 PlayArrow。
+            if (LocalUiMode.current == UiMode.Coui) {
+                Icon(
+                    painter = painterResource(LucideR.drawable.lucide_ic_play),
+                    contentDescription = null,
+                    tint = Color.White,
+                    modifier = Modifier.fillMaxSize(0.6f),
+                )
+            } else {
+                Icon(
+                    imageVector = Icons.Filled.PlayArrow,
+                    contentDescription = null,
+                    tint = Color.White,
+                    modifier = Modifier.fillMaxSize(0.6f),
+                )
+            }
         }
     }
 }

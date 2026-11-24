@@ -32,8 +32,11 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.core.graphics.drawable.toBitmap
+import com.composables.icons.lucide.R as LucideR
 import com.highcapable.kavaref.extension.classOf
 import com.itos.coui.theme.CouiTheme
 import com.luckyzyx.luckytool.ITileServiceController
@@ -143,9 +146,21 @@ fun OtherPage(activity: MainActivity, isCurrentPage: Boolean = true) {
                 click(
                     title = quickEntryTitle,
                     summary = quickEntrySummary,
-                    leading = { PrefIcon(Icons.AutoMirrored.Rounded.OpenInNew) },
+                    leading = { PrefIcon(Icons.AutoMirrored.Rounded.OpenInNew, painter = painterResource(LucideR.drawable.lucide_ic_square_arrow_out_up_right)) },
                     value = "",
-                    trailing = { Icon(Icons.AutoMirrored.Rounded.KeyboardArrowRight, contentDescription = null) },
+                    trailing = {
+                        if (LocalUiMode.current == UiMode.Coui) {
+                            Icon(
+                                painter = painterResource(
+                                    if (LocalLayoutDirection.current == LayoutDirection.Rtl) LucideR.drawable.lucide_ic_chevron_left
+                                    else LucideR.drawable.lucide_ic_chevron_right
+                                ),
+                                contentDescription = null,
+                            )
+                        } else {
+                            Icon(Icons.AutoMirrored.Rounded.KeyboardArrowRight, contentDescription = null)
+                        }
+                    },
                     onClick = {
                         activity.requestFunctionNavigation("quick_entry", quickEntryTitle)
                     },
@@ -154,7 +169,7 @@ fun OtherPage(activity: MainActivity, isCurrentPage: Boolean = true) {
                     click(
                         title = tileListTitle,
                         summary = tileListSummary,
-                        leading = { PrefIcon(Icons.Rounded.GridView) },
+                        leading = { PrefIcon(Icons.Rounded.GridView, painter = painterResource(LucideR.drawable.lucide_ic_layout_grid)) },
                         onClick = {
                             context.showToast(tileListClickTips)
                             showTileDialog = true
@@ -165,7 +180,7 @@ fun OtherPage(activity: MainActivity, isCurrentPage: Boolean = true) {
                     title = setModuleShortcutsTitle,
                     summary = setModuleShortcutsSummary,
                     leading = {
-                        PrefIcon(Icons.AutoMirrored.Rounded.AddToHomeScreen)
+                        PrefIcon(Icons.AutoMirrored.Rounded.AddToHomeScreen, painter = painterResource(LucideR.drawable.lucide_ic_square_plus))
                     },
                     onClick = { showShortcutDialog = true },
                 )
@@ -173,9 +188,21 @@ fun OtherPage(activity: MainActivity, isCurrentPage: Boolean = true) {
                 click(
                     title = fpsTitle,
                     summary = fpsSummary,
-                    leading = { PrefIcon(Icons.Rounded.Speed) },
+                    leading = { PrefIcon(Icons.Rounded.Speed, painter = painterResource(LucideR.drawable.lucide_ic_gauge)) },
                     value = "",
-                    trailing = { Icon(Icons.AutoMirrored.Rounded.KeyboardArrowRight, contentDescription = null) },
+                    trailing = {
+                        if (LocalUiMode.current == UiMode.Coui) {
+                            Icon(
+                                painter = painterResource(
+                                    if (LocalLayoutDirection.current == LayoutDirection.Rtl) LucideR.drawable.lucide_ic_chevron_left
+                                    else LucideR.drawable.lucide_ic_chevron_right
+                                ),
+                                contentDescription = null,
+                            )
+                        } else {
+                            Icon(Icons.AutoMirrored.Rounded.KeyboardArrowRight, contentDescription = null)
+                        }
+                    },
                     onClick = {
                         activity.requestFunctionNavigation("force_fps", fpsTitle)
                     },
@@ -184,7 +211,7 @@ fun OtherPage(activity: MainActivity, isCurrentPage: Boolean = true) {
                     click(
                         title = touchSamplingTitle,
                         summary = touchSamplingSummary,
-                        leading = { PrefIcon(Icons.Rounded.TouchApp) },
+                        leading = { PrefIcon(Icons.Rounded.TouchApp, painter = painterResource(LucideR.drawable.lucide_ic_hand)) },
                         onClick = { showTouchDialog = true },
                     )
                 }
@@ -196,7 +223,7 @@ fun OtherPage(activity: MainActivity, isCurrentPage: Boolean = true) {
                     click(
                         title = remoteAdbTitle,
                         summary = remoteAdbSummary,
-                        leading = { PrefIcon(Icons.Rounded.Adb) },
+                        leading = { PrefIcon(Icons.Rounded.Adb, painter = painterResource(LucideR.drawable.lucide_ic_terminal)) },
                         itemKey = "other_adb",
                         animate = true,
                         onClick = { showAdbDialog = true },
@@ -339,7 +366,7 @@ private fun ShortcutDialog(context: Context, onDismiss: () -> Unit) {
                     contentDescription = pinContentDescription,
                 ) {
                     Icon(
-                        imageVector = Icons.Rounded.PushPin,
+                        painter = painterResource(LucideR.drawable.lucide_ic_pin),
                         contentDescription = null,
                         tint = CouiTheme.colorScheme.onSurface,
                     )

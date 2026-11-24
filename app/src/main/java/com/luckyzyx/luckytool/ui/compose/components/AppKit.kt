@@ -40,6 +40,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.graphics.takeOrElse
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.Shape
@@ -373,6 +374,7 @@ private fun CouiLongPressItem(
 @Composable
 fun AppSwitchItem(
     icon: ImageVector? = null,
+    painter: Painter? = null,
     title: String,
     summary: String? = null,
     colors: ListItemColors = materialGroupColors(),
@@ -407,8 +409,21 @@ fun AppSwitchItem(
                 role = Role.Switch,
                 onValueChange = onCheckedChange,
             ),
-            icon = leading ?: icon?.let { vector ->
-                { CouiIcon(vector, pageColors.title, CouiPageDefaults.iconSize) }
+            icon = leading ?: when {
+                painter != null -> {
+                    {
+                        Icon(
+                            painter = painter,
+                            contentDescription = null,
+                            tint = pageColors.title,
+                            modifier = Modifier.size(CouiPageDefaults.iconSize),
+                        )
+                    }
+                }
+                icon != null -> {
+                    { CouiIcon(icon, pageColors.title, CouiPageDefaults.iconSize) }
+                }
+                else -> null
             },
             title = { CouiRowTitle(title, enabled, pageColors) },
             summary = summary?.let { text -> { CouiRowSummary(text, enabled, pageColors) } },
@@ -470,6 +485,7 @@ fun AppRadioItem(
 @Composable
 fun AppDropdownItem(
     icon: ImageVector? = null,
+    painter: Painter? = null,
     title: String,
     summary: String? = null,
     items: List<String>,
@@ -527,8 +543,21 @@ fun AppDropdownItem(
                         onClick?.invoke()
                         anchor.open { expanded = true }
                     },
-                icon = leading ?: icon?.let { vector ->
-                    { CouiIcon(vector, pageColors.title, CouiPageDefaults.iconSize) }
+                icon = leading ?: when {
+                    painter != null -> {
+                        {
+                            Icon(
+                                painter = painter,
+                                contentDescription = null,
+                                tint = pageColors.title,
+                                modifier = Modifier.size(CouiPageDefaults.iconSize),
+                            )
+                        }
+                    }
+                    icon != null -> {
+                        { CouiIcon(icon, pageColors.title, CouiPageDefaults.iconSize) }
+                    }
+                    else -> null
                 },
                 title = { CouiRowTitle(title, enabled, pageColors) },
                 summary = summary?.let { text -> { CouiRowSummary(text, enabled, pageColors) } },

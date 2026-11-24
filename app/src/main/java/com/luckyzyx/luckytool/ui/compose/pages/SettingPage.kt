@@ -46,7 +46,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.LayoutDirection
+import com.composables.icons.lucide.R as LucideR
 import com.itos.coui.dialog.CouiDialogAction
 import com.itos.coui.dialog.CouiDialogActionStyle
 import com.itos.coui.dialog.CouiDialogDefaults
@@ -204,7 +207,7 @@ fun SettingPage(activity: MainActivity, onOpenTheme: () -> Unit = {}) {
                     entryValues = selectableUiModes.map { it.value }.toTypedArray(),
                     default = UiMode.DEFAULT_VALUE,
                     summary = settingsUiModeSummary,
-                    leading = { PrefIcon(Icons.Rounded.DisplaySettings) },
+                    leading = { PrefIcon(Icons.Rounded.DisplaySettings, painter = painterResource(LucideR.drawable.lucide_ic_monitor_cog)) },
                     onChange = { ThemePrefs.notifyChanged() },
                 )
                 if (!couiAvailable) {
@@ -212,16 +215,28 @@ fun SettingPage(activity: MainActivity, onOpenTheme: () -> Unit = {}) {
                         title = "COUI",
                         summary = settingsUiModeCouiUnavailable,
                         enabled = false,
-                        leading = { PrefIcon(Icons.Rounded.DisplaySettings) },
+                        leading = { PrefIcon(Icons.Rounded.DisplaySettings, painter = painterResource(LucideR.drawable.lucide_ic_monitor_cog)) },
                     )
                 }
                 // 导航入口用箭头，不暴露内部色板名称。
                 click(
                     title = themePaletteTitle,
                     summary = themePaletteSummary,
-                    leading = { PrefIcon(Icons.Rounded.Palette) },
+                    leading = { PrefIcon(Icons.Rounded.Palette, painter = painterResource(LucideR.drawable.lucide_ic_palette)) },
                     value = "",
-                    trailing = { Icon(Icons.AutoMirrored.Rounded.KeyboardArrowRight, contentDescription = null) },
+                    trailing = {
+                        if (LocalUiMode.current == UiMode.Coui) {
+                            Icon(
+                                painter = painterResource(
+                                    if (LocalLayoutDirection.current == LayoutDirection.Rtl) LucideR.drawable.lucide_ic_chevron_left
+                                    else LucideR.drawable.lucide_ic_chevron_right
+                                ),
+                                contentDescription = null,
+                            )
+                        } else {
+                            Icon(Icons.AutoMirrored.Rounded.KeyboardArrowRight, contentDescription = null)
+                        }
+                    },
                     onClick = onOpenTheme,
                 )
 
@@ -232,13 +247,13 @@ fun SettingPage(activity: MainActivity, onOpenTheme: () -> Unit = {}) {
                     title = autoCheckUpdateTitle,
                     summary = autoCheckUpdateSummary,
                     default = true,
-                    leading = { PrefIcon(Icons.Rounded.SystemUpdate) },
+                    leading = { PrefIcon(Icons.Rounded.SystemUpdate, painter = painterResource(LucideR.drawable.lucide_ic_refresh_cw)) },
                 )
                 if (deviceSecure) {
                     switch(
                         key = "enable_biometric_unlock_verification",
                         title = biometricUnlockTitle,
-                        leading = { PrefIcon(Icons.Rounded.Fingerprint) },
+                        leading = { PrefIcon(Icons.Rounded.Fingerprint, painter = painterResource(LucideR.drawable.lucide_ic_fingerprint_pattern)) },
                         beforeApply = { enable, apply ->
                             if (enable) {
                                 // 验证通过才真正写入（取消或失败则不写）
@@ -256,13 +271,13 @@ fun SettingPage(activity: MainActivity, onOpenTheme: () -> Unit = {}) {
                     title = tileAutoStartTitle,
                     summary = tileAutoStartSummary,
                     default = true,
-                    leading = { PrefIcon(Icons.Rounded.Widgets) },
+                    leading = { PrefIcon(Icons.Rounded.Widgets, painter = painterResource(LucideR.drawable.lucide_ic_shapes)) },
                 )
                 switch(
                     key = "hide_desktop_module_icon",
                     title = hideModuleIconTitle,
                     summary = hideModuleIconSummary,
-                    leading = { PrefIcon(Icons.Rounded.VisibilityOff) },
+                    leading = { PrefIcon(Icons.Rounded.VisibilityOff, painter = painterResource(LucideR.drawable.lucide_ic_eye_off)) },
                     onChange = { value ->
                         AppUtils(context).setComponentDisabled(
                             ComponentName(
@@ -278,9 +293,21 @@ fun SettingPage(activity: MainActivity, onOpenTheme: () -> Unit = {}) {
                 click(
                     title = appPermissionTitle,
                     summary = appPermissionSummary,
-                    leading = { PrefIcon(Icons.Rounded.AdminPanelSettings) },
+                    leading = { PrefIcon(Icons.Rounded.AdminPanelSettings, painter = painterResource(LucideR.drawable.lucide_ic_user_cog)) },
                     value = "",
-                    trailing = { Icon(Icons.AutoMirrored.Rounded.KeyboardArrowRight, contentDescription = null) },
+                    trailing = {
+                        if (LocalUiMode.current == UiMode.Coui) {
+                            Icon(
+                                painter = painterResource(
+                                    if (LocalLayoutDirection.current == LayoutDirection.Rtl) LucideR.drawable.lucide_ic_chevron_left
+                                    else LucideR.drawable.lucide_ic_chevron_right
+                                ),
+                                contentDescription = null,
+                            )
+                        } else {
+                            Icon(Icons.AutoMirrored.Rounded.KeyboardArrowRight, contentDescription = null)
+                        }
+                    },
                     onClick = {
                         activity.requestFunctionNavigation("app_permission", appPermissionTitle)
                     },
@@ -290,12 +317,12 @@ fun SettingPage(activity: MainActivity, onOpenTheme: () -> Unit = {}) {
                 group()
                 click(
                     title = backupDataTitle,
-                    leading = { PrefIcon(Icons.Rounded.SaveAlt) },
+                    leading = { PrefIcon(Icons.Rounded.SaveAlt, painter = painterResource(LucideR.drawable.lucide_ic_download)) },
                     onClick = { showBackupDialog = true },
                 )
                 click(
                     title = restoreDataTitle,
-                    leading = { PrefIcon(Icons.Rounded.Restore) },
+                    leading = { PrefIcon(Icons.Rounded.Restore, painter = painterResource(LucideR.drawable.lucide_ic_history)) },
                     onClick = {
                         FileUtils.checkDownloadDir(context, "LuckyTool").apply {
                             if (isFile) delete()
@@ -307,7 +334,7 @@ fun SettingPage(activity: MainActivity, onOpenTheme: () -> Unit = {}) {
                 click(
                     title = clearAllDataTitle,
                     summary = clearAllDataSummary,
-                    leading = { PrefIcon(Icons.Rounded.Delete) },
+                    leading = { PrefIcon(Icons.Rounded.Delete, painter = painterResource(LucideR.drawable.lucide_ic_trash_2)) },
                     onClick = { showClearDialog = true },
                 )
 
@@ -316,19 +343,19 @@ fun SettingPage(activity: MainActivity, onOpenTheme: () -> Unit = {}) {
                 click(
                     title = donateTitle,
                     summary = donateSummary,
-                    leading = { PrefIcon(Icons.Rounded.FavoriteBorder) },
+                    leading = { PrefIcon(Icons.Rounded.FavoriteBorder, painter = painterResource(LucideR.drawable.lucide_ic_heart)) },
                     onClick = { showDonateList = true },
                 )
                 click(
                     title = feedbackDownloadTitle,
                     summary = feedbackDownloadSummary,
-                    leading = { PrefIcon(Icons.Rounded.Feedback) },
+                    leading = { PrefIcon(Icons.Rounded.Feedback, painter = painterResource(LucideR.drawable.lucide_ic_message_square_warning)) },
                     onClick = { showFeedbackDialog = true },
                 )
                 click(
                     title = participateTranslationTitle,
                     summary = participateTranslationSummary,
-                    leading = { PrefIcon(Icons.Rounded.Translate) },
+                    leading = { PrefIcon(Icons.Rounded.Translate, painter = painterResource(LucideR.drawable.lucide_ic_languages)) },
                     onClick = {
                         context.openUrl("https://github.com/luckyzyx/LuckyTool-Localization")
                     },

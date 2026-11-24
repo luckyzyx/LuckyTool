@@ -36,8 +36,10 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.composables.icons.lucide.R as LucideR
 import com.luckyzyx.luckytool.ui.compose.components.coui.CouiIconsExt
 import com.itos.coui.layout.CouiPageDefaults
 import com.itos.coui.scroll.rememberCouiOverscrollEffect
@@ -242,11 +244,20 @@ private fun CategoryBadgeIcon(badge: CategoryBadge?) {
             .background(background),
         contentAlignment = Alignment.Center,
     ) {
-        Icon(
-            imageVector = badge?.icon ?: Icons.Filled.Apps,
-            contentDescription = null,
-            tint = foreground,
-            modifier = Modifier.size(CategoryBadgeGlyphSize),
-        )
+        if (LocalUiMode.current == UiMode.Coui) {
+            Icon(
+                painter = painterResource(badge?.lucideRes ?: LucideR.drawable.lucide_ic_layout_grid),
+                contentDescription = null,
+                tint = foreground,
+                modifier = Modifier.size(CategoryBadgeGlyphSize),
+            )
+        } else {
+            Icon(
+                imageVector = badge?.icon ?: Icons.Filled.Apps,
+                contentDescription = null,
+                tint = foreground,
+                modifier = Modifier.size(CategoryBadgeGlyphSize),
+            )
+        }
     }
 }
