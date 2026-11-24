@@ -105,6 +105,7 @@
     <string name="restore_data">Restore Data</string>
     <string name="data_backup_complete">Data backup completed!</string>
     <string name="data_backup_error">Data backup error!</string>
+    <string name="data_backup_result">Backup finished: %1$d succeeded, %2$d failed</string>
     <string name="data_restore_complete">Data restore complete!</string>
     <string name="data_restore_result">Restore finished: %1$d succeeded, %2$d failed</string>
     <string name="data_backup_data_version">Backup data version</string>

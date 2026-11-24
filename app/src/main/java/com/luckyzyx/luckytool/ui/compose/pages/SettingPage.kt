@@ -586,6 +586,9 @@ private object SaveBackupDocument : ActivityResultContract<String, Uri?>() {
 private fun writeBackupData(context: Context, uri: Uri) {
     val json = JSONObject().apply { put("osCode", getOSVersionCode) }
     val dataMapList = context.backupAllPrefs(*BackupPrefs.toTypedArray())
+    var success = 0
+    var failed = 0
+    val failedKeys = ArrayList<String>()
     dataMapList.keys.forEach { prefs ->
         val jsons = JSONObject()
         dataMapList[prefs]?.keys?.forEach { key ->
@@ -595,7 +598,8 @@ private fun writeBackupData(context: Context, uri: Uri) {
             // 不认识的类型同样不能落到那个兜底分支：记录日志后跳过该键，绝不写成字符串。
             try {
                 when (value) {
-                    null -> Unit
+                    // 空值没有可备份的内容，静默跳过（prefs.all 正常不会产生 null 值）
+                    null -> return@forEach
                     is Set<*> -> {
                         val arr = JSONArray()
                         value.forEach { arr.put(it) }
@@ -609,8 +613,11 @@ private fun writeBackupData(context: Context, uri: Uri) {
 
                     else -> error("${value.javaClass.name} is not JSON-safe")
                 }
+                success++
             } catch (t: Throwable) {
-                LogUtils.e("SettingPage", "backup skip $key", "$t", false)
+                failed++
+                failedKeys.add("$prefs/$key")
+                LogUtils.d("SettingPage", "backup skip $prefs/$key", "$t", true)
             }
         }
         json.put(prefs, JSONObject().apply {
@@ -626,6 +633,15 @@ private fun writeBackupData(context: Context, uri: Uri) {
         LogUtils.e("SettingPage", "backup write", "$it", false)
     }.isSuccess
     if (saved) {
+        if (failed > 0) {
+            LogUtils.d(
+                "SettingPage",
+                "backup result",
+                "success=$success failed=$failed " + failedKeys.joinToString(),
+                true,
+            )
+            context.showToast(context.getString(R.string.data_backup_result, success, failed))
+        }
         context.showToast(context.getString(R.string.data_backup_saved, backupSavedPath(context, uri)))
     } else {
         context.showToast(context.getString(R.string.data_backup_error))
@@ -669,11 +685,11 @@ private fun writeRestoreData(context: Context, json: JSONObject) {
             remoteUnwritable += prefsDatas.length()
             failed += prefsDatas.length()
             failedKeys.add("$prefsName/*(${target.key} unavailable)")
-            LogUtils.e(
+            LogUtils.d(
                 "SettingPage",
                 "restore skip $prefsName",
                 "${target.key} unavailable, ${prefsDatas.length()} keys",
-                false,
+                true,
             )
             return@forEach
         }
@@ -702,18 +718,18 @@ private fun writeRestoreData(context: Context, json: JSONObject) {
                 // 恢复不了的值：记录日志、跳过，并把该键从目标 prefs 移除，不让坏数据留在设备上
                 failed++
                 failedKeys.add("$prefsName/$key")
-                LogUtils.e("SettingPage", "restore skip $prefsName/$key", "$t", false)
+                LogUtils.d("SettingPage", "restore skip $prefsName/$key", "$t", true)
                 runCatching { prefs.edit().remove(key).commit() }
             }
         }
     }
     if (failed > 0) {
-        LogUtils.e(
+        LogUtils.d(
             "SettingPage",
             "restore result",
             "success=$success failed=$failed remoteUnwritable=$remoteUnwritable " +
                     failedKeys.joinToString(),
-            false,
+            true,
         )
     }
     context.showToast(context.getString(R.string.data_restore_result, success, failed))
