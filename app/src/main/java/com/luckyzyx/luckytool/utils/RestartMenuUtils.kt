@@ -471,7 +471,7 @@ object RestartMenuUtils {
     }
 
 
-    /** Material 线：执行中的进度弹窗，只有居中的进度圈和一行进度文字 */
+    /** Material 线：执行中的进度弹窗，居中的进度圈下显示两行进度文字（计数与应用名各一行） */
     @Composable
     private fun MaterialOptimizeRunningDialog(title: String, progressText: String) {
         AlertDialog(
@@ -499,7 +499,7 @@ object RestartMenuUtils {
      * Coui 线：执行中的进度弹窗，标题写明在做什么，进度文案放在标题下面。
      *
      * 没有可点动作，返回键与外点都不关闭：优化还在跑，弹层不该消失。
-     * 进度文案把计数写在应用名前，长应用名只会截掉名字，看不出「还剩多少」的计数不会被吃掉。
+     * 进度文案把计数与应用名分成两行，长应用名不会挤掉「还剩多少」的计数。
      */
     @Composable
     private fun CouiOptimizeRunningDialog(title: String, progressText: String) {
@@ -584,8 +584,8 @@ object RestartMenuUtils {
             scopes.keys.forEachIndexed { index, pack ->
                 val name = scopes[pack] ?: pack
                 withContext(Dispatchers.Main) {
-                    // 计数放在最前：COUI 加载弹窗的提示是单行、超长省略号，长应用名会把末尾的计数吃掉
-                    onProgress("${index + 1}/${scopes.size} $name")
+                    // 计数与应用名分两行显示：计数行始终完整可见，应用名行超长时省略
+                    onProgress("${index + 1}/${scopes.size}\n$name")
                 }
                 val success = try {
                     controller?.clearApplicationProfileData(pack)

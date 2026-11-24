@@ -148,7 +148,7 @@ internal fun CouiLinearProgressIndicator(
 private val ProgressDialogMaxWidth = 280.dp
 
 /**
- * COUI 线的进度弹窗：标题在上，中间不确定进度环，下面一行进度说明，没有按钮。
+ * COUI 线的进度弹窗：标题在上，中间不确定进度环，下面进度说明（最多两行），没有按钮。
  *
  * COUI 的加载弹窗只有一行提示放不下标题，COUI 弹窗本体的确认位又是必填项，画不出零按钮的进度层，
  * 所以用裸 Dialog 承载一张 COUI 弹窗配色的卡片。执行期间不响应返回键与外点：
