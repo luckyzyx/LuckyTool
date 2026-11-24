@@ -100,6 +100,9 @@
     <string name="restore_data">恢复数据</string>
     <string name="data_backup_complete">数据备份已完成！</string>
     <string name="data_backup_error">数据备份错误！</string>
+    <string name="data_backup_result">备份完成：成功 %1$d，失败 %2$d</string>
+    <string name="data_result_view_failures">查看失败信息</string>
+    <string name="data_result_failed_entries">失败条目</string>
     <string name="data_restore_complete">数据恢复已完成！</string>
     <string name="data_restore_result">恢复完成：成功 %1$d，失败 %2$d</string>
     <string name="data_backup_data_version">备份数据版本</string>

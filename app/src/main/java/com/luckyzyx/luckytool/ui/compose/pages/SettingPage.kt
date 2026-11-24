@@ -59,6 +59,7 @@ import com.luckyzyx.luckytool.ui.activity.MainActivity
 import com.luckyzyx.luckytool.ui.compose.components.ActionListDialog
 import com.luckyzyx.luckytool.ui.compose.components.ChoiceItem
 import com.luckyzyx.luckytool.ui.compose.components.ConfirmDialog
+import com.luckyzyx.luckytool.ui.compose.components.DataResultDialog
 import com.luckyzyx.luckytool.ui.compose.components.LocalScopeTopInset
 import com.luckyzyx.luckytool.ui.compose.components.ScopeScreen
 import com.luckyzyx.luckytool.ui.compose.components.PrefIcon
@@ -109,13 +110,14 @@ fun SettingPage(activity: MainActivity, onOpenTheme: () -> Unit = {}) {
     // 以 Configuration 作 key：语言切换后 isZh 需要重新求值
     val zh = remember(LocalConfiguration.current) { isZh(context) }
     var pendingRestoreJson by remember { mutableStateOf<JSONObject?>(null) }
+    var dataResult by remember { mutableStateOf<DataResult?>(null) }
 
     // 备份仍走系统文件选择器（落点由用户确认），只是把选择器的起始目录预设成 Download/LuckyTool；
     // 备份前先展示四个 prefs 各自的落点，回调链里没有 Composer，这段收进 lambda
     val backupLauncher = rememberLauncherForActivityResult(
         SaveBackupDocument
     ) { uri ->
-        if (uri != null) writeBackupData(activity, uri)
+        if (uri != null) writeBackupData(activity, uri) { dataResult = it }
     }
     val startBackup: () -> Unit = {
         backupLauncher.launch("LuckyTool_" + formatDate("yyyyMMdd_HHmmss") + "_backup.json")
@@ -524,10 +526,23 @@ fun SettingPage(activity: MainActivity, onOpenTheme: () -> Unit = {}) {
             message = restoreMessage,
             onConfirm = {
                 pendingRestoreJson = null
-                writeRestoreData(activity, json)
+                writeRestoreData(activity, json) { dataResult = it }
             },
             onDismiss = { pendingRestoreJson = null },
             confirmLabel = stringResource(R.string.restore_data),
+        )
+    }
+
+    // 备份/恢复结束后的结果汇总：关闭后恢复流程重启 Activity，让恢复的值生效
+    dataResult?.let { result ->
+        DataResultDialog(
+            title = result.title,
+            message = result.message,
+            failedKeys = result.failedKeys,
+            onDismiss = {
+                dataResult = null
+                if (result.restartOnDismiss) activity.restart()
+            },
         )
     }
 }
@@ -583,7 +598,7 @@ private object SaveBackupDocument : ActivityResultContract<String, Uri?>() {
  *
  * 落点仍由用户在系统选择器里确认（起始目录已预设到 Download/LuckyTool），写入失败只提示错误。
  */
-private fun writeBackupData(context: Context, uri: Uri) {
+private fun writeBackupData(context: Context, uri: Uri, onResult: (DataResult) -> Unit) {
     val json = JSONObject().apply { put("osCode", getOSVersionCode) }
     val dataMapList = context.backupAllPrefs(*BackupPrefs.toTypedArray())
     var success = 0
@@ -640,9 +655,16 @@ private fun writeBackupData(context: Context, uri: Uri) {
                 "success=$success failed=$failed " + failedKeys.joinToString(),
                 true,
             )
-            context.showToast(context.getString(R.string.data_backup_result, success, failed))
         }
         context.showToast(context.getString(R.string.data_backup_saved, backupSavedPath(context, uri)))
+        onResult(
+            DataResult(
+                title = context.getString(R.string.data_backup_complete),
+                message = context.getString(R.string.data_backup_result, success, failed),
+                failedKeys = failedKeys,
+                restartOnDismiss = false,
+            )
+        )
     } else {
         context.showToast(context.getString(R.string.data_backup_error))
     }
@@ -668,7 +690,7 @@ private fun backupSavedPath(context: Context, uri: Uri): String {
  * target 是落点而不是建议：备份记 remote 但此刻框架 service 不可用时，这些键按失败计数并提示，
  * 不静默回落到本地 —— 否则界面显示恢复成功，hook 侧却读不到。
  */
-private fun writeRestoreData(context: Context, json: JSONObject) {
+private fun writeRestoreData(context: Context, json: JSONObject, onResult: (DataResult) -> Unit) {
     if (json.length() <= 0) return
     json.remove("osCode")
     var success = 0
@@ -732,17 +754,26 @@ private fun writeRestoreData(context: Context, json: JSONObject) {
             true,
         )
     }
-    context.showToast(context.getString(R.string.data_restore_result, success, failed))
-    if (remoteUnwritable > 0) {
-        context.showToast(
-            context.getString(R.string.data_restore_remote_unavailable, remoteUnwritable)
+    onResult(
+        DataResult(
+            title = context.getString(R.string.data_restore_complete),
+            message = context.getString(R.string.data_restore_result, success, failed),
+            failedKeys = failedKeys,
+            restartOnDismiss = true,
         )
-    }
-    (context as? MainActivity)?.restart()
+    )
 }
 
 /** 备份/恢复涉及的四个 prefs 文件，顺序即 JSON 里的顺序 */
 private val BackupPrefs = listOf(ModulePrefs, IntentPrefs, SettingsPrefs, OtherPrefs)
+
+/** 备份/恢复结束后的结果汇总：标题与计数正文已拼好，失败条目供「查看失败信息」明细展示 */
+private data class DataResult(
+    val title: String,
+    val message: String,
+    val failedKeys: List<String>,
+    val restartOnDismiss: Boolean,
+)
 
 /** 备份目录（外部存储相对路径）：只用来预设文件选择器打开的位置，真实落点由用户在选择器里确认 */
 private const val DOWNLOAD_TOOL_DIR = "Download/LuckyTool"
