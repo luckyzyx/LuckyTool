@@ -105,7 +105,7 @@ class BatteryControllerUtils(val classLoader: ClassLoader?) {
                     else -> "Normal"
                 }
 
-                else -> if (isWireless) "AirSVOOC" else "SUPERVOOC"
+                else -> if (isWireless) "AirVOOC" else "SUPERVOOC"
             }
 
             else -> "Normal"
@@ -125,9 +125,9 @@ class BatteryControllerUtils(val classLoader: ClassLoader?) {
             }
 
             1 -> if (isWireless) "AirVOOC" else "VOOC"
-            2 -> if (isWireless) "AirSVOOC" else "SUPERVOOC"
-            20 -> if (isWireless) "AirSVOOC2" else "SUPERVOOC2.0"
-            30 -> if (isWireless) "AirSVOOC" else "SUPERVOOC Athena Foreign Pro"
+            2 -> if (isWireless) "AirVOOC" else "SUPERVOOC"
+            20 -> if (isWireless) "AirVOOC" else "SUPERVOOC2.0"
+            30 -> if (isWireless) "AirVOOC" else "SUPERVOOC Athena Foreign Pro"
             25 -> if (isWireless) "AirVOOC" else "VOOC Beta Pro"
             3 -> "PD"
             4 -> "QC"
