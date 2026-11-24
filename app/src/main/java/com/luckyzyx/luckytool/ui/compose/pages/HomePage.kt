@@ -257,6 +257,7 @@ fun HomePage(activity: MainActivity, isCurrentPage: Boolean = true) {
         when (LocalUiMode.current) {
             UiMode.Material -> AlertDialog(
                 onDismissRequest = { dexDialogVisible = false },
+                title = { Text(stringResource(R.string.re_optimize_dex)) },
                 text = {
                     Column(
                         Modifier
@@ -431,6 +432,7 @@ private fun CouiDexOptimizeDialog(
 ) {
     CouiAlertDialog(
         onDismissRequest = onDismissRequest,
+        title = stringResource(R.string.re_optimize_dex),
         message = message,
         confirmAction = CouiDialogAction(
             text = stringResource(android.R.string.ok),

@@ -110,6 +110,7 @@ object CorePatchPage {
                 when (LocalUiMode.current) {
                     UiMode.Material -> AlertDialog(
                         onDismissRequest = { showWarning = false },
+                        title = { Text(stringResource(R.string.use_previous_signatures)) },
                         text = {
                             Column(
                                 Modifier
@@ -129,6 +130,7 @@ object CorePatchPage {
                     // COUI 线：正文交给 COUI 弹窗绘制；主操作是 Primary 样式，必须显式给按钮配色
                     UiMode.Coui -> CouiAlertDialog(
                         onDismissRequest = { showWarning = false },
+                        title = stringResource(R.string.use_previous_signatures),
                         message = stringResource(R.string.use_previous_signatures_warning),
                         confirmAction = CouiDialogAction(
                             text = stringResource(android.R.string.ok),

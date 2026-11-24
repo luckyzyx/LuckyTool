@@ -366,6 +366,7 @@ internal fun LazyItemScope.MemcConfigContent() {
 
     if (showResetConfirm) {
         ConfirmDialog(
+            title = stringResource(R.string.reset),
             message = stringResource(R.string.restore_frame_insertion_configuration_data),
             onDismiss = { showResetConfirm = false },
             onConfirm = {
@@ -873,6 +874,7 @@ internal fun MemcPackageDialog(
 
     if (showDeleteConfirm && initial != null) {
         ConfirmDialog(
+            title = stringResource(R.string.remove),
             message = stringResource(
                 R.string.confirm_to_delete_this_configuration,
                 initial.packName,
@@ -1234,6 +1236,7 @@ internal fun MemcActivityDialog(
 
     if (showDeleteConfirm && initial != null) {
         ConfirmDialog(
+            title = stringResource(R.string.remove),
             message = stringResource(
                 R.string.confirm_to_delete_this_configuration,
                 initial.activity,

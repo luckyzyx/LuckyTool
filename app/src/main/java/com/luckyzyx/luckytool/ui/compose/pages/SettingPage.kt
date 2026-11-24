@@ -406,6 +406,7 @@ fun SettingPage(activity: MainActivity, onOpenTheme: () -> Unit = {}) {
 
     if (showClearDialog) {
         ConfirmDialog(
+            title = stringResource(R.string.clear_all_data),
             message = stringResource(R.string.clear_all_data_message),
             onConfirm = {
                 showClearDialog = false
@@ -467,6 +468,7 @@ fun SettingPage(activity: MainActivity, onOpenTheme: () -> Unit = {}) {
             stringResource(R.string.data_backup_status_tips),
         ).joinToString("\n\n")
         ConfirmDialog(
+            title = stringResource(R.string.backup_data),
             message = message,
             onConfirm = {
                 showBackupDialog = false
@@ -518,6 +520,7 @@ fun SettingPage(activity: MainActivity, onOpenTheme: () -> Unit = {}) {
             if (remoteUnwritable) add(stringResource(R.string.data_remote_unavailable_tips))
         }.joinToString("\n\n")
         ConfirmDialog(
+            title = stringResource(R.string.restore_data),
             message = restoreMessage,
             onConfirm = {
                 pendingRestoreJson = null
