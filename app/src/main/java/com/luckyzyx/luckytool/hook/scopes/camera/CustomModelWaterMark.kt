@@ -25,7 +25,7 @@ class CustomModelWaterMark(val dexKitBridge: DexKitBridge) : YukiBaseHooker() {
                 usingStrings("key_watermark_part_a_line", "key_watermark_part_b_line")
             }
         }.apply {
-            checkDataList("CustomModelWaterMark Shot class")
+            checkDataList("CustomModelWaterMark Shot class", false)
             findMethod {
                 matcher {
                     paramTypes(classOf<Context>(), classOf<Float>(), null, null)
@@ -99,7 +99,7 @@ class CustomModelWaterMark(val dexKitBridge: DexKitBridge) : YukiBaseHooker() {
                 usingStrings("[\u4e00-\u9fa5]", "")
             }
         }.apply {
-            checkDataList("CustomModelWaterMark RemoveChineseOfString class")
+            checkDataList("CustomModelWaterMark RemoveChineseOfString class", false)
             findMethod {
                 matcher {
                     returnType(classOf<String>())

@@ -6,9 +6,7 @@ import com.highcapable.kavaref.extension.classOf
 import com.highcapable.yukihookapi.extension.kavaref.hook
 import com.highcapable.yukihookapi.extension.kavaref.toClass
 import com.highcapable.yukihookapi.hook.entity.YukiBaseHooker
-import com.luckyzyx.luckytool.utils.A13
 import com.luckyzyx.luckytool.utils.DexkitUtils.checkDataList
-import com.luckyzyx.luckytool.utils.SDK
 import org.lsposed.lsparanoid.Obfuscate
 import org.luckypray.dexkit.DexKitBridge
 
@@ -17,13 +15,12 @@ class RemoveWatermarkWordLimit(val dexKitBridge: DexKitBridge) : YukiBaseHooker(
     override fun onHook() {
         //Source CameraSubSettingFragment -> camera_namelength_outofrange -> filter
         //Source CameraSloganSettingFragment -> camera_namelength_outofrange -> filter
-        val onlyOne = SDK >= A13
         dexKitBridge.findClass {
             matcher {
                 usingStrings("")
             }
         }.apply {
-            checkDataList("RemoveWatermarkWordLimit class", onlyOne)
+            checkDataList("RemoveWatermarkWordLimit class", false)
             findMethod {
                 matcher {
                     name("filter")
@@ -39,8 +36,8 @@ class RemoveWatermarkWordLimit(val dexKitBridge: DexKitBridge) : YukiBaseHooker(
                     }
                 }
             }.apply {
-                checkDataList("RemoveWatermarkWordLimit", onlyOne)
-                if (onlyOne.not() && size == 2) {
+                checkDataList("RemoveWatermarkWordLimit", false)
+                if (size == 2) {
                     forEach {
                         it.className.toClass().resolve().apply {
                             firstMethod {
