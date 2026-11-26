@@ -18,7 +18,7 @@ navigationevent = "1.2.0"
 navigation = "2.10.2"
 
 miuix = "0.9.4"
-coui = "0.0.1-alpha19"
+coui = "0.0.1-alpha21"
 lucide-icons = "2.2.1"
 libsu = "6.0.0"
 coil = "3.6.3"

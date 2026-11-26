@@ -11,7 +11,7 @@ description: "LuckyTool 接入 COUI-Kit 的约定：JitPack 渠道与版本、�
 
 ## 依赖渠道与版本（硬事实）
 - 坐标走 JitPack：`com.github.itoseo.coui-kit`（coui / coui-material3 / coui-icons 三件套同版本）。
-- 当前版本：`gradle/libs.versions.toml` 中 `coui = "0.0.1-alpha19"`。
+- 当前版本：`gradle/libs.versions.toml` 中 `coui = "0.0.1-alpha21"`。
 - 不要回退到 Maven Central 的 `io.github.itoseo:coui-*`（该渠道止步 alpha17）。
 - 升级流程：先查 JitPack 构建状态与 GitHub tag diff（Release 未必有，以 tag 为准），再改 toml，然后一次 gradle 跑完验证（见「构建与红测」）。
 
