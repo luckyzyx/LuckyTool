@@ -163,7 +163,7 @@ fun SettingPage(activity: MainActivity, onOpenTheme: () -> Unit = {}) {
             val settingsUiModeTitle = stringResource(R.string.settings_ui_mode)
             val settingsUiModeSummary = stringResource(R.string.settings_ui_mode_summary)
             val settingsUiModeCouiUnavailable = stringResource(R.string.settings_ui_mode_coui_unavailable)
-            val themePaletteTitle = stringResource(R.string.theme_palette)
+            val themeSettingsTitle = stringResource(R.string.settings_theme)
             val themePaletteSummary = stringResource(R.string.theme_palette_summary)
             val autoCheckUpdateTitle = stringResource(R.string.auto_check_update)
             val autoCheckUpdateSummary = stringResource(R.string.auto_check_update_summary)
@@ -222,7 +222,7 @@ fun SettingPage(activity: MainActivity, onOpenTheme: () -> Unit = {}) {
                 }
                 // 导航入口用箭头，不暴露内部色板名称。
                 click(
-                    title = themePaletteTitle,
+                    title = themeSettingsTitle,
                     summary = themePaletteSummary,
                     leading = { PrefIcon(Icons.Rounded.Palette, painter = painterResource(LucideR.drawable.lucide_ic_palette)) },
                     value = "",
