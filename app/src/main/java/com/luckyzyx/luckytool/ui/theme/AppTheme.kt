@@ -184,7 +184,8 @@ fun AppTheme(content: @Composable () -> Unit) {
         LocalEnableBlur provides shellSettings.enableBlur,
         LocalEnableFloatingBottomBar provides shellSettings.enableFloatingBottomBar,
         LocalFloatingBottomBarStyle provides shellSettings.floatingBottomBarStyle,
-        LocalEnableSwipeDismiss provides shellSettings.swipeDismiss,
+        // 二级页迁移到独立 Activity 后侧滑返回暂时禁用：后续接回 SwipeBackPage 时再恢复 shellSettings.swipeDismiss
+        LocalEnableSwipeDismiss provides false,
         LocalPagerInterceptionMode provides shellSettings.pagerInterceptionMode,
         LocalCategoryBadgeColors provides shellSettings.categoryBadgeColors,
     ) {

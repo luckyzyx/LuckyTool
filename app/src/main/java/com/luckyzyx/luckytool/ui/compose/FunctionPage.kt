@@ -146,7 +146,6 @@ private fun FunctionTreeScreen(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun ScopePageHost(
-    activity: MainActivity,
     route: ScopeRoute,
     onBack: () -> Unit,
     onNavigate: (pageKey: String, title: String?) -> Unit,

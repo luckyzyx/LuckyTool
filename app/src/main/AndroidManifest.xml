@@ -94,6 +94,11 @@
         <activity
                 android:name=".ui.activity.CropImageActivity"
                 android:theme="@style/Theme.Luckyzyx.NoActionBar" />
+
+        <activity
+                android:name=".ui.activity.SecondaryActivity"
+                android:exported="false"
+                android:theme="@style/Theme.Luckyzyx.NoActionBar" />
         
         <meta-data
                 android:name="xposedmodule"
