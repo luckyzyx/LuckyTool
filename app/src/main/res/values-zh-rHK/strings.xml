@@ -1373,6 +1373,7 @@
     <string name="left">左側</string>
     <string name="right">右側</string>
     <string name="close">關閉</string>
+    <string name="sheet_done">完成</string>
     <string name="open">開啟</string>
     <string name="share">分享</string>
     <string name="add">新增</string>

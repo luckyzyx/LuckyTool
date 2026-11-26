@@ -25,14 +25,15 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import com.drake.net.Get
 import com.itos.coui.layout.Divider as CouiDivider
 import com.itos.coui.sheet.BottomSheet
+import com.itos.coui.sheet.CouiSheetButton
 import com.itos.coui.switch.Switch as CouiSwitch
 import com.itos.coui.text.CouiTextKind
 import com.itos.coui.text.Text as CouiText
@@ -518,21 +519,34 @@ private fun DonateSortSheetMaterial(sheet: DonateSortSheetModel) {
 }
 
 /**
- * COUI 线排序过滤弹层：面板用 COUI 的 [BottomSheet]（自带内部纵向滚动与导航栏内边距），
+ * COUI 线排序过滤弹层：半屏 [BottomSheet] 承载（自带内部纵向滚动与导航栏内边距），
+ * 标题进顶栏，左右按钮走顶栏槽位——左边关闭、右边完成，都只是收起面板。
  * 排序/筛选项用 [CouiFilterChip]，行间补 8dp 间距——COUI 标签本身不带外边距。
  */
 @Composable
 private fun DonateSortSheetCoui(sheet: DonateSortSheetModel) {
-    BottomSheet(visible = sheet.visible) {
+    BottomSheet(
+        visible = sheet.visible,
+        sheetHeight = LocalConfiguration.current.screenHeightDp.dp / 2,
+        showDragHandle = true,
+        leadingButton = CouiSheetButton(
+            label = stringResource(R.string.close),
+            onClick = { sheet.visible.value = false },
+        ),
+        titleContent = {
+            CouiText(
+                text = stringResource(R.string.appinfo_sort_and_filter),
+                kind = CouiTextKind.SheetTitle,
+            )
+        },
+        trailingButton = CouiSheetButton(
+            label = stringResource(R.string.sheet_done),
+            onClick = { sheet.visible.value = false },
+        ),
+    ) {
         Column(
             Modifier.fillMaxWidth().padding(horizontal = 16.dp).padding(bottom = 24.dp)
         ) {
-            CouiText(
-                text = stringResource(R.string.appinfo_sort_and_filter),
-                kind = CouiTextKind.TopBar,
-                textAlign = TextAlign.Center,
-                modifier = Modifier.fillMaxWidth(),
-            )
             Row(
                 Modifier.fillMaxWidth().padding(top = 12.dp),
                 verticalAlignment = Alignment.CenterVertically,

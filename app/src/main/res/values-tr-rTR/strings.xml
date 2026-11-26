@@ -1238,6 +1238,7 @@
     <string name="left">Sol</string>
     <string name="right">Sağ</string>
     <string name="close">Kapat</string>
+    <string name="sheet_done">Bitti</string>
     <string name="open">Aç</string>
     <string name="share">Paylaş</string>
     <string name="add">Ekle</string>

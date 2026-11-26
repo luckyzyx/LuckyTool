@@ -1408,6 +1408,7 @@
     <string name="left">Left</string>
     <string name="right">Right</string>
     <string name="close">Close</string>
+    <string name="sheet_done">Done</string>
     <string name="open">Open</string>
     <string name="share">Share</string>
     <string name="add">Add</string>

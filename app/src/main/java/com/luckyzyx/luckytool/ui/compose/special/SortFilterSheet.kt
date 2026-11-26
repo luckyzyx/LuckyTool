@@ -19,11 +19,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.itos.coui.layout.Divider as CouiDivider
 import com.itos.coui.sheet.BottomSheet
+import com.itos.coui.sheet.CouiSheetButton
 import com.itos.coui.switch.Switch as CouiSwitch
 import com.itos.coui.text.CouiTextKind
 import com.itos.coui.text.Text as CouiText
@@ -139,12 +140,13 @@ internal fun SortFilterSheetMaterial(
 }
 
 /**
- * COUI 线：面板由 COUI 的 [BottomSheet] 承载，标题居中，反转是开关行，排序项是 COUI 筛选标签。
+ * COUI 线：半屏 [BottomSheet] 承载，标题进面板顶栏（[CouiTextKind.SheetTitle]），
+ * 左右按钮走顶栏槽位——左边关闭、右边完成，都只是收起面板。
  *
  * 标签本身不带外边距，行内与行间都要在这里补：不补的话相邻胶囊贴在一起，整行读起来像一串连写的文字。
  * 排序项比其他入口多（6 项），用 FlowRow 折行而不是横向滚动，靠后的项不会被挤出屏幕外。
- * 标题用 [CouiTextKind.TopBar]：比小节标题更大，层级才不会反过来。
- * 关闭行为由面板负责：点遮罩或按返回键都把 [visible] 置回 false，内容再多也只在面板内部滚动。
+ * 开关与排序项即时生效：这里只上报操作，状态由调用方持有并刷新。
+ * 关闭行为由面板负责：点遮罩、按返回键或顶栏按钮都把 [visible] 置回 false，内容再多也只在面板内部滚动。
  */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
@@ -157,19 +159,31 @@ private fun CouiSortFilterSheet(
     onSortChange: (Int) -> Unit,
     filterContent: (@Composable () -> Unit)? = null,
 ) {
-    BottomSheet(visible = visible) {
+    BottomSheet(
+        visible = visible,
+        sheetHeight = LocalConfiguration.current.screenHeightDp.dp / 2,
+        showDragHandle = true,
+        leadingButton = CouiSheetButton(
+            label = stringResource(R.string.close),
+            onClick = { visible.value = false },
+        ),
+        titleContent = {
+            CouiText(
+                text = stringResource(R.string.appinfo_sort_and_filter),
+                kind = CouiTextKind.SheetTitle,
+            )
+        },
+        trailingButton = CouiSheetButton(
+            label = stringResource(R.string.sheet_done),
+            onClick = { visible.value = false },
+        ),
+    ) {
         Column(
             Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 16.dp)
                 .padding(bottom = 24.dp)
         ) {
-            CouiText(
-                text = stringResource(R.string.appinfo_sort_and_filter),
-                kind = CouiTextKind.TopBar,
-                textAlign = TextAlign.Center,
-                modifier = Modifier.fillMaxWidth(),
-            )
             Row(
                 Modifier
                     .fillMaxWidth()
