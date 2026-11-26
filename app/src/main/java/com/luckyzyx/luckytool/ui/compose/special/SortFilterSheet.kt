@@ -202,8 +202,8 @@ private fun CouiSortFilterSheet(
                 CouiSwitch(
                     modifier = Modifier.padding(start = 8.dp),
                     checked = reverse,
-                    onCheckedChange = null,
-                    // 开关只上报“翻了一下”，具体取反由调用方持有
+                    // 轻点与拖动都只上报“切换动作”，具体取反由调用方持有
+                    onCheckedChange = { onReverseChange() },
                     onDragCheckedChange = { onReverseChange() },
                     dark = CouiTheme.isDark,
                 )

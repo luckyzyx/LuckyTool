@@ -563,8 +563,8 @@ private fun DonateSortSheetCoui(sheet: DonateSortSheetModel) {
                 CouiSwitch(
                     modifier = Modifier.padding(start = 8.dp),
                     checked = sheet.reverse,
-                    // 整行不是可点区域，只把开关拖动/点击的结果回传
-                    onCheckedChange = null,
+                    // 轻点与拖动的结果都直接回传模型，不在本地取反
+                    onCheckedChange = sheet.onReverseChange,
                     onDragCheckedChange = sheet.onReverseChange,
                     dark = CouiTheme.isDark,
                 )
