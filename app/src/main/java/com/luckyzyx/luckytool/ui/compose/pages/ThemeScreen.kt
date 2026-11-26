@@ -5,10 +5,12 @@ import android.content.Context
 import android.os.Build
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
@@ -422,8 +424,12 @@ private fun ThemeScreenList(
         }
 
         // 首个按钮是「跟随壁纸取色」，其余为固定主题色；COUI 未开启「跟随 Material 配色」时整行隐藏。
-        if (!isCouiLine || state.couiDynamicColor) {
-            item {
+        item {
+            AnimatedVisibility(
+                visible = !isCouiLine || state.couiDynamicColor,
+                enter = fadeIn() + expandVertically(),
+                exit = fadeOut() + shrinkVertically(),
+            ) {
                 LazyRow(
                     modifier = Modifier.fillMaxWidth(),
                     contentPadding = PaddingValues(horizontal = 16.dp),
@@ -468,8 +474,12 @@ private fun ThemeScreenList(
         }
 
         // 调色风格 / 色彩规格两条外观线共用；COUI 未开启「跟随 Material 配色」时整组隐藏。
-        if (!isCouiLine || state.couiDynamicColor) {
-            item {
+        item {
+            AnimatedVisibility(
+                visible = !isCouiLine || state.couiDynamicColor,
+                enter = fadeIn() + expandVertically(),
+                exit = fadeOut() + shrinkVertically(),
+            ) {
                 AppGroup(
                     modifier = Modifier.padding(horizontal = 16.dp),
                     content = listOf(
@@ -542,26 +552,30 @@ private fun ThemeScreenList(
                             )
                         }
                         // COUI 未开启「跟随 Material 配色」时隐藏动态取色；API 31 以下同样不出现
-                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S &&
-                            (!isCouiLine || state.couiDynamicColor)
-                        ) add {
-                            AppSwitchItem(
-                                icon = Icons.Rounded.Style,
-                                painter = painterResource(LucideR.drawable.lucide_ic_paintbrush),
-                                title = stringResource(R.string.use_dynamic_color),
-                                summary = stringResource(R.string.use_dynamic_color_summary),
-                                checked = state.dynamicColor,
-                                onCheckedChange = {
-                                    state.dynamicColor = it
-                                    context.putBoolean(SettingsPrefs, "use_dynamic_color", it)
-                                    // 开启动态取色时把自定义主题色归零，保证"跟随系统"色板与开关状态一致
-                                    if (it) {
-                                        state.keyColor = 0
-                                        context.putInt(SettingsPrefs, "key_color", 0)
-                                    }
-                                    ThemePrefs.notifyChanged()
-                                },
-                            )
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) add {
+                            AnimatedVisibility(
+                                visible = !isCouiLine || state.couiDynamicColor,
+                                enter = fadeIn() + expandVertically(),
+                                exit = fadeOut() + shrinkVertically(),
+                            ) {
+                                AppSwitchItem(
+                                    icon = Icons.Rounded.Style,
+                                    painter = painterResource(LucideR.drawable.lucide_ic_paintbrush),
+                                    title = stringResource(R.string.use_dynamic_color),
+                                    summary = stringResource(R.string.use_dynamic_color_summary),
+                                    checked = state.dynamicColor,
+                                    onCheckedChange = {
+                                        state.dynamicColor = it
+                                        context.putBoolean(SettingsPrefs, "use_dynamic_color", it)
+                                        // 开启动态取色时把自定义主题色归零，保证"跟随系统"色板与开关状态一致
+                                        if (it) {
+                                            state.keyColor = 0
+                                            context.putInt(SettingsPrefs, "key_color", 0)
+                                        }
+                                        ThemePrefs.notifyChanged()
+                                    },
+                                )
+                            }
                         }
                     },
                 )
