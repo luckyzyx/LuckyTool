@@ -17,6 +17,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -31,6 +32,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import com.drake.net.Get
 import com.itos.coui.layout.Divider as CouiDivider
+import com.itos.coui.sheet.BottomSheet
 import com.itos.coui.switch.Switch as CouiSwitch
 import com.itos.coui.text.CouiTextKind
 import com.itos.coui.text.Text as CouiText
@@ -41,7 +43,6 @@ import com.luckyzyx.luckytool.data.DonateInfo
 import com.luckyzyx.luckytool.ui.compose.components.AppSearchBar
 import com.luckyzyx.luckytool.ui.compose.components.PrefScopeBuilder
 import com.luckyzyx.luckytool.ui.compose.components.coui.CouiFilterChip
-import com.luckyzyx.luckytool.ui.compose.components.coui.CouiModalBottomSheet
 import com.luckyzyx.luckytool.ui.compose.components.material.MaterialSwitch
 import com.luckyzyx.luckytool.ui.compose.scopes.ScopePageSpec
 import com.luckyzyx.luckytool.ui.theme.LocalUiMode
@@ -278,7 +279,7 @@ internal fun PrefScopeBuilder.DonateBody(c: Context) {
     var otherCurrency by remember { mutableStateOf(state.getBoolean(showOtherCurrencyKey, false)) }
     var markdown by remember { mutableStateOf("") }
     var ready by remember { mutableStateOf(false) }
-    var showSheet by remember { mutableStateOf(false) }
+    val showSheet = remember { mutableStateOf(false) }
 
     val develop = state.getBoolean(developKey, false)
 
@@ -383,8 +384,8 @@ internal fun PrefScopeBuilder.DonateBody(c: Context) {
             placeholder = "Name",
             modifier = Modifier.padding(bottom = 8.dp),
             enabled = ready,
-            filterActive = showSheet,
-            onFilterClick = { showSheet = true },
+            filterActive = showSheet.value,
+            onFilterClick = { showSheet.value = true },
         )
 
         val markwon = remember {
@@ -400,51 +401,49 @@ internal fun PrefScopeBuilder.DonateBody(c: Context) {
         )
     }
 
-    if (showSheet) {
-        // 排序项在 remember 计算块里组装（那里没有 Composer），字符串先在这里取一次
-        val sortTimeText = stringResource(R.string.donate_info_time)
-        val sortMoneyText = stringResource(R.string.donate_info_money)
-        val sortOrderText = stringResource(R.string.donate_info_order)
-        val sorts = remember(showDetail, sortTimeText, sortMoneyText, sortOrderText) {
-            val list = arrayListOf(
-                sortTimeText,
-                sortMoneyText,
-                sortOrderText,
-            )
-            if (showDetail) list.removeLastOrNull()
-            list
-        }
-        // 弹层内容按渲染线分两份，状态与回调只在这里建一次
-        val sheet = DonateSortSheetModel(
-            sorts = sorts,
-            sortMode = sortMode,
-            reverse = isReverse,
-            showDetail = showDetail,
-            otherCurrency = otherCurrency,
-            onDismiss = { showSheet = false },
-            onSortModeChange = { mode ->
-                sortMode = mode
-                rerunFilter()
-            },
-            onReverseChange = {
-                isReverse = it
-                rerunFilter()
-            },
-            onToggleDetail = {
-                showDetail = !showDetail
-                state.set(showDetailedKey, showDetail)
-                rerunFilter()
-            },
-            onToggleOtherCurrency = {
-                otherCurrency = !otherCurrency
-                state.set(showOtherCurrencyKey, otherCurrency)
-                rerunFilter()
-            },
+    // 排序项在 remember 计算块里组装（那里没有 Composer），字符串先在这里取一次
+    val sortTimeText = stringResource(R.string.donate_info_time)
+    val sortMoneyText = stringResource(R.string.donate_info_money)
+    val sortOrderText = stringResource(R.string.donate_info_order)
+    val sorts = remember(showDetail, sortTimeText, sortMoneyText, sortOrderText) {
+        val list = arrayListOf(
+            sortTimeText,
+            sortMoneyText,
+            sortOrderText,
         )
-        when (LocalUiMode.current) {
-            UiMode.Material -> DonateSortSheetMaterial(sheet)
-            UiMode.Coui -> DonateSortSheetCoui(sheet)
-        }
+        if (showDetail) list.removeLastOrNull()
+        list
+    }
+    // 弹层内容按渲染线分两份，状态与回调只在这里建一次
+    val sheet = DonateSortSheetModel(
+        sorts = sorts,
+        sortMode = sortMode,
+        reverse = isReverse,
+        showDetail = showDetail,
+        otherCurrency = otherCurrency,
+        visible = showSheet,
+        onSortModeChange = { mode ->
+            sortMode = mode
+            rerunFilter()
+        },
+        onReverseChange = {
+            isReverse = it
+            rerunFilter()
+        },
+        onToggleDetail = {
+            showDetail = !showDetail
+            state.set(showDetailedKey, showDetail)
+            rerunFilter()
+        },
+        onToggleOtherCurrency = {
+            otherCurrency = !otherCurrency
+            state.set(showOtherCurrencyKey, otherCurrency)
+            rerunFilter()
+        },
+    )
+    when (LocalUiMode.current) {
+        UiMode.Material -> if (sheet.visible.value) DonateSortSheetMaterial(sheet)
+        UiMode.Coui -> DonateSortSheetCoui(sheet)
     }
 }
 
@@ -458,7 +457,7 @@ private class DonateSortSheetModel(
     val reverse: Boolean,
     val showDetail: Boolean,
     val otherCurrency: Boolean,
-    val onDismiss: () -> Unit,
+    val visible: MutableState<Boolean>,
     val onSortModeChange: (Int) -> Unit,
     val onReverseChange: (Boolean) -> Unit,
     val onToggleDetail: () -> Unit,
@@ -468,7 +467,7 @@ private class DonateSortSheetModel(
 /** Material 线排序过滤弹层：底部面板 + M3 筛选片 */
 @Composable
 private fun DonateSortSheetMaterial(sheet: DonateSortSheetModel) {
-    ModalBottomSheet(onDismissRequest = sheet.onDismiss) {
+    ModalBottomSheet(onDismissRequest = { sheet.visible.value = false }) {
         Column(
             Modifier.fillMaxWidth().padding(horizontal = 16.dp).padding(bottom = 24.dp)
         ) {
@@ -519,12 +518,12 @@ private fun DonateSortSheetMaterial(sheet: DonateSortSheetModel) {
 }
 
 /**
- * COUI 线排序过滤弹层：面板用 [CouiModalBottomSheet]（自带内部纵向滚动与导航栏内边距），
+ * COUI 线排序过滤弹层：面板用 COUI 的 [BottomSheet]（自带内部纵向滚动与导航栏内边距），
  * 排序/筛选项用 [CouiFilterChip]，行间补 8dp 间距——COUI 标签本身不带外边距。
  */
 @Composable
 private fun DonateSortSheetCoui(sheet: DonateSortSheetModel) {
-    CouiModalBottomSheet(onDismissRequest = sheet.onDismiss) {
+    BottomSheet(visible = sheet.visible) {
         Column(
             Modifier.fillMaxWidth().padding(horizontal = 16.dp).padding(bottom = 24.dp)
         ) {

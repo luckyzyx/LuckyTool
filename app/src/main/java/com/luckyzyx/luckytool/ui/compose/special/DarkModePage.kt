@@ -135,7 +135,7 @@ internal fun LazyItemScope.DarkModeContent(builder: PrefScopeBuilder) {
     var filterAppInfos by remember { mutableStateOf(ArrayList<AppInfo>()) }
     var allEnabledInfos by remember { mutableStateOf(ArrayMap<String, DarkModeInfo>()) }
 
-    var showSortSheet by remember { mutableStateOf(false) }
+    val showSortSheet = remember { mutableStateOf(false) }
 
     fun applyQuery(q: String): ArrayList<AppInfo> =
         if (q.isBlank()) allAppInfos
@@ -269,8 +269,8 @@ internal fun LazyItemScope.DarkModeContent(builder: PrefScopeBuilder) {
                     },
                     placeholder = AppSearchPlaceholder,
                     enabled = !loading,
-                    filterActive = showSortSheet,
-                    onFilterClick = { showSortSheet = true },
+                    filterActive = showSortSheet.value,
+                    onFilterClick = { showSortSheet.value = true },
                 )
             }
             Spacer(Modifier.height(AppListContentGap))
@@ -294,24 +294,22 @@ internal fun LazyItemScope.DarkModeContent(builder: PrefScopeBuilder) {
         }
     }
 
-    if (showSortSheet) {
-        SortFilterSheet(
-            reverse = isReverse,
-            sortMode = sortMode,
-            sortLabels =
-                context.resources.getStringArray(R.array.sort_selector_chips).toList(),
-            onReverseChange = {
-                isReverse = !isReverse
-                scope.launch { reload() }
-            },
-            onSortChange = { mode ->
-                sortMode = mode
-                scope.launch { reload() }
-            },
-            filterContent = null,
-            onDismiss = { showSortSheet = false },
-        )
-    }
+    SortFilterSheet(
+        reverse = isReverse,
+        sortMode = sortMode,
+        sortLabels =
+            context.resources.getStringArray(R.array.sort_selector_chips).toList(),
+        onReverseChange = {
+            isReverse = !isReverse
+            scope.launch { reload() }
+        },
+        onSortChange = { mode ->
+            sortMode = mode
+            scope.launch { reload() }
+        },
+        filterContent = null,
+        visible = showSortSheet,
+    )
 }
 
 /**
