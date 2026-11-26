@@ -247,14 +247,6 @@ private class ThemeScreenState(context: Context) {
         ShellSettingsController.get(context).floatingBottomBarStyle
     )
 
-    var swipeDismiss by mutableStateOf(
-        context.getBoolean(
-            SettingsPrefs,
-            ShellSettingsController.KEY_SWIPE_DISMISS,
-            true
-        )
-    )
-
     var pagerMode by mutableIntStateOf(ShellSettingsController.get(context).pagerInterceptionMode)
 
     /** 预测式返回手势（需 Android 14+，反射 ApplicationInfo.setEnableOnBackInvokedCallback） */
@@ -678,20 +670,6 @@ private fun ThemeScreenList(
                                 },
                             )
                         }
-                    }
-                    add {
-                        AppSwitchItem(
-                            icon = Icons.Rounded.Swipe,
-                            painter = painterResource(LucideR.drawable.lucide_ic_hand),
-                            title = stringResource(R.string.settings_enable_swipe_dismiss),
-                            summary = stringResource(R.string.settings_enable_swipe_dismiss_summary),
-                            checked = state.swipeDismiss,
-                            onCheckedChange = {
-                                state.swipeDismiss = it
-                                context.putBoolean(SettingsPrefs, ShellSettingsController.KEY_SWIPE_DISMISS, it)
-                                ThemePrefs.notifyChanged()
-                            },
-                        )
                     }
                     add {
                         AppDropdownItem(

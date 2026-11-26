@@ -26,7 +26,6 @@ import com.luckyzyx.luckytool.ui.shell.LocalEnableFloatingBottomBar
 import com.luckyzyx.luckytool.ui.shell.LocalFloatingBottomBarStyle
 import com.luckyzyx.luckytool.ui.shell.LocalCategoryBadgeColors
 import com.luckyzyx.luckytool.ui.shell.LocalEnableNavigationBadge
-import com.luckyzyx.luckytool.ui.shell.LocalEnableSwipeDismiss
 import com.luckyzyx.luckytool.ui.shell.LocalPagerInterceptionMode
 import com.luckyzyx.luckytool.ui.shell.ShellSettingsController
 
@@ -184,8 +183,6 @@ fun AppTheme(content: @Composable () -> Unit) {
         LocalEnableBlur provides shellSettings.enableBlur,
         LocalEnableFloatingBottomBar provides shellSettings.enableFloatingBottomBar,
         LocalFloatingBottomBarStyle provides shellSettings.floatingBottomBarStyle,
-        // 二级页迁移到独立 Activity 后侧滑返回暂时禁用：后续接回 SwipeBackPage 时再恢复 shellSettings.swipeDismiss
-        LocalEnableSwipeDismiss provides false,
         LocalPagerInterceptionMode provides shellSettings.pagerInterceptionMode,
         LocalCategoryBadgeColors provides shellSettings.categoryBadgeColors,
     ) {
