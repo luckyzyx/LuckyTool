@@ -43,7 +43,7 @@
         （返回桌面 / 跨 Activity / 跨任务；Android 16 起 targetSdk 36+ 默认开启）。运行期由
         PredictiveBackUtils 按 enable_predictive_back 偏好覆盖该值（应用内默认开启）。-->
     <application
-            android:name=".ui.application.MyApplication"
+            android:name=".ui.App"
             android:allowBackup="true"
             android:icon="@mipmap/ic_launcher"
             android:label="@string/app_name"

@@ -1,4 +1,4 @@
-package com.luckyzyx.luckytool.ui.application
+package com.luckyzyx.luckytool.ui
 
 import com.highcapable.yukihookapi.hook.xposed.application.ModuleApplication
 import com.luckyzyx.luckytool.ui.service.XposedServiceBridge
@@ -7,7 +7,7 @@ import com.luckyzyx.luckytool.utils.PredictiveBackUtils
 import org.lsposed.lsparanoid.Obfuscate
 
 @Obfuscate
-class MyApplication : ModuleApplication() {
+class App : ModuleApplication() {
 
     override fun onCreate() {
         super.onCreate()
