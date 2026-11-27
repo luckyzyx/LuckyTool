@@ -113,6 +113,7 @@ import com.itos.coui.theme.CouiTheme
 import com.itos.coui.topappbar.CouiTopAppBarDefaults
 import com.luckyzyx.luckytool.R
 import com.luckyzyx.luckytool.ui.compose.components.ChromeInsets
+import com.luckyzyx.luckytool.ui.compose.components.pageInset
 import com.luckyzyx.luckytool.ui.compose.components.coui.CouiPageScaffold
 import com.luckyzyx.luckytool.ui.compose.components.material.MaterialScaffold
 import com.luckyzyx.luckytool.ui.compose.components.material.MaterialToggleButton
@@ -738,7 +739,7 @@ private fun ThemeModeSelector(state: ThemeScreenState) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp),
+            .pageInset(),
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         modes.chunked(4).forEach { rowModes ->
@@ -825,7 +826,7 @@ private fun ThemeSliderCard(
     AppCard(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp),
+            .pageInset(),
     ) {
         Column(
             modifier = Modifier.padding(horizontal = 16.dp, vertical = 16.dp),

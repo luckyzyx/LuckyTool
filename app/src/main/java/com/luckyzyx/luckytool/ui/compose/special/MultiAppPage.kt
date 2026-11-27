@@ -25,6 +25,7 @@ import androidx.compose.ui.unit.dp
 import com.luckyzyx.luckytool.R
 import com.luckyzyx.luckytool.data.AppInfo
 import com.luckyzyx.luckytool.ui.compose.components.AppSearchPlaceholder
+import com.luckyzyx.luckytool.ui.compose.components.pageInset
 import com.luckyzyx.luckytool.ui.compose.components.AppSearchBar
 import com.luckyzyx.luckytool.ui.compose.components.AppItem
 import com.luckyzyx.luckytool.ui.compose.scopes.ScopePageAction
@@ -189,7 +190,7 @@ internal fun LazyItemScope.MultiAppContent(builder: PrefScopeBuilder) {
     ) {
         Column(Modifier.fillParentMaxHeight()) {
             Column(
-                modifier = Modifier.padding(horizontal = 16.dp),
+                modifier = Modifier.pageInset(),
                 verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 AppSearchBar(

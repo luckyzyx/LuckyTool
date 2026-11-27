@@ -25,6 +25,7 @@ import androidx.compose.ui.unit.dp
 import com.luckyzyx.luckytool.R
 import com.luckyzyx.luckytool.data.AppInfo
 import com.luckyzyx.luckytool.ui.compose.components.AppSearchPlaceholder
+import com.luckyzyx.luckytool.ui.compose.components.pageInset
 import com.luckyzyx.luckytool.ui.compose.components.AppSearchBar
 import com.luckyzyx.luckytool.ui.compose.components.AppItem
 import com.luckyzyx.luckytool.ui.compose.scopes.ScopePageSpec
@@ -169,7 +170,7 @@ internal fun LazyItemScope.ZoomWindowContent(builder: PrefScopeBuilder) {
         modifier = Modifier.fillParentMaxHeight(),
     ) {
         Column(Modifier.fillParentMaxHeight()) {
-            Column(Modifier.padding(horizontal = 16.dp)) {
+            Column(Modifier.pageInset()) {
                 AppSearchBar(
                     query = query,
                     onQueryChange = { q ->

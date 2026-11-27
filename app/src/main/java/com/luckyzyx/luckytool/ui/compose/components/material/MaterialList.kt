@@ -167,40 +167,6 @@ private fun defaultSingleSegmentedShape(index: Int, count: Int): ListItemShapes 
     return base.withoutShapeAnimation(shape)
 }
 
-/** 静态分段列：传入已确定的条目内容列表（不可增删时使用） */
-@Composable
-fun MaterialGroup(
-    modifier: Modifier = Modifier,
-    title: String = "",
-    visibleLen: Int = 0,
-    content: List<@Composable () -> Unit>,
-) {
-    if (content.isEmpty()) return
-
-    Column(modifier = modifier) {
-        if (title.isNotEmpty()) {
-            Text(
-                text = title,
-                style = MaterialTheme.typography.titleSmall,
-                color = colorScheme.primary,
-                modifier = Modifier.padding(start = 16.dp, top = 8.dp, bottom = 8.dp),
-            )
-        }
-        Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-            content.forEachIndexed { index, itemContent ->
-                CompositionLocalProvider(
-                    LocalListItemShapes provides defaultSingleSegmentedShape(
-                        index = index,
-                        count = if (visibleLen > 0) visibleLen else content.size,
-                    ),
-                ) {
-                    itemContent()
-                }
-            }
-        }
-    }
-}
-
 @MaterialGroupDsl
 class MaterialGroupScope {
     internal data class Entry(

@@ -5,8 +5,6 @@ import android.app.Activity
 import android.content.Context
 import android.content.ContextWrapper
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -27,11 +25,8 @@ import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.luckyzyx.luckytool.R
-import com.luckyzyx.luckytool.ui.compose.components.PrefCard
-import com.luckyzyx.luckytool.ui.compose.components.PrefCategoryHeader
-import com.luckyzyx.luckytool.ui.compose.components.PrefGroup
 import com.luckyzyx.luckytool.ui.compose.components.PrefRow
-import com.luckyzyx.luckytool.ui.compose.components.PrefRowInset
+import com.luckyzyx.luckytool.ui.compose.components.PrefGroup
 import com.luckyzyx.luckytool.ui.compose.components.coui.CouiTextButton
 import com.luckyzyx.luckytool.ui.compose.scopes.ScopePageSpec
 import com.luckyzyx.luckytool.ui.service.XposedServiceBridge
@@ -63,13 +58,11 @@ object AppPermissionPage {
         restartEnabled = false,
     ) {
         custom(key = "app_permission_content") {
-            // custom() 逃生舱：行内容需自带 16dp 内缩
-            PrefRowInset {
-                AppPermissionContent(
-                    activity = LocalContext.current.findActivity(),
-                    blocking = false,
-                )
-            }
+            // 水平内缩由内容里的 PrefGroup 按外观线给，宿主不再套 PrefRowInset
+            AppPermissionContent(
+                activity = LocalContext.current.findActivity(),
+                blocking = false,
+            )
         }
     }
 }
@@ -90,8 +83,8 @@ private data class RootInfo(
  * [blocking] = true 时是冷启动阻塞态：4 项齐全后回调 [onAllGranted] 放行，并显示「退出应用」。
  * 本页只做纯查询展示，申请与跳转都只能由用户手势发起（行右侧按钮或整行点击）。
  *
- * [selfInset] = true 表示宿主不提供行级水平内缩（阻塞态独立成屏），由本页自补，否则内容贴边；
- * 被作用域页列表包裹时（设置页入口）保持 false，避免与宿主内缩叠加成 24/32dp。
+ * 行级水平内缩由分组容器 [PrefGroup] 按外观线给，宿主（设置页列表 / 阻塞态整屏）都不再补，
+ * 因此本页在两种宿主下排版一致。
  *
  * [activity] 是宿主 Activity（阻塞态为 MainActivity，设置页入口为 SecondaryActivity），
  * 取不到时只展示权限名称、不给任何授权入口 —— 因此解析要认「任意 Activity」而不是某一种宿主。
@@ -102,7 +95,6 @@ fun AppPermissionContent(
     activity: Activity?,
     blocking: Boolean,
     modifier: Modifier = Modifier,
-    selfInset: Boolean = false,
     onAllGranted: () -> Unit = {},
     onExit: () -> Unit = {},
 ) {
@@ -150,20 +142,10 @@ fun AppPermissionContent(
     }
     val moduleActive by XposedServiceBridge.isModuleActive.collectAsStateWithLifecycle()
 
-    // selfInset：阻塞态独立成屏、宿主列表不在场时补行级水平内缩。
-    // COUI 线由 CouiCard / 库的 Group 自带头 16dp，本页再叠加会把卡片顶到 32dp，故只对 Material 线生效；
-    // 设置页入口 selfInset 恒为 false，仍由宿主列表提供，保持不叠加
-    val lineInset = if (LocalUiMode.current == UiMode.Coui) 0.dp else 16.dp
-    Column(
-        modifier = modifier.then(
-            if (selfInset) Modifier.padding(horizontal = lineInset) else Modifier
-        )
-    ) {
+    // 行级水平内缩由分组容器（PrefGroup）按外观线给，宿主（设置页列表 / 阻塞态整屏）都不再补；
+    // 页面底部留白也由页面自己收尾，宿主容器不提供列表底部内边距
+    Column(modifier = modifier.padding(bottom = 24.dp)) {
         // ===== Root / LSPosed：纯只读，整块放最上面（不参与门禁判定，无任何跳转）=====
-        PrefCategoryHeader(
-            title = stringResource(R.string.app_permission_root_section),
-            materialInset = 0.dp,
-        )
         // Root / Xposed 状态合并成单行 "title: value"，不再用 title + summary 两行展示
         val rootStatus = stringResource(
             if (rootInfo?.rooted == true) R.string.app_permission_root_yes else R.string.app_permission_root_no
@@ -171,25 +153,25 @@ fun AppPermissionContent(
         val moduleStatus = stringResource(
             if (moduleActive) R.string.app_permission_module_active else R.string.app_permission_module_inactive
         )
-        PrefGroup {
-            item {
+        PrefGroup(title = stringResource(R.string.app_permission_root_section)) {
+            // 行都带显式 key：缺省 key 是条目序号，条件行一插一删会让后面各行换 key、连带换掉行状态
+            // 顺序固定：Root 状态 → Root 来源 → Xposed 状态 → 框架版本
+            item(key = "root_status") {
                 PrefRow(title = "${stringResource(R.string.app_permission_root_status)}: $rootStatus")
             }
-            val info = rootInfo
-            // 顺序固定：Root 来源 → Xposed 状态 → 框架版本
-            if (info != null && info.rootVersion.isNotBlank()) {
-                item { PrefRow(title = info.rootVersion) }
+            // 版本行始终在位：查询未就绪时只占位，避免整行忽隐忽现（起 shell 的查询可能要等一会儿）
+            item(key = "root_version") {
+                PrefRow(title = rootInfo?.rootVersion ?: "${stringResource(R.string.root_source)} —")
             }
-            item {
+            item(key = "xposed_status") {
                 PrefRow(title = "${stringResource(R.string.app_permission_module_status)}: $moduleStatus")
             }
-            if (info != null && info.frameworkVersion.isNotBlank()) {
-                item { PrefRow(title = info.frameworkVersion) }
+            item(key = "framework_version") {
+                PrefRow(title = rootInfo?.frameworkVersion ?: "${stringResource(R.string.framework_version)} —")
             }
         }
 
-        Spacer(Modifier.height(12.dp))
-        PrefCategoryHeader(
+        PrefGroup(
             title = stringResource(
                 if (blocking) R.string.app_permission_blocked_title else R.string.app_permission
             ),
@@ -200,9 +182,7 @@ fun AppPermissionContent(
                     R.string.app_permission_summary
                 }
             ),
-            materialInset = 0.dp,
-        )
-        PrefGroup {
+        ) {
             AppPermission.entries.forEach { kind ->
                 val state = states[kind]
                 val granted = state?.granted == true
@@ -262,14 +242,16 @@ fun AppPermissionContent(
         }
 
         if (blocking) {
-            Spacer(Modifier.height(24.dp))
             // 无跳过出口：阻塞态只提供逐项授权与退出应用
-            PrefCard(
-                title = stringResource(R.string.app_permission_exit),
-                onClick = onExit,
-            )
+            PrefGroup {
+                item {
+                    PrefRow(
+                        title = stringResource(R.string.app_permission_exit),
+                        onClick = onExit,
+                    )
+                }
+            }
         }
-        Spacer(Modifier.height(24.dp))
     }
 }
 

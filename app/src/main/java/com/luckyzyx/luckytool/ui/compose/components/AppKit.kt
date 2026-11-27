@@ -90,17 +90,13 @@ private val LocalCouiRowSlot = compositionLocalOf<CouiRowSlot?> { null }
 /**
  * 祖先是否已经画好卡片背景。[CouiSegmentCard] 这类分段容器在自己这一层铺底色与圆角，
  * 行容器据此不要再补一层同色卡片，否则会出现「外层分段卡 + 内层整卡」的双层底色。
+ *
+ * 分组渲染的唯一实现（[PrefSectionRows] 的 COUI 线）也用它：卡片由分组画，行只需要正文与分隔线。
  */
-private val LocalCouiRowFramed = compositionLocalOf { false }
+internal val LocalCouiRowFramed = compositionLocalOf { false }
 
 private val isCouiAppearance: Boolean
     @Composable get() = LocalUiMode.current == UiMode.Coui
-
-/**
- * Material 线的分组卡片不自带横向内缩，由 [AppGroup] 统一给 16dp；
- * COUI 线的库 Group 自带同档内缩，接进去时不能再叠一层。
- */
-private fun Modifier.groupInset(): Modifier = padding(horizontal = 16.dp)
 
 /**
  * COUI 行容器，按祖先状态决定行自己要不要画卡片：
@@ -133,68 +129,39 @@ private fun CouiRowFrame(content: @Composable () -> Unit) {
 /**
  * 分组：静态条目列表。
  *
- * COUI 线的卡片、标题与分组前后的留白都交给库的 [CouiGroup]；Material 线没有这层容器，
- * 横向 16dp 内缩由这里补上，两条线的卡片左右边距保持一致。
+ * 与 DSL 的 `group()`、[PrefGroup] 是同一份实现（[PrefSectionRows]）：标题、卡片、行间分隔线、
+ * 分组前后的留白都只在那一处给，这里不再自己判外观线、补内缩或直接接库的 Group。
  */
 @Composable
 fun AppGroup(
     modifier: Modifier = Modifier,
     title: String = "",
-    visibleLen: Int = 0,
     content: List<@Composable () -> Unit>,
 ) {
     if (content.isEmpty()) return
-    if (!isCouiAppearance) {
-        MaterialGroup(
-            modifier = modifier.groupInset(),
-            title = title,
-            visibleLen = visibleLen,
-            content = content,
-        )
-        return
-    }
-    CouiGroup(modifier = modifier, title = title.takeIf { it.isNotEmpty() }) {
-        content.forEachIndexed { index, itemContent ->
-            CompositionLocalProvider(LocalCouiRowSlot provides CouiRowSlot(index, inGroup = true)) {
-                itemContent()
-            }
-        }
-    }
+    PrefSectionRows(
+        modifier = modifier,
+        title = title.takeIf { it.isNotEmpty() },
+        rows = content.map { row -> PrefCardRow { row() } },
+    )
 }
 
-/** 分组：条目可显隐，显隐时整行缩放进出（排版与静态重载同一套，见上） */
+/** 分组：条目可显隐，显隐时整行展开/收起（渲染同样走 [PrefSectionRows]） */
 @Composable
 fun AppGroup(
     modifier: Modifier = Modifier,
     title: String = "",
     content: MaterialGroupScope.() -> Unit,
 ) {
-    if (!isCouiAppearance) {
-        MaterialGroup(modifier = modifier.groupInset(), title = title, content = content)
-        return
-    }
     val entries = MaterialGroupScope().apply(content).entries
     if (entries.isEmpty()) return
-    // 分隔线只跟可见行算位置：隐藏的行不占位，也不保留分组端点
-    val visibleIndices = entries.indices.filter { entries[it].visible }
-    CouiGroup(modifier = modifier, title = title.takeIf { it.isNotEmpty() }) {
-        entries.forEachIndexed { index, entry ->
-            AnimatedVisibility(
-                visible = entry.visible,
-                enter = expandVertically(),
-                exit = shrinkVertically(),
-            ) {
-                CompositionLocalProvider(
-                    LocalCouiRowSlot provides CouiRowSlot(
-                        index = visibleIndices.indexOf(index).coerceAtLeast(0),
-                        inGroup = true,
-                    ),
-                ) {
-                    entry.content()
-                }
-            }
-        }
-    }
+    PrefSectionRows(
+        modifier = modifier,
+        title = title.takeIf { it.isNotEmpty() },
+        rows = entries.map { entry ->
+            PrefCardRow(key = entry.key, visible = entry.visible) { entry.content() }
+        },
+    )
 }
 
 /** 单条目形状提供者：Material 侧给分段圆角，COUI 侧把行标成组内条目 */
@@ -212,6 +179,11 @@ fun AppItem(
         CompositionLocalProvider(LocalCouiRowSlot provides CouiRowSlot(index, inGroup = true)) {
             content()
         }
+        return
+    }
+    // 祖先（分组渲染的唯一实现）已经画好卡片：只出正文，圆角、底色与行间线都归那一层
+    if (LocalCouiRowFramed.current) {
+        Column(modifier = Modifier.fillMaxWidth()) { content() }
         return
     }
     // 没有分组容器承载（列表直接平铺行）：按 index/count 自绘分段卡片，

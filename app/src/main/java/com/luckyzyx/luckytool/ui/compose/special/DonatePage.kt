@@ -42,6 +42,7 @@ import com.luckyzyx.luckytool.R
 import com.luckyzyx.luckytool.data.DonateDetailInfo
 import com.luckyzyx.luckytool.data.DonateInfo
 import com.luckyzyx.luckytool.ui.compose.components.AppSearchBar
+import com.luckyzyx.luckytool.ui.compose.components.pageInset
 import com.luckyzyx.luckytool.ui.compose.components.PrefScopeBuilder
 import com.luckyzyx.luckytool.ui.compose.components.coui.CouiFilterChip
 import com.luckyzyx.luckytool.ui.compose.components.material.MaterialSwitch
@@ -378,7 +379,7 @@ internal fun PrefScopeBuilder.DonateBody(c: Context) {
         rerunFilter()
     }
 
-    Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp)) {
+    Column(Modifier.fillMaxWidth().pageInset().padding(vertical = 8.dp)) {
         AppSearchBar(
             query = filterString,
             onQueryChange = onQueryChange,
@@ -470,7 +471,7 @@ private class DonateSortSheetModel(
 private fun DonateSortSheetMaterial(sheet: DonateSortSheetModel) {
     ModalBottomSheet(onDismissRequest = { sheet.visible.value = false }) {
         Column(
-            Modifier.fillMaxWidth().padding(horizontal = 16.dp).padding(bottom = 24.dp)
+            Modifier.fillMaxWidth().pageInset().padding(bottom = 24.dp)
         ) {
             Text(
                 stringResource(R.string.appinfo_sort_and_filter),
@@ -545,7 +546,7 @@ private fun DonateSortSheetCoui(sheet: DonateSortSheetModel) {
         ),
     ) {
         Column(
-            Modifier.fillMaxWidth().padding(horizontal = 16.dp).padding(bottom = 24.dp)
+            Modifier.fillMaxWidth().pageInset().padding(bottom = 24.dp)
         ) {
             Row(
                 Modifier.fillMaxWidth().padding(top = 12.dp),

@@ -538,8 +538,6 @@ private fun PermissionGateScreen(activity: MainActivity) {
             activity = activity,
             blocking = true,
             modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()),
-            // 阻塞页独立成屏，行级水平内缩由自己提供（宿主列表不在场）
-            selfInset = true,
             // 4 项齐全：撤掉阻塞门回到主界面（不重启 Activity）
             onAllGranted = { activity.refreshPermissionGate() },
             onExit = { exitProcess(0) },

@@ -34,8 +34,9 @@ import com.itos.coui.text.Text as CouiText
 import com.itos.coui.theme.CouiTheme
 import com.luckyzyx.luckytool.R
 import com.luckyzyx.luckytool.ui.compose.components.AppSlider
-import com.luckyzyx.luckytool.ui.compose.components.PrefGroup
+import com.luckyzyx.luckytool.ui.compose.components.pageInset
 import com.luckyzyx.luckytool.ui.compose.components.PrefRow
+import com.luckyzyx.luckytool.ui.compose.components.PrefGroup
 import com.luckyzyx.luckytool.ui.compose.components.PrefSwitchRow
 import com.luckyzyx.luckytool.ui.compose.components.material.MaterialItemContainer
 import com.luckyzyx.luckytool.ui.compose.scopes.ScopePageSpec
@@ -72,7 +73,8 @@ import kotlin.math.roundToInt
  * 2. 回到前台：`LifecycleEventEffect(ON_RESUME)` —— 系统设置或磁贴可能改过同样的键；
  * 3. 下拉刷新：`spec.onRefresh` → [reloader]。
  *
- * 水平内缩由外层 Column 的 16dp padding 提供；滑条用 material3 `Slider` 包在自绘卡片里。
+ * 分组卡片的水平内缩由 [PrefGroup] 按外观线给（两条线都是 16dp），页级 padding 只留垂直方向；
+ * 滑条卡片与提示文字不经分组，各自补水平 16dp 才能与卡片对齐。滑条用 material3 `Slider` 包在自绘卡片里。
  */
 object ExtraDimPage {
 
@@ -132,10 +134,11 @@ object ExtraDimPage {
                 )
             }
 
+            // 页级只留垂直外边距：分组卡片的水平内缩由 PrefGroup 给
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 8.dp),
+                    .padding(vertical = 8.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 PrefGroup {
@@ -187,8 +190,8 @@ object ExtraDimPage {
                     LaunchedEffect(level) {
                         sliderState.value = (level ?: ExtraDimUtils.MIN_LEVEL).toFloat()
                     }
-                    // 水平 16dp 已由外层 Column 的 padding 提供，这里再叠一层会让滑条卡片比 PrefGroup 窄
-                    Box(modifier = Modifier.fillMaxWidth()) {
+                    // 滑条卡片不是分组内容，水平 16dp 自己补，才能与 PrefGroup 卡片的左右边界对齐
+                    Box(modifier = Modifier.fillMaxWidth().pageInset()) {
                         MaterialItemContainer(modifier = Modifier.fillMaxWidth()) {
                             Column(
                                 modifier = Modifier

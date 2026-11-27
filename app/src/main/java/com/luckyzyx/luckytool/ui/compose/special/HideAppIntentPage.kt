@@ -62,6 +62,7 @@ import com.luckyzyx.luckytool.data.AppInfo
 import com.luckyzyx.luckytool.data.AppIntentInfo
 import com.luckyzyx.luckytool.enums.IntentType
 import com.luckyzyx.luckytool.ui.compose.components.AppSearchBar
+import com.luckyzyx.luckytool.ui.compose.components.pageInset
 import com.luckyzyx.luckytool.ui.compose.components.AppSearchPlaceholder
 import com.luckyzyx.luckytool.ui.compose.components.ChoiceItem
 import com.luckyzyx.luckytool.ui.compose.components.MultiChoiceDialog
@@ -446,11 +447,8 @@ internal fun LazyItemScope.HideAppIntentContent() {
         modifier = Modifier.fillParentMaxHeight(),
     ) {
         Column(Modifier.fillParentMaxHeight()) {
-            // COUI 线的分组卡片自带 16dp 水平内缩（CouiCard / 库的 Group），页级 padding 只补给 Material 线，
-            // 否则开关卡左右各多缩 16dp，与搜索框 / 列表对不齐。
-            PrefGroup(
-                modifier = if (LocalUiMode.current == UiMode.Coui) Modifier else Modifier.padding(horizontal = 16.dp),
-            ) {
+            // 开关卡的水平内缩由 PrefGroup 按外观线统一给，与下方搜索框、列表保持同一左右边界
+            PrefGroup {
                 item {
                     PrefSwitchRow(
                         title = stringResource(R.string.custom_config_app_intent_list),
@@ -464,7 +462,7 @@ internal fun LazyItemScope.HideAppIntentContent() {
             }
             Spacer(Modifier.height(8.dp))
             Column(
-                modifier = Modifier.padding(horizontal = 16.dp),
+                modifier = Modifier.pageInset(),
                 verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 AppSearchBar(

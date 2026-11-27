@@ -29,6 +29,7 @@ import com.luckyzyx.luckytool.R
 import com.luckyzyx.luckytool.data.DisplayMode
 import com.luckyzyx.luckytool.service.RefreshRateService
 import com.luckyzyx.luckytool.ui.compose.components.PrefGroup
+import com.luckyzyx.luckytool.ui.compose.components.pageInset
 import com.luckyzyx.luckytool.ui.compose.components.PrefSwitchRow
 import com.luckyzyx.luckytool.ui.compose.components.AppRadioItem
 import com.luckyzyx.luckytool.ui.compose.components.coui.CouiFilledButton
@@ -81,9 +82,8 @@ import kotlinx.coroutines.withTimeoutOrNull
  * 3. 设置卡：自启（`keyFpsAutoStart`）+ 显示刷新率合并为一张卡片；
  * 4. 恢复默认刷新率按钮 + 底部提示文案。
  *
- * 水平内缩：整页 body 是一个组外 `custom`（不被任何卡片容器包裹）。COUI 线的分组卡片自带 16dp 水平内缩
- * （`CouiCard` / 库的 `Group`），页级 padding 只补给 Material 线，否则卡片比按钮、提示文字左右各多缩 16dp；
- * 页面自绘的文字与按钮不经卡片，自己补 16dp 才能与卡片对齐。
+ * 水平内缩：分组卡片的内缩统一由 [PrefGroup] 按外观线给（两条线都是 16dp），
+ * 页级 padding 因此只留垂直方向；页面自绘的按钮与提示文字不经分组，自己补 16dp 才能与卡片对齐。
  * 行呈现（`PrefGroup` / `PrefSwitchRow`）与页面自绘的文字、按钮按外观分派
  * （COUI 线用 COUI 语义文字与胶囊按钮，Material 线用 material3 件）；
  * 模式单选项走 `AppRadioItem`，它本身已双线。
@@ -107,8 +107,6 @@ object ForceFpsPage {
         val c = requireNotNull(context) { "ScopeScreen 未注入 Context" }
         custom(key = "force_fps_body") {
             val isCoui = LocalUiMode.current == UiMode.Coui
-            // 分组卡片的内缩按外观分派：COUI 线卡片自带 16dp，Material 线列表不自带
-            val cardInset = if (isCoui) Modifier else Modifier.padding(horizontal = 16.dp)
             // 进程级缓存做种子：进入子页不重新绑定，直接用 RefreshRateService 已缓存的存活控制器
             var controller by remember { mutableStateOf(RefreshRateService.getCachedController()) }
             // 每次 load 读一次的 root IPC 快照（不在组合期反复读）
@@ -157,7 +155,7 @@ object ForceFpsPage {
             val fpsCur = state.getInt(keyFpsCur, -1)
             val fpsAutostart = state.getBoolean(keyFpsAutoStart, false)
 
-            // 页级只留垂直外边距：水平内缩按外观分派，见 cardInset
+            // 页级只留垂直外边距：分组卡片的水平内缩由 PrefGroup 提供
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -167,7 +165,7 @@ object ForceFpsPage {
                 // FPS 数据卡：displayMode 模式列表置顶，独立一张卡片
                 // 单选以列表位置 index 为准：点击与选中态比的都是 index，mode.id 仅用于展示文本，
                 // 选中/设置/持久化都用 index，保证恰一项选中且与 keyFpsCur 自启语义一致
-                PrefGroup(modifier = cardInset) {
+                PrefGroup {
                     if (!isUnsupport) {
                         modes.forEachIndexed { index, mode ->
                             item {
@@ -217,7 +215,7 @@ object ForceFpsPage {
                     }
                 }
                 // 自启动 + 显示刷新率：设置项合并为一张卡片，位于 FPS 数据卡之下
-                PrefGroup(modifier = cardInset) {
+                PrefGroup {
                     item {
                         PrefSwitchRow(
                             title = stringResource(R.string.fps_autostart),
@@ -249,7 +247,7 @@ object ForceFpsPage {
                         },
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(horizontal = 16.dp),
+                            .pageInset(),
                         enabled = controller != null,
                     )
                 } else {
@@ -261,7 +259,7 @@ object ForceFpsPage {
                         enabled = controller != null,
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(horizontal = 16.dp),
+                            .pageInset(),
                     ) { Text(stringResource(R.string.restore_default_refresh_rate)) }
                 }
                 if (isCoui) {

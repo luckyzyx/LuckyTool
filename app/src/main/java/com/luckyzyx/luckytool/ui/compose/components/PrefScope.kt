@@ -251,14 +251,69 @@ internal fun CouiCard(
 }
 
 /**
+ * COUI 卡片里的一行：key / 可见性 / 可选的整行底色（搜索跳转高亮）/ 行内容。
+ *
+ * 只是行的描述，画法统一交给 [CouiRowsColumn]。
+ */
+internal class PrefCardRow(
+    val key: Any? = null,
+    val visible: Boolean = true,
+    val background: Color? = null,
+    val content: @Composable () -> Unit,
+)
+
+/**
+ * COUI 卡片内的行序列：按可见顺序画分隔线，行级显隐原地展开/收起。
+ *
+ * **COUI 线唯一的分行实现**：DSL 分组块（[ScopeScreen]）与页面自绘分组（[PrefGroup]）
+ * 都交给它，分隔线位置、显隐动画与跳转高亮因此不会各写一份。
+ * 卡片本身（内缩、圆角、底色）由外层 [CouiPrefGroup] / [CouiCard] 提供。
+ */
+@Composable
+internal fun CouiRowsColumn(rows: List<PrefCardRow>) {
+    var visibleRows = 0
+    rows.forEachIndexed { rawIndex, row ->
+        val hasDivider = visibleRows > 0
+        if (row.visible) visibleRows++
+        key(row.key ?: rawIndex) {
+            AnimatedVisibility(
+                visible = row.visible,
+                enter = fadeIn() + expandVertically(),
+                exit = fadeOut() + shrinkVertically(),
+            ) {
+                Column(modifier = Modifier.fillMaxWidth()) {
+                    if (hasDivider) CouiDivider()
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .then(
+                                if (row.background != null) {
+                                    Modifier.background(row.background)
+                                } else {
+                                    Modifier
+                                },
+                            ),
+                    ) {
+                        // 卡片由分组画：行内容据此不再自绘卡片（见 AppKit 的 CouiRowFrame）
+                        CompositionLocalProvider(LocalCouiRowFramed provides true) {
+                            row.content()
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+/**
  * COUI 分组卡片：[PrefScopeBuilder.group] 的容器实现。
  *
  * 卡片内外三段文字各归其位：标题与说明画在卡片上方（标题一行、说明一行，与库 Group 的标题行同档：
  * 12dp 分组上沿、32dp 水平内缩、[CouiTextKind.GroupTitle]，说明用 GroupFooter 样式），
  * [footer] 画在卡片下方（库的 [CouiFooter]，32dp 水平内缩 + 上下 8dp）。
  *
- * 分组前后留白也在这里给：有标题走 [CouiPageDefaults.categoryTopSpacing]，无标题走
- * [CouiPageDefaults.groupSpacing]，调用方不要再自己加 top padding。
+ * 分组上沿留白也在这里给：有标题走 [CouiPageDefaults.categoryTopSpacing]，无标题走
+ * [CouiPageDefaults.groupSpacing] —— 分组之间的垂直间距只由分组自己给，页面不再自己排（见 [PrefGroup]）。
  */
 @Composable
 internal fun CouiPrefGroup(
@@ -373,7 +428,7 @@ internal fun PrefCategoryHeader(
 
 /** material 线的分组底部说明：画在卡片下方，与标题下方那行说明同一档字号与内缩 */
 @Composable
-private fun PrefGroupFooter(text: String) {
+internal fun PrefGroupFooter(text: String) {
     Text(
         text = text,
         style = MaterialTheme.typography.bodySmall,
@@ -1379,8 +1434,8 @@ fun ScopeScreen(
             item(key = "full") { pageFullContent(this, builder) }
         } else {
             if (coui) {
-                // COUI 线：一个分组块就是一个 LazyColumn item，整张卡片交给 CouiPrefGroup
-                //（标题/说明/底部说明 + 分组前后留白 + 行间分隔线），行内容只负责自己那一行。
+                // COUI 线：一个分组块就是一个 LazyColumn item，整张卡片交给 [PrefSectionRows]
+                //（与 [PrefGroup] 同一个实现：标题/说明/底部说明 + 分组上沿留白 + 行间分隔线），行内容只负责自己那一行。
                 builder.blocks.forEach { block ->
                     item(key = block.itemKey) {
                         val head = block.head
@@ -1394,44 +1449,20 @@ fun ScopeScreen(
                             }
                         } else {
                             val overlay = couiHighlightOverlay(CouiPageDefaults.themeColors().card)
-                            CouiPrefGroup(
+                            val highlighted = builder.highlightSlot.value
+                            PrefSectionRows(
+                                rows = block.rows.map { entry ->
+                                    PrefCardRow(
+                                        key = entry.itemKey,
+                                        visible = entry.visible,
+                                        background = if (highlighted == entry.slot) overlay else null,
+                                    ) { entry.render(entry.slot) }
+                                },
+                                modifier = animModifier,
                                 title = head?.sectionTitle,
                                 summary = head?.sectionSummary,
                                 footer = block.footer,
-                                modifier = animModifier,
-                            ) {
-                                // 行级显隐：行始终留在块里，只按 [PrefEntry.visible] 原地展开/收起，
-                                // 分隔线跟着可见行算位置（收起的那行不留下一条孤立的分隔线）。
-                                var visibleRows = 0
-                                block.rows.forEach { entry ->
-                                    val hasDivider = visibleRows > 0
-                                    if (entry.visible) visibleRows++
-                                    key(entry.itemKey) {
-                                        AnimatedVisibility(
-                                            visible = entry.visible,
-                                            enter = fadeIn() + expandVertically(),
-                                            exit = fadeOut() + shrinkVertically(),
-                                        ) {
-                                            Column(modifier = Modifier.fillMaxWidth()) {
-                                                if (hasDivider) CouiDivider()
-                                                Box(
-                                                    modifier = Modifier
-                                                        .fillMaxWidth()
-                                                        .then(
-                                                            if (builder.highlightSlot.value == entry.slot) {
-                                                                Modifier.background(overlay)
-                                                            } else {
-                                                                Modifier
-                                                            },
-                                                        ),
-                                                ) {
-                                                    entry.render(entry.slot)
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-                            }
+                            )
                         }
                     }
                 }

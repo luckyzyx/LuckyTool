@@ -55,6 +55,7 @@ import com.luckyzyx.luckytool.R
 import com.luckyzyx.luckytool.data.MemcConfigActivity
 import com.luckyzyx.luckytool.data.MemcConfigPackage
 import com.luckyzyx.luckytool.ui.compose.components.ActionListDialog
+import com.luckyzyx.luckytool.ui.compose.components.pageInset
 import com.luckyzyx.luckytool.ui.compose.components.AppPickerDialog
 import com.luckyzyx.luckytool.ui.compose.components.dialogBodyMaxHeight
 import com.luckyzyx.luckytool.ui.compose.components.ChoiceItem
@@ -428,7 +429,7 @@ private fun MemcTabRow(selected: Int, onSelect: (Int) -> Unit) {
             labels = labels,
             selectedIndex = selected,
             onSelect = onSelect,
-            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+            modifier = Modifier.pageInset().padding(vertical = 8.dp),
         )
     }
 }
@@ -451,7 +452,7 @@ private fun MemcSearchField(
             placeholder = { Text(placeholder) },
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 16.dp),
+                .pageInset(),
         )
 
         UiMode.Coui -> CouiTextField(
@@ -462,7 +463,7 @@ private fun MemcSearchField(
             placeholder = placeholder,
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 16.dp),
+                .pageInset(),
         )
     }
 }
@@ -503,7 +504,7 @@ private fun MaterialMemcPackagePanel(
         PrefCard(
             title = "＋ Add",
             onClick = { onEdit(null) },
-            modifier = Modifier.padding(horizontal = 16.dp),
+            modifier = Modifier.pageInset(),
         )
         if (state.pkgFilter.isEmpty() && !state.pkgLoading) {
             Box(
@@ -657,7 +658,7 @@ private fun MaterialMemcActivityPanel(
         PrefCard(
             title = "＋ Add",
             onClick = { onEdit(null) },
-            modifier = Modifier.padding(horizontal = 16.dp),
+            modifier = Modifier.pageInset(),
         )
         if (state.actFilter.isEmpty() && !state.actLoading) {
             Box(
