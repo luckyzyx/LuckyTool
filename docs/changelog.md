@@ -51,6 +51,7 @@ in [TG Channel’s associated groups](https://t.me/LuckyTool)**
 - 添加 USB 调试自动授权 (@RealmeOS)
 - 移除高能户外模式App列表白名单
 - COUI 底栏图标选中态（未选中描边、选中实心）
+- COUI 轮廓光开关（主题设置中的 COUI 项，默认开启）
 
 #### 优化
 

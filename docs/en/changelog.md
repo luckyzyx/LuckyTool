@@ -50,6 +50,7 @@ Entries for versions before `1.3.5_beta` are currently only available in the
 - Add the panorama work station 3-split view (@天伞桜)
 - Remove the app list whitelist for the high-energy outdoor mode (Rider Mode)
 - Selected state for COUI bottom bar icons (outlined when idle, filled when selected)
+- COUI contour glow switch in the theme settings (on by default)
 
 #### Optimized
 

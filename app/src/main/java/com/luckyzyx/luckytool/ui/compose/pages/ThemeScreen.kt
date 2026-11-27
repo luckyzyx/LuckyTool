@@ -60,6 +60,7 @@ import androidx.compose.material.icons.rounded.CallToAction
 import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material.icons.rounded.Colorize
 import androidx.compose.material.icons.rounded.DesignServices
+import androidx.compose.material.icons.rounded.Flare
 import androidx.compose.material.icons.rounded.Palette
 import androidx.compose.material.icons.rounded.Style
 import androidx.compose.material.icons.rounded.Swipe
@@ -217,6 +218,15 @@ private class ThemeScreenState(context: Context) {
         )
     )
 
+    /** COUI 线轮廓光（组件表面描边与内光晕）；默认开，与 COUI 默认观感一致 */
+    var couiContourGlow by mutableStateOf(
+        context.getBoolean(
+            SettingsPrefs,
+            ThemeController.KEY_COUI_CONTOUR_GLOW,
+            true
+        )
+    )
+
     var paletteStyle by mutableStateOf(
         PaletteStyle.entries.firstOrNull {
             it.name == context.getString(
@@ -285,7 +295,8 @@ private fun rememberThemeScreenState(): ThemeScreenState {
  *
  * 偏好键沿用 LuckyTool 既有约定（SettingsPrefs）：
  * dark_theme（0 跟随系统 / 1 深色 / 2 浅色 / 3 深色 AMOLED）、key_color、
- * palette_style、color_spec、use_dynamic_color、coui_dynamic_color（COUI 线专用）、
+ * palette_style、color_spec、use_dynamic_color、coui_dynamic_color 与
+ * coui_contour_glow（COUI 线专用）、
  * enable_predictive_back、enable_swipe_dismiss。
  * 写入后通过 [ThemePrefs.notifyChanged] 让应用主题即时重算，无需 recreate。
  */
@@ -399,6 +410,7 @@ private fun ThemeScreenList(
         colorSpec = state.colorSpec,
         dynamicColor = state.dynamicColor,
         couiDynamicColor = state.couiDynamicColor,
+        couiContourGlow = state.couiContourGlow,
     )
 
     LazyColumn(
@@ -537,6 +549,24 @@ private fun ThemeScreenList(
                                     context.putBoolean(
                                         SettingsPrefs,
                                         ThemeController.KEY_COUI_DYNAMIC_COLOR,
+                                        it,
+                                    )
+                                    ThemePrefs.notifyChanged()
+                                },
+                            )
+                        }
+                        // 轮廓光只作用在 COUI 组件表面的描边与内光晕上，与配色选择互不影响
+                        if (isCouiLine) add {
+                            AppSwitchItem(
+                                icon = Icons.Rounded.Flare,
+                                title = stringResource(R.string.coui_contour_glow),
+                                summary = stringResource(R.string.coui_contour_glow_summary),
+                                checked = state.couiContourGlow,
+                                onCheckedChange = {
+                                    state.couiContourGlow = it
+                                    context.putBoolean(
+                                        SettingsPrefs,
+                                        ThemeController.KEY_COUI_CONTOUR_GLOW,
                                         it,
                                     )
                                     ThemePrefs.notifyChanged()

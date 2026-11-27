@@ -18,6 +18,8 @@
     <string name="use_dynamic_color_summary">使用動態取色</string>
     <string name="coui_follow_material_color">跟隨 Material 配色</string>
     <string name="coui_follow_material_color_summary">開啟後 COUI 使用上方取色設定；關閉則使用 COUI 自帶預設配色</string>
+    <string name="coui_contour_glow">輪廓光</string>
+    <string name="coui_contour_glow_summary">關閉後不再繪製 COUI 組件表面的描邊與內光暈；模糊、材質與外投影不受影響</string>
     <string name="dark_theme">深色主題</string>
     <string name="follow_system">跟隨系統</string>
     <string name="dark_theme_off">總是關閉</string>

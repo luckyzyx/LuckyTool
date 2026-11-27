@@ -5,6 +5,7 @@ import androidx.compose.material3.MaterialExpressiveTheme
 import androidx.compose.material3.MotionScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import com.itos.coui.effect.LocalCouiContourGlowEnabled
 import com.itos.coui.theme.CouiTheme
 import com.itos.coui.theme.CouiTypography
 
@@ -21,6 +22,9 @@ import com.itos.coui.theme.CouiTypography
  *
  * COUI 线里仍由 material3 渲染的弹层与底部弹窗读的是 M3 色板，
  * 因此用同一套 COUI 色板反推 M3 色板（见 [couiMaterialColorScheme]），避免两种强调色并排出现。
+ *
+ * 轮廓光（组件表面的描边与内光晕）由主题页的开关决定，通过
+ * [LocalCouiContourGlowEnabled] 下发给所有 COUI 组件；模糊、材质与外投影不受它影响。
  *
  * 组合顺序有约束：[CouiTheme] 必须位于 [MaterialExpressiveTheme] 内部，
  * 这样两套组件读到的深浅色与取色结果一致。
@@ -56,6 +60,7 @@ fun CouiAppTheme(
     CompositionLocalProvider(
         LocalColorMode provides colorMode,
         LocalAppColorScheme provides materialScheme,
+        LocalCouiContourGlowEnabled provides appSettings.couiContourGlow,
     ) {
         MaterialExpressiveTheme(
             colorScheme = materialScheme,

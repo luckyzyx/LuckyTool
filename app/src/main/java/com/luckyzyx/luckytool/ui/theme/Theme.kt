@@ -104,6 +104,8 @@ data class AppSettings(
     val dynamicColor: Boolean = true,
     /** COUI 线是否跟随 Material 取色；false 表示使用 COUI 自带预设配色 */
     val couiDynamicColor: Boolean = false,
+    /** COUI 线是否绘制描边与内光晕（轮廓光）；关闭后模糊、材质与外投影照旧 */
+    val couiContourGlow: Boolean = true,
 )
 
 /** 主题偏好读取。 */
@@ -115,6 +117,9 @@ object ThemeController {
     /** COUI 线专用取色开关：开启后跟随 Material 取色设置，关闭则使用 COUI 预设配色。 */
     const val KEY_COUI_DYNAMIC_COLOR = "coui_dynamic_color"
 
+    /** COUI 线轮廓光开关：控制组件表面描边与内光晕，不影响模糊、材质与外投影。 */
+    const val KEY_COUI_CONTOUR_GLOW = "coui_contour_glow"
+
     fun getUiMode(context: Context): UiMode = UiMode.fromValue(
         context.getString(SettingsPrefs, KEY_UI_MODE, UiMode.DEFAULT_VALUE)
     ).coerceAvailable()
@@ -124,6 +129,7 @@ object ThemeController {
      *
      * Material 线的取色由 key_color / use_dynamic_color 决定；COUI 线由 coui_dynamic_color
      * 决定使用 COUI 预设配色还是跟随同一份取色设置，跟随时才把结果翻译成 COUI 语义色。
+     * COUI 线的轮廓光另由 coui_contour_glow 控制，与配色选择互不影响。
      */
     fun getAppSettings(context: Context): AppSettings {
         val colorMode = ColorMode.fromValue(
@@ -146,6 +152,8 @@ object ThemeController {
         } ?: ColorSpec.SpecVersion.SPEC_2025
         val dynamicColor = context.getBoolean(SettingsPrefs, "use_dynamic_color", true)
         val couiDynamicColor = context.getBoolean(SettingsPrefs, KEY_COUI_DYNAMIC_COLOR, false)
+        // 默认开启，与 COUI 库的默认观感一致
+        val couiContourGlow = context.getBoolean(SettingsPrefs, KEY_COUI_CONTOUR_GLOW, true)
         return AppSettings(
             colorMode = colorMode,
             keyColor = keyColor,
@@ -153,6 +161,7 @@ object ThemeController {
             colorSpec = colorSpec,
             dynamicColor = dynamicColor,
             couiDynamicColor = couiDynamicColor,
+            couiContourGlow = couiContourGlow,
         )
     }
 }
