@@ -189,6 +189,13 @@ internal class PrefEntry(
      * COUI 线的行并进同一个分组块后不再是独立 item，动画只在整块粒度生效。
      */
     val animate: Boolean,
+    /**
+     * 该行是否显示（默认显示）。false 时行原地收起、true 时原地展开，两条线都是行级动画。
+     *
+     * 条件行用 [PrefScopeBuilder.click] 的 `visible` 表达，不要再用 `if (条件) { click(…) }` 包起来：
+     * 那样条目会整块增删，COUI 线的行并在一张卡片里，只有整块卡片能跟着动。
+     */
+    val visible: Boolean,
     val render: @Composable (slot: Int) -> Unit,
 ) {
     var segIndex: Int = 0
@@ -455,8 +462,9 @@ class PrefScopeBuilder internal constructor(
         entries.clear()
     }
 
-    /** 当前构建轮次的搜索索引快照 */
+    /** 当前构建轮次的搜索索引快照（收起的行不进索引：搜到也跳不到一个没有高度的槽位） */
     fun snapshotIndex(): List<PrefIndexItem> = entries.mapNotNull { entry ->
+        if (!entry.visible) return@mapNotNull null
         entry.indexKey?.let { key ->
             PrefIndexItem(
                 key,
@@ -507,6 +515,7 @@ class PrefScopeBuilder internal constructor(
         sectionSummary: String? = null,
         sectionFooter: String? = null,
         animate: Boolean = false,
+        visible: Boolean = true,
         render: @Composable (slot: Int) -> Unit,
     ) {
         val slot = entries.size
@@ -526,6 +535,7 @@ class PrefScopeBuilder internal constructor(
             sectionSummary = sectionSummary,
             sectionFooter = sectionFooter,
             animate = animate,
+            visible = visible,
             render = render,
         )
     }
@@ -539,14 +549,15 @@ class PrefScopeBuilder internal constructor(
     internal fun computeSegments() {
         var i = 0
         while (i < entries.size) {
-            if (!entries[i].groupable) {
+            // 收起的行不算分段成员：它不占高度，相邻两行要各自拿到卡片端点（圆角/组间距）
+            if (!entries[i].groupable || !entries[i].visible) {
                 entries[i].segIndex = 0
                 entries[i].segCount = 1
                 i++
                 continue
             }
             var j = i
-            while (j + 1 < entries.size && entries[j + 1].groupable) j++
+            while (j + 1 < entries.size && entries[j + 1].groupable && entries[j + 1].visible) j++
             val count = j - i + 1
             for (k in i..j) {
                 entries[k].segIndex = k - i
@@ -1187,7 +1198,12 @@ class PrefScopeBuilder internal constructor(
         itemKey: String? = null,
         /** 该行参与列表增删动画（配合稳定 [itemKey]；默认关闭，其余页面行为不变） */
         animate: Boolean = false,
-    ) = emit(itemKey, null, title, summary, animate = animate) { slot ->
+        /**
+         * 该行是否显示（默认显示）：false 时原地收起、true 时原地展开，两条线都有行级动画。
+         * 条件行用它代替 `if (条件) { click(…) }`，并配一个稳定的 [itemKey]。
+         */
+        visible: Boolean = true,
+    ) = emit(itemKey, null, title, summary, animate = animate, visible = visible) { slot ->
         if (LocalUiMode.current == UiMode.Coui) {
             val colors = CouiPageDefaults.themeColors()
             val dark = CouiTheme.isDark
@@ -1384,20 +1400,35 @@ fun ScopeScreen(
                                 footer = block.footer,
                                 modifier = animModifier,
                             ) {
-                                block.rows.forEachIndexed { rowIndex, entry ->
-                                    if (rowIndex > 0) CouiDivider()
-                                    Box(
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .then(
-                                                if (builder.highlightSlot.value == entry.slot) {
-                                                    Modifier.background(overlay)
-                                                } else {
-                                                    Modifier
-                                                },
-                                            ),
-                                    ) {
-                                        entry.render(entry.slot)
+                                // 行级显隐：行始终留在块里，只按 [PrefEntry.visible] 原地展开/收起，
+                                // 分隔线跟着可见行算位置（收起的那行不留下一条孤立的分隔线）。
+                                var visibleRows = 0
+                                block.rows.forEach { entry ->
+                                    val hasDivider = visibleRows > 0
+                                    if (entry.visible) visibleRows++
+                                    key(entry.itemKey) {
+                                        AnimatedVisibility(
+                                            visible = entry.visible,
+                                            enter = fadeIn() + expandVertically(),
+                                            exit = fadeOut() + shrinkVertically(),
+                                        ) {
+                                            Column(modifier = Modifier.fillMaxWidth()) {
+                                                if (hasDivider) CouiDivider()
+                                                Box(
+                                                    modifier = Modifier
+                                                        .fillMaxWidth()
+                                                        .then(
+                                                            if (builder.highlightSlot.value == entry.slot) {
+                                                                Modifier.background(overlay)
+                                                            } else {
+                                                                Modifier
+                                                            },
+                                                        ),
+                                                ) {
+                                                    entry.render(entry.slot)
+                                                }
+                                            }
+                                        }
                                     }
                                 }
                             }
@@ -1407,44 +1438,48 @@ fun ScopeScreen(
             } else {
                 builder.entries.forEach { entry ->
                     item(key = entry.itemKey) {
-                        if (entry.groupBreak) {
-                            // 分组结束标记：带 footer 的画卡片下方那行说明，其余保留零高度槽位，
-                            // 让搜索索引和滚动定位仍与 entry.slot 一致。
-                            entry.render(entry.slot)
-                            return@item
-                        }
                         // 逐行增删动画：只挂到 DSL 显式声明 animate 的行，其余页面行为完全不变。
                         // 淡出/淡入按 key 认身份，所以这类行必须同时传稳定的 itemKey（默认槽位 key 会漂移）。
                         val animModifier = if (entry.animate) Modifier.animateItem() else Modifier
-                        if (entry.groupStart) {
-                            // 分组起始标记：material 线由它画分类标题（COUI 线由 CouiPrefGroup 画）
-                            if (entry.sectionTitle != null || entry.sectionSummary != null) {
+                        // 行级显隐：收起时整个 item 收到零高，相邻行跟着连续位移（分段圆角由可见行决定，
+                        // 见 [computeSegments]）。默认可见的行第一帧就按可见落位，不产生动画。
+                        AnimatedVisibility(
+                            visible = entry.visible,
+                            enter = fadeIn() + expandVertically(),
+                            exit = fadeOut() + shrinkVertically(),
+                        ) {
+                            if (entry.groupBreak) {
+                                // 分组结束标记：带 footer 的画卡片下方那行说明，其余保留零高度槽位，
+                                // 让搜索索引和滚动定位仍与 entry.slot 一致。
+                                entry.render(entry.slot)
+                            } else if (entry.groupStart) {
+                                // 分组起始标记：material 线由它画分类标题（COUI 线由 CouiPrefGroup 画）
+                                if (entry.sectionTitle != null || entry.sectionSummary != null) {
+                                    val topGap = if (entry.slot == 0) 0.dp else 8.dp
+                                    Box(modifier = animModifier.padding(top = topGap)) {
+                                        entry.render(entry.slot)
+                                    }
+                                }
+                            } else if (entry.raw) {
+                                // 裸条目：不套卡片，裸渲染在分组卡片之上。
                                 val topGap = if (entry.slot == 0) 0.dp else 8.dp
                                 Box(modifier = animModifier.padding(top = topGap)) {
                                     entry.render(entry.slot)
                                 }
-                            }
-                            return@item
-                        }
-                        if (entry.raw) {
-                            // 裸条目：不套卡片，裸渲染在分组卡片之上。
-                            val topGap = if (entry.slot == 0) 0.dp else 8.dp
-                            Box(modifier = animModifier.padding(top = topGap)) {
-                                entry.render(entry.slot)
-                            }
-                        } else {
-                            AppItem(index = entry.segIndex, count = entry.segCount) {
-                                Box(
-                                    modifier = animModifier.padding(
-                                        top = when {
-                                            entry.slot == 0 -> 0.dp
-                                            entry.segIndex == 0 -> 8.dp
-                                            // 组内条目：0dp，同一分组拼成一张连续卡片
-                                            else -> DesignTokens.ItemGap
-                                        }
-                                    )
-                                ) {
-                                    entry.render(entry.slot)
+                            } else {
+                                AppItem(index = entry.segIndex, count = entry.segCount) {
+                                    Box(
+                                        modifier = animModifier.padding(
+                                            top = when {
+                                                entry.slot == 0 -> 0.dp
+                                                entry.segIndex == 0 -> 8.dp
+                                                // 组内条目：0dp，同一分组拼成一张连续卡片
+                                                else -> DesignTokens.ItemGap
+                                            }
+                                        )
+                                    ) {
+                                        entry.render(entry.slot)
+                                    }
                                 }
                             }
                         }

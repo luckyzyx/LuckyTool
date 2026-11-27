@@ -230,37 +230,35 @@ fun OtherPage(activity: MainActivity, isCurrentPage: Boolean = true) {
                                 activity.requestFunctionNavigation("force_fps", fpsTitle)
                             },
                         )
-                        if (touchModeNow) {
-                            click(
-                                title = touchSamplingTitle,
-                                summary = touchSamplingSummary,
-                                leading = {
-                                    PrefIcon(
-                                        Icons.Rounded.TouchApp,
-                                        painter = painterResource(LucideR.drawable.lucide_ic_hand)
-                                    )
-                                },
-                                onClick = { showTouchDialog = true },
-                            )
-                        }
-                        if (hasAdbNow) {
-                            // ADB 服务是异步连上的，这一组会在页面已显示后才出现：稳定 itemKey + animate
-                            // 让它淡入/淡出，而不是在列表末尾直接弹出来（默认槽位 key 会随上方条件行漂移，
-                            // animateItem 认不出是同一行）。
-                            click(
-                                title = remoteAdbTitle,
-                                summary = remoteAdbSummary,
-                                leading = {
-                                    PrefIcon(
-                                        Icons.Rounded.Adb,
-                                        painter = painterResource(LucideR.drawable.lucide_ic_terminal)
-                                    )
-                                },
-                                itemKey = "other_adb",
-                                animate = true,
-                                onClick = { showAdbDialog = true },
-                            )
-                        }
+                        // 这两行都是随运行期状态才出现的（触摸采样看机型、ADB 服务异步连上），
+                        // 用 visible 声明显示条件：行留在原位展开/收起，不会在列表末尾凭空弹出；
+                        // 稳定 itemKey 让显隐动画认得出是同一行（默认槽位 key 会随上方行漂移）。
+                        click(
+                            title = touchSamplingTitle,
+                            summary = touchSamplingSummary,
+                            leading = {
+                                PrefIcon(
+                                    Icons.Rounded.TouchApp,
+                                    painter = painterResource(LucideR.drawable.lucide_ic_hand)
+                                )
+                            },
+                            itemKey = "other_touch",
+                            visible = touchModeNow,
+                            onClick = { showTouchDialog = true },
+                        )
+                        click(
+                            title = remoteAdbTitle,
+                            summary = remoteAdbSummary,
+                            leading = {
+                                PrefIcon(
+                                    Icons.Rounded.Adb,
+                                    painter = painterResource(LucideR.drawable.lucide_ic_terminal)
+                                )
+                            },
+                            itemKey = "other_adb",
+                            visible = hasAdbNow,
+                            onClick = { showAdbDialog = true },
+                        )
                     }
                 }
             }

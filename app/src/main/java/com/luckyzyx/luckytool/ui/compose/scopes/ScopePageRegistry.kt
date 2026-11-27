@@ -389,7 +389,7 @@ object ScopePageRegistry {
     fun all(): List<ScopePageSpec> = pages.values.toList()
 
     /**
-     * headless 构建一页的搜索索引（条件可见性已由 DSL 的 Kotlin if 应用）。
+     * headless 构建一页的搜索索引（条件可见性由 DSL 的 Kotlin if 或行的 `visible` 承担）。
      * 构建是纯记录（emit 不渲染），可在任意线程运行；功能树、全屏搜索与 DSL page() 子页入口可达性判断共用。
      * 注意：空索引**不等于**该页不可见——见 [hasVisibleContent]。
      */
