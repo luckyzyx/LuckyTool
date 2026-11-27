@@ -123,7 +123,7 @@
     <string name="enable_full_brightness_refresh_rate_minimum_one_summary">一部のモデルではゲームアシスタントと競合し画面がチラつく可能性があります。</string>
     <string name="disable_long_press_home_key_start_speech_asssist">ホームボタンの長押しでの音声アシスタントの起動を無効化</string>
     <!-- CorePatch -->
-    <string name="ColorOSCorePatchTip">ColorOSの公式インストーラーを使用するには他の機能を有効にする必要があります。\n機能一覧-アプリ関連-アプリインストール関連</string>
+    <string name="ColorOSCorePatchTip">ColorOS公式インストーラーはコアのパッチと併用する必要があります</string>
     <string name="corepatch">コアのパッチ</string>
     <string name="corepatch_summary">Remove install limits, supports Android %1$s</string>
     <!--Status Bar-->

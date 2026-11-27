@@ -206,7 +206,7 @@
     <string name="disable_long_press_home_key_start_speech_asssist">禁用長按HOME鍵啟動語音助手</string>
 
     <!-- CorePatch -->
-    <string name="ColorOSCorePatchTip">ColorOS官方安裝器需要另外開啟其他功能使用\n功能列表-應用相關-應用安裝相關</string>
+    <string name="ColorOSCorePatchTip">ColorOS官方安裝器需要搭配核心破解使用</string>
     <string name="corepatch">核心破解</string>
     <string name="corepatch_summary">解除安裝限制,支援 Android %1$s</string>
     <string name="bypass_downgrade">允許降版安裝應用程式</string>

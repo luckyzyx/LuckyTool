@@ -123,7 +123,7 @@
     <string name="enable_full_brightness_refresh_rate_minimum_one_summary">Некоторые модели могут конфликтовать с \"Игровой помощник\", вызывая мерцание экрана</string>
     <string name="disable_long_press_home_key_start_speech_asssist">Отключить долгое нажатие клавиши \"Домой\" для запуска голосового помощника</string>
     <!-- CorePatch -->
-    <string name="ColorOSCorePatchTip">Официальному установщику Color OS необходимо включить другие функции для использования\nСписок функций-Приложения-Установка приложений</string>
+    <string name="ColorOSCorePatchTip">Официальный установщик ColorOS следует использовать вместе с Патчами ядра</string>
     <string name="corepatch">Патчи ядра</string>
     <string name="corepatch_summary">Убрать ограничения на установку, поддерживает Android %1$s</string>
     <string name="disable_verification_agent_summary">Например Google Play Protection</string>

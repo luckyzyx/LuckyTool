@@ -123,7 +123,7 @@
     <string name="enable_full_brightness_refresh_rate_minimum_one_summary">Unele modele pot intra în conflict cu Game Assistant, făcând ca ecranul să pâlpâie.</string>
     <string name="disable_long_press_home_key_start_speech_asssist">Dezactivați apăsarea lungă a tastei acasă pentru a începe asistentul de vorbire</string>
     <!-- CorePatch -->
-    <string name="ColorOSCorePatchTip">The official Color OS installer needs to enable other functions to use\nFunction List-Application Related-Application Installation Related</string>
+    <string name="ColorOSCorePatchTip">Instalatorul oficial ColorOS necesită Patch Nucleu</string>
     <string name="corepatch">Patch Nucleu</string>
     <string name="corepatch_summary">Remove install limits, supports Android %1$s</string>
     <string name="disable_verification_agent_summary">ex. Protecție Google Play</string>

@@ -209,7 +209,7 @@
     <string name="disable_long_press_home_key_start_speech_asssist">Disable long press HOME key to start speech assistant</string>
     
     <!-- CorePatch -->
-    <string name="ColorOSCorePatchTip">The official Color OS installer needs to enable other functions to use\nFunction List-Application Related-Application Installation Related</string>
+    <string name="ColorOSCorePatchTip">The official ColorOS installer needs to be used with Core Patch</string>
     <string name="corepatch">Core Patch</string>
     <string name="corepatch_summary">Remove install limits, supports Android %1$s</string>
     <string name="bypass_downgrade">Bypass downgrade</string>

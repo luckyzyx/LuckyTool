@@ -139,7 +139,7 @@
     <string name="disable_long_press_home_key_start_speech_asssist">Sesli asistanı başlatmak için HOME (Ana Sayfa) tuşuna uzun basmayı devre dışı bırak</string>
     
     <!-- CorePatch -->
-    <string name="ColorOSCorePatchTip">ColorOS orijinal yükleyicisini (Package Installer) kullanabilmek için diğer işlevlerin de açılması gerekmektedir:\nİşlev Listesi -> Uygulama İle İlgili -> Uygulama Yüklemeyle İlgili</string>
+    <string name="ColorOSCorePatchTip">ColorOS orijinal yükleyicisi Çekirdek Yaması (Core Patch) ile birlikte kullanılmalıdır</string>
     <string name="corepatch">Çekirdek Yaması (Core Patch)</string>
     <string name="corepatch_summary">Yükleme sınırlarını kaldırır, Android %1$s sürümünü destekler</string>
     <string name="disable_verification_agent_summary">Örn. Google Play Koruması (Play Protect)</string>

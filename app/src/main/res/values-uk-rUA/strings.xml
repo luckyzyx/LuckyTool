@@ -123,7 +123,7 @@
     <string name="enable_full_brightness_refresh_rate_minimum_one_summary">Some models may conflict with Game Assistant, causing the screen to flicker.</string>
     <string name="disable_long_press_home_key_start_speech_asssist">Disable long press HOME key to start speech assistant</string>
     <!-- CorePatch -->
-    <string name="ColorOSCorePatchTip">Офіційному інсталятору Color OS необхідно увімкнути інші функції для використання\nСписок функцій-Додатка-Встановлення додатків</string>
+    <string name="ColorOSCorePatchTip">Офіційний інсталятор ColorOS потрібно використовувати разом із Патчем ядра</string>
     <string name="corepatch">Патч ядра</string>
     <string name="corepatch_summary">Remove install limits, supports Android %1$s</string>
     <string name="disable_verification_agent_summary">e.g. Google Play Protection</string>

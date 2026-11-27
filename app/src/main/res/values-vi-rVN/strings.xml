@@ -125,7 +125,7 @@
     <string name="enable_full_brightness_refresh_rate_minimum_one_summary">Một số kiểu máy có thể xung đột với Trợ lý trò chơi và gây ra hiện tượng màn hình nhấp nháy.</string>
     <string name="disable_long_press_home_key_start_speech_asssist">Tắt tính năng nhấn và giữ nút HOME để khởi động trợ lý giọng nói</string>
     <!-- CorePatch -->
-    <string name="ColorOSCorePatchTip">Bộ cài đặt ColorOS chính thức cần kích hoạt các chức năng khác để sử dụng\nDanh sách chức năng-Ứng dụng-Cài đặt ứng dụng</string>
+    <string name="ColorOSCorePatchTip">Bộ cài đặt ColorOS chính thức cần dùng cùng Vá lõi hệ thống</string>
     <string name="corepatch">Vá lõi hệ thống</string>
     <string name="corepatch_summary">Xóa giới hạn cài đặt, hỗ trợ Android %1$s</string>
     <string name="disable_verification_agent_summary">Ví dụ: Google Play Protect</string>

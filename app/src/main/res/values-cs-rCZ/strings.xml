@@ -123,7 +123,7 @@
     <string name="enable_full_brightness_refresh_rate_minimum_one_summary">Některé modely mohou být v rozporu s herním asistentem, což může způsobit blikání obrazovky.</string>
     <string name="disable_long_press_home_key_start_speech_asssist">Zakázat dlouhý stisk klávesy HOME pro spuštění mluvicího asistenta</string>
     <!-- CorePatch -->
-    <string name="ColorOSCorePatchTip">Oficiální instalátor pro Color OS musí umožnit ostatním funkcím používat\nSeznam funkcí-Vztahující se k aplikacím-Vztahující se k instalaci aplikací</string>
+    <string name="ColorOSCorePatchTip">Oficiální instalátor ColorOS vyžaduje Hlavní patch</string>
     <string name="corepatch">Hlavní patch</string>
     <string name="corepatch_summary">Odstranit limity instalace, podporuje Android %1$s</string>
 

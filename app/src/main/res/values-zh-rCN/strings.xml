@@ -194,7 +194,7 @@
     <string name="enable_full_brightness_refresh_rate_minimum_one_summary">部分机型可能会与游戏助手冲突而导致闪屏</string>
     <string name="disable_long_press_home_key_start_speech_asssist">禁用长按HOME键启动语音助手</string>
     <!-- CorePatch -->
-    <string name="ColorOSCorePatchTip">ColorOS 官方安装程序需要启用其他功能来使用\n功能列表 - 应用相关 - 应用安装相关</string>
+    <string name="ColorOSCorePatchTip">ColorOS官方安装器需要搭配核心破解使用</string>
     <string name="corepatch">核心破解</string>
     <string name="corepatch_summary">解除安装限制,支持 Android %1$s</string>
     <string name="bypass_downgrade">允许降级安装应用</string>

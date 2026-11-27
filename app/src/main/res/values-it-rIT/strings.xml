@@ -123,7 +123,7 @@
     <string name="enable_full_brightness_refresh_rate_minimum_one_summary">Alcuni modelli possono entrare in conflitto con Assistente Gioco, causando sfarfallio dello schermo.</string>
     <string name="disable_long_press_home_key_start_speech_asssist">Disabilita la pressione prolungata del tasto HOME per avviare l\'assistente vocale</string>
     <!-- CorePatch -->
-    <string name="ColorOSCorePatchTip">L\'installatore ufficiale ColorOS deve abilitare altre funzioni per utilizzare\nFunzione Lista-Applicazioni\nFunzione Installazione</string>
+    <string name="ColorOSCorePatchTip">L\'installatore ufficiale ColorOS richiede Core Patch</string>
     <string name="corepatch">Core Patch</string>
     <string name="corepatch_summary">RimuovI i limiti di installazione, supporta Android %1$s</string>
     <!--Status Bar-->
