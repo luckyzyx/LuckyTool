@@ -30,50 +30,53 @@ object OplusBrowserPage {
     ) {
         val c = requireNotNull(context) { "ScopeScreen 未注入 Context" }
         if (c.checkPackName("com.heytap.browser")) {
-            custom(title = c.getString(R.string.browser_concise_mode)) {
-                PrefRowInset {
-                    PrefRow(
-                        title = stringResource(R.string.browser_concise_mode),
-                        onClick = {
-                            try {
-                                Intent().apply {
-                                    setClassName(
-                                        "com.heytap.browser",
-                                        "com.heytap.browser.settings.component.BrowserPreferenceActivity"
-                                    )
-                                    putExtra(
-                                        "key.fragment.name",
-                                        "com.heytap.browser.settings.homepage.HomepagePreferenceFragment"
-                                    )
-                                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                                    addFlags(Intent.FLAG_ACTIVITY_MULTIPLE_TASK)
-                                    addFlags(Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED)
-                                    c.startActivity(this)
+            group {
+                custom(title = c.getString(R.string.browser_concise_mode)) {
+                    PrefRowInset {
+                        PrefRow(
+                            title = stringResource(R.string.browser_concise_mode),
+                            onClick = {
+                                try {
+                                    Intent().apply {
+                                        setClassName(
+                                            "com.heytap.browser",
+                                            "com.heytap.browser.settings.component.BrowserPreferenceActivity"
+                                        )
+                                        putExtra(
+                                            "key.fragment.name",
+                                            "com.heytap.browser.settings.homepage.HomepagePreferenceFragment"
+                                        )
+                                        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                                        addFlags(Intent.FLAG_ACTIVITY_MULTIPLE_TASK)
+                                        addFlags(Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED)
+                                        c.startActivity(this)
+                                    }
+                                } catch (_: Exception) {
+                                    c.showToast("Error: Please check your browser version!")
                                 }
-                            } catch (_: Exception) {
-                                c.showToast("Error: Please check your browser version!")
-                            }
-                        },
-                    )
+                            },
+                        )
+                    }
                 }
             }
         }
-        category(c.getString(R.string.ads))
-        switch(
-            key = "remove_ads_from_download_dialog",
-            title = c.getString(R.string.remove_ads_from_download_dialog),
-        )
-        switch(
-            key = "remove_ads_at_download_page_bottom",
-            title = c.getString(R.string.remove_ads_at_download_page_bottom),
-        )
-        switch(
-            key = "remove_browser_window_limit_number",
-            title = c.getString(R.string.remove_browser_window_limit_number),
-        )
-        switch(
-            key = "remove_browser_search_bar_app_promotion",
-            title = c.getString(R.string.remove_browser_search_bar_app_promotion),
-        )
+        group(title = c.getString(R.string.ads)) {
+            switch(
+                key = "remove_ads_from_download_dialog",
+                title = c.getString(R.string.remove_ads_from_download_dialog),
+            )
+            switch(
+                key = "remove_ads_at_download_page_bottom",
+                title = c.getString(R.string.remove_ads_at_download_page_bottom),
+            )
+            switch(
+                key = "remove_browser_window_limit_number",
+                title = c.getString(R.string.remove_browser_window_limit_number),
+            )
+            switch(
+                key = "remove_browser_search_bar_app_promotion",
+                title = c.getString(R.string.remove_browser_search_bar_app_promotion),
+            )
+        }
     }
 }

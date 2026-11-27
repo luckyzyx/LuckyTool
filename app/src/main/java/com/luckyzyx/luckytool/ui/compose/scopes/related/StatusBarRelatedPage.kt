@@ -56,111 +56,112 @@ object StatusBarRelatedPage {
         page(c.getString(R.string.StatusBarBattery), "statusBarBattery")
 
         // 状态栏事件
-        category(c.getString(R.string.StatusbarEvents))
-        switch(
-            key = "statusbar_double_click_lock_screen",
-            title = c.getString(R.string.statusbar_double_click_lock_screen),
-        )
-        if (getOSVersionCode >= 26) {
+        group(title = c.getString(R.string.StatusbarEvents)) {
             switch(
-                key = "vibrate_when_opening_the_statusbar",
-                title = c.getString(R.string.vibrate_when_opening_the_statusbar),
+                key = "statusbar_double_click_lock_screen",
+                title = c.getString(R.string.statusbar_double_click_lock_screen),
             )
-        }
-        if (SDK >= A13) {
-            list(
-                key = "set_click_statusbar_scroll_to_top_mode",
-                title = c.getString(R.string.set_click_statusbar_scroll_to_top_mode),
-                entries = c.resources.getStringArray(R.array.set_click_statusbar_scroll_to_top_mode_entries),
-                entryValues = arrayOf("0", "1", "2"),
-                default = "0",
-                summary = c.getString(R.string.current_mode) + ": %s\n" +
-                        c.getString(R.string.need_restart_system),
-            )
-        }
-        // 音乐流体云
-        if (getOSVersionCode >= 33) {
-            switch(
-                key = "custom_music_fluid_cloud_whitelist",
-                title = c.getString(R.string.custom_music_fluid_cloud_whitelist),
-            )
-            if (state.getBoolean("custom_music_fluid_cloud_whitelist")) {
+            if (getOSVersionCode >= 26) {
                 switch(
-                    key = "disable_music_fluid_cloud_display",
-                    title = c.getString(R.string.disable_music_fluid_cloud_display),
+                    key = "vibrate_when_opening_the_statusbar",
+                    title = c.getString(R.string.vibrate_when_opening_the_statusbar),
                 )
-                custom(
-                    key = "set_custom_music_fluid_cloud_whitelist",
-                    title = c.getString(R.string.set_custom_music_fluid_cloud_whitelist),
-                ) { slot ->
-                    // 应用选择行：summary=当前白名单集合，enabled=未禁用显示
-                    val whitelist by state.stringSetFlow("set_custom_music_fluid_cloud_whitelist")
-                        .collectAsStateWithLifecycle()
-                    val enabled = !state.getBoolean("disable_music_fluid_cloud_display")
-                    var showPicker by remember { mutableStateOf(false) }
-                    PrefRowInset {
-                        AppListItem(
-                            onClick = { if (enabled) showPicker = true },
-                            supportingContent = {
-                                // 槽位文字由调用方绘制：COUI 线改用 COUI 说明排版与页面配色，Material 线保持 M3 文本
-                                if (LocalUiMode.current == UiMode.Coui) {
-                                    CouiText(
-                                        text = whitelist.toString(),
-                                        kind = CouiTextKind.ItemSummary,
-                                        color = CouiPageDefaults.themeColors(CouiTheme.isDark).summary,
-                                    )
-                                } else {
-                                    Text(whitelist.toString())
-                                }
-                            },
-                            enabled = enabled,
-                            colors = itemColors(slot),
-                            headlineContent = {
-                                if (LocalUiMode.current == UiMode.Coui) {
-                                    CouiText(
-                                        text = stringResource(R.string.set_custom_music_fluid_cloud_whitelist),
-                                        kind = CouiTextKind.ItemTitle,
-                                    )
-                                } else {
-                                    Text(stringResource(R.string.set_custom_music_fluid_cloud_whitelist))
-                                }
-                            },
-                        )
-                    }
-                    if (showPicker) {
-                        AppPickerDialog(
-                            title = stringResource(R.string.set_custom_music_fluid_cloud_whitelist),
-                            multiMode = true,
-                            enabledList = whitelist,
-                            onDismiss = { showPicker = false },
-                            onConfirm = { apps ->
-                                state.set(
-                                    "set_custom_music_fluid_cloud_whitelist",
-                                    apps.map { it.packageName }.toSet(),
-                                )
-                            },
-                        )
-                    }
-                }
-                if (getOSVersionCode >= 35) {
-                    switch(
-                        key = "disable_media_music_fluid_cloud_blacklist",
-                        title = c.getString(R.string.disable_media_music_fluid_cloud_blacklist),
-                    )
-                }
             }
-            // 目标包与页面 packName 不同：走 onChange 直接发送
-            switch(
-                key = "force_enable_media_music_fluid_cloud_ripple",
-                title = c.getString(R.string.force_enable_media_music_fluid_cloud_ripple),
-                onChange = { newValue ->
-                    c.sendPrefsValue(
-                        "com.oplus.mediacontroller",
-                        "force_enable_media_music_fluid_cloud_ripple",
-                        newValue,
+            if (SDK >= A13) {
+                list(
+                    key = "set_click_statusbar_scroll_to_top_mode",
+                    title = c.getString(R.string.set_click_statusbar_scroll_to_top_mode),
+                    entries = c.resources.getStringArray(R.array.set_click_statusbar_scroll_to_top_mode_entries),
+                    entryValues = arrayOf("0", "1", "2"),
+                    default = "0",
+                    summary = c.getString(R.string.current_mode) + ": %s\n" +
+                            c.getString(R.string.need_restart_system),
+                )
+            }
+            // 音乐流体云
+            if (getOSVersionCode >= 33) {
+                switch(
+                    key = "custom_music_fluid_cloud_whitelist",
+                    title = c.getString(R.string.custom_music_fluid_cloud_whitelist),
+                )
+                if (state.getBoolean("custom_music_fluid_cloud_whitelist")) {
+                    switch(
+                        key = "disable_music_fluid_cloud_display",
+                        title = c.getString(R.string.disable_music_fluid_cloud_display),
                     )
-                },
-            )
+                    custom(
+                        key = "set_custom_music_fluid_cloud_whitelist",
+                        title = c.getString(R.string.set_custom_music_fluid_cloud_whitelist),
+                    ) { slot ->
+                        // 应用选择行：summary=当前白名单集合，enabled=未禁用显示
+                        val whitelist by state.stringSetFlow("set_custom_music_fluid_cloud_whitelist")
+                            .collectAsStateWithLifecycle()
+                        val enabled = !state.getBoolean("disable_music_fluid_cloud_display")
+                        var showPicker by remember { mutableStateOf(false) }
+                        PrefRowInset {
+                            AppListItem(
+                                onClick = { if (enabled) showPicker = true },
+                                supportingContent = {
+                                    // 槽位文字由调用方绘制：COUI 线改用 COUI 说明排版与页面配色，Material 线保持 M3 文本
+                                    if (LocalUiMode.current == UiMode.Coui) {
+                                        CouiText(
+                                            text = whitelist.toString(),
+                                            kind = CouiTextKind.ItemSummary,
+                                            color = CouiPageDefaults.themeColors(CouiTheme.isDark).summary,
+                                        )
+                                    } else {
+                                        Text(whitelist.toString())
+                                    }
+                                },
+                                enabled = enabled,
+                                colors = itemColors(slot),
+                                headlineContent = {
+                                    if (LocalUiMode.current == UiMode.Coui) {
+                                        CouiText(
+                                            text = stringResource(R.string.set_custom_music_fluid_cloud_whitelist),
+                                            kind = CouiTextKind.ItemTitle,
+                                        )
+                                    } else {
+                                        Text(stringResource(R.string.set_custom_music_fluid_cloud_whitelist))
+                                    }
+                                },
+                            )
+                        }
+                        if (showPicker) {
+                            AppPickerDialog(
+                                title = stringResource(R.string.set_custom_music_fluid_cloud_whitelist),
+                                multiMode = true,
+                                enabledList = whitelist,
+                                onDismiss = { showPicker = false },
+                                onConfirm = { apps ->
+                                    state.set(
+                                        "set_custom_music_fluid_cloud_whitelist",
+                                        apps.map { it.packageName }.toSet(),
+                                    )
+                                },
+                            )
+                        }
+                    }
+                    if (getOSVersionCode >= 35) {
+                        switch(
+                            key = "disable_media_music_fluid_cloud_blacklist",
+                            title = c.getString(R.string.disable_media_music_fluid_cloud_blacklist),
+                        )
+                    }
+                }
+                // 目标包与页面 packName 不同：走 onChange 直接发送
+                switch(
+                    key = "force_enable_media_music_fluid_cloud_ripple",
+                    title = c.getString(R.string.force_enable_media_music_fluid_cloud_ripple),
+                    onChange = { newValue ->
+                        c.sendPrefsValue(
+                            "com.oplus.mediacontroller",
+                            "force_enable_media_music_fluid_cloud_ripple",
+                            newValue,
+                        )
+                    },
+                )
+            }
         }
     }
 }

@@ -47,266 +47,270 @@ object StatusBarControlCenterPage {
         val c = requireNotNull(context) { "ScopeScreen 未注入 Context" }
         val osCode = getOSVersionCode
         // 时钟相关
-        category(c.getString(R.string.ControlCenter_Clock_Related))
-        if (osCode >= 34) {
+        group(title = c.getString(R.string.ControlCenter_Clock_Related)) {
+            if (osCode >= 34) {
+                switch(
+                    key = "remove_control_center_clock_view",
+                    title = c.getString(R.string.remove_control_center_clock_view),
+                )
+            }
             switch(
-                key = "remove_control_center_clock_view",
-                title = c.getString(R.string.remove_control_center_clock_view),
+                key = "control_center_clock_show_second",
+                title = c.getString(R.string.control_center_clock_show_second),
             )
-        }
-        switch(
-            key = "control_center_clock_show_second",
-            title = c.getString(R.string.control_center_clock_show_second),
-        )
-        list(
-            key = "statusbar_control_center_clock_red_one_mode",
-            title = c.getString(R.string.statusbar_control_center_clock_red_one_mode),
-            entries = c.resources.getStringArray(R.array.statusbar_control_center_clock_red_one_mode_entries),
-            entryValues = arrayOf("0", "1", "2"),
-            default = "0",
-            summary = c.getString(R.string.current_mode) + ": %s",
-            notify = true,
-        )
-        if (SDK >= A13) {
             list(
-                key = "statusbar_control_center_clock_colon_style",
-                title = c.getString(R.string.statusbar_control_center_clock_colon_style),
-                entries = c.resources.getStringArray(R.array.statusbar_control_center_clock_colon_style_entries),
+                key = "statusbar_control_center_clock_red_one_mode",
+                title = c.getString(R.string.statusbar_control_center_clock_red_one_mode),
+                entries = c.resources.getStringArray(R.array.statusbar_control_center_clock_red_one_mode_entries),
                 entryValues = arrayOf("0", "1", "2"),
                 default = "0",
                 summary = c.getString(R.string.current_mode) + ": %s",
                 notify = true,
             )
-        }
-        switch(
-            key = "remove_control_center_date_comma",
-            title = c.getString(R.string.remove_control_center_date_comma),
-            notify = true,
-        )
-        if (isZh(c)) {
+            if (SDK >= A13) {
+                list(
+                    key = "statusbar_control_center_clock_colon_style",
+                    title = c.getString(R.string.statusbar_control_center_clock_colon_style),
+                    entries = c.resources.getStringArray(R.array.statusbar_control_center_clock_colon_style_entries),
+                    entryValues = arrayOf("0", "1", "2"),
+                    default = "0",
+                    summary = c.getString(R.string.current_mode) + ": %s",
+                    notify = true,
+                )
+            }
             switch(
-                key = "statusbar_control_center_date_show_lunar",
-                title = c.getString(R.string.statusbar_control_center_date_show_lunar),
+                key = "remove_control_center_date_comma",
+                title = c.getString(R.string.remove_control_center_date_comma),
                 notify = true,
             )
-        }
-        if (SDK >= A13 && isZh(c)) {
-            switch(
-                key = "statusbar_control_center_date_disable_text_scroll",
-                title = c.getString(R.string.statusbar_control_center_date_disable_text_scroll),
-                notify = true,
-            )
-        }
-        if (SDK >= A13 && isZh(c) && state.getBoolean("statusbar_control_center_date_show_lunar", false)) {
-            list(
-                key = "statusbar_control_center_date_set_display_mode_horizontal",
-                title = c.getString(R.string.statusbar_control_center_date_set_display_mode_horizontal),
-                entries = c.resources.getStringArray(R.array.statusbar_control_center_date_fix_lunar_horizontal_entries),
-                entryValues = arrayOf("0", "1", "2"),
-                default = "0",
-                summary = c.getString(R.string.current_mode) + ": %s",
-                notify = true,
-            )
-        }
-        if (osCode >= 38) {
-            switch(
-                key = "remove_control_center_carriers",
-                title = c.getString(R.string.remove_control_center_carriers),
-            )
+            if (isZh(c)) {
+                switch(
+                    key = "statusbar_control_center_date_show_lunar",
+                    title = c.getString(R.string.statusbar_control_center_date_show_lunar),
+                    notify = true,
+                )
+            }
+            if (SDK >= A13 && isZh(c)) {
+                switch(
+                    key = "statusbar_control_center_date_disable_text_scroll",
+                    title = c.getString(R.string.statusbar_control_center_date_disable_text_scroll),
+                    notify = true,
+                )
+            }
+            if (SDK >= A13 && isZh(c) && state.getBoolean("statusbar_control_center_date_show_lunar", false)) {
+                list(
+                    key = "statusbar_control_center_date_set_display_mode_horizontal",
+                    title = c.getString(R.string.statusbar_control_center_date_set_display_mode_horizontal),
+                    entries = c.resources.getStringArray(R.array.statusbar_control_center_date_fix_lunar_horizontal_entries),
+                    entryValues = arrayOf("0", "1", "2"),
+                    default = "0",
+                    summary = c.getString(R.string.current_mode) + ": %s",
+                    notify = true,
+                )
+            }
+            if (osCode >= 38) {
+                switch(
+                    key = "remove_control_center_carriers",
+                    title = c.getString(R.string.remove_control_center_carriers),
+                )
+            }
         }
         // 通知中心
-        category(c.getString(R.string.ControlCenterNotificationCenter))
-        if (osCode >= 23) {
-            switch(
-                key = "enable_notification_side_spacing",
-                title = c.getString(R.string.enable_notification_side_spacing),
-            )
-        }
-        if (state.getBoolean("enable_notification_side_spacing", false)) {
+        group(title = c.getString(R.string.ControlCenterNotificationCenter)) {
             if (osCode >= 23) {
+                switch(
+                    key = "enable_notification_side_spacing",
+                    title = c.getString(R.string.enable_notification_side_spacing),
+                )
+            }
+            if (state.getBoolean("enable_notification_side_spacing", false)) {
+                if (osCode >= 23) {
+                    slider(
+                        key = "custom_notification_side_spacing_vertical",
+                        title = c.getString(R.string.custom_notification_side_spacing_vertical),
+                        valueRange = -30..30,
+                        default = 0,
+                        notify = true,
+                    )
+                    slider(
+                        key = "custom__notification_side_spacing_horizontal",
+                        title = c.getString(R.string.custom__notification_side_spacing_horizontal),
+                        valueRange = -30..30,
+                        default = 0,
+                        notify = true,
+                    )
+                }
+            }
+            if (osCode < 30) {
+                switch(
+                    key = "enable_notification_importance_classification",
+                    title = c.getString(R.string.enable_notification_importance_classification),
+                )
+            }
+            if (osCode in 30..33) {
                 slider(
-                    key = "custom_notification_side_spacing_vertical",
-                    title = c.getString(R.string.custom_notification_side_spacing_vertical),
-                    valueRange = -30..30,
-                    default = 0,
+                    key = "custom_notification_background_transparency",
+                    title = c.getString(R.string.custom_notification_background_transparency),
+                    valueRange = -1..10,
+                    default = -1,
+                    summary = c.getString(R.string.force_enable_systemui_blur_feature_tips),
                     notify = true,
                 )
-                slider(
-                    key = "custom__notification_side_spacing_horizontal",
-                    title = c.getString(R.string.custom__notification_side_spacing_horizontal),
-                    valueRange = -30..30,
-                    default = 0,
+                switch(
+                    key = "enable_notification_background_blur_effect",
+                    title = c.getString(R.string.enable_notification_background_blur_effect),
+                    summary = arraySummaryLine(
+                        c.getString(R.string.force_enable_systemui_blur_feature_tips),
+                        c.getString(R.string.force_enable_systemui_blur_feature_tips_2)
+                    ),
                     notify = true,
                 )
             }
-        }
-        if (osCode < 30) {
             switch(
-                key = "enable_notification_importance_classification",
-                title = c.getString(R.string.enable_notification_importance_classification),
+                key = "remove_notification_cleanup_button",
+                title = c.getString(R.string.remove_notification_cleanup_button),
             )
-        }
-        if (osCode in 30..33) {
-            slider(
-                key = "custom_notification_background_transparency",
-                title = c.getString(R.string.custom_notification_background_transparency),
-                valueRange = -1..10,
-                default = -1,
-                summary = c.getString(R.string.force_enable_systemui_blur_feature_tips),
-                notify = true,
-            )
-            switch(
-                key = "enable_notification_background_blur_effect",
-                title = c.getString(R.string.enable_notification_background_blur_effect),
-                summary = arraySummaryLine(
-                    c.getString(R.string.force_enable_systemui_blur_feature_tips),
-                    c.getString(R.string.force_enable_systemui_blur_feature_tips_2)
-                ),
-                notify = true,
-            )
-        }
-        switch(
-            key = "remove_notification_cleanup_button",
-            title = c.getString(R.string.remove_notification_cleanup_button),
-        )
-        // 滑动条相关
-        if (osCode in 26..33) {
-            category(c.getString(R.string.ControlCenter_Silder_Related))
-            slider(
-                key = "custom_control_center_silder_transparency",
-                title = c.getString(R.string.custom_control_center_silder_transparency),
-                valueRange = -1..10,
-                default = -1,
-            )
+            // 滑动条相关
+            if (osCode in 26..33) {
+                group(title = c.getString(R.string.ControlCenter_Silder_Related)) {
+                    slider(
+                        key = "custom_control_center_silder_transparency",
+                        title = c.getString(R.string.custom_control_center_silder_transparency),
+                        valueRange = -1..10,
+                        default = -1,
+                    )
+                }
+            }
         }
         // UI相关
-        category(c.getString(R.string.ControlCenter_UI_Related))
-        if (osCode >= 31) {
+        group(title = c.getString(R.string.ControlCenter_UI_Related)) {
+            if (osCode >= 31) {
+                list(
+                    key = "set_control_center_volume_seekbar_mode",
+                    title = c.getString(R.string.set_control_center_volume_seekbar_mode),
+                    entries = c.resources.getStringArray(R.array.set_control_center_volume_seekbar_mode_entries),
+                    entryValues = arrayOf("0", "1", "2"),
+                    default = "0",
+                    summary = c.getString(R.string.current_mode) + ": %s",
+                )
+            }
+            switch(
+                key = "enable_control_center_progress_percent_display",
+                title = c.getString(R.string.enable_control_center_progress_percent_display),
+            )
+            if (state.getBoolean("enable_control_center_progress_percent_display", false)) {
+                custom(
+                    key = PROGRESS_COLOR_KEY,
+                    title = c.getString(R.string.custom_control_center_progress_percent_color),
+                ) {
+                    val hex by state.stringFlow(PROGRESS_COLOR_KEY, "#FFFFFFFF")
+                        .collectAsStateWithLifecycle()
+                    val color = remember(hex) {
+                        try {
+                            Color(hex.toColorInt())
+                        } catch (_: Throwable) {
+                            Color.Transparent
+                        }
+                    }
+                    var showPicker by remember { mutableStateOf(false) }
+                    PrefRowInset {
+                        PrefRow(
+                            title = stringResource(R.string.custom_control_center_progress_percent_color),
+                            summary = stringResource(R.string.current_color, hex),
+                            trailing = {
+                                PrefColorPreview(color = color)
+                            },
+                            onClick = { showPicker = true },
+                        )
+                    }
+                    if (showPicker) {
+                        ColorPickerDialog(
+                            initialHex = hex,
+                            onDismiss = { showPicker = false },
+                            onColorSelected = { _, newHex ->
+                                state.set(PROGRESS_COLOR_KEY, newHex)
+                                sendValue(PROGRESS_COLOR_KEY, newHex)
+                                showPicker = false
+                            },
+                        )
+                    }
+                }
+            }
+            if (osCode >= 34) {
+                switch(
+                    key = "remove_control_center_edit_button",
+                    title = c.getString(R.string.remove_control_center_edit_button),
+                    summary = c.getString(R.string.separate_control_center_mode_only),
+                )
+            }
+            if (osCode in 34..39) {
+                switch(
+                    key = "remove_control_center_more_button",
+                    title = c.getString(R.string.remove_control_center_more_button),
+                    summary = c.getString(R.string.separate_control_center_mode_only),
+                )
+            }
+            if (osCode >= 38) {
+                switch(
+                    key = "remove_control_center_settings_button",
+                    title = c.getString(R.string.remove_control_center_settings_button),
+                    summary = c.getString(R.string.separate_control_center_mode_only),
+                )
+            }
             list(
-                key = "set_control_center_volume_seekbar_mode",
-                title = c.getString(R.string.set_control_center_volume_seekbar_mode),
-                entries = c.resources.getStringArray(R.array.set_control_center_volume_seekbar_mode_entries),
+                key = "set_auto_brightness_button_mode",
+                title = c.getString(R.string.set_auto_brightness_button_mode),
+                entries = c.resources.getStringArray(R.array.statusbar_control_center_auto_brightness_mode_entries),
                 entryValues = arrayOf("0", "1", "2"),
                 default = "0",
                 summary = c.getString(R.string.current_mode) + ": %s",
             )
-        }
-        switch(
-            key = "enable_control_center_progress_percent_display",
-            title = c.getString(R.string.enable_control_center_progress_percent_display),
-        )
-        if (state.getBoolean("enable_control_center_progress_percent_display", false)) {
-            custom(
-                key = PROGRESS_COLOR_KEY,
-                title = c.getString(R.string.custom_control_center_progress_percent_color),
-            ) {
-                val hex by state.stringFlow(PROGRESS_COLOR_KEY, "#FFFFFFFF")
-                    .collectAsStateWithLifecycle()
-                val color = remember(hex) {
-                    try {
-                        Color(hex.toColorInt())
-                    } catch (_: Throwable) {
-                        Color.Transparent
-                    }
-                }
-                var showPicker by remember { mutableStateOf(false) }
-                PrefRowInset {
-                    PrefRow(
-                        title = stringResource(R.string.custom_control_center_progress_percent_color),
-                        summary = stringResource(R.string.current_color, hex),
-                        trailing = {
-                            PrefColorPreview(color = color)
-                        },
-                        onClick = { showPicker = true },
-                    )
-                }
-                if (showPicker) {
-                    ColorPickerDialog(
-                        initialHex = hex,
-                        onDismiss = { showPicker = false },
-                        onColorSelected = { _, newHex ->
-                            state.set(PROGRESS_COLOR_KEY, newHex)
-                            sendValue(PROGRESS_COLOR_KEY, newHex)
-                            showPicker = false
-                        },
-                    )
-                }
+            if (SDK < A13) {
+                switch(
+                    key = "remove_control_center_user_switcher",
+                    title = c.getString(R.string.remove_control_center_user_switcher),
+                )
             }
-        }
-        if (osCode >= 34) {
-            switch(
-                key = "remove_control_center_edit_button",
-                title = c.getString(R.string.remove_control_center_edit_button),
-                summary = c.getString(R.string.separate_control_center_mode_only),
-            )
-        }
-        if (osCode in 34..39) {
-            switch(
-                key = "remove_control_center_more_button",
-                title = c.getString(R.string.remove_control_center_more_button),
-                summary = c.getString(R.string.separate_control_center_mode_only),
-            )
-        }
-        if (osCode >= 38) {
-            switch(
-                key = "remove_control_center_settings_button",
-                title = c.getString(R.string.remove_control_center_settings_button),
-                summary = c.getString(R.string.separate_control_center_mode_only),
-            )
-        }
-        list(
-            key = "set_auto_brightness_button_mode",
-            title = c.getString(R.string.set_auto_brightness_button_mode),
-            entries = c.resources.getStringArray(R.array.statusbar_control_center_auto_brightness_mode_entries),
-            entryValues = arrayOf("0", "1", "2"),
-            default = "0",
-            summary = c.getString(R.string.current_mode) + ": %s",
-        )
-        if (SDK < A13) {
-            switch(
-                key = "remove_control_center_user_switcher",
-                title = c.getString(R.string.remove_control_center_user_switcher),
-            )
-        }
-        if (SDK >= A13) {
-            switch(
-                key = "remove_control_center_mydevice",
-                title = c.getString(R.string.remove_control_center_mydevice),
-            )
-        }
-        list(
-            key = "set_control_center_search_button_mode",
-            title = c.getString(R.string.set_control_center_search_button_mode),
-            entries = c.resources.getStringArray(R.array.set_control_center_search_button_mode_entries),
-            entryValues = arrayOf("0", "1", "2"),
-            default = "0",
-            summary = c.getString(R.string.current_mode) + ": %s",
-            notify = true,
-        )
-        // Android 16 起宿主改由控制中心底栏的协程流程驱动，这个功能只保留到 16 以下
-        if (SDK < A16) {
+            if (SDK >= A13) {
+                switch(
+                    key = "remove_control_center_mydevice",
+                    title = c.getString(R.string.remove_control_center_mydevice),
+                )
+            }
             list(
-                key = "remove_control_center_networkwarn",
-                title = c.getString(R.string.remove_control_center_networkwarn),
-                entries = c.resources.getStringArray(R.array.statusbar_control_center_networkwarn_entries),
+                key = "set_control_center_search_button_mode",
+                title = c.getString(R.string.set_control_center_search_button_mode),
+                entries = c.resources.getStringArray(R.array.set_control_center_search_button_mode_entries),
                 entryValues = arrayOf("0", "1", "2"),
                 default = "0",
-                summary = arraySummaryLine(
-                    c.getString(R.string.current_mode) + ": %s",
-                    c.getString(R.string.remove_control_center_networkwarn_summary)
-                ),
+                summary = c.getString(R.string.current_mode) + ": %s",
                 notify = true,
             )
-        }
-        if (osCode < 34) {
-            slider(
-                key = "custom_control_center_background_transparency",
-                title = c.getString(R.string.custom_control_center_background_transparency),
-                valueRange = -1..10,
-                default = -1,
-                summary = c.getString(R.string.force_enable_systemui_blur_feature_tips),
-                notify = true,
-            )
+            // Android 16 起宿主改由控制中心底栏的协程流程驱动，这个功能只保留到 16 以下
+            if (SDK < A16) {
+                list(
+                    key = "remove_control_center_networkwarn",
+                    title = c.getString(R.string.remove_control_center_networkwarn),
+                    entries = c.resources.getStringArray(R.array.statusbar_control_center_networkwarn_entries),
+                    entryValues = arrayOf("0", "1", "2"),
+                    default = "0",
+                    summary = arraySummaryLine(
+                        c.getString(R.string.current_mode) + ": %s",
+                        c.getString(R.string.remove_control_center_networkwarn_summary)
+                    ),
+                    notify = true,
+                )
+            }
+            if (osCode < 34) {
+                slider(
+                    key = "custom_control_center_background_transparency",
+                    title = c.getString(R.string.custom_control_center_background_transparency),
+                    valueRange = -1..10,
+                    default = -1,
+                    summary = c.getString(R.string.force_enable_systemui_blur_feature_tips),
+                    notify = true,
+                )
+            }
         }
     }
 }

@@ -52,95 +52,44 @@ object OplusGamesPage {
         }
 
         // 游戏助手页面入口
-        if (c.checkPackName("com.oplus.games") && c.checkResolveActivity(
-                Intent().setClassName(
-                    "com.oplus.games", "business.compact.activity.GameBoxCoverActivity"
-                )
-            )
-        ) {
-            custom(title = c.getString(R.string.game_assistant_page)) {
-                PrefRowInset {
-                    PrefRow(
-                        title = stringResource(R.string.game_assistant_page),
-                        summary = "(${appUtils.getAppLabel("com.oplus.games")})",
-                        onClick = {
-                            launchShell(
-                                "com.oplus.games/business.compact.activity.GameBoxCoverActivity"
-                            )
-                        },
+        group {
+            if (c.checkPackName("com.oplus.games") && c.checkResolveActivity(
+                    Intent().setClassName(
+                        "com.oplus.games", "business.compact.activity.GameBoxCoverActivity"
                     )
-                }
-            }
-        }
-        // 游戏空间页面入口
-        if (c.checkPackName("com.nearme.gamecenter") && c.checkResolveActivity(
-                Intent().setClassName(
-                    "com.nearme.gamecenter",
-                    "com.nearme.gamespace.desktopspace.ui.DesktopSpaceMainActivity"
                 )
-            )
-        ) {
-            custom(title = c.getString(R.string.game_space_page)) {
-                PrefRowInset {
-                    PrefRow(
-                        title = stringResource(R.string.game_space_page),
-                        summary = "(${appUtils.getAppLabel("com.nearme.gamecenter")})",
-                        onClick = {
-                            launchShell(
-                                "com.nearme.gamecenter/" +
-                                    "com.nearme.gamespace.desktopspace.ui.DesktopSpaceMainActivity"
-                            )
-                        },
-                    )
-                }
-            }
-        }
-        // 布局
-        category(c.getString(R.string.OplusGamesLayout))
-        switch(
-            key = "remove_startup_animation",
-            title = c.getString(R.string.remove_startup_animation),
-        )
-        if (!isNew) {
-            switch(
-                key = "remove_welfare_page",
-                title = c.getString(R.string.remove_welfare_page),
-            )
-        }
-        if (appVerInfo?.versionCode?.let { it < 90000000 } ?: false) {
-            switch(
-                key = "remove_tool_recommendation_card",
-                title = c.getString(R.string.remove_tool_recommendation_card),
-            )
-        }
-        // 工具
-        category(c.getString(R.string.OplusGamesTool))
-        switch(
-            key = "remove_root_check",
-            title = c.getString(R.string.remove_root_check),
-            summary = c.getString(R.string.remove_root_check_summary),
-        )
-        switch(
-            key = "remove_some_vip_limit",
-            title = c.getString(R.string.remove_some_vip_limit),
-            summary = c.getString(R.string.remove_some_vip_limit_summary),
-        )
-        switch(
-            key = "enable_developer_page",
-            title = c.getString(R.string.enable_developer_page),
-            summary = c.getString(R.string.enable_developer_page_summary),
-        )
-        if (state.getBoolean("enable_developer_page")) {
-            if (c.checkPackName("com.oplus.games")) {
-                custom(title = c.getString(R.string.game_assistant_develop_page)) {
+            ) {
+                custom(title = c.getString(R.string.game_assistant_page)) {
                     PrefRowInset {
                         PrefRow(
-                            title = stringResource(R.string.game_assistant_develop_page),
+                            title = stringResource(R.string.game_assistant_page),
                             summary = "(${appUtils.getAppLabel("com.oplus.games")})",
                             onClick = {
                                 launchShell(
-                                    "com.oplus.games/" +
-                                        "business.compact.activity.GameDevelopOptionsActivity"
+                                    "com.oplus.games/business.compact.activity.GameBoxCoverActivity"
+                                )
+                            },
+                        )
+                    }
+                }
+            }
+            // 游戏空间页面入口
+            if (c.checkPackName("com.nearme.gamecenter") && c.checkResolveActivity(
+                    Intent().setClassName(
+                        "com.nearme.gamecenter",
+                        "com.nearme.gamespace.desktopspace.ui.DesktopSpaceMainActivity"
+                    )
+                )
+            ) {
+                custom(title = c.getString(R.string.game_space_page)) {
+                    PrefRowInset {
+                        PrefRow(
+                            title = stringResource(R.string.game_space_page),
+                            summary = "(${appUtils.getAppLabel("com.nearme.gamecenter")})",
+                            onClick = {
+                                launchShell(
+                                    "com.nearme.gamecenter/" +
+                                        "com.nearme.gamespace.desktopspace.ui.DesktopSpaceMainActivity"
                                 )
                             },
                         )
@@ -148,135 +97,190 @@ object OplusGamesPage {
                 }
             }
         }
-        custom(
-            key = "custom_media_player_support_list",
-            title = c.getString(R.string.custom_media_player_support),
-        ) {
-            val saved by state.stringSetFlow("custom_media_player_support_list")
-                .collectAsStateWithLifecycle()
-            var show by remember { mutableStateOf(false) }
-            PrefRowInset {
-                PrefRow(
-                    title = stringResource(R.string.custom_media_player_support),
-                    summary = saved.toString(),
-                    onClick = { show = true },
+        // 布局
+        group(title = c.getString(R.string.OplusGamesLayout)) {
+            switch(
+                key = "remove_startup_animation",
+                title = c.getString(R.string.remove_startup_animation),
+            )
+            if (!isNew) {
+                switch(
+                    key = "remove_welfare_page",
+                    title = c.getString(R.string.remove_welfare_page),
                 )
             }
-            if (show) {
-                AppPickerDialog(
-                    title = stringResource(R.string.custom_media_player_support),
-                    multiMode = true,
-                    enabledList = saved,
-                    onDismiss = { show = false },
-                    onConfirm = { apps ->
-                        state.set(
-                            "custom_media_player_support_list",
-                            apps.map { it.packageName }.toSet(),
-                        )
-                    },
+            if (appVerInfo?.versionCode?.let { it < 90000000 } ?: false) {
+                switch(
+                    key = "remove_tool_recommendation_card",
+                    title = c.getString(R.string.remove_tool_recommendation_card),
                 )
             }
         }
-        custom(
-            key = "custom_barrage_notification_whitelist_list",
-            title = c.getString(R.string.custom_barrage_notification_whitelist),
-        ) {
-            val saved by state
-                .stringSetFlow("custom_barrage_notification_whitelist_list")
-                .collectAsStateWithLifecycle()
-            var show by remember { mutableStateOf(false) }
-            PrefRowInset {
-                PrefRow(
-                    title = stringResource(R.string.custom_barrage_notification_whitelist),
-                    summary = saved.toString(),
-                    onClick = { show = true },
+        // 工具
+        group(title = c.getString(R.string.OplusGamesTool)) {
+            switch(
+                key = "remove_root_check",
+                title = c.getString(R.string.remove_root_check),
+                summary = c.getString(R.string.remove_root_check_summary),
+            )
+            switch(
+                key = "remove_some_vip_limit",
+                title = c.getString(R.string.remove_some_vip_limit),
+                summary = c.getString(R.string.remove_some_vip_limit_summary),
+            )
+            switch(
+                key = "enable_developer_page",
+                title = c.getString(R.string.enable_developer_page),
+                summary = c.getString(R.string.enable_developer_page_summary),
+            )
+            if (state.getBoolean("enable_developer_page")) {
+                if (c.checkPackName("com.oplus.games")) {
+                    custom(title = c.getString(R.string.game_assistant_develop_page)) {
+                        PrefRowInset {
+                            PrefRow(
+                                title = stringResource(R.string.game_assistant_develop_page),
+                                summary = "(${appUtils.getAppLabel("com.oplus.games")})",
+                                onClick = {
+                                    launchShell(
+                                        "com.oplus.games/" +
+                                            "business.compact.activity.GameDevelopOptionsActivity"
+                                    )
+                                },
+                            )
+                        }
+                    }
+                }
+            }
+            custom(
+                key = "custom_media_player_support_list",
+                title = c.getString(R.string.custom_media_player_support),
+            ) {
+                val saved by state.stringSetFlow("custom_media_player_support_list")
+                    .collectAsStateWithLifecycle()
+                var show by remember { mutableStateOf(false) }
+                PrefRowInset {
+                    PrefRow(
+                        title = stringResource(R.string.custom_media_player_support),
+                        summary = saved.toString(),
+                        onClick = { show = true },
+                    )
+                }
+                if (show) {
+                    AppPickerDialog(
+                        title = stringResource(R.string.custom_media_player_support),
+                        multiMode = true,
+                        enabledList = saved,
+                        onDismiss = { show = false },
+                        onConfirm = { apps ->
+                            state.set(
+                                "custom_media_player_support_list",
+                                apps.map { it.packageName }.toSet(),
+                            )
+                        },
+                    )
+                }
+            }
+            custom(
+                key = "custom_barrage_notification_whitelist_list",
+                title = c.getString(R.string.custom_barrage_notification_whitelist),
+            ) {
+                val saved by state
+                    .stringSetFlow("custom_barrage_notification_whitelist_list")
+                    .collectAsStateWithLifecycle()
+                var show by remember { mutableStateOf(false) }
+                PrefRowInset {
+                    PrefRow(
+                        title = stringResource(R.string.custom_barrage_notification_whitelist),
+                        summary = saved.toString(),
+                        onClick = { show = true },
+                    )
+                }
+                if (show) {
+                    AppPickerDialog(
+                        title = stringResource(R.string.custom_barrage_notification_whitelist),
+                        multiMode = true,
+                        enabledList = saved,
+                        onDismiss = { show = false },
+                        onConfirm = { apps ->
+                            state.set(
+                                "custom_barrage_notification_whitelist_list",
+                                apps.map { it.packageName }.toSet(),
+                            )
+                        },
+                    )
+                }
+            }
+            if (getOSVersionCode >= 27) {
+                switch(
+                    key = "enable_game_run_in_background",
+                    title = c.getString(R.string.enable_run_in_background),
                 )
             }
-            if (show) {
-                AppPickerDialog(
-                    title = stringResource(R.string.custom_barrage_notification_whitelist),
-                    multiMode = true,
-                    enabledList = saved,
-                    onDismiss = { show = false },
-                    onConfirm = { apps ->
-                        state.set(
-                            "custom_barrage_notification_whitelist_list",
-                            apps.map { it.packageName }.toSet(),
-                        )
-                    },
+            if (!isNew) {
+                switch(
+                    key = "enable_game_ai_play",
+                    title = c.getString(R.string.enable_game_ai_play),
                 )
             }
-        }
-        if (getOSVersionCode >= 27) {
+            if (SDK < A14) {
+                switch(
+                    key = "remove_danmaku_notification_whitelist",
+                    title = c.getString(R.string.remove_danmaku_notification_whitelist),
+                )
+            }
+            if (!isNew) {
+                switch(
+                    key = "remove_game_voice_changer_whitelist",
+                    title = c.getString(R.string.remove_game_voice_changer_whitelist),
+                )
+            }
             switch(
-                key = "enable_game_run_in_background",
-                title = c.getString(R.string.enable_run_in_background),
-            )
-        }
-        if (!isNew) {
-            switch(
-                key = "enable_game_ai_play",
-                title = c.getString(R.string.enable_game_ai_play),
-            )
-        }
-        if (SDK < A14) {
-            switch(
-                key = "remove_danmaku_notification_whitelist",
-                title = c.getString(R.string.remove_danmaku_notification_whitelist),
-            )
-        }
-        if (!isNew) {
-            switch(
-                key = "remove_game_voice_changer_whitelist",
-                title = c.getString(R.string.remove_game_voice_changer_whitelist),
-            )
-        }
-        switch(
-            key = "remove_game_assistant_temperature_detection",
-            title = c.getString(R.string.remove_game_assistant_temperature_detection),
-            summary = c.getString(R.string.remove_game_assistant_temperature_detection_summary),
-        )
-        switch(
-            key = "enable_support_competition_mode",
-            title = c.getString(R.string.enable_support_competition_mode),
-        )
-        switch(
-            key = "remove_competition_mode_sound",
-            title = c.getString(R.string.remove_competition_mode_sound),
-        )
-        switch(
-            key = "enable_x_mode_feature",
-            title = c.getString(R.string.enable_x_mode_feature),
-        )
-        if (!isNew) {
-            switch(
-                key = "enable_gt_mode_feature",
-                title = c.getString(R.string.enable_gt_mode_feature),
+                key = "remove_game_assistant_temperature_detection",
+                title = c.getString(R.string.remove_game_assistant_temperature_detection),
+                summary = c.getString(R.string.remove_game_assistant_temperature_detection_summary),
             )
             switch(
-                key = "enable_one_plus_characteristic",
-                title = c.getString(R.string.enable_one_plus_characteristic),
+                key = "enable_support_competition_mode",
+                title = c.getString(R.string.enable_support_competition_mode),
             )
             switch(
-                key = "enable_adreno_gpu_controller",
-                title = c.getString(R.string.enable_adreno_gpu_controller),
+                key = "remove_competition_mode_sound",
+                title = c.getString(R.string.remove_competition_mode_sound),
             )
             switch(
-                key = "enable_increase_fps_limit_feature",
-                title = c.getString(R.string.enable_increase_fps_limit_feature),
+                key = "enable_x_mode_feature",
+                title = c.getString(R.string.enable_x_mode_feature),
             )
-            switch(
-                key = "enable_increase_fps_feature",
-                title = c.getString(R.string.enable_increase_fps_feature),
-            )
-            switch(
-                key = "enable_optimise_power_feature",
-                title = c.getString(R.string.enable_optimise_power_feature),
-            )
-            switch(
-                key = "enable_super_resolution_feature",
-                title = c.getString(R.string.enable_super_resolution_feature),
-            )
+            if (!isNew) {
+                switch(
+                    key = "enable_gt_mode_feature",
+                    title = c.getString(R.string.enable_gt_mode_feature),
+                )
+                switch(
+                    key = "enable_one_plus_characteristic",
+                    title = c.getString(R.string.enable_one_plus_characteristic),
+                )
+                switch(
+                    key = "enable_adreno_gpu_controller",
+                    title = c.getString(R.string.enable_adreno_gpu_controller),
+                )
+                switch(
+                    key = "enable_increase_fps_limit_feature",
+                    title = c.getString(R.string.enable_increase_fps_limit_feature),
+                )
+                switch(
+                    key = "enable_increase_fps_feature",
+                    title = c.getString(R.string.enable_increase_fps_feature),
+                )
+                switch(
+                    key = "enable_optimise_power_feature",
+                    title = c.getString(R.string.enable_optimise_power_feature),
+                )
+                switch(
+                    key = "enable_super_resolution_feature",
+                    title = c.getString(R.string.enable_super_resolution_feature),
+                )
+            }
         }
     }
 }

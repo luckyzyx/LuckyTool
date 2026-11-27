@@ -12,6 +12,7 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -34,6 +35,8 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import com.itos.coui.effect.couiButtonFeedback
 import com.itos.coui.layout.CouiPageDefaults
+import com.itos.coui.layout.Divider as CouiDivider
+import com.itos.coui.layout.Group as CouiGroup
 import com.itos.coui.layout.Item as CouiItem
 import com.itos.coui.switch.CouiSwitchDefaults
 import com.itos.coui.switch.Switch as CouiSwitch
@@ -48,7 +51,7 @@ import com.luckyzyx.luckytool.ui.theme.UiMode
 /**
  * 卡片行 / 卡原语，支持分段卡片与独立卡片。
  *
- * **「设置区块」的唯一 API 是 `PrefScope` DSL**（`group()` / `category()` / `switch()` / `click()` / `list()` /
+ * **「设置区块」的唯一 API 是 `PrefScope` DSL**（`group()` / `switch()` / `click()` / `list()` /
  * `custom()`，见 `ui/compose/components/PrefScope.kt`）—— 所有标准设置页与作用域页都走它。
  * 本文件只保留 `custom()` 逃生舱（无法走 DSL 的自定义控件里的单行 / 单卡）所需的原始行 / 卡原语：
  * [PrefGroup] + [PrefRow] + [PrefSwitchRow]（组内行，形状由所属 [PrefGroup] 决定）、
@@ -104,34 +107,28 @@ private class CouiPrefCardScope : PrefCardScope {
 }
 
 /**
- * COUI 线的分段卡片组容器：每行是一片带圆角与卡片底色的切片，行间由切片内的 CouiDivider 分隔。
+ * COUI 线的分段卡片组容器：交给库的 [CouiGroup] 画整张卡片（16dp 横向内缩、24dp 平滑圆角、
+ * 与上一区块的分组间距都由它提供），可见行之间再显式插 [CouiDivider]。
  *
- * 整张卡片由一个 Column 切成多片而非一个 CouiGroup：条目各自带显隐动画，
- * 切片化后单条的进场/退场只影响自己所占的高度与圆角，不会牵动整卡。
+ * 行级显隐动画保留：分隔线放在行的动画内容里跟随该行一起进退，
+ * 因此某一行的展开/收起不会带动整张卡片的其余行。
  */
 @Composable
 private fun CouiPrefCardGroup(entries: List<PrefCardEntry>, modifier: Modifier = Modifier) {
     if (entries.none { it.visible }) return
-    val visibleCount = entries.count { it.visible }
-    Column(modifier = modifier.fillMaxWidth()) {
+    CouiGroup(modifier = modifier.fillMaxWidth()) {
         var visibleIndex = 0
         entries.forEachIndexed { rawIndex, entry ->
             val index = visibleIndex
             if (entry.visible) visibleIndex++
-            // 首条留出与上一区块的组间距，其余条目直接贴合，视觉上是一张连续卡片
-            val gap = if (index == 0) CouiPageDefaults.groupSpacing else 0.dp
             key(entry.key ?: rawIndex) {
                 AnimatedVisibility(
                     visible = entry.visible,
                     enter = fadeIn() + expandVertically(),
                     exit = fadeOut() + shrinkVertically(),
                 ) {
-                    CouiScopeCard(
-                        index = index,
-                        count = visibleCount,
-                        highlighted = false,
-                        modifier = Modifier.padding(top = gap),
-                    ) {
+                    Column(modifier = Modifier.fillMaxWidth()) {
+                        if (index > 0) CouiDivider()
                         entry.content()
                     }
                 }
@@ -355,7 +352,7 @@ fun PrefRowInset(
 /**
  * 独立卡片（不属于任何分段组时使用）。
  * 外观与主题页一致：Material（surfaceBright 容器 + 16dp 外圆角）/
- * COUI 整卡切片（`CouiPageDefaults.shape` 24dp 圆角 + 卡片底色）。
+ * COUI 整卡（`CouiPageDefaults.shape` 24dp 圆角 + 卡片底色，不成组，故不套库的 Group）。
  */
 @Composable
 fun PrefCard(
@@ -369,7 +366,7 @@ fun PrefCard(
 ) {
     if (LocalUiMode.current == UiMode.Coui) {
         // 单条即整张卡：调用方的 modifier 交给卡片（横向内缩与底色都在卡上），行内不再叠
-        CouiScopeCard(index = 0, count = 1, highlighted = false, modifier = modifier) {
+        CouiCard(modifier = modifier) {
             PrefRow(
                 title = title,
                 summary = summary,
@@ -405,7 +402,7 @@ fun PrefSwitchCard(
     onCheckedChange: (Boolean) -> Unit,
 ) {
     if (LocalUiMode.current == UiMode.Coui) {
-        CouiScopeCard(index = 0, count = 1, highlighted = false, modifier = modifier) {
+        CouiCard(modifier = modifier) {
             PrefSwitchRow(
                 title = title,
                 checked = checked,

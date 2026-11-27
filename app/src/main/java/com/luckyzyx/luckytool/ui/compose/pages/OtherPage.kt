@@ -36,7 +36,6 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.core.graphics.drawable.toBitmap
-import com.composables.icons.lucide.R as LucideR
 import com.highcapable.kavaref.extension.classOf
 import com.itos.coui.theme.CouiTheme
 import com.luckyzyx.luckytool.ITileServiceController
@@ -48,15 +47,15 @@ import com.luckyzyx.luckytool.ui.compose.components.ActionListDialog
 import com.luckyzyx.luckytool.ui.compose.components.AdbDebugDialog
 import com.luckyzyx.luckytool.ui.compose.components.AppPickerDialog
 import com.luckyzyx.luckytool.ui.compose.components.ChoiceItem
-import com.luckyzyx.luckytool.ui.compose.components.MultiChoiceDialog
 import com.luckyzyx.luckytool.ui.compose.components.LocalScopeTopInset
-import com.luckyzyx.luckytool.ui.compose.components.SingleChoiceDialog
 import com.luckyzyx.luckytool.ui.compose.components.MainPageActivationEffect
+import com.luckyzyx.luckytool.ui.compose.components.MultiChoiceDialog
 import com.luckyzyx.luckytool.ui.compose.components.OtherTopBarActions
+import com.luckyzyx.luckytool.ui.compose.components.PageScaffold
 import com.luckyzyx.luckytool.ui.compose.components.PrefIcon
 import com.luckyzyx.luckytool.ui.compose.components.ScopeScreen
+import com.luckyzyx.luckytool.ui.compose.components.SingleChoiceDialog
 import com.luckyzyx.luckytool.ui.compose.components.coui.CouiIconButton
-import com.luckyzyx.luckytool.ui.compose.components.PageScaffold
 import com.luckyzyx.luckytool.ui.theme.LocalUiMode
 import com.luckyzyx.luckytool.ui.theme.UiMode
 import com.luckyzyx.luckytool.utils.A13
@@ -69,6 +68,7 @@ import com.luckyzyx.luckytool.utils.SDK
 import com.luckyzyx.luckytool.utils.SettingsPrefs
 import com.luckyzyx.luckytool.utils.ShortcutUtils
 import com.luckyzyx.luckytool.utils.showToast
+import com.composables.icons.lucide.R as LucideR
 
 /**
  * 其他页：磁贴控制器、远程 ADB、快捷方式、触摸采样率、快捷入口与 DEX 优化等工具入口。
@@ -141,94 +141,127 @@ fun OtherPage(activity: MainActivity, isCurrentPage: Boolean = true) {
                     state = settings,
                     modifier = scopeModifier,
                 ) {
-                // 快捷入口、显示与触控、调试各自成组。
-                group()
-                click(
-                    title = quickEntryTitle,
-                    summary = quickEntrySummary,
-                    leading = { PrefIcon(Icons.AutoMirrored.Rounded.OpenInNew, painter = painterResource(LucideR.drawable.lucide_ic_square_arrow_out_up_right)) },
-                    value = "",
-                    trailing = {
-                        if (LocalUiMode.current == UiMode.Coui) {
-                            Icon(
-                                painter = painterResource(
-                                    if (LocalLayoutDirection.current == LayoutDirection.Rtl) LucideR.drawable.lucide_ic_chevron_left
-                                    else LucideR.drawable.lucide_ic_chevron_right
-                                ),
-                                contentDescription = null,
+                    // 快捷入口、显示与触控、调试各自成组。
+                    group {
+                        click(
+                            title = quickEntryTitle,
+                            summary = quickEntrySummary,
+                            leading = {
+                                PrefIcon(
+                                    Icons.AutoMirrored.Rounded.OpenInNew,
+                                    painter = painterResource(LucideR.drawable.lucide_ic_square_arrow_out_up_right)
+                                )
+                            },
+                            value = "",
+                            trailing = {
+                                if (LocalUiMode.current == UiMode.Coui) {
+                                    Icon(
+                                        painter = painterResource(
+                                            if (LocalLayoutDirection.current == LayoutDirection.Rtl) LucideR.drawable.lucide_ic_chevron_left
+                                            else LucideR.drawable.lucide_ic_chevron_right
+                                        ),
+                                        contentDescription = null,
+                                    )
+                                } else {
+                                    Icon(
+                                        Icons.AutoMirrored.Rounded.KeyboardArrowRight,
+                                        contentDescription = null
+                                    )
+                                }
+                            },
+                            onClick = {
+                                activity.requestFunctionNavigation("quick_entry", quickEntryTitle)
+                            },
+                        )
+                        if (SDK >= A13) {
+                            click(
+                                title = tileListTitle,
+                                summary = tileListSummary,
+                                leading = {
+                                    PrefIcon(
+                                        Icons.Rounded.GridView,
+                                        painter = painterResource(LucideR.drawable.lucide_ic_layout_grid)
+                                    )
+                                },
+                                onClick = {
+                                    context.showToast(tileListClickTips)
+                                    showTileDialog = true
+                                },
                             )
-                        } else {
-                            Icon(Icons.AutoMirrored.Rounded.KeyboardArrowRight, contentDescription = null)
                         }
-                    },
-                    onClick = {
-                        activity.requestFunctionNavigation("quick_entry", quickEntryTitle)
-                    },
-                )
-                if (SDK >= A13) {
-                    click(
-                        title = tileListTitle,
-                        summary = tileListSummary,
-                        leading = { PrefIcon(Icons.Rounded.GridView, painter = painterResource(LucideR.drawable.lucide_ic_layout_grid)) },
-                        onClick = {
-                            context.showToast(tileListClickTips)
-                            showTileDialog = true
-                        },
-                    )
-                }
-                click(
-                    title = setModuleShortcutsTitle,
-                    summary = setModuleShortcutsSummary,
-                    leading = {
-                        PrefIcon(Icons.AutoMirrored.Rounded.AddToHomeScreen, painter = painterResource(LucideR.drawable.lucide_ic_square_plus))
-                    },
-                    onClick = { showShortcutDialog = true },
-                )
-                group()
-                click(
-                    title = fpsTitle,
-                    summary = fpsSummary,
-                    leading = { PrefIcon(Icons.Rounded.Speed, painter = painterResource(LucideR.drawable.lucide_ic_gauge)) },
-                    value = "",
-                    trailing = {
-                        if (LocalUiMode.current == UiMode.Coui) {
-                            Icon(
-                                painter = painterResource(
-                                    if (LocalLayoutDirection.current == LayoutDirection.Rtl) LucideR.drawable.lucide_ic_chevron_left
-                                    else LucideR.drawable.lucide_ic_chevron_right
-                                ),
-                                contentDescription = null,
+                        click(
+                            title = setModuleShortcutsTitle,
+                            summary = setModuleShortcutsSummary,
+                            leading = {
+                                PrefIcon(
+                                    Icons.AutoMirrored.Rounded.AddToHomeScreen,
+                                    painter = painterResource(LucideR.drawable.lucide_ic_square_plus)
+                                )
+                            },
+                            onClick = { showShortcutDialog = true },
+                        )
+                        click(
+                            title = fpsTitle,
+                            summary = fpsSummary,
+                            leading = {
+                                PrefIcon(
+                                    Icons.Rounded.Speed,
+                                    painter = painterResource(LucideR.drawable.lucide_ic_gauge)
+                                )
+                            },
+                            value = "",
+                            trailing = {
+                                if (LocalUiMode.current == UiMode.Coui) {
+                                    Icon(
+                                        painter = painterResource(
+                                            if (LocalLayoutDirection.current == LayoutDirection.Rtl) LucideR.drawable.lucide_ic_chevron_left
+                                            else LucideR.drawable.lucide_ic_chevron_right
+                                        ),
+                                        contentDescription = null,
+                                    )
+                                } else {
+                                    Icon(
+                                        Icons.AutoMirrored.Rounded.KeyboardArrowRight,
+                                        contentDescription = null
+                                    )
+                                }
+                            },
+                            onClick = {
+                                activity.requestFunctionNavigation("force_fps", fpsTitle)
+                            },
+                        )
+                        if (touchModeNow) {
+                            click(
+                                title = touchSamplingTitle,
+                                summary = touchSamplingSummary,
+                                leading = {
+                                    PrefIcon(
+                                        Icons.Rounded.TouchApp,
+                                        painter = painterResource(LucideR.drawable.lucide_ic_hand)
+                                    )
+                                },
+                                onClick = { showTouchDialog = true },
                             )
-                        } else {
-                            Icon(Icons.AutoMirrored.Rounded.KeyboardArrowRight, contentDescription = null)
                         }
-                    },
-                    onClick = {
-                        activity.requestFunctionNavigation("force_fps", fpsTitle)
-                    },
-                )
-                if (touchModeNow) {
-                    click(
-                        title = touchSamplingTitle,
-                        summary = touchSamplingSummary,
-                        leading = { PrefIcon(Icons.Rounded.TouchApp, painter = painterResource(LucideR.drawable.lucide_ic_hand)) },
-                        onClick = { showTouchDialog = true },
-                    )
-                }
-                if (hasAdbNow) {
-                    group()
-                    // ADB 服务是异步连上的，这一组会在页面已显示后才出现：稳定 itemKey + animate
-                    // 让它淡入/淡出，而不是在列表末尾直接弹出来（默认槽位 key 会随上方条件行漂移，
-                    // animateItem 认不出是同一行）。
-                    click(
-                        title = remoteAdbTitle,
-                        summary = remoteAdbSummary,
-                        leading = { PrefIcon(Icons.Rounded.Adb, painter = painterResource(LucideR.drawable.lucide_ic_terminal)) },
-                        itemKey = "other_adb",
-                        animate = true,
-                        onClick = { showAdbDialog = true },
-                    )
-                }
+                        if (hasAdbNow) {
+                            // ADB 服务是异步连上的，这一组会在页面已显示后才出现：稳定 itemKey + animate
+                            // 让它淡入/淡出，而不是在列表末尾直接弹出来（默认槽位 key 会随上方条件行漂移，
+                            // animateItem 认不出是同一行）。
+                            click(
+                                title = remoteAdbTitle,
+                                summary = remoteAdbSummary,
+                                leading = {
+                                    PrefIcon(
+                                        Icons.Rounded.Adb,
+                                        painter = painterResource(LucideR.drawable.lucide_ic_terminal)
+                                    )
+                                },
+                                itemKey = "other_adb",
+                                animate = true,
+                                onClick = { showAdbDialog = true },
+                            )
+                        }
+                    }
                 }
             }
         }

@@ -72,27 +72,28 @@ object AndroidRelatedPage {
                 c.getString(R.string.need_restart_system),
             ),
         )
-        category("LTPO")
-        list(
-            key = "set_ltpo_refresh_rate_mode",
-            title = c.getString(R.string.set_ltpo_refresh_rate_mode),
-            entries = c.resources.getStringArray(R.array.set_ltpo_refresh_rate_mode_entries),
-            entryValues = arrayOf("0", "1", "2"),
-            default = "0",
-            summary = arraySummaryLine(
-                c.getString(R.string.current_mode) + ": %s",
-                c.getString(R.string.need_restart_system),
-            ),
-        )
-        if (state.getString("set_ltpo_refresh_rate_mode", "0") == "1") {
-            switch(
-                key = "enable_full_brightness_refresh_rate_minimum_one",
-                title = c.getString(R.string.enable_full_brightness_refresh_rate_minimum_one),
+        group(title = "LTPO") {
+            list(
+                key = "set_ltpo_refresh_rate_mode",
+                title = c.getString(R.string.set_ltpo_refresh_rate_mode),
+                entries = c.resources.getStringArray(R.array.set_ltpo_refresh_rate_mode_entries),
+                entryValues = arrayOf("0", "1", "2"),
+                default = "0",
                 summary = arraySummaryLine(
-                    c.getString(R.string.enable_full_brightness_refresh_rate_minimum_one_summary),
+                    c.getString(R.string.current_mode) + ": %s",
                     c.getString(R.string.need_restart_system),
                 ),
             )
+            if (state.getString("set_ltpo_refresh_rate_mode", "0") == "1") {
+                switch(
+                    key = "enable_full_brightness_refresh_rate_minimum_one",
+                    title = c.getString(R.string.enable_full_brightness_refresh_rate_minimum_one),
+                    summary = arraySummaryLine(
+                        c.getString(R.string.enable_full_brightness_refresh_rate_minimum_one_summary),
+                        c.getString(R.string.need_restart_system),
+                    ),
+                )
+            }
         }
     }
 }

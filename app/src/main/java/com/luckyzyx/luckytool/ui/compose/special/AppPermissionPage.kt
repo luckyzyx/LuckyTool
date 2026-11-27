@@ -1,14 +1,13 @@
 package com.luckyzyx.luckytool.ui.compose.special
 
 import android.annotation.SuppressLint
+import android.app.Activity
 import android.content.Context
 import android.content.ContextWrapper
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -22,18 +21,14 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.itos.coui.text.CouiTextKind
-import com.itos.coui.text.Text as CouiText
-import com.itos.coui.theme.CouiTheme
 import com.luckyzyx.luckytool.R
-import com.luckyzyx.luckytool.ui.activity.MainActivity
 import com.luckyzyx.luckytool.ui.compose.components.PrefCard
+import com.luckyzyx.luckytool.ui.compose.components.PrefCategoryHeader
 import com.luckyzyx.luckytool.ui.compose.components.PrefGroup
 import com.luckyzyx.luckytool.ui.compose.components.PrefRow
 import com.luckyzyx.luckytool.ui.compose.components.PrefRowInset
@@ -52,9 +47,11 @@ import kotlinx.coroutines.withContext
 /**
  * 应用权限页（pageKey = `app_permission`）。
  *
- * 同一份内容 [AppPermissionContent] 有两个消费方：
- * - 设置页入口（本 [spec]，正常态、可返回）；
- * - 冷启动阻塞门（MainShell 内提前渲染，阻塞态：无底栏/抽屉、返回键无效、无跳过出口）。
+ * 同一份内容 [AppPermissionContent] 有两个消费方，各自的宿主 Activity 不同：
+ * - 设置页入口（本 [spec]）：二级页由 SecondaryActivity 承载，正常态、可返回；
+ * - 冷启动阻塞门（MainShell 内提前渲染，宿主为 MainActivity）：阻塞态，无底栏/抽屉、返回键无效、无跳过出口。
+ *
+ * 因此内容侧只要求「任意 Activity」，不能把人限定成 MainActivity。
  */
 object AppPermissionPage {
 
@@ -65,11 +62,11 @@ object AppPermissionPage {
         scopes = arrayOf(),
         restartEnabled = false,
     ) {
-        custom(key = "app_permission_content", bare = true) {
+        custom(key = "app_permission_content") {
             // custom() 逃生舱：行内容需自带 16dp 内缩
             PrefRowInset {
                 AppPermissionContent(
-                    activity = LocalContext.current.findMainActivity(),
+                    activity = LocalContext.current.findActivity(),
                     blocking = false,
                 )
             }
@@ -95,11 +92,14 @@ private data class RootInfo(
  *
  * [selfInset] = true 表示宿主不提供行级水平内缩（阻塞态独立成屏），由本页自补，否则内容贴边；
  * 被作用域页列表包裹时（设置页入口）保持 false，避免与宿主内缩叠加成 24/32dp。
+ *
+ * [activity] 是宿主 Activity（阻塞态为 MainActivity，设置页入口为 SecondaryActivity），
+ * 取不到时只展示权限名称、不给任何授权入口 —— 因此解析要认「任意 Activity」而不是某一种宿主。
  */
 @SuppressLint("ReplaceWithLifecycleExtension")
 @Composable
 fun AppPermissionContent(
-    activity: MainActivity?,
+    activity: Activity?,
     blocking: Boolean,
     modifier: Modifier = Modifier,
     selfInset: Boolean = false,
@@ -151,7 +151,7 @@ fun AppPermissionContent(
     val moduleActive by XposedServiceBridge.isModuleActive.collectAsStateWithLifecycle()
 
     // selfInset：阻塞态独立成屏、宿主列表不在场时补行级水平内缩。
-    // COUI 线由 CouiScopeCard 自带头 16dp，本页再叠加会把卡片顶到 32dp，故只对 Material 线生效；
+    // COUI 线由 CouiCard / 库的 Group 自带头 16dp，本页再叠加会把卡片顶到 32dp，故只对 Material 线生效；
     // 设置页入口 selfInset 恒为 false，仍由宿主列表提供，保持不叠加
     val lineInset = if (LocalUiMode.current == UiMode.Coui) 0.dp else 16.dp
     Column(
@@ -160,7 +160,10 @@ fun AppPermissionContent(
         )
     ) {
         // ===== Root / LSPosed：纯只读，整块放最上面（不参与门禁判定，无任何跳转）=====
-        Category(title = stringResource(R.string.app_permission_root_section))
+        PrefCategoryHeader(
+            title = stringResource(R.string.app_permission_root_section),
+            materialInset = 0.dp,
+        )
         // Root / Xposed 状态合并成单行 "title: value"，不再用 title + summary 两行展示
         val rootStatus = stringResource(
             if (rootInfo?.rooted == true) R.string.app_permission_root_yes else R.string.app_permission_root_no
@@ -186,7 +189,7 @@ fun AppPermissionContent(
         }
 
         Spacer(Modifier.height(12.dp))
-        Category(
+        PrefCategoryHeader(
             title = stringResource(
                 if (blocking) R.string.app_permission_blocked_title else R.string.app_permission
             ),
@@ -197,6 +200,7 @@ fun AppPermissionContent(
                     R.string.app_permission_summary
                 }
             ),
+            materialInset = 0.dp,
         )
         PrefGroup {
             AppPermission.entries.forEach { kind ->
@@ -270,63 +274,6 @@ fun AppPermissionContent(
 }
 
 /**
- * 分类标题 + 可选说明：标题与说明作为一个块渲染，配合 [PrefGroup] 组成一个分类组。
- * 无说明时标题上下各 8dp 垂直居中；有说明时标题下沿收紧到 4dp 让说明贴紧标题，
- * 说明底部再补 8dp，保证有无说明两种情况的块级上下留白都是 8dp。
- */
-@Composable
-private fun Category(title: String, summary: String? = null) {
-    when (LocalUiMode.current) {
-        UiMode.Material -> Column(modifier = Modifier.fillMaxWidth()) {
-            Text(
-                text = title,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 8.dp, bottom = if (summary == null) 8.dp else 4.dp),
-                style = MaterialTheme.typography.titleSmall,
-                color = MaterialTheme.colorScheme.primary,
-            )
-            if (summary != null) {
-                Text(
-                    text = summary,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(bottom = 8.dp),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
-        }
-
-        UiMode.Coui -> Column(modifier = Modifier.fillMaxWidth()) {
-            CouiText(
-                text = title,
-                kind = CouiTextKind.GroupTitle,
-                color = CouiTheme.colorScheme.accent,
-                // GroupTitle 在库内默认水平居中，这里强制起始对齐，保持 32dp 内缩起点
-                textAlign = TextAlign.Start,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    // COUI 分类标题统一 32dp 水平内缩，与卡片内行文字（16+16）对齐
-                    .padding(start = 32.dp, end = 32.dp, top = 8.dp, bottom = if (summary == null) 8.dp else 4.dp),
-            )
-            if (summary != null) {
-                CouiText(
-                    text = summary,
-                    kind = CouiTextKind.Search,
-                    textAlign = TextAlign.Start,
-                    color = CouiTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        // 与标题同一水平起点，底部 8dp 与无说明的标题块底部一致
-                        .padding(start = 32.dp, end = 32.dp, bottom = 8.dp),
-                )
-            }
-        }
-    }
-}
-
-/**
  * 动作按钮：Material 线用 material3 `TextButton`，COUI 线用 [CouiTextButton]；
  * [enabled] = false 走禁用弱化样式（COUI 侧把文字降到 onSurfaceVariant 低透明度）。
  */
@@ -339,8 +286,8 @@ private fun ActionButton(text: String, onClick: () -> Unit, enabled: Boolean = t
 }
 
 /** LocalContext 可能是包装 Context：逐层解包取宿主 Activity，取不到就是 null */
-private fun Context.findMainActivity(): MainActivity? = when (this) {
-    is MainActivity -> this
-    is ContextWrapper -> baseContext.findMainActivity()
+private fun Context.findActivity(): Activity? = when (this) {
+    is Activity -> this
+    is ContextWrapper -> baseContext.findActivity()
     else -> null
 }

@@ -56,74 +56,75 @@ object StatusBarTilesPage {
         )
         // 特殊磁贴
         if (SDK >= A13) {
-            category(c.getString(R.string.SpecialTiles))
-            list(
-                key = "set_media_player_display_mode",
-                title = c.getString(R.string.set_media_player_display_mode),
-                entries = c.resources.getStringArray(R.array.set_media_player_display_mode_entries),
-                entryValues = arrayOf("0", "1", "2", "3"),
-                default = "0",
-                summary = c.getString(R.string.current_mode) + ": %s",
-                notify = true,
-            )
-            if (state.getString("set_media_player_display_mode", "0") != "0") {
-                if (SDK >= A14) {
-                    switch(
-                        key = "auto_expand_tile_rows_horizontal",
-                        title = c.getString(R.string.auto_expand_tile_rows_horizontal),
-                        summary = arraySummaryLine(
-                            c.getString(R.string.auto_expand_tile_rows_horizontal_summary),
-                            c.getString(R.string.auto_expand_tile_rows_horizontal_summary_2),
-                        ),
-                        notify = true,
-                        onChange = { v ->
-                            if (v) {
-                                state.set("control_center_custom_gaps_for_special_tile", true)
-                                state.set("control_center_tile_enable", true)
-                            }
-                        },
-                    )
-                }
-                if (state.getString("set_media_player_display_mode", "0") == "1") {
-                    switch(
-                        key = "force_enable_media_toggle_button",
-                        title = c.getString(R.string.force_enable_media_toggle_button),
-                    )
-                }
-                if (osCode >= 27) {
-                    switch(
-                        key = "control_center_custom_gaps_for_special_tile",
-                        title = c.getString(R.string.control_center_custom_gaps_for_special_tile),
-                        summary = if (state.getBoolean("auto_expand_tile_rows_horizontal")) {
-                            c.getString(R.string.control_center_custom_gaps_for_special_tile_summary)
-                        } else {
-                            null
-                        },
-                        notify = true,
-                        onChange = { v ->
-                            if (!v) state.set("auto_expand_tile_rows_horizontal", false)
-                        },
-                    )
-                    if (state.getBoolean("control_center_custom_gaps_for_special_tile")) {
-                        slider(
-                            key = "control_center_special_tile_top_gap",
-                            title = c.getString(R.string.control_center_special_tile_top_gap),
-                            valueRange = 0..20,
-                            default = 10,
+            group(title = c.getString(R.string.SpecialTiles)) {
+                list(
+                    key = "set_media_player_display_mode",
+                    title = c.getString(R.string.set_media_player_display_mode),
+                    entries = c.resources.getStringArray(R.array.set_media_player_display_mode_entries),
+                    entryValues = arrayOf("0", "1", "2", "3"),
+                    default = "0",
+                    summary = c.getString(R.string.current_mode) + ": %s",
+                    notify = true,
+                )
+                if (state.getString("set_media_player_display_mode", "0") != "0") {
+                    if (SDK >= A14) {
+                        switch(
+                            key = "auto_expand_tile_rows_horizontal",
+                            title = c.getString(R.string.auto_expand_tile_rows_horizontal),
+                            summary = arraySummaryLine(
+                                c.getString(R.string.auto_expand_tile_rows_horizontal_summary),
+                                c.getString(R.string.auto_expand_tile_rows_horizontal_summary_2),
+                            ),
                             notify = true,
+                            onChange = { v ->
+                                if (v) {
+                                    state.set("control_center_custom_gaps_for_special_tile", true)
+                                    state.set("control_center_tile_enable", true)
+                                }
+                            },
                         )
-                        slider(
-                            key = "control_center_special_tile_bottom_gap",
-                            title = c.getString(R.string.control_center_special_tile_bottom_gap),
-                            valueRange = 0..20,
-                            default = 0,
+                    }
+                    if (state.getString("set_media_player_display_mode", "0") == "1") {
+                        switch(
+                            key = "force_enable_media_toggle_button",
+                            title = c.getString(R.string.force_enable_media_toggle_button),
+                        )
+                    }
+                    if (osCode >= 27) {
+                        switch(
+                            key = "control_center_custom_gaps_for_special_tile",
+                            title = c.getString(R.string.control_center_custom_gaps_for_special_tile),
+                            summary = if (state.getBoolean("auto_expand_tile_rows_horizontal")) {
+                                c.getString(R.string.control_center_custom_gaps_for_special_tile_summary)
+                            } else {
+                                null
+                            },
                             notify = true,
+                            onChange = { v ->
+                                if (!v) state.set("auto_expand_tile_rows_horizontal", false)
+                            },
                         )
-                        if (osCode >= 30) {
-                            switch(
-                                key = "decrease_horizontal_brightness_bar_top_gap",
-                                title = c.getString(R.string.decrease_horizontal_brightness_bar_top_gap),
+                        if (state.getBoolean("control_center_custom_gaps_for_special_tile")) {
+                            slider(
+                                key = "control_center_special_tile_top_gap",
+                                title = c.getString(R.string.control_center_special_tile_top_gap),
+                                valueRange = 0..20,
+                                default = 10,
+                                notify = true,
                             )
+                            slider(
+                                key = "control_center_special_tile_bottom_gap",
+                                title = c.getString(R.string.control_center_special_tile_bottom_gap),
+                                valueRange = 0..20,
+                                default = 0,
+                                notify = true,
+                            )
+                            if (osCode >= 30) {
+                                switch(
+                                    key = "decrease_horizontal_brightness_bar_top_gap",
+                                    title = c.getString(R.string.decrease_horizontal_brightness_bar_top_gap),
+                                )
+                            }
                         }
                     }
                 }
@@ -131,105 +132,108 @@ object StatusBarTilesPage {
         }
         if (SDK >= A13) {
             // 磁贴长按事件
-            category(c.getString(R.string.TileLongClickEvent))
-            switch(
-                key = "restore_some_tile_long_press_event",
-                title = c.getString(R.string.restore_some_tile_long_press_event),
-                summary = c.getString(R.string.restore_some_tile_long_press_event_summary),
-            )
+            group(title = c.getString(R.string.TileLongClickEvent)) {
+                switch(
+                    key = "restore_some_tile_long_press_event",
+                    title = c.getString(R.string.restore_some_tile_long_press_event),
+                    summary = c.getString(R.string.restore_some_tile_long_press_event_summary),
+                )
+            }
         }
         // 磁贴样式相关
         if (osCode in 27..33) {
-            category(c.getString(R.string.TileStyleRelated))
-            slider(
-                key = "custom_tile_background_transparency",
-                title = c.getString(R.string.custom_tile_background_transparency),
-                valueRange = -1..10,
-                default = -1,
-            )
+            group(title = c.getString(R.string.TileStyleRelated)) {
+                slider(
+                    key = "custom_tile_background_transparency",
+                    title = c.getString(R.string.custom_tile_background_transparency),
+                    valueRange = -1..10,
+                    default = -1,
+                )
+            }
         }
         // 磁贴布局相关
-        category(c.getString(R.string.TileLayoutRelated))
-        if (osCode >= 26) {
-            switch(
-                key = "fix_tile_align_both_sides",
-                title = c.getString(R.string.fix_tile_align_both_sides),
-                summary = c.getString(R.string.fix_tile_align_both_sides_summary),
-            )
-        }
-        if (SDK >= A13) {
-            switch(
-                key = "restore_page_layout_row_count_for_edit_tiles",
-                title = c.getString(R.string.restore_page_layout_row_count_for_edit_tiles),
-            )
-        }
-        if (osCode < 37) {
-            switch(
-                key = "remove_control_center_tile_count_limit",
-                title = c.getString(R.string.remove_control_center_tile_count_limit),
-            )
-        }
-        switch(
-            key = "control_center_tile_enable",
-            title = c.getString(R.string.control_center_tile_enable),
-            summary = c.getString(R.string.classic_control_center_mode_only),
-            onChange = { v ->
-                if (!v) state.set("auto_expand_tile_rows_horizontal", false)
-            },
-        )
-        if (state.getBoolean("control_center_tile_enable")) {
-            if (SDK < A13) {
-                slider(
-                    key = "tile_unexpanded_columns_vertical",
-                    title = c.getString(R.string.tile_unexpanded_columns_vertical),
-                    valueRange = 1..6,
-                    default = 6,
-                )
-                slider(
-                    key = "tile_unexpanded_columns_horizontal",
-                    title = c.getString(R.string.tile_unexpanded_columns_horizontal),
-                    valueRange = 1..8,
-                    default = 6,
-                )
-                slider(
-                    key = "tile_expanded_columns_vertical",
-                    title = c.getString(R.string.tile_expanded_columns_vertical),
-                    valueRange = 1..7,
-                    default = 4,
-                )
-                slider(
-                    key = "tile_expanded_columns_horizontal",
-                    title = c.getString(R.string.tile_expanded_columns_horizontal),
-                    valueRange = 1..9,
-                    default = 6,
+        group(title = c.getString(R.string.TileLayoutRelated)) {
+            if (osCode >= 26) {
+                switch(
+                    key = "fix_tile_align_both_sides",
+                    title = c.getString(R.string.fix_tile_align_both_sides),
+                    summary = c.getString(R.string.fix_tile_align_both_sides_summary),
                 )
             }
             if (SDK >= A13) {
-                slider(
-                    key = "tile_unexpanded_columns_vertical_c13",
-                    title = c.getString(R.string.tile_unexpanded_columns_vertical),
-                    valueRange = 1..6,
-                    default = 5,
+                switch(
+                    key = "restore_page_layout_row_count_for_edit_tiles",
+                    title = c.getString(R.string.restore_page_layout_row_count_for_edit_tiles),
                 )
-                slider(
-                    key = "tile_expanded_rows_vertical_c13",
-                    title = c.getString(R.string.tile_expanded_rows_vertical),
-                    valueRange = 1..6,
-                    default = 3,
+            }
+            if (osCode < 37) {
+                switch(
+                    key = "remove_control_center_tile_count_limit",
+                    title = c.getString(R.string.remove_control_center_tile_count_limit),
                 )
-                slider(
-                    key = "tile_expanded_columns_vertical_c13",
-                    title = c.getString(R.string.tile_expanded_columns_vertical),
-                    valueRange = 1..7,
-                    default = 4,
-                )
-                slider(
-                    key = "tile_columns_horizontal_c13",
-                    title = c.getString(R.string.tile_columns_horizontal_c13),
-                    valueRange = 1..6,
-                    //与宿主 R.integer.quick_settings_num_columns 的默认值保持一致
-                    default = 4,
-                )
+            }
+            switch(
+                key = "control_center_tile_enable",
+                title = c.getString(R.string.control_center_tile_enable),
+                summary = c.getString(R.string.classic_control_center_mode_only),
+                onChange = { v ->
+                    if (!v) state.set("auto_expand_tile_rows_horizontal", false)
+                },
+            )
+            if (state.getBoolean("control_center_tile_enable")) {
+                if (SDK < A13) {
+                    slider(
+                        key = "tile_unexpanded_columns_vertical",
+                        title = c.getString(R.string.tile_unexpanded_columns_vertical),
+                        valueRange = 1..6,
+                        default = 6,
+                    )
+                    slider(
+                        key = "tile_unexpanded_columns_horizontal",
+                        title = c.getString(R.string.tile_unexpanded_columns_horizontal),
+                        valueRange = 1..8,
+                        default = 6,
+                    )
+                    slider(
+                        key = "tile_expanded_columns_vertical",
+                        title = c.getString(R.string.tile_expanded_columns_vertical),
+                        valueRange = 1..7,
+                        default = 4,
+                    )
+                    slider(
+                        key = "tile_expanded_columns_horizontal",
+                        title = c.getString(R.string.tile_expanded_columns_horizontal),
+                        valueRange = 1..9,
+                        default = 6,
+                    )
+                }
+                if (SDK >= A13) {
+                    slider(
+                        key = "tile_unexpanded_columns_vertical_c13",
+                        title = c.getString(R.string.tile_unexpanded_columns_vertical),
+                        valueRange = 1..6,
+                        default = 5,
+                    )
+                    slider(
+                        key = "tile_expanded_rows_vertical_c13",
+                        title = c.getString(R.string.tile_expanded_rows_vertical),
+                        valueRange = 1..6,
+                        default = 3,
+                    )
+                    slider(
+                        key = "tile_expanded_columns_vertical_c13",
+                        title = c.getString(R.string.tile_expanded_columns_vertical),
+                        valueRange = 1..7,
+                        default = 4,
+                    )
+                    slider(
+                        key = "tile_columns_horizontal_c13",
+                        title = c.getString(R.string.tile_columns_horizontal_c13),
+                        valueRange = 1..6,
+                        //与宿主 R.integer.quick_settings_num_columns 的默认值保持一致
+                        default = 4,
+                    )
+                }
             }
         }
     }

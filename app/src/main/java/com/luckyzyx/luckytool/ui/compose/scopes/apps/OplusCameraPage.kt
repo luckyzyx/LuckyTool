@@ -54,281 +54,286 @@ object OplusCameraPage {
         val c = requireNotNull(context) { "ScopeScreen 未注入 Context" }
 
         // 调试 UI 选项
-        if (getOSVersionCode >= 30) {
-            switch(
-                key = "enable_camera_debug_ui_option",
-                title = c.getString(R.string.enable_camera_debug_ui_option),
-                summary = c.getString(R.string.enable_camera_debug_ui_option_summary).trimIndent(),
-            )
-        }
-        // 默认打开相册的应用选择（单选一个应用 → AppPickerDialog）
-        if (getOSVersionCode >= 26) {
-            custom(
-                key = "custom_camera_open_gallery_by_default",
-                title = c.getString(R.string.custom_camera_open_gallery_by_default),
-            ) { slot ->
-                val current by state.stringFlow("custom_camera_open_gallery_by_default")
-                    .collectAsStateWithLifecycle()
-                var show by remember { mutableStateOf(false) }
-                PrefRowInset {
-                    AppListItem(
-                        onClick = { show = true },
-                        supportingContent = {
-                            // 槽位文字由调用方绘制：COUI 线改用 COUI 说明排版与页面配色，Material 线保持 M3 文本
-                            if (LocalUiMode.current == UiMode.Coui) {
-                                CouiText(
-                                    text = arraySummaryLine(current.ifBlank { stringResource(R.string.not_set) }),
-                                    kind = CouiTextKind.ItemSummary,
-                                    color = CouiPageDefaults.themeColors(CouiTheme.isDark).summary,
-                                )
-                            } else {
-                                Text(arraySummaryLine(current.ifBlank { stringResource(R.string.not_set) }))
-                            }
-                        },
-                        colors = itemColors(slot),
-                        headlineContent = {
-                            if (LocalUiMode.current == UiMode.Coui) {
-                                CouiText(
-                                    text = stringResource(R.string.custom_camera_open_gallery_by_default),
-                                    kind = CouiTextKind.ItemTitle,
-                                )
-                            } else {
-                                Text(stringResource(R.string.custom_camera_open_gallery_by_default))
-                            }
-                        },
-                    )
-                }
-                if (show) {
-                    AppPickerDialog(
-                        title = stringResource(R.string.custom_camera_open_gallery_by_default),
-                        onDismiss = { show = false },
-                        onConfirm = { apps ->
-                            val packName = apps.firstOrNull()?.packageName.orEmpty()
-                            state.set("custom_camera_open_gallery_by_default", packName)
-                            sendValue("custom_camera_open_gallery_by_default", packName)
-                        },
-                    )
-                }
-            }
-        }
-        if (getOSVersionCode >= 28) {
-            switch(
-                key = "enable_camera_night_zoom_30x",
-                title = c.getString(R.string.enable_camera_night_zoom_30x),
-            )
-            switch(
-                key = "enable_video_capture_roulette_zoom",
-                title = c.getString(R.string.enable_video_capture_roulette_zoom),
-            )
-        }
-        if (getOSVersionCode >= 26) {
-            switch(
-                key = "remove_camera_flash_limit",
-                title = c.getString(R.string.remove_camera_flash_limit),
-            )
-        }
-        // 水印
-        category(c.getString(R.string.CameraWaterMark))
-        switch(
-            key = "remove_watermark_word_limit",
-            title = c.getString(R.string.remove_watermark_word_limit),
-        )
-        if (SDK >= A13) {
-            switch(
-                key = "enable_frame_watermark_style",
-                title = c.getString(R.string.enable_frame_watermark_style),
-                onChange = { newValue ->
-                    if (newValue) state.set("enable_hasselblad_watermark_style", false)
-                },
-            )
-            switch(
-                key = "enable_hasselblad_watermark_style",
-                title = c.getString(R.string.enable_hasselblad_watermark_style),
-                onChange = { newValue ->
-                    if (newValue) state.set("enable_frame_watermark_style", false)
-                },
-            )
-            if (!Build.FINGERPRINT.contains("RMX", true)) {
-                editText(
-                    key = "custom_model_watermark",
-                    title = c.getString(R.string.custom_model_watermark),
-                    default = "None",
-                )
-            }
-        }
-        // 滤镜
-        if (SDK >= A13) {
-            category(c.getString(R.string.CameraFilter))
-            if (getOSVersionCode >= 34) {
+        group {
+            if (getOSVersionCode >= 30) {
                 switch(
-                    key = "remove_filter_model_limit",
-                    title = c.getString(R.string.remove_filter_model_limit),
+                    key = "enable_camera_debug_ui_option",
+                    title = c.getString(R.string.enable_camera_debug_ui_option),
+                    summary = c.getString(R.string.enable_camera_debug_ui_option_summary).trimIndent(),
                 )
             }
-            custom(
-                key = "camera_universal_filter_settings",
-                title = c.getString(R.string.camera_universal_filter_settings),
-            ) { slot ->
-                var showDialog by remember { mutableStateOf(false) }
-                val saved = state.getStringSet("camera_universal_filter_settings")
-                val filters = CameraUtils.getCameraFilters(c).apply {
-                    forEach { it.isEnable = it.key in saved }
-                }
-                PrefRowInset {
-                    AppListItem(
-                        onClick = { showDialog = true },
-                        supportingContent = {
-                            // 槽位文字由调用方绘制：COUI 线改用 COUI 说明排版与页面配色，Material 线保持 M3 文本
-                            if (LocalUiMode.current == UiMode.Coui) {
-                                CouiText(
-                                    text = filters.filter { it.isEnable }.map { it.title }.toString(),
-                                    kind = CouiTextKind.ItemSummary,
-                                    color = CouiPageDefaults.themeColors(CouiTheme.isDark).summary,
-                                )
-                            } else {
-                                Text(filters.filter { it.isEnable }.map { it.title }.toString())
-                            }
-                        },
-                        colors = itemColors(slot),
-                        headlineContent = {
-                            if (LocalUiMode.current == UiMode.Coui) {
-                                CouiText(
-                                    text = stringResource(R.string.camera_universal_filter_settings),
-                                    kind = CouiTextKind.ItemTitle,
-                                )
-                            } else {
-                                Text(stringResource(R.string.camera_universal_filter_settings))
-                            }
-                        },
-                    )
-                }
-                if (showDialog) {
-                    CameraFilterDialog(
-                        c = c,
-                        state = state,
-                        data = FilterDialogData(
-                            key = "camera_universal_filter_settings",
-                            title = stringResource(R.string.camera_universal_filter_settings),
-                            filters = filters,
-                            onSaved = { set ->
-                                if (set.contains("master_filter")) {
-                                    state.set("enable_hasselblad_watermark_style", true)
+            // 默认打开相册的应用选择（单选一个应用 → AppPickerDialog）
+            if (getOSVersionCode >= 26) {
+                custom(
+                    key = "custom_camera_open_gallery_by_default",
+                    title = c.getString(R.string.custom_camera_open_gallery_by_default),
+                ) { slot ->
+                    val current by state.stringFlow("custom_camera_open_gallery_by_default")
+                        .collectAsStateWithLifecycle()
+                    var show by remember { mutableStateOf(false) }
+                    PrefRowInset {
+                        AppListItem(
+                            onClick = { show = true },
+                            supportingContent = {
+                                // 槽位文字由调用方绘制：COUI 线改用 COUI 说明排版与页面配色，Material 线保持 M3 文本
+                                if (LocalUiMode.current == UiMode.Coui) {
+                                    CouiText(
+                                        text = arraySummaryLine(current.ifBlank { stringResource(R.string.not_set) }),
+                                        kind = CouiTextKind.ItemSummary,
+                                        color = CouiPageDefaults.themeColors(CouiTheme.isDark).summary,
+                                    )
+                                } else {
+                                    Text(arraySummaryLine(current.ifBlank { stringResource(R.string.not_set) }))
                                 }
                             },
-                        ),
-                        onDismiss = { showDialog = false },
-                    )
+                            colors = itemColors(slot),
+                            headlineContent = {
+                                if (LocalUiMode.current == UiMode.Coui) {
+                                    CouiText(
+                                        text = stringResource(R.string.custom_camera_open_gallery_by_default),
+                                        kind = CouiTextKind.ItemTitle,
+                                    )
+                                } else {
+                                    Text(stringResource(R.string.custom_camera_open_gallery_by_default))
+                                }
+                            },
+                        )
+                    }
+                    if (show) {
+                        AppPickerDialog(
+                            title = stringResource(R.string.custom_camera_open_gallery_by_default),
+                            onDismiss = { show = false },
+                            onConfirm = { apps ->
+                                val packName = apps.firstOrNull()?.packageName.orEmpty()
+                                state.set("custom_camera_open_gallery_by_default", packName)
+                                sendValue("custom_camera_open_gallery_by_default", packName)
+                            },
+                        )
+                    }
                 }
             }
-            custom(
-                key = "camera_portrait_filter_settings",
-                title = c.getString(R.string.camera_portrait_filter_settings),
-            ) { slot ->
-                var showDialog by remember { mutableStateOf(false) }
-                val saved = state.getStringSet("camera_portrait_filter_settings")
-                val filters = CameraUtils.getPortraitCameraFilters(c).apply {
-                    forEach { it.isEnable = it.key in saved }
-                }
-                PrefRowInset {
-                    AppListItem(
-                        onClick = { showDialog = true },
-                        supportingContent = {
-                            // 槽位文字由调用方绘制：COUI 线改用 COUI 说明排版与页面配色，Material 线保持 M3 文本
-                            if (LocalUiMode.current == UiMode.Coui) {
-                                CouiText(
-                                    text = filters.filter { it.isEnable }.map { it.title }.toString(),
-                                    kind = CouiTextKind.ItemSummary,
-                                    color = CouiPageDefaults.themeColors(CouiTheme.isDark).summary,
-                                )
-                            } else {
-                                Text(filters.filter { it.isEnable }.map { it.title }.toString())
-                            }
-                        },
-                        colors = itemColors(slot),
-                        headlineContent = {
-                            if (LocalUiMode.current == UiMode.Coui) {
-                                CouiText(
-                                    text = stringResource(R.string.camera_portrait_filter_settings),
-                                    kind = CouiTextKind.ItemTitle,
-                                )
-                            } else {
-                                Text(stringResource(R.string.camera_portrait_filter_settings))
-                            }
-                        },
-                    )
-                }
-                if (showDialog) {
-                    CameraFilterDialog(
-                        c = c,
-                        state = state,
-                        data = FilterDialogData(
-                            key = "camera_portrait_filter_settings",
-                            title = stringResource(R.string.camera_portrait_filter_settings),
-                            filters = filters,
-                        ),
-                        onDismiss = { showDialog = false },
-                    )
-                }
+            if (getOSVersionCode >= 28) {
+                switch(
+                    key = "enable_camera_night_zoom_30x",
+                    title = c.getString(R.string.enable_camera_night_zoom_30x),
+                )
+                switch(
+                    key = "enable_video_capture_roulette_zoom",
+                    title = c.getString(R.string.enable_video_capture_roulette_zoom),
+                )
             }
-            custom(
-                key = "camera_video_filter_settings",
-                title = c.getString(R.string.camera_video_filter_settings),
-            ) { slot ->
-                var showDialog by remember { mutableStateOf(false) }
-                val saved = state.getStringSet("camera_video_filter_settings")
-                val filters = CameraUtils.getVideoCameraFilters(c).apply {
-                    forEach { it.isEnable = it.key in saved }
-                }
-                PrefRowInset {
-                    AppListItem(
-                        onClick = { showDialog = true },
-                        supportingContent = {
-                            // 槽位文字由调用方绘制：COUI 线改用 COUI 说明排版与页面配色，Material 线保持 M3 文本
-                            if (LocalUiMode.current == UiMode.Coui) {
-                                CouiText(
-                                    text = filters.filter { it.isEnable }.map { it.title }.toString(),
-                                    kind = CouiTextKind.ItemSummary,
-                                    color = CouiPageDefaults.themeColors(CouiTheme.isDark).summary,
-                                )
-                            } else {
-                                Text(filters.filter { it.isEnable }.map { it.title }.toString())
-                            }
-                        },
-                        colors = itemColors(slot),
-                        headlineContent = {
-                            if (LocalUiMode.current == UiMode.Coui) {
-                                CouiText(
-                                    text = stringResource(R.string.camera_video_filter_settings),
-                                    kind = CouiTextKind.ItemTitle,
-                                )
-                            } else {
-                                Text(stringResource(R.string.camera_video_filter_settings))
-                            }
-                        },
-                    )
-                }
-                if (showDialog) {
-                    CameraFilterDialog(
-                        c = c,
-                        state = state,
-                        data = FilterDialogData(
-                            key = "camera_video_filter_settings",
-                            title = stringResource(R.string.camera_video_filter_settings),
-                            filters = filters,
-                        ),
-                        onDismiss = { showDialog = false },
-                    )
-                }
+            if (getOSVersionCode >= 26) {
+                switch(
+                    key = "remove_camera_flash_limit",
+                    title = c.getString(R.string.remove_camera_flash_limit),
+                )
             }
         }
-        // 其他
-        if (SDK >= A13) {
-            category(c.getString(R.string.settings_other_preference))
+        // 水印
+        group(title = c.getString(R.string.CameraWaterMark)) {
             switch(
-                key = "enable_10_bit_image_support",
-                title = c.getString(R.string.enable_10_bit_image_support),
-                summary = c.getString(R.string.enable_10_bit_image_support_summary),
+                key = "remove_watermark_word_limit",
+                title = c.getString(R.string.remove_watermark_word_limit),
             )
+            if (SDK >= A13) {
+                switch(
+                    key = "enable_frame_watermark_style",
+                    title = c.getString(R.string.enable_frame_watermark_style),
+                    onChange = { newValue ->
+                        if (newValue) state.set("enable_hasselblad_watermark_style", false)
+                    },
+                )
+                switch(
+                    key = "enable_hasselblad_watermark_style",
+                    title = c.getString(R.string.enable_hasselblad_watermark_style),
+                    onChange = { newValue ->
+                        if (newValue) state.set("enable_frame_watermark_style", false)
+                    },
+                )
+                if (!Build.FINGERPRINT.contains("RMX", true)) {
+                    editText(
+                        key = "custom_model_watermark",
+                        title = c.getString(R.string.custom_model_watermark),
+                        default = "None",
+                    )
+                }
+            }
+            // 滤镜
+            if (SDK >= A13) {
+                group(title = c.getString(R.string.CameraFilter)) {
+                    if (getOSVersionCode >= 34) {
+                        switch(
+                            key = "remove_filter_model_limit",
+                            title = c.getString(R.string.remove_filter_model_limit),
+                        )
+                    }
+                    custom(
+                        key = "camera_universal_filter_settings",
+                        title = c.getString(R.string.camera_universal_filter_settings),
+                    ) { slot ->
+                        var showDialog by remember { mutableStateOf(false) }
+                        val saved = state.getStringSet("camera_universal_filter_settings")
+                        val filters = CameraUtils.getCameraFilters(c).apply {
+                            forEach { it.isEnable = it.key in saved }
+                        }
+                        PrefRowInset {
+                            AppListItem(
+                                onClick = { showDialog = true },
+                                supportingContent = {
+                                    // 槽位文字由调用方绘制：COUI 线改用 COUI 说明排版与页面配色，Material 线保持 M3 文本
+                                    if (LocalUiMode.current == UiMode.Coui) {
+                                        CouiText(
+                                            text = filters.filter { it.isEnable }.map { it.title }.toString(),
+                                            kind = CouiTextKind.ItemSummary,
+                                            color = CouiPageDefaults.themeColors(CouiTheme.isDark).summary,
+                                        )
+                                    } else {
+                                        Text(filters.filter { it.isEnable }.map { it.title }.toString())
+                                    }
+                                },
+                                colors = itemColors(slot),
+                                headlineContent = {
+                                    if (LocalUiMode.current == UiMode.Coui) {
+                                        CouiText(
+                                            text = stringResource(R.string.camera_universal_filter_settings),
+                                            kind = CouiTextKind.ItemTitle,
+                                        )
+                                    } else {
+                                        Text(stringResource(R.string.camera_universal_filter_settings))
+                                    }
+                                },
+                            )
+                        }
+                        if (showDialog) {
+                            CameraFilterDialog(
+                                c = c,
+                                state = state,
+                                data = FilterDialogData(
+                                    key = "camera_universal_filter_settings",
+                                    title = stringResource(R.string.camera_universal_filter_settings),
+                                    filters = filters,
+                                    onSaved = { set ->
+                                        if (set.contains("master_filter")) {
+                                            state.set("enable_hasselblad_watermark_style", true)
+                                        }
+                                    },
+                                ),
+                                onDismiss = { showDialog = false },
+                            )
+                        }
+                    }
+                    custom(
+                        key = "camera_portrait_filter_settings",
+                        title = c.getString(R.string.camera_portrait_filter_settings),
+                    ) { slot ->
+                        var showDialog by remember { mutableStateOf(false) }
+                        val saved = state.getStringSet("camera_portrait_filter_settings")
+                        val filters = CameraUtils.getPortraitCameraFilters(c).apply {
+                            forEach { it.isEnable = it.key in saved }
+                        }
+                        PrefRowInset {
+                            AppListItem(
+                                onClick = { showDialog = true },
+                                supportingContent = {
+                                    // 槽位文字由调用方绘制：COUI 线改用 COUI 说明排版与页面配色，Material 线保持 M3 文本
+                                    if (LocalUiMode.current == UiMode.Coui) {
+                                        CouiText(
+                                            text = filters.filter { it.isEnable }.map { it.title }.toString(),
+                                            kind = CouiTextKind.ItemSummary,
+                                            color = CouiPageDefaults.themeColors(CouiTheme.isDark).summary,
+                                        )
+                                    } else {
+                                        Text(filters.filter { it.isEnable }.map { it.title }.toString())
+                                    }
+                                },
+                                colors = itemColors(slot),
+                                headlineContent = {
+                                    if (LocalUiMode.current == UiMode.Coui) {
+                                        CouiText(
+                                            text = stringResource(R.string.camera_portrait_filter_settings),
+                                            kind = CouiTextKind.ItemTitle,
+                                        )
+                                    } else {
+                                        Text(stringResource(R.string.camera_portrait_filter_settings))
+                                    }
+                                },
+                            )
+                        }
+                        if (showDialog) {
+                            CameraFilterDialog(
+                                c = c,
+                                state = state,
+                                data = FilterDialogData(
+                                    key = "camera_portrait_filter_settings",
+                                    title = stringResource(R.string.camera_portrait_filter_settings),
+                                    filters = filters,
+                                ),
+                                onDismiss = { showDialog = false },
+                            )
+                        }
+                    }
+                    custom(
+                        key = "camera_video_filter_settings",
+                        title = c.getString(R.string.camera_video_filter_settings),
+                    ) { slot ->
+                        var showDialog by remember { mutableStateOf(false) }
+                        val saved = state.getStringSet("camera_video_filter_settings")
+                        val filters = CameraUtils.getVideoCameraFilters(c).apply {
+                            forEach { it.isEnable = it.key in saved }
+                        }
+                        PrefRowInset {
+                            AppListItem(
+                                onClick = { showDialog = true },
+                                supportingContent = {
+                                    // 槽位文字由调用方绘制：COUI 线改用 COUI 说明排版与页面配色，Material 线保持 M3 文本
+                                    if (LocalUiMode.current == UiMode.Coui) {
+                                        CouiText(
+                                            text = filters.filter { it.isEnable }.map { it.title }.toString(),
+                                            kind = CouiTextKind.ItemSummary,
+                                            color = CouiPageDefaults.themeColors(CouiTheme.isDark).summary,
+                                        )
+                                    } else {
+                                        Text(filters.filter { it.isEnable }.map { it.title }.toString())
+                                    }
+                                },
+                                colors = itemColors(slot),
+                                headlineContent = {
+                                    if (LocalUiMode.current == UiMode.Coui) {
+                                        CouiText(
+                                            text = stringResource(R.string.camera_video_filter_settings),
+                                            kind = CouiTextKind.ItemTitle,
+                                        )
+                                    } else {
+                                        Text(stringResource(R.string.camera_video_filter_settings))
+                                    }
+                                },
+                            )
+                        }
+                        if (showDialog) {
+                            CameraFilterDialog(
+                                c = c,
+                                state = state,
+                                data = FilterDialogData(
+                                    key = "camera_video_filter_settings",
+                                    title = stringResource(R.string.camera_video_filter_settings),
+                                    filters = filters,
+                                ),
+                                onDismiss = { showDialog = false },
+                            )
+                        }
+                    }
+                }
+            }
+            // 其他
+            if (SDK >= A13) {
+                group(title = c.getString(R.string.settings_other_preference)) {
+                    switch(
+                        key = "enable_10_bit_image_support",
+                        title = c.getString(R.string.enable_10_bit_image_support),
+                        summary = c.getString(R.string.enable_10_bit_image_support_summary),
+                    )
+                }
+            }
         }
     }
 

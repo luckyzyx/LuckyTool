@@ -31,251 +31,260 @@ object LauncherRelatedPage {
         val osCode = getOSVersionCode
         // 小组件
         if (osCode >= 26) {
-            category(c.getString(R.string.WidgetRelated))
-            switch(
-                key = "remove_launcher_card_name",
-                title = c.getString(R.string.remove_launcher_card_name),
-            )
-            if (osCode >= 30) {
+            group(title = c.getString(R.string.WidgetRelated)) {
                 switch(
-                    key = "remove_widgets_add_request_whitelist",
-                    title = c.getString(R.string.remove_widgets_add_request_whitelist),
+                    key = "remove_launcher_card_name",
+                    title = c.getString(R.string.remove_launcher_card_name),
                 )
+                if (osCode >= 30) {
+                    switch(
+                        key = "remove_widgets_add_request_whitelist",
+                        title = c.getString(R.string.remove_widgets_add_request_whitelist),
+                    )
+                }
             }
         }
         // 应用图标
-        category(c.getString(R.string.AppIcon))
-        switch(
-            key = "allow_app_names_display_multiple_lines",
-            title = c.getString(R.string.allow_app_names_display_multiple_lines),
-        )
-        if (state.getBoolean("allow_app_names_display_multiple_lines")) {
-            slider(
-                key = "custom_app_icon_name_line_height",
-                title = c.getString(R.string.custom_app_icon_name_line_height),
-                valueRange = -1..15,
-                default = -1,
-            )
-        }
-        slider(
-            key = "custom_launcher_app_icon_size",
-            title = c.getString(R.string.custom_launcher_app_icon_size),
-            valueRange = 0..100,
-            default = 0,
-            summary = c.getString(R.string.statusbar_clock_if_zero_summary),
-        )
-        if (osCode >= 37) {
+        group(title = c.getString(R.string.AppIcon)) {
             switch(
-                key = "disable_long_press_app_icon_secondary_menu",
-                title = c.getString(R.string.disable_long_press_app_icon_secondary_menu),
+                key = "allow_app_names_display_multiple_lines",
+                title = c.getString(R.string.allow_app_names_display_multiple_lines),
             )
+            if (state.getBoolean("allow_app_names_display_multiple_lines")) {
+                slider(
+                    key = "custom_app_icon_name_line_height",
+                    title = c.getString(R.string.custom_app_icon_name_line_height),
+                    valueRange = -1..15,
+                    default = -1,
+                )
+            }
+            slider(
+                key = "custom_launcher_app_icon_size",
+                title = c.getString(R.string.custom_launcher_app_icon_size),
+                valueRange = 0..100,
+                default = 0,
+                summary = c.getString(R.string.statusbar_clock_if_zero_summary),
+            )
+            if (osCode >= 37) {
+                switch(
+                    key = "disable_long_press_app_icon_secondary_menu",
+                    title = c.getString(R.string.disable_long_press_app_icon_secondary_menu),
+                )
+            }
         }
         // 应用徽标
-        category(c.getString(R.string.AppBadgeRelated))
-        if (osCode < 33) {
-            switch(
-                key = "enable_display_app_update_dot",
-                title = c.getString(R.string.enable_display_app_update_dot),
-                summary = c.getString(R.string.enable_display_app_update_dot_summary),
-            )
-        }
-        if (osCode >= 33) {
-            list(
-                key = "set_app_update_dot_display_mode",
-                title = c.getString(R.string.set_app_update_dot_display_mode),
-                entries = c.resources.getStringArray(R.array.set_app_update_dot_display_mode_entries),
-                entryValues = arrayOf("0", "1", "2"),
-                default = "0",
-                summary = arraySummaryLine(
-                    c.getString(R.string.current_mode) + ": %s",
-                    *when (state.getString("set_app_update_dot_display_mode", "0")) {
-                        "1" -> arrayOf(c.getString(R.string.need_restart_system))
-                        "2" -> arrayOf(c.getString(R.string.need_restart_scope))
-                        else -> emptyArray()
-                    },
-                ),
-            )
-        }
-        if (SDK >= A13) {
-            switch(
-                key = "remove_app_shortcut_badge",
-                title = c.getString(R.string.remove_app_shortcut_badge),
-            )
-            switch(
-                key = "remove_app_work_badge",
-                title = c.getString(R.string.remove_app_work_badge),
-            )
-            switch(
-                key = "remove_app_clone_badge",
-                title = c.getString(R.string.remove_app_clone_badge),
-            )
+        group(title = c.getString(R.string.AppBadgeRelated)) {
+            if (osCode < 33) {
+                switch(
+                    key = "enable_display_app_update_dot",
+                    title = c.getString(R.string.enable_display_app_update_dot),
+                    summary = c.getString(R.string.enable_display_app_update_dot_summary),
+                )
+            }
+            if (osCode >= 33) {
+                list(
+                    key = "set_app_update_dot_display_mode",
+                    title = c.getString(R.string.set_app_update_dot_display_mode),
+                    entries = c.resources.getStringArray(R.array.set_app_update_dot_display_mode_entries),
+                    entryValues = arrayOf("0", "1", "2"),
+                    default = "0",
+                    summary = arraySummaryLine(
+                        c.getString(R.string.current_mode) + ": %s",
+                        *when (state.getString("set_app_update_dot_display_mode", "0")) {
+                            "1" -> arrayOf(c.getString(R.string.need_restart_system))
+                            "2" -> arrayOf(c.getString(R.string.need_restart_scope))
+                            else -> emptyArray()
+                        },
+                    ),
+                )
+            }
+            if (SDK >= A13) {
+                switch(
+                    key = "remove_app_shortcut_badge",
+                    title = c.getString(R.string.remove_app_shortcut_badge),
+                )
+                switch(
+                    key = "remove_app_work_badge",
+                    title = c.getString(R.string.remove_app_work_badge),
+                )
+                switch(
+                    key = "remove_app_clone_badge",
+                    title = c.getString(R.string.remove_app_clone_badge),
+                )
+            }
         }
         // 文件夹布局
-        category(c.getString(R.string.FolderLayoutRelated))
-        switch(
-            key = "remove_folder_name_input_limit",
-            title = c.getString(R.string.remove_folder_name_input_limit),
-        )
-        if (osCode >= 34) {
+        group(title = c.getString(R.string.FolderLayoutRelated)) {
             switch(
-                key = "enable_auto_close_folder",
-                title = c.getString(R.string.enable_auto_close_folder),
+                key = "remove_folder_name_input_limit",
+                title = c.getString(R.string.remove_folder_name_input_limit),
             )
-        }
-        switch(
-            key = "remove_folder_preview_background",
-            title = c.getString(R.string.remove_folder_preview_background),
-        )
-        switch(
-            key = "enable_folder_layout_adjustment",
-            title = c.getString(R.string.enable_folder_layout_adjustment),
-        )
-        if (state.getBoolean("enable_folder_layout_adjustment")) {
-            slider(
-                key = "set_icon_rows_in_folder",
-                title = c.getString(R.string.set_icon_rows_in_folder),
-                valueRange = 4..10,
-                default = 4,
-            )
-            slider(
-                key = "set_icon_columns_in_folder",
-                title = c.getString(R.string.set_icon_columns_in_folder),
-                valueRange = 3..10,
-                default = 3,
+            if (osCode >= 34) {
+                switch(
+                    key = "enable_auto_close_folder",
+                    title = c.getString(R.string.enable_auto_close_folder),
+                )
+            }
+            switch(
+                key = "remove_folder_preview_background",
+                title = c.getString(R.string.remove_folder_preview_background),
             )
             switch(
-                key = "sync_folder_icon_column_number_preview",
-                title = c.getString(R.string.sync_folder_icon_column_number_preview),
+                key = "enable_folder_layout_adjustment",
+                title = c.getString(R.string.enable_folder_layout_adjustment),
             )
+            if (state.getBoolean("enable_folder_layout_adjustment")) {
+                slider(
+                    key = "set_icon_rows_in_folder",
+                    title = c.getString(R.string.set_icon_rows_in_folder),
+                    valueRange = 4..10,
+                    default = 4,
+                )
+                slider(
+                    key = "set_icon_columns_in_folder",
+                    title = c.getString(R.string.set_icon_columns_in_folder),
+                    valueRange = 3..10,
+                    default = 3,
+                )
+                switch(
+                    key = "sync_folder_icon_column_number_preview",
+                    title = c.getString(R.string.sync_folder_icon_column_number_preview),
+                )
+            }
         }
         // 分页组件
-        category(c.getString(R.string.PaginationComponentRelated))
-        switch(
-            key = "remove_pagination_component",
-            title = c.getString(R.string.remove_pagination_component),
-        )
-        switch(
-            key = "remove_folder_pagination_component",
-            title = c.getString(R.string.remove_folder_pagination_component),
-        )
-        if (SDK >= A13) {
+        group(title = c.getString(R.string.PaginationComponentRelated)) {
             switch(
-                key = "disable_pagination_component_sliding",
-                title = c.getString(R.string.disable_pagination_component_sliding),
+                key = "remove_pagination_component",
+                title = c.getString(R.string.remove_pagination_component),
             )
+            switch(
+                key = "remove_folder_pagination_component",
+                title = c.getString(R.string.remove_folder_pagination_component),
+            )
+            if (SDK >= A13) {
+                switch(
+                    key = "disable_pagination_component_sliding",
+                    title = c.getString(R.string.disable_pagination_component_sliding),
+                )
+            }
         }
         // 最近任务列表
-        category(c.getString(R.string.RecentTaskListRelated))
-        if (osCode >= 37) {
+        group(title = c.getString(R.string.RecentTaskListRelated)) {
+            if (osCode >= 37) {
+                switch(
+                    key = "enable_recent_task_pin_capsule",
+                    title = c.getString(R.string.enable_recent_task_pin_capsule),
+                )
+            }
+            if (osCode >= 30) {
+                switch(
+                    key = "force_enable_recent_task_memory_display",
+                    title = c.getString(R.string.force_enable_recent_task_memory_display),
+                )
+            }
+            if (osCode >= 34) {
+                switch(
+                    key = "disable_auto_switch_last_task",
+                    title = c.getString(R.string.disable_auto_switch_last_task),
+                )
+            }
             switch(
-                key = "enable_recent_task_pin_capsule",
-                title = c.getString(R.string.enable_recent_task_pin_capsule),
+                key = "long_press_app_icon_open_app_details",
+                title = c.getString(R.string.long_press_app_icon_open_app_details),
+            )
+            switch(
+                key = "remove_bottom_app_icon_of_recent_task_list",
+                title = c.getString(R.string.remove_bottom_app_icon_of_recent_task_list),
+            )
+            switch(
+                key = "remove_recent_task_list_clear_button",
+                title = c.getString(R.string.remove_recent_task_list_clear_button),
+            )
+            switch(
+                key = "unlock_task_locks",
+                title = c.getString(R.string.unlock_task_locks),
+            )
+            switch(
+                key = "allow_locking_unlocking_of_excluded_activity",
+                title = c.getString(R.string.allow_locking_unlocking_of_excluded_activity),
             )
         }
-        if (osCode >= 30) {
-            switch(
-                key = "force_enable_recent_task_memory_display",
-                title = c.getString(R.string.force_enable_recent_task_memory_display),
-            )
-        }
-        if (osCode >= 34) {
-            switch(
-                key = "disable_auto_switch_last_task",
-                title = c.getString(R.string.disable_auto_switch_last_task),
-            )
-        }
-        switch(
-            key = "long_press_app_icon_open_app_details",
-            title = c.getString(R.string.long_press_app_icon_open_app_details),
-        )
-        switch(
-            key = "remove_bottom_app_icon_of_recent_task_list",
-            title = c.getString(R.string.remove_bottom_app_icon_of_recent_task_list),
-        )
-        switch(
-            key = "remove_recent_task_list_clear_button",
-            title = c.getString(R.string.remove_recent_task_list_clear_button),
-        )
-        switch(
-            key = "unlock_task_locks",
-            title = c.getString(R.string.unlock_task_locks),
-        )
-        switch(
-            key = "allow_locking_unlocking_of_excluded_activity",
-            title = c.getString(R.string.allow_locking_unlocking_of_excluded_activity),
-        )
         // 抽屉布局
-        category(c.getString(R.string.launcher_drawer_layout_related))
-        switch(
-            key = "enable_drawer_layout_adjustment",
-            title = c.getString(R.string.enable_drawer_layout_adjustment),
-        )
-        if (state.getBoolean("enable_drawer_layout_adjustment")) {
-            slider(
-                key = "set_icon_columns_in_drawer",
-                title = c.getString(R.string.set_icon_columns_in_drawer),
-                valueRange = 4..10,
-                default = 4,
+        group(title = c.getString(R.string.launcher_drawer_layout_related)) {
+            switch(
+                key = "enable_drawer_layout_adjustment",
+                title = c.getString(R.string.enable_drawer_layout_adjustment),
             )
+            if (state.getBoolean("enable_drawer_layout_adjustment")) {
+                slider(
+                    key = "set_icon_columns_in_drawer",
+                    title = c.getString(R.string.set_icon_columns_in_drawer),
+                    valueRange = 4..10,
+                    default = 4,
+                )
+            }
         }
         // 桌面布局
-        category(c.getString(R.string.launcher_layout_related))
-        if (osCode >= 37) {
+        group(title = c.getString(R.string.launcher_layout_related)) {
+            if (osCode >= 37) {
+                switch(
+                    key = "enable_launcher_indicator_entry",
+                    title = c.getString(R.string.enable_launcher_indicator_entry),
+                )
+            }
+            editText(
+                key = "custom_desktop_default_home_page",
+                title = c.getString(R.string.custom_desktop_default_home_page),
+                dialogMessage = c.getString(R.string.custom_desktop_default_home_page),
+                default = "0",
+            )
+            if (osCode >= 26) {
+                switch(
+                    key = "enable_docker_background",
+                    title = c.getString(R.string.enable_docker_background),
+                )
+            }
+            if (osCode >= 37) {
+                switch(
+                    key = "force_enable_docker_background_blur",
+                    title = c.getString(R.string.force_enable_docker_background_blur),
+                )
+            }
             switch(
-                key = "enable_launcher_indicator_entry",
-                title = c.getString(R.string.enable_launcher_indicator_entry),
+                key = "remove_docker_max_number_limit",
+                title = c.getString(R.string.remove_docker_max_number_limit),
+                summary = c.getString(R.string.remove_docker_max_number_limit_summary),
             )
-        }
-        editText(
-            key = "custom_desktop_default_home_page",
-            title = c.getString(R.string.custom_desktop_default_home_page),
-            dialogMessage = c.getString(R.string.custom_desktop_default_home_page),
-            default = "0",
-        )
-        if (osCode >= 26) {
             switch(
-                key = "enable_docker_background",
-                title = c.getString(R.string.enable_docker_background),
+                key = "launcher_layout_enable",
+                title = c.getString(R.string.launcher_layout_enable),
+                summary = c.getString(R.string.launcher_layout_row_colume),
             )
-        }
-        if (osCode >= 37) {
-            switch(
-                key = "force_enable_docker_background_blur",
-                title = c.getString(R.string.force_enable_docker_background_blur),
-            )
-        }
-        switch(
-            key = "remove_docker_max_number_limit",
-            title = c.getString(R.string.remove_docker_max_number_limit),
-            summary = c.getString(R.string.remove_docker_max_number_limit_summary),
-        )
-        switch(
-            key = "launcher_layout_enable",
-            title = c.getString(R.string.launcher_layout_enable),
-            summary = c.getString(R.string.launcher_layout_row_colume),
-        )
-        if (state.getBoolean("launcher_layout_enable")) {
-            slider(
-                key = "launcher_layout_max_rows",
-                title = c.getString(R.string.launcher_layout_max_rows),
-                valueRange = 6..11,
-                default = 6,
-            )
-            slider(
-                key = "launcher_layout_max_columns",
-                title = c.getString(R.string.launcher_layout_max_columns),
-                valueRange = 4..9,
-                default = 4,
-                summary = if (osCode >= 30) c.getString(R.string.launcher_layout_max_columns_summary) else null,
-            )
-        }
+            if (state.getBoolean("launcher_layout_enable")) {
+                slider(
+                    key = "launcher_layout_max_rows",
+                    title = c.getString(R.string.launcher_layout_max_rows),
+                    valueRange = 6..11,
+                    default = 6,
+                )
+                slider(
+                    key = "launcher_layout_max_columns",
+                    title = c.getString(R.string.launcher_layout_max_columns),
+                    valueRange = 4..9,
+                    default = 4,
+                    summary = if (osCode >= 30) c.getString(R.string.launcher_layout_max_columns_summary) else null,
+                )
+            }
 
+        }
         // 桌面布局备份/恢复不再是功能树顶层条目，收进本页末尾
-        category(c.getString(R.string.launcher_backup))
-        page(
-            title = c.getString(R.string.launcher_backup_entry),
-            target = "launcherBackup",
-            summary = c.getString(R.string.launcher_backup_entry_summary),
-        )
+        group(title = c.getString(R.string.launcher_backup)) {
+            page(
+                title = c.getString(R.string.launcher_backup_entry),
+                target = "launcherBackup",
+                summary = c.getString(R.string.launcher_backup_entry_summary),
+            )
+        }
     }
 }

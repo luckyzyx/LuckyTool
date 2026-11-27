@@ -56,271 +56,281 @@ object ApplicationRelatedPage {
         val c = requireNotNull(context) { "ScopeScreen 未注入 Context" }
         // 应用启动
         if (SDK >= A13) {
-            category(c.getString(R.string.AppStartupRelated))
-            switch(
-                key = "disable_splash_screen",
-                title = c.getString(R.string.disable_splash_screen),
-                summary = arraySummaryLine(
-                    c.getString(R.string.need_restart_system),
-                    c.getString(R.string.disable_splash_screen_summary),
-                ),
-            )
-            switch(
-                key = "disable_preload_splash",
-                title = c.getString(R.string.disable_preload_splash),
-                summary = c.getString(R.string.need_restart_system),
-            )
-        }
-        // 应用列表
-        category(c.getString(R.string.APPRelatedList))
-        page(
-            title = c.getString(R.string.custom_config_app_intent_list),
-            target = "hideAppIntentFragment",
-            summary = c.getString(R.string.need_restart_system),
-        )
-        page(
-            title = c.getString(R.string.dark_mode_support_list),
-            target = "darkModeFragment",
-            summary = c.getString(R.string.zoom_window_support_list_summary),
-        )
-        list(
-            key = "set_multi_app_support_mode",
-            title = c.getString(R.string.set_multi_app_support_mode),
-            entries = c.resources.getStringArray(
-                if (getOSVersionCode < 27) R.array.set_multi_app_support_mode_low_entries
-                else R.array.set_multi_app_support_mode_entries
-            ),
-            entryValues = arrayOf("0", "1", "2"),
-            default = "0",
-            summary = arraySummaryLine(
-                c.getString(R.string.current_mode) + ": %s",
-                c.getString(R.string.need_restart_system),
-                c.getString(R.string.set_multi_app_support_mode_tips),
-            ),
-            // 条件可见性由 state.revision 驱动（list 内部先 state.set → revision 前进 →
-            // ScopeScreen 重组重跑构建 lambda），因此无需 recreate 刷新页面
-            onChange = { value ->
-                c.sendPrefsValue("system", "set_multi_app_support_mode", value)
-                c.sendPrefsValue(MULTI_APP, "set_multi_app_support_mode", value)
-            },
-        )
-        if (state.getString("set_multi_app_support_mode", "0") == "1") {
-            page(
-                title = c.getString(R.string.multi_app_custom_list),
-                target = "multiAppFragment",
-                summary = c.getString(R.string.multi_app_custom_list_summary),
-            )
-        }
-        if (getOSVersionCode >= 31) {
-            switch(
-                key = "remove_multi_app_blacklist",
-                title = c.getString(R.string.remove_multi_app_blacklist),
-                summary = c.getString(R.string.need_restart_system),
-            )
-        }
-        if (getOSVersionCode >= 38) {
-            switch(
-                key = "remove_multi_app_created_num_limit_for_users",
-                title = c.getString(R.string.remove_multi_app_created_num_limit),
-                summary = arraySummaryLine(
-                    c.getString(R.string.remove_multi_app_created_num_limit_for_users),
-                    c.getString(R.string.need_restart_system),
-                ),
-            )
-        }
-        if (getOSVersionCode >= 31) {
-            switch(
-                key = "remove_multi_app_created_num_limit_for_apps",
-                title = c.getString(R.string.remove_multi_app_created_num_limit),
-                summary = arraySummaryLine(
-                    c.getString(R.string.remove_multi_app_created_num_limit_for_apps),
-                    c.getString(R.string.need_restart_system),
-                ),
-            )
-        }
-        list(
-            key = "set_wlan_sla_whitelist_mode",
-            title = c.getString(R.string.set_wlan_sla_whitelist_mode),
-            entries = c.resources.getStringArray(R.array.set_wlan_sla_whitelist_mode_entries),
-            entryValues = arrayOf("0", "1", "2"),
-            default = "0",
-            summary = arraySummaryLine(
-                c.getString(R.string.current_mode) + ": %s",
-                c.getString(R.string.need_restart_system),
-            ),
-            onChange = { value ->
-                c.sendPrefsValue("system", "set_wlan_sla_whitelist_mode", value)
-            },
-        )
-        if (state.getString("set_wlan_sla_whitelist_mode", "0") != "0") {
-            switch(
-                key = "remove_wlan_sla_blacklist",
-                title = c.getString(R.string.remove_wlan_sla_blacklist),
-                onChange = { value ->
-                    c.sendPrefsValue("system", "remove_wlan_sla_blacklist", value)
-                },
-            )
-            wlanWhitelist(c, key = "custom_wlan_sla_whitelist")
-            wlanWhitelist(c, key = "custom_wlan_sla_game_whitelist")
-        }
-        // 应用安装
-        category(c.getString(R.string.AppInstallationRelated))
-        page(
-            title = c.getString(R.string.corepatch),
-            target = "corePatch",
-            summary = c.getString(R.string.corepatch_summary, "11-17"),
-        )
-        switch(
-            key = "force_enable_32_bit_support",
-            title = c.getString(R.string.force_enable_32_bit_support),
-            summary = c.getString(R.string.need_restart_system),
-        )
-        switch(
-            key = "fix_install_button_display_exception",
-            title = c.getString(R.string.fix_install_button_display_exception),
-            summary = c.getString(R.string.fix_install_button_display_exception_summary),
-        )
-        switch(
-            key = "disable_start_app_detail",
-            title = c.getString(R.string.disable_start_app_detail),
-            summary = c.getString(R.string.disable_start_app_detail_summary),
-        )
-        switch(
-            key = "skip_apk_scan",
-            title = c.getString(R.string.skip_apk_scan),
-            summary = c.getString(R.string.skip_apk_scan_summary),
-        )
-        switch(
-            key = "allow_downgrade_install",
-            title = c.getString(R.string.allow_downgrade_install),
-            summary = c.getString(R.string.allow_downgrade_install_summary),
-        )
-        switch(
-            key = "remove_install_ads",
-            title = c.getString(R.string.remove_install_ads),
-            summary = c.getString(R.string.remove_install_ads_summary),
-        )
-        switch(
-            key = "auto_click_install_button",
-            title = c.getString(R.string.auto_click_install_button),
-        )
-        switch(
-            key = "auto_click_uninstall_button",
-            title = c.getString(R.string.auto_click_uninstall_button),
-        )
-        switch(
-            key = "show_more_apk_package_information",
-            title = c.getString(R.string.show_more_apk_package_information),
-            summary = c.getString(R.string.show_more_apk_package_information_summary),
-        )
-        switch(
-            key = "remove_adb_install_confirm",
-            title = c.getString(R.string.remove_adb_install_confirm),
-            summary = c.getString(R.string.remove_adb_install_confirm_summary),
-        )
-        switch(
-            key = InstallerRoutingPolicy.PREFERENCE_KEY,
-            title = c.getString(R.string.allow_third_party_installer),
-            summary = c.getString(R.string.allow_third_party_installer_summary),
-            default = false,
-            onChange = { value ->
-                c.sendPrefsValue("system", InstallerRoutingPolicy.PREFERENCE_KEY, value)
-            },
-        )
-        // 其他限制
-        category(c.getString(R.string.ApplyOtherRestrictions))
-        switch(
-            key = "unlock_startup_limit",
-            title = c.getString(R.string.unlock_startup_limit),
-            summary = c.getString(R.string.unlock_startup_limit_summary),
-        )
-        // 应用详情相关
-        category(c.getString(R.string.AppDetailsRelated))
-        switch(
-            key = "show_package_name_in_app_details",
-            title = c.getString(R.string.show_package_name_in_app_details),
-        )
-        switch(
-            key = "show_sdk_in_app_details",
-            title = c.getString(R.string.show_sdk_in_app_details),
-        )
-        switch(
-            key = "show_first_install_time_in_app_details",
-            title = c.getString(R.string.show_first_install_time_in_app_details),
-        )
-        switch(
-            key = "show_last_update_time_in_app_details",
-            title = c.getString(R.string.show_last_update_time_in_app_details),
-        )
-        switch(
-            key = "show_install_source_in_app_details",
-            title = c.getString(R.string.show_install_source_in_app_details),
-        )
-        switch(
-            key = "enable_long_press_to_copy_in_app_details",
-            title = c.getString(R.string.enable_long_press_to_copy_in_app_details),
-        )
-        switch(
-            key = "enable_quick_open_market_page",
-            title = c.getString(R.string.enable_quick_open_market_page),
-        )
-        if (getOSVersionCode >= 27) {
-            switch(
-                key = "enable_app_clone_quick_jump",
-                title = c.getString(R.string.enable_app_clone_quick_jump),
-            )
-        }
-        switch(
-            key = "allow_disabling_system_apps",
-            title = c.getString(R.string.allow_disabling_system_apps),
-            summary = c.getString(R.string.allow_disabling_system_apps_summary),
-        )
-        if (SDK >= A13) {
-            switch(
-                key = "remove_app_uninstall_button_blacklist",
-                title = c.getString(R.string.remove_app_uninstall_button_blacklist),
-            )
-        }
-        if (SDK >= A14) {
-            switch(
-                key = "enable_custom_app_language",
-                title = c.getString(R.string.enable_custom_app_language),
-            )
-        }
-        //《自动释放应用空间》默认关闭：disable_app_archiving 的默认值是 true，普通 switch 表达不了，故用 booleanFlow(default = true) 的自定义项
-        if (getOSVersionCode >= 36) {
-            val archivingKey = "disable_app_archiving"
-            custom(
-                key = archivingKey,
-                title = c.getString(R.string.disable_app_archiving),
-                summary = c.getString(R.string.disable_app_archiving_summary),
-            ) { slot ->
-                val checked by state.booleanFlow(archivingKey, true).collectAsStateWithLifecycle()
-                PrefRowInset {
-                    AppSwitchItem(
-                        title = stringResource(R.string.disable_app_archiving),
-                        summary = stringResource(R.string.disable_app_archiving_summary),
-                        checked = checked,
-                        colors = itemColors(slot),
-                        onCheckedChange = { v ->
-                            state.set(archivingKey, v)
-                            c.sendPrefsValue("system", archivingKey, v)
-                            c.sendPrefsValue("com.android.settings", archivingKey, v)
-                        },
-                    )
-                }
+            group(title = c.getString(R.string.AppStartupRelated)) {
+                switch(
+                    key = "disable_splash_screen",
+                    title = c.getString(R.string.disable_splash_screen),
+                    summary = arraySummaryLine(
+                        c.getString(R.string.need_restart_system),
+                        c.getString(R.string.disable_splash_screen_summary),
+                    ),
+                )
+                switch(
+                    key = "disable_preload_splash",
+                    title = c.getString(R.string.disable_preload_splash),
+                    summary = c.getString(R.string.need_restart_system),
+                )
             }
         }
-        //隐藏应用详情页的归档按钮（已归档应用的“恢复”按钮保留）
-        if (getOSVersionCode >= 36) {
-            switch(
-                key = "disable_app_archive_button",
-                title = c.getString(R.string.disable_app_archive_button),
-                summary = c.getString(R.string.disable_app_archive_button_summary),
-                onChange = { v ->
-                    c.sendPrefsValue("com.android.settings", "disable_app_archive_button", v)
+        // 应用列表
+        group(title = c.getString(R.string.APPRelatedList)) {
+            page(
+                title = c.getString(R.string.custom_config_app_intent_list),
+                target = "hideAppIntentFragment",
+                summary = c.getString(R.string.need_restart_system),
+            )
+            page(
+                title = c.getString(R.string.dark_mode_support_list),
+                target = "darkModeFragment",
+                summary = c.getString(R.string.zoom_window_support_list_summary),
+            )
+            list(
+                key = "set_multi_app_support_mode",
+                title = c.getString(R.string.set_multi_app_support_mode),
+                entries = c.resources.getStringArray(
+                    if (getOSVersionCode < 27) R.array.set_multi_app_support_mode_low_entries
+                    else R.array.set_multi_app_support_mode_entries
+                ),
+                entryValues = arrayOf("0", "1", "2"),
+                default = "0",
+                summary = arraySummaryLine(
+                    c.getString(R.string.current_mode) + ": %s",
+                    c.getString(R.string.need_restart_system),
+                    c.getString(R.string.set_multi_app_support_mode_tips),
+                ),
+                // 条件可见性由 state.revision 驱动（list 内部先 state.set → revision 前进 →
+                // ScopeScreen 重组重跑构建 lambda），因此无需 recreate 刷新页面
+                onChange = { value ->
+                    c.sendPrefsValue("system", "set_multi_app_support_mode", value)
+                    c.sendPrefsValue(MULTI_APP, "set_multi_app_support_mode", value)
                 },
             )
+            if (state.getString("set_multi_app_support_mode", "0") == "1") {
+                page(
+                    title = c.getString(R.string.multi_app_custom_list),
+                    target = "multiAppFragment",
+                    summary = c.getString(R.string.multi_app_custom_list_summary),
+                )
+            }
+            if (getOSVersionCode >= 31) {
+                switch(
+                    key = "remove_multi_app_blacklist",
+                    title = c.getString(R.string.remove_multi_app_blacklist),
+                    summary = c.getString(R.string.need_restart_system),
+                )
+            }
+            if (getOSVersionCode >= 38) {
+                switch(
+                    key = "remove_multi_app_created_num_limit_for_users",
+                    title = c.getString(R.string.remove_multi_app_created_num_limit),
+                    summary = arraySummaryLine(
+                        c.getString(R.string.remove_multi_app_created_num_limit_for_users),
+                        c.getString(R.string.need_restart_system),
+                    ),
+                )
+            }
+            if (getOSVersionCode >= 31) {
+                switch(
+                    key = "remove_multi_app_created_num_limit_for_apps",
+                    title = c.getString(R.string.remove_multi_app_created_num_limit),
+                    summary = arraySummaryLine(
+                        c.getString(R.string.remove_multi_app_created_num_limit_for_apps),
+                        c.getString(R.string.need_restart_system),
+                    ),
+                )
+            }
+            list(
+                key = "set_wlan_sla_whitelist_mode",
+                title = c.getString(R.string.set_wlan_sla_whitelist_mode),
+                entries = c.resources.getStringArray(R.array.set_wlan_sla_whitelist_mode_entries),
+                entryValues = arrayOf("0", "1", "2"),
+                default = "0",
+                summary = arraySummaryLine(
+                    c.getString(R.string.current_mode) + ": %s",
+                    c.getString(R.string.need_restart_system),
+                ),
+                onChange = { value ->
+                    c.sendPrefsValue("system", "set_wlan_sla_whitelist_mode", value)
+                },
+            )
+            if (state.getString("set_wlan_sla_whitelist_mode", "0") != "0") {
+                switch(
+                    key = "remove_wlan_sla_blacklist",
+                    title = c.getString(R.string.remove_wlan_sla_blacklist),
+                    onChange = { value ->
+                        c.sendPrefsValue("system", "remove_wlan_sla_blacklist", value)
+                    },
+                )
+                wlanWhitelist(c, key = "custom_wlan_sla_whitelist")
+                wlanWhitelist(c, key = "custom_wlan_sla_game_whitelist")
+            }
+        }
+        // 应用安装
+        group(title = c.getString(R.string.AppInstallationRelated)) {
+            page(
+                title = c.getString(R.string.corepatch),
+                target = "corePatch",
+                // 入口就在父级页可见：ColorOS 官方安装器要搭配核心破解使用这层关系直接写在入口说明里，
+                // 与子页分组说明同一句；版本支持范围仍是第一行
+                summary = arraySummaryLine(
+                    c.getString(R.string.corepatch_summary, "11-17"),
+                    c.getString(R.string.ColorOSCorePatchTip),
+                ),
+            )
+            switch(
+                key = "force_enable_32_bit_support",
+                title = c.getString(R.string.force_enable_32_bit_support),
+                summary = c.getString(R.string.need_restart_system),
+            )
+            switch(
+                key = "fix_install_button_display_exception",
+                title = c.getString(R.string.fix_install_button_display_exception),
+                summary = c.getString(R.string.fix_install_button_display_exception_summary),
+            )
+            switch(
+                key = "disable_start_app_detail",
+                title = c.getString(R.string.disable_start_app_detail),
+                summary = c.getString(R.string.disable_start_app_detail_summary),
+            )
+            switch(
+                key = "skip_apk_scan",
+                title = c.getString(R.string.skip_apk_scan),
+                summary = c.getString(R.string.skip_apk_scan_summary),
+            )
+            switch(
+                key = "allow_downgrade_install",
+                title = c.getString(R.string.allow_downgrade_install),
+                summary = c.getString(R.string.allow_downgrade_install_summary),
+            )
+            switch(
+                key = "remove_install_ads",
+                title = c.getString(R.string.remove_install_ads),
+                summary = c.getString(R.string.remove_install_ads_summary),
+            )
+            switch(
+                key = "auto_click_install_button",
+                title = c.getString(R.string.auto_click_install_button),
+            )
+            switch(
+                key = "auto_click_uninstall_button",
+                title = c.getString(R.string.auto_click_uninstall_button),
+            )
+            switch(
+                key = "show_more_apk_package_information",
+                title = c.getString(R.string.show_more_apk_package_information),
+                summary = c.getString(R.string.show_more_apk_package_information_summary),
+            )
+            switch(
+                key = "remove_adb_install_confirm",
+                title = c.getString(R.string.remove_adb_install_confirm),
+                summary = c.getString(R.string.remove_adb_install_confirm_summary),
+            )
+            switch(
+                key = InstallerRoutingPolicy.PREFERENCE_KEY,
+                title = c.getString(R.string.allow_third_party_installer),
+                summary = c.getString(R.string.allow_third_party_installer_summary),
+                default = false,
+                onChange = { value ->
+                    c.sendPrefsValue("system", InstallerRoutingPolicy.PREFERENCE_KEY, value)
+                },
+            )
+        }
+        // 其他限制
+        group(title = c.getString(R.string.ApplyOtherRestrictions)) {
+            switch(
+                key = "unlock_startup_limit",
+                title = c.getString(R.string.unlock_startup_limit),
+                summary = c.getString(R.string.unlock_startup_limit_summary),
+            )
+        }
+        // 应用详情相关
+        group(title = c.getString(R.string.AppDetailsRelated)) {
+            switch(
+                key = "show_package_name_in_app_details",
+                title = c.getString(R.string.show_package_name_in_app_details),
+            )
+            switch(
+                key = "show_sdk_in_app_details",
+                title = c.getString(R.string.show_sdk_in_app_details),
+            )
+            switch(
+                key = "show_first_install_time_in_app_details",
+                title = c.getString(R.string.show_first_install_time_in_app_details),
+            )
+            switch(
+                key = "show_last_update_time_in_app_details",
+                title = c.getString(R.string.show_last_update_time_in_app_details),
+            )
+            switch(
+                key = "show_install_source_in_app_details",
+                title = c.getString(R.string.show_install_source_in_app_details),
+            )
+            switch(
+                key = "enable_long_press_to_copy_in_app_details",
+                title = c.getString(R.string.enable_long_press_to_copy_in_app_details),
+            )
+            switch(
+                key = "enable_quick_open_market_page",
+                title = c.getString(R.string.enable_quick_open_market_page),
+            )
+            if (getOSVersionCode >= 27) {
+                switch(
+                    key = "enable_app_clone_quick_jump",
+                    title = c.getString(R.string.enable_app_clone_quick_jump),
+                )
+            }
+            switch(
+                key = "allow_disabling_system_apps",
+                title = c.getString(R.string.allow_disabling_system_apps),
+                summary = c.getString(R.string.allow_disabling_system_apps_summary),
+            )
+            if (SDK >= A13) {
+                switch(
+                    key = "remove_app_uninstall_button_blacklist",
+                    title = c.getString(R.string.remove_app_uninstall_button_blacklist),
+                )
+            }
+            if (SDK >= A14) {
+                switch(
+                    key = "enable_custom_app_language",
+                    title = c.getString(R.string.enable_custom_app_language),
+                )
+            }
+            //《自动释放应用空间》默认关闭：disable_app_archiving 的默认值是 true，普通 switch 表达不了，故用 booleanFlow(default = true) 的自定义项
+            if (getOSVersionCode >= 36) {
+                val archivingKey = "disable_app_archiving"
+                custom(
+                    key = archivingKey,
+                    title = c.getString(R.string.disable_app_archiving),
+                    summary = c.getString(R.string.disable_app_archiving_summary),
+                ) { slot ->
+                    val checked by state.booleanFlow(archivingKey, true).collectAsStateWithLifecycle()
+                    PrefRowInset {
+                        AppSwitchItem(
+                            title = stringResource(R.string.disable_app_archiving),
+                            summary = stringResource(R.string.disable_app_archiving_summary),
+                            checked = checked,
+                            colors = itemColors(slot),
+                            onCheckedChange = { v ->
+                                state.set(archivingKey, v)
+                                c.sendPrefsValue("system", archivingKey, v)
+                                c.sendPrefsValue("com.android.settings", archivingKey, v)
+                            },
+                        )
+                    }
+                }
+            }
+            //隐藏应用详情页的归档按钮（已归档应用的“恢复”按钮保留）
+            if (getOSVersionCode >= 36) {
+                switch(
+                    key = "disable_app_archive_button",
+                    title = c.getString(R.string.disable_app_archive_button),
+                    summary = c.getString(R.string.disable_app_archive_button_summary),
+                    onChange = { v ->
+                        c.sendPrefsValue("com.android.settings", "disable_app_archive_button", v)
+                    },
+                )
+            }
         }
     }
 

@@ -37,52 +37,53 @@ object OplusMetisPage {
         val c = requireNotNull(context) { "ScopeScreen 未注入 Context" }
 
         // 卡片重定向
-        category(c.getString(R.string.metis_category_redirect))
-        switch(
-            key = KEY_REDIRECT_ENABLED,
-            title = c.getString(R.string.metis_redirect_enabled),
-            summary = c.getString(R.string.metis_redirect_enabled_summary),
-            notify = true,
-        )
-        // 目标浏览器：候选只列能响应 https 链接的应用，存包名；首项空串表示未设置（不重定向）
-        val browsers = queryBrowserApps(c)
-        list(
-            key = KEY_TARGET_BROWSER,
-            title = c.getString(R.string.metis_target_browser),
-            entries = arrayOf(c.getString(R.string.not_set)) + browsers.map { it.label }.toTypedArray(),
-            entryValues = arrayOf("") + browsers.map { it.packageName }.toTypedArray(),
-            default = "",
-            summary = c.getString(R.string.metis_target_browser_summary),
-            notify = true,
-        )
-        switch(
-            key = KEY_RULE_PROTOCOL,
-            title = c.getString(R.string.metis_rule_protocol),
-            summary = c.getString(R.string.metis_rule_protocol_summary),
-            default = true,
-            notify = true,
-        )
-        switch(
-            key = KEY_RULE_TEXT_SEARCH,
-            title = c.getString(R.string.metis_rule_text_search),
-            summary = c.getString(R.string.metis_rule_text_search_summary),
-            default = true,
-            notify = true,
-        )
-        switch(
-            key = KEY_RULE_HEYTAP_HTTP,
-            title = c.getString(R.string.metis_rule_heytap_http),
-            summary = c.getString(R.string.metis_rule_heytap_http_summary),
-            default = true,
-            notify = true,
-        )
-        switch(
-            key = KEY_RULE_BROWSER_CARD,
-            title = c.getString(R.string.metis_rule_browser_card),
-            summary = c.getString(R.string.metis_rule_browser_card_summary),
-            default = false,
-            notify = true,
-        )
+        group(title = c.getString(R.string.metis_category_redirect)) {
+            switch(
+                key = KEY_REDIRECT_ENABLED,
+                title = c.getString(R.string.metis_redirect_enabled),
+                summary = c.getString(R.string.metis_redirect_enabled_summary),
+                notify = true,
+            )
+            // 目标浏览器：候选只列能响应 https 链接的应用，存包名；首项空串表示未设置（不重定向）
+            val browsers = queryBrowserApps(c)
+            list(
+                key = KEY_TARGET_BROWSER,
+                title = c.getString(R.string.metis_target_browser),
+                entries = arrayOf(c.getString(R.string.not_set)) + browsers.map { it.label }.toTypedArray(),
+                entryValues = arrayOf("") + browsers.map { it.packageName }.toTypedArray(),
+                default = "",
+                summary = c.getString(R.string.metis_target_browser_summary),
+                notify = true,
+            )
+            switch(
+                key = KEY_RULE_PROTOCOL,
+                title = c.getString(R.string.metis_rule_protocol),
+                summary = c.getString(R.string.metis_rule_protocol_summary),
+                default = true,
+                notify = true,
+            )
+            switch(
+                key = KEY_RULE_TEXT_SEARCH,
+                title = c.getString(R.string.metis_rule_text_search),
+                summary = c.getString(R.string.metis_rule_text_search_summary),
+                default = true,
+                notify = true,
+            )
+            switch(
+                key = KEY_RULE_HEYTAP_HTTP,
+                title = c.getString(R.string.metis_rule_heytap_http),
+                summary = c.getString(R.string.metis_rule_heytap_http_summary),
+                default = true,
+                notify = true,
+            )
+            switch(
+                key = KEY_RULE_BROWSER_CARD,
+                title = c.getString(R.string.metis_rule_browser_card),
+                summary = c.getString(R.string.metis_rule_browser_card_summary),
+                default = false,
+                notify = true,
+            )
+        }
     }
 }
 

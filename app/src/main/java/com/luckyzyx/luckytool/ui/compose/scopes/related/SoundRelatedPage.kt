@@ -45,105 +45,107 @@ object SoundRelatedPage {
     ) {
         val c = requireNotNull(context) { "ScopeScreen 未注入 Context" }
         val osCode = getOSVersionCode
-        switch(
-            key = "disable_headphone_high_volume_warning",
-            title = c.getString(R.string.disable_headphone_high_volume_warning),
-            summary = c.getString(R.string.disable_headphone_high_volume_warning_summary),
-        )
-        slider(
-            key = "media_volume_level",
-            title = c.getString(R.string.media_volume_level),
-            valueRange = 0..50,
-            default = 0,
-            summary = c.getString(R.string.media_volume_level_summary),
-        )
-        if (SDK >= A12) {
+        group {
             switch(
-                key = "minimum_volume_level_can_be_zero",
-                title = c.getString(R.string.minimum_volume_level_can_be_zero),
+                key = "disable_headphone_high_volume_warning",
+                title = c.getString(R.string.disable_headphone_high_volume_warning),
+                summary = c.getString(R.string.disable_headphone_high_volume_warning_summary),
             )
-        }
-        if (osCode >= 27) {
+            slider(
+                key = "media_volume_level",
+                title = c.getString(R.string.media_volume_level),
+                valueRange = 0..50,
+                default = 0,
+                summary = c.getString(R.string.media_volume_level_summary),
+            )
+            if (SDK >= A12) {
+                switch(
+                    key = "minimum_volume_level_can_be_zero",
+                    title = c.getString(R.string.minimum_volume_level_can_be_zero),
+                )
+            }
+            if (osCode >= 27) {
+                switch(
+                    key = "enable_app_specific_media_volume",
+                    title = c.getString(R.string.enable_app_specific_media_volume),
+                    summary = arraySummaryLine(
+                        c.getString(R.string.need_restart_system),
+                        c.getString(R.string.enable_app_specific_media_volume_summary),
+                        c.getString(R.string.enable_app_specific_media_volume_tips)
+                    ),
+                )
+            }
+            if (osCode >= 30) {
+                switch(
+                    key = "disable_volume_bar_thickness_effect",
+                    title = c.getString(R.string.disable_volume_bar_thickness_effect),
+                )
+            }
+            if (SDK >= A13) {
+                list(
+                    key = "set_volume_bar_display_position",
+                    title = c.getString(R.string.set_volume_bar_display_position),
+                    entries = c.resources.getStringArray(R.array.set_volume_bar_display_position_entries),
+                    entryValues = arrayOf("0", "1", "2"),
+                    default = "0",
+                    summary = c.getString(R.string.current_mode) + ": %s",
+                )
+            }
+            slider(
+                key = "custom_volume_dialog_background_transparency",
+                title = c.getString(R.string.custom_volume_dialog_background_transparency),
+                valueRange = -1..10,
+                default = -1,
+                summary = c.getString(R.string.force_enable_systemui_blur_feature_tips),
+                notify = true,
+            )
             switch(
-                key = "enable_app_specific_media_volume",
-                title = c.getString(R.string.enable_app_specific_media_volume),
-                summary = arraySummaryLine(
-                    c.getString(R.string.need_restart_system),
-                    c.getString(R.string.enable_app_specific_media_volume_summary),
-                    c.getString(R.string.enable_app_specific_media_volume_tips)
-                ),
+                key = "enable_volume_bar_percent_display",
+                title = c.getString(R.string.enable_volume_bar_percent_display),
             )
-        }
-        if (osCode >= 30) {
-            switch(
-                key = "disable_volume_bar_thickness_effect",
-                title = c.getString(R.string.disable_volume_bar_thickness_effect),
-            )
-        }
-        if (SDK >= A13) {
-            list(
-                key = "set_volume_bar_display_position",
-                title = c.getString(R.string.set_volume_bar_display_position),
-                entries = c.resources.getStringArray(R.array.set_volume_bar_display_position_entries),
-                entryValues = arrayOf("0", "1", "2"),
-                default = "0",
-                summary = c.getString(R.string.current_mode) + ": %s",
-            )
-        }
-        slider(
-            key = "custom_volume_dialog_background_transparency",
-            title = c.getString(R.string.custom_volume_dialog_background_transparency),
-            valueRange = -1..10,
-            default = -1,
-            summary = c.getString(R.string.force_enable_systemui_blur_feature_tips),
-            notify = true,
-        )
-        switch(
-            key = "enable_volume_bar_percent_display",
-            title = c.getString(R.string.enable_volume_bar_percent_display),
-        )
-        if (state.getBoolean("enable_volume_bar_percent_display", false)) {
-            custom(
-                key = PERCENT_COLOR_KEY,
-                title = c.getString(R.string.custom_volume_bar_percent_color),
-            ) {
-                val hex by state.stringFlow(PERCENT_COLOR_KEY, "#FFFFFFFF")
-                    .collectAsStateWithLifecycle()
-                val color = remember(hex) {
-                    try {
-                        Color(hex.toColorInt())
-                    } catch (_: Throwable) {
-                        Color.Transparent
+            if (state.getBoolean("enable_volume_bar_percent_display", false)) {
+                custom(
+                    key = PERCENT_COLOR_KEY,
+                    title = c.getString(R.string.custom_volume_bar_percent_color),
+                ) {
+                    val hex by state.stringFlow(PERCENT_COLOR_KEY, "#FFFFFFFF")
+                        .collectAsStateWithLifecycle()
+                    val color = remember(hex) {
+                        try {
+                            Color(hex.toColorInt())
+                        } catch (_: Throwable) {
+                            Color.Transparent
+                        }
+                    }
+                    var showPicker by remember { mutableStateOf(false) }
+                    PrefRowInset {
+                        PrefRow(
+                            title = stringResource(R.string.custom_volume_bar_percent_color),
+                            summary = stringResource(R.string.current_color, hex),
+                            trailing = {
+                                PrefColorPreview(color = color)
+                            },
+                            onClick = { showPicker = true },
+                        )
+                    }
+                    if (showPicker) {
+                        ColorPickerDialog(
+                            initialHex = hex,
+                            onDismiss = { showPicker = false },
+                            onColorSelected = { _, newHex ->
+                                state.set(PERCENT_COLOR_KEY, newHex)
+                                sendValue(PERCENT_COLOR_KEY, newHex)
+                                showPicker = false
+                            },
+                        )
                     }
                 }
-                var showPicker by remember { mutableStateOf(false) }
-                PrefRowInset {
-                    PrefRow(
-                        title = stringResource(R.string.custom_volume_bar_percent_color),
-                        summary = stringResource(R.string.current_color, hex),
-                        trailing = {
-                            PrefColorPreview(color = color)
-                        },
-                        onClick = { showPicker = true },
-                    )
-                }
-                if (showPicker) {
-                    ColorPickerDialog(
-                        initialHex = hex,
-                        onDismiss = { showPicker = false },
-                        onColorSelected = { _, newHex ->
-                            state.set(PERCENT_COLOR_KEY, newHex)
-                            sendValue(PERCENT_COLOR_KEY, newHex)
-                            showPicker = false
-                        },
-                    )
-                }
             }
+            switch(
+                key = "disable_audio_focus",
+                title = c.getString(R.string.disable_audio_focus),
+                summary = c.getString(R.string.need_restart_system),
+            )
         }
-        switch(
-            key = "disable_audio_focus",
-            title = c.getString(R.string.disable_audio_focus),
-            summary = c.getString(R.string.need_restart_system),
-        )
     }
 }

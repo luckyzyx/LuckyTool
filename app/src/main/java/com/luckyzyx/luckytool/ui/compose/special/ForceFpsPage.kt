@@ -81,8 +81,8 @@ import kotlinx.coroutines.withTimeoutOrNull
  * 3. 设置卡：自启（`keyFpsAutoStart`）+ 显示刷新率合并为一张卡片；
  * 4. 恢复默认刷新率按钮 + 底部提示文案。
  *
- * 水平内缩：body 走 `custom(bare = true)`（整页无卡片容器）。COUI 线的分组卡片自带 16dp 水平内缩
- * （`CouiScopeCard`），页级 padding 只补给 Material 线，否则卡片比按钮、提示文字左右各多缩 16dp；
+ * 水平内缩：整页 body 是一个组外 `custom`（不被任何卡片容器包裹）。COUI 线的分组卡片自带 16dp 水平内缩
+ * （`CouiCard` / 库的 `Group`），页级 padding 只补给 Material 线，否则卡片比按钮、提示文字左右各多缩 16dp；
  * 页面自绘的文字与按钮不经卡片，自己补 16dp 才能与卡片对齐。
  * 行呈现（`PrefGroup` / `PrefSwitchRow`）与页面自绘的文字、按钮按外观分派
  * （COUI 线用 COUI 语义文字与胶囊按钮，Material 线用 material3 件）；
@@ -105,7 +105,7 @@ object ForceFpsPage {
         onRefresh = { reloader?.invoke() },
     ) {
         val c = requireNotNull(context) { "ScopeScreen 未注入 Context" }
-        custom(key = "force_fps_body", bare = true) {
+        custom(key = "force_fps_body") {
             val isCoui = LocalUiMode.current == UiMode.Coui
             // 分组卡片的内缩按外观分派：COUI 线卡片自带 16dp，Material 线列表不自带
             val cardInset = if (isCoui) Modifier else Modifier.padding(horizontal = 16.dp)

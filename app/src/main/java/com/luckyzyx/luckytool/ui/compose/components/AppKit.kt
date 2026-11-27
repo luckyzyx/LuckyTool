@@ -12,7 +12,6 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -52,6 +51,7 @@ import com.itos.coui.effect.couiButtonFeedback
 import com.luckyzyx.luckytool.ui.compose.components.coui.CouiIconsExt
 import com.itos.coui.layout.CouiPageDefaults
 import com.itos.coui.layout.Divider as CouiDivider
+import com.itos.coui.layout.Group as CouiGroup
 import com.itos.coui.layout.Item as CouiItem
 import com.itos.coui.menu.Menu as CouiMenu
 import com.itos.coui.menu.CouiMenuItem
@@ -60,8 +60,6 @@ import com.itos.coui.menu.rememberCouiMenuAnchor
 import com.itos.coui.radiobutton.RadioButton as CouiRadioButton
 import com.itos.coui.slider.Slider as CouiSlider
 import com.itos.coui.switch.Switch as CouiSwitch
-import com.itos.coui.text.CouiTextKind
-import com.itos.coui.text.Text as CouiText
 import com.itos.coui.theme.CouiTheme
 import com.itos.coui.theme.LocalCouiContentColor
 import com.luckyzyx.luckytool.ui.compose.components.material.MaterialDropdownItem
@@ -98,29 +96,11 @@ private val LocalCouiRowFramed = compositionLocalOf { false }
 private val isCouiAppearance: Boolean
     @Composable get() = LocalUiMode.current == UiMode.Coui
 
-/** COUI 分组卡片：一张卡片承载整组行，行间由 [CouiDivider] 切分。 */
-@Composable
-private fun CouiGroupCard(
-    modifier: Modifier = Modifier,
-    title: String = "",
-    content: @Composable ColumnScope.() -> Unit,
-) {
-    val colors = CouiPageDefaults.themeColors()
-    Column(modifier = modifier.fillMaxWidth()) {
-        if (title.isNotEmpty()) {
-            Box(modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = 4.dp, bottom = 6.dp)) {
-                CouiText(text = title, kind = CouiTextKind.GroupTitle, color = colors.accent)
-            }
-        }
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clip(CouiPageDefaults.shape)
-                .background(colors.card),
-            content = content,
-        )
-    }
-}
+/**
+ * Material 线的分组卡片不自带横向内缩，由 [AppGroup] 统一给 16dp；
+ * COUI 线的库 Group 自带同档内缩，接进去时不能再叠一层。
+ */
+private fun Modifier.groupInset(): Modifier = padding(horizontal = 16.dp)
 
 /**
  * COUI 行容器，按祖先状态决定行自己要不要画卡片：
@@ -150,7 +130,12 @@ private fun CouiRowFrame(content: @Composable () -> Unit) {
     }
 }
 
-/** 分组：静态条目列表 */
+/**
+ * 分组：静态条目列表。
+ *
+ * COUI 线的卡片、标题与分组前后的留白都交给库的 [CouiGroup]；Material 线没有这层容器，
+ * 横向 16dp 内缩由这里补上，两条线的卡片左右边距保持一致。
+ */
 @Composable
 fun AppGroup(
     modifier: Modifier = Modifier,
@@ -160,10 +145,15 @@ fun AppGroup(
 ) {
     if (content.isEmpty()) return
     if (!isCouiAppearance) {
-        MaterialGroup(modifier = modifier, title = title, visibleLen = visibleLen, content = content)
+        MaterialGroup(
+            modifier = modifier.groupInset(),
+            title = title,
+            visibleLen = visibleLen,
+            content = content,
+        )
         return
     }
-    CouiGroupCard(modifier = modifier, title = title) {
+    CouiGroup(modifier = modifier, title = title.takeIf { it.isNotEmpty() }) {
         content.forEachIndexed { index, itemContent ->
             CompositionLocalProvider(LocalCouiRowSlot provides CouiRowSlot(index, inGroup = true)) {
                 itemContent()
@@ -172,7 +162,7 @@ fun AppGroup(
     }
 }
 
-/** 分组：条目可显隐，显隐时整行缩放进出 */
+/** 分组：条目可显隐，显隐时整行缩放进出（排版与静态重载同一套，见上） */
 @Composable
 fun AppGroup(
     modifier: Modifier = Modifier,
@@ -180,14 +170,14 @@ fun AppGroup(
     content: MaterialGroupScope.() -> Unit,
 ) {
     if (!isCouiAppearance) {
-        MaterialGroup(modifier = modifier, title = title, content = content)
+        MaterialGroup(modifier = modifier.groupInset(), title = title, content = content)
         return
     }
     val entries = MaterialGroupScope().apply(content).entries
     if (entries.isEmpty()) return
     // 分隔线只跟可见行算位置：隐藏的行不占位，也不保留分组端点
     val visibleIndices = entries.indices.filter { entries[it].visible }
-    CouiGroupCard(modifier = modifier, title = title) {
+    CouiGroup(modifier = modifier, title = title.takeIf { it.isNotEmpty() }) {
         entries.forEachIndexed { index, entry ->
             AnimatedVisibility(
                 visible = entry.visible,
@@ -225,7 +215,7 @@ fun AppItem(
         return
     }
     // 没有分组容器承载（列表直接平铺行）：按 index/count 自绘分段卡片，
-    // 与 CouiGroupCard 的观感一致，相邻行拼起来仍是一张连续卡片。
+    // 与库 Group 的分组卡片观感一致，相邻行拼起来仍是一张连续卡片。
     CouiSegmentCard(index = index, count = count) { content() }
 }
 

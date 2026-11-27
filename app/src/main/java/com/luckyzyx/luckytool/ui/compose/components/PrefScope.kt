@@ -12,6 +12,7 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
@@ -27,7 +28,6 @@ import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.toggleable
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -58,8 +58,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.RectangleShape
-import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.compositeOver
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
@@ -69,6 +67,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.itos.coui.dialog.CouiDialogAction
@@ -80,6 +79,7 @@ import com.luckyzyx.luckytool.ui.compose.components.coui.CouiIconsExt
 import com.itos.coui.layout.CouiPageColors
 import com.itos.coui.layout.CouiPageDefaults
 import com.itos.coui.layout.Divider as CouiDivider
+import com.itos.coui.layout.Footer as CouiFooter
 import com.itos.coui.layout.Item as CouiItem
 import com.itos.coui.menu.CouiMenuItem
 import com.itos.coui.menu.Menu as CouiMenu
@@ -152,9 +152,10 @@ data class PrefIndexItem(
  *
  * [segIndex]/[segCount] 用于把相邻条目合并成同一张分组卡片（首条上端 16dp 外圆角、尾条下端 16dp 外圆角、
  * 组内条目不设内圆角与间距，见 [com.luckyzyx.luckytool.ui.theme.DesignTokens]）；
- * [groupable] = false 的条目独占一张卡片（分类标题，以及 [PrefScopeBuilder.custom] 显式声明 standalone 的逃生舱）。
- * [bare] = true 的条目（仅分类标题）完全裸渲染，不套任何卡片容器。
- * [groupBreak] 只分隔卡片组，保留零高度槽位以维持索引位置。
+ * [groupable] = false 的条目独占一张卡片（[PrefScopeBuilder.group] 的起止标记、`custom(raw = true)` 的页面级 body）。
+ * [raw] = true 的条目完全裸渲染，不套任何卡片容器。
+ * [groupStart]/[groupBreak] 是 [PrefScopeBuilder.group] 发出的分组起止标记：只参与分块计算，
+ * 两个线上都不占高度（material 线借结束标记的 [sectionFooter] 画卡片下方那行说明）。
  */
 internal class PrefEntry(
     val slot: Int,
@@ -164,9 +165,23 @@ internal class PrefEntry(
     val indexSummary: String?,
     val pageTarget: String?,
     val groupable: Boolean,
-    val bare: Boolean,
+    /** 自身永不进卡片：页面级整页内容、组内不参与卡片体的 body，按顺序裸渲染 */
+    val raw: Boolean,
+    /** [PrefScopeBuilder.custom] 的任意内容槽：组内当普通行，组外裸渲染 */
+    val custom: Boolean = false,
     val groupBreak: Boolean = false,
-    /** 该行参与列表增删动画（需要 [itemKey] 稳定，默认关闭） */
+    /** 分组起始标记：先切块，再把自己当成块的标题（标题与说明都为空时不作标题） */
+    val groupStart: Boolean = false,
+    /** 分组标题：画在卡片上方，两条线都走 [PrefCategoryHeader] */
+    val sectionTitle: String? = null,
+    /** 分组说明：与标题同组画在卡片上方（标题在上、说明在下） */
+    val sectionSummary: String? = null,
+    /** 分组底部说明：COUI 线画在卡片下方，material 线由结束标记自己画 */
+    val sectionFooter: String? = null,
+    /**
+     * 该行参与列表增删动画（需要 [itemKey] 稳定，默认关闭）。
+     * COUI 线的行并进同一个分组块后不再是独立 item，动画只在整块粒度生效。
+     */
     val animate: Boolean,
     val render: @Composable (slot: Int) -> Unit,
 ) {
@@ -174,89 +189,184 @@ internal class PrefEntry(
     var segCount: Int = 1
 }
 
-/** COUI 分组卡片的外圆角半径（与 [CouiPageDefaults.shape] 同值） */
-private val CouiCardCorner = 24.dp
+/**
+ * COUI 线的分组块：一个 LazyColumn item 承载 [CouiPrefGroup] 画出的整张卡片。
+ *
+ * [head] 是块首的分组起始标记或裸条目（[PrefScopeBuilder.group]、`custom(raw = true)`、组外的 [PrefScopeBuilder.custom]）：
+ * 有 [rows] 时它是卡片的标题，没有 [rows] 时它自己裸渲染在卡片之外。
+ * [rows] 是块内成组的选项行，行间由 [CouiDivider] 切分。
+ * [footer] 是卡片下方那行说明（[PrefScopeBuilder.group] 的 footer）。
+ */
+internal class PrefBlock(
+    val itemKey: String,
+    val head: PrefEntry?,
+    val rows: List<PrefEntry>,
+    val footer: String? = null,
+)
 
 /**
- * COUI 线的分组卡片横切片。
- *
- * COUI 的分组卡片是「一个 Column 装全部行」，而本页每行都是独立的 LazyColumn item，
- * 跨 item 无法共享同一个容器，因此按行切卡：组首圆上两角、组尾圆下两角、组中间直边，
- * 相邻 item 拼起来等于一张连续卡片；行间分隔线由除末行外的切片底部绘制。
- * 单行分组（[count] <= 1）直接用整卡形状。
- *
- * 水平 16dp 内缩在这里提供（与 COUI Group 的卡片内缩一致），列表层不再叠加。
- * 搜索跳转命中时用与手动长按一致的按压蒙层色叠在卡片底色上，卡片保持不透明，避免透出滚动内容。
+ * 搜索跳转命中的行底蒙层色：与手动长按同一按压蒙层色（浅色 0x1F000000 / 深色 0x33FFFFFF），
+ * 叠在卡片底色上保持不透明，避免透出滚动内容。
  */
 @Composable
-internal fun CouiScopeCard(
-    index: Int,
-    count: Int,
-    highlighted: Boolean,
+internal fun couiHighlightOverlay(card: Color): Color {
+    val dark = CouiTheme.isDark
+    return Color(if (dark) 0x33FFFFFF else 0x1F000000).compositeOver(card)
+}
+
+/**
+ * COUI 整卡容器：一段内容自成一张卡片。
+ *
+ * 只给「不成组」的内容用（[PrefCard] / [PrefSwitchCard]）：卡片前后留白由调用方给出，
+ * 这里只提供 16dp 横向内缩、24dp 平滑圆角与卡片底色。成组内容用 [CouiPrefGroup]
+ * ——它自带标题、说明、底部说明与分组前后留白，不要再用本容器拼分组卡片。
+ */
+@Composable
+internal fun CouiCard(
     modifier: Modifier = Modifier,
-    content: @Composable () -> Unit,
+    content: @Composable ColumnScope.() -> Unit,
 ) {
     val colors = CouiPageDefaults.themeColors()
-    val dark = CouiTheme.isDark
-    val shape: Shape = when {
-        count <= 1 -> CouiPageDefaults.shape
-        index <= 0 -> RoundedCornerShape(topStart = CouiCardCorner, topEnd = CouiCardCorner)
-        index >= count - 1 -> RoundedCornerShape(bottomStart = CouiCardCorner, bottomEnd = CouiCardCorner)
-        else -> RectangleShape
-    }
     Column(
         modifier = modifier
             .fillMaxWidth()
             .padding(horizontal = CouiPageDefaults.horizontalMargin)
-            .clip(shape)
-            .background(
-                if (highlighted) {
-                    // 搜索跳转高亮与手动长按用同一按压蒙层色（浅色 0x1F000000 / 深色 0x33FFFFFF），
-                    // 叠在卡片底色上保持不透明。
-                    Color(if (dark) 0x33FFFFFF else 0x1F000000).compositeOver(colors.card)
-                } else {
-                    colors.card
-                },
+            .clip(CouiPageDefaults.shape)
+            .background(colors.card),
+        content = content,
+    )
+}
+
+/**
+ * COUI 分组卡片：[PrefScopeBuilder.group] 的容器实现。
+ *
+ * 卡片内外三段文字各归其位：标题与说明画在卡片上方（标题一行、说明一行，与库 Group 的标题行同档：
+ * 12dp 分组上沿、32dp 水平内缩、[CouiTextKind.GroupTitle]，说明用 GroupFooter 样式），
+ * [footer] 画在卡片下方（库的 [CouiFooter]，32dp 水平内缩 + 上下 8dp）。
+ *
+ * 分组前后留白也在这里给：有标题走 [CouiPageDefaults.categoryTopSpacing]，无标题走
+ * [CouiPageDefaults.groupSpacing]，调用方不要再自己加 top padding。
+ */
+@Composable
+internal fun CouiPrefGroup(
+    title: String?,
+    summary: String?,
+    footer: String?,
+    modifier: Modifier = Modifier,
+    content: @Composable ColumnScope.() -> Unit,
+) {
+    val hasHeader = !title.isNullOrEmpty()
+    Column(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(
+                top = if (hasHeader) CouiPageDefaults.categoryTopSpacing else CouiPageDefaults.groupSpacing,
             ),
     ) {
-        content()
-        if (index < count - 1) CouiDivider()
+        if (title.isNullOrEmpty()) {
+            // 说明没有标题可挂时单独成行，与标题下方的说明同一版式
+            if (!summary.isNullOrEmpty()) {
+                CouiText(
+                    text = summary,
+                    kind = CouiTextKind.GroupFooter,
+                    color = CouiPageDefaults.themeColors().summary,
+                    textAlign = TextAlign.Start,
+                    modifier = Modifier.fillMaxWidth().padding(start = 32.dp, end = 32.dp, bottom = 8.dp),
+                )
+            }
+        } else {
+            PrefCategoryHeader(title = title, summary = summary)
+        }
+        CouiCard(content = content)
+        if (!footer.isNullOrEmpty()) {
+            CouiFooter(text = footer, color = CouiPageDefaults.themeColors().summary)
+        }
     }
 }
 
 /**
- * COUI 分类标题：对齐 coui demo 底栏设置页 Group 的标题样式
- * （GroupTitle 12sp 字重 500 + colors.summary，水平 32dp、上下 8dp、TextAlign.Start、heading 语义）。
- * 说明行是 LT 在标题下方的扩展：与标题同字号、弱化前景色，有说明时标题下沿收紧到 4dp、
- * 说明底部补 8dp，整体节奏沿用 AppPermissionPage 的 preference 分类标题。
+ * 分类标题 + 可选说明：**全应用唯一的分组标题版式**，[CouiPrefGroup] 与页面自绘内容
+ * （如应用权限页）都走这里，两条外观线各一套：
+ *
+ * - COUI：对齐 coui demo 底栏设置页 Group 的标题样式（GroupTitle 12sp 字重 500 + colors.summary，
+ *   水平 32dp 与分组卡片内行文字对齐、上下 8dp、TextAlign.Start、heading 语义）；
+ * - material：titleSmall + primary，说明用 bodySmall + onSurfaceVariant。
+ *
+ * 说明与标题同组渲染（标题在上、说明在下）：有说明时标题下沿收紧到 4dp、说明底部补 8dp，
+ * 有无说明两种情况的块级上下留白都是 8dp。
+ *
+ * [materialInset] 只影响 material 线：宿主的列表/行本身没有水平 contentPadding，所以默认自带 16dp；
+ * 宿主已经提供过 16dp（例如 `custom()` 里的 [PrefRowInset]）就传 0dp，避免叠成 32dp。
+ * COUI 线的 32dp 是卡片内缩 + 行内缩的固定和，不受它影响。
  */
 @Composable
-private fun CouiCategoryHeader(title: String, summary: String?) {
-    val colors = CouiPageDefaults.themeColors()
-    Column(modifier = Modifier.fillMaxWidth()) {
-        CouiText(
-            text = title,
-            kind = CouiTextKind.GroupTitle,
-            color = colors.summary,
-            // GroupTitle 在库内默认水平居中，这里与库内 Group 一样强制起始对齐
-            textAlign = TextAlign.Start,
-            modifier = Modifier
-                .fillMaxWidth()
-                .semantics { heading() }
-                .padding(start = 32.dp, end = 32.dp, top = 8.dp, bottom = if (summary == null) 8.dp else 4.dp),
-        )
-        if (summary != null) {
+internal fun PrefCategoryHeader(
+    title: String,
+    summary: String? = null,
+    materialInset: Dp = 16.dp,
+) {
+    if (LocalUiMode.current == UiMode.Coui) {
+        val colors = CouiPageDefaults.themeColors()
+        Column(modifier = Modifier.fillMaxWidth()) {
             CouiText(
-                text = summary,
-                kind = CouiTextKind.GroupFooter,
+                text = title,
+                kind = CouiTextKind.GroupTitle,
                 color = colors.summary,
+                // GroupTitle 在库内默认水平居中，这里与库内 Group 一样强制起始对齐
                 textAlign = TextAlign.Start,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(start = 32.dp, end = 32.dp, bottom = 8.dp),
+                    .semantics { heading() }
+                    .padding(start = 32.dp, end = 32.dp, top = 8.dp, bottom = if (summary == null) 8.dp else 4.dp),
             )
+            if (summary != null) {
+                CouiText(
+                    text = summary,
+                    kind = CouiTextKind.GroupFooter,
+                    color = colors.summary,
+                    textAlign = TextAlign.Start,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(start = 32.dp, end = 32.dp, bottom = 8.dp),
+                )
+            }
+        }
+    } else {
+        Column(modifier = Modifier.fillMaxWidth()) {
+            Text(
+                text = title,
+                style = MaterialTheme.typography.titleSmall,
+                color = MaterialTheme.colorScheme.primary,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .semantics { heading() }
+                    .padding(horizontal = materialInset)
+                    .padding(top = 8.dp, bottom = if (summary == null) 8.dp else 4.dp),
+            )
+            if (summary != null) {
+                Text(
+                    text = summary,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = materialInset)
+                        .padding(bottom = 8.dp),
+                )
+            }
         }
     }
+}
+
+/** material 线的分组底部说明：画在卡片下方，与标题下方那行说明同一档字号与内缩 */
+@Composable
+private fun PrefGroupFooter(text: String) {
+    Text(
+        text = text,
+        style = MaterialTheme.typography.bodySmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp).padding(top = 4.dp, bottom = 8.dp),
+    )
 }
 
 /** COUI 行的标题文字（16 号 ItemTitle）：禁用态改用 colors.disabled */
@@ -299,17 +409,18 @@ internal fun couiTrailingIconTint(dark: Boolean): Color =
     if (dark) Color(0x4DFFFFFF) else Color(0x42000000)
 
 /**
- * 偏好页声明式 DSL：用普通 lambda 声明分类、开关、列表、滑条、输入与页面入口。
+ * 偏好页声明式 DSL：用普通 lambda 声明分组、开关、列表、滑条、输入与页面入口。
  *
  * 用法：
  * ```
  * ScopeScreen(state, sendValue = { k, v -> context.sendPrefsValue(pack, k, v) }) {
- *     category("基础")
- *     switch("key1", "标题", "摘要")
- *     if (state.getBoolean("master", false)) {   // 条件可见性：任意偏好变更自动重求值
- *         slider("key2", "滑条", 1..100)
+ *     group(title = "基础", summary = "整组说明", footer = "整组脚注") {
+ *         switch("key1", "标题", "摘要")
+ *         if (state.getBoolean("master", false)) {   // 条件可见性：任意偏好变更自动重求值
+ *             slider("key2", "滑条", 1..100)
+ *         }
  *     }
- *     page("其他页面", "statusbar_clock")
+ *     page("其他页面", "statusbar_clock")   // 组外条目自成一块
  * }
  * ```
  *
@@ -329,6 +440,9 @@ class PrefScopeBuilder internal constructor(
     internal val highlightSlot = mutableStateOf<Int?>(null)
 
     internal val entries = ArrayList<PrefEntry>()
+
+    /** COUI 线的分组块（[computeSegments] 里随条目一起算好），material 线不使用 */
+    internal var blocks: List<PrefBlock> = emptyList()
 
     /** 每次重建前清空（ScopeScreen 每次重组前调用；外部索引收集同样先调用） */
     fun beginBuild() {
@@ -351,7 +465,7 @@ class PrefScopeBuilder internal constructor(
 
     @Composable
     internal fun highlightColor(slot: Int): Color {
-        // COUI 线的高亮由 CouiScopeCard 自己用强调色混卡片底色绘制，这里不读 MaterialTheme 取色。
+        // COUI 线的高亮由分组块里的行蒙层绘制（见 couiHighlightOverlay），这里不读 MaterialTheme 取色。
         // 外部页面的 custom 内容可能在 COUI 下也调用本函数（它们自绘的列表项不由本文件分派），
         // 因此守卫放在函数入口，而不是依赖调用点。
         if (LocalUiMode.current == UiMode.Coui) return Color.Transparent
@@ -379,8 +493,13 @@ class PrefScopeBuilder internal constructor(
         indexSummary: String?,
         pageTarget: String? = null,
         groupable: Boolean = true,
-        bare: Boolean = false,
+        raw: Boolean = false,
+        custom: Boolean = false,
         groupBreak: Boolean = false,
+        groupStart: Boolean = false,
+        sectionTitle: String? = null,
+        sectionSummary: String? = null,
+        sectionFooter: String? = null,
         animate: Boolean = false,
         render: @Composable (slot: Int) -> Unit,
     ) {
@@ -393,8 +512,13 @@ class PrefScopeBuilder internal constructor(
             indexSummary = indexSummary,
             pageTarget = pageTarget,
             groupable = groupable,
-            bare = bare,
+            raw = raw,
+            custom = custom,
             groupBreak = groupBreak,
+            groupStart = groupStart,
+            sectionTitle = sectionTitle,
+            sectionSummary = sectionSummary,
+            sectionFooter = sectionFooter,
             animate = animate,
             render = render,
         )
@@ -403,8 +527,8 @@ class PrefScopeBuilder internal constructor(
     /**
      * 计算分组：连续且 [PrefEntry.groupable] 的条目合并为一组。
      *
-     * 分类标题（裸渲染）把相邻条目切成不同分组；滑条与普通自定义控件都属于组内选项行，
-     * 不再独占卡片——只有显式声明 standalone 的逃生舱条目才单独成卡。
+     * 分组起止标记与页面级裸 body（`custom(raw = true)`）都是 groupable = false，各自把相邻条目切开；
+     * 滑条、自定义控件等选项行一律并入所在分组卡片。
      */
     internal fun computeSegments() {
         var i = 0
@@ -424,51 +548,108 @@ class PrefScopeBuilder internal constructor(
             }
             i = j + 1
         }
+        computeBlocks()
+    }
+
+    /**
+     * 按块切开 COUI 线的条目：[group] 的起始标记开一块、结束标记收尾，标记之间的行就是这块的卡片内容。
+     *
+     * [PrefScopeBuilder.custom] 在组内是普通行，在组外裸渲染（不与相邻条目拼卡，也不套卡片）；
+     * 声明了 [PrefEntry.raw] 的条目与没有行的分组标题各自独占一块。
+     */
+    private fun computeBlocks() {
+        val result = ArrayList<PrefBlock>()
+        var head: PrefEntry? = null
+        var rows = ArrayList<PrefEntry>()
+        var inGroup = false
+
+        fun flush() {
+            if (head == null && rows.isEmpty()) return
+            result += PrefBlock(head?.itemKey ?: rows.first().itemKey, head, rows)
+            head = null
+            rows = ArrayList()
+        }
+
+        entries.forEach { entry ->
+            when {
+                entry.groupStart -> {
+                    flush()
+                    inGroup = true
+                    if (entry.sectionTitle != null || entry.sectionSummary != null) head = entry
+                }
+                // 结束标记：footer 归它之前那一块，块本身空着就整块丢弃
+                entry.groupBreak -> {
+                    if (head != null || rows.isNotEmpty()) {
+                        result += PrefBlock(head?.itemKey ?: rows.first().itemKey, head, rows, entry.sectionFooter)
+                    }
+                    head = null
+                    rows = ArrayList()
+                    inGroup = false
+                }
+                // 不进卡片的条目：页面级整页内容、没有行的分组标题
+                entry.raw -> {
+                    flush()
+                    result += PrefBlock(entry.itemKey, entry, emptyList())
+                }
+                // 组外的 custom 不是行：裸渲染，不和相邻条目拼成无标题卡片
+                entry.custom && !inGroup -> {
+                    flush()
+                    result += PrefBlock(entry.itemKey, entry, emptyList())
+                }
+                !entry.groupable -> {
+                    flush()
+                    result += PrefBlock(entry.itemKey, null, listOf(entry))
+                }
+                else -> rows += entry
+            }
+        }
+        flush()
+        blocks = result
+    }
+
+    /** 条目槽位 → COUI 线列表 item 下标（滚动定位用；找不到返回 -1） */
+    internal fun blockIndexOf(slot: Int): Int = blocks.indexOfFirst { block ->
+        block.head?.slot == slot || block.rows.any { it.slot == slot }
     }
 
     // ---------------- DSL 项 ----------------
 
-    /** 开始一张无标题分组卡片；沿用列表的组间距，不额外绘制分类标题。 */
-    fun group() = emit(
-        null, null, null, null,
-        groupable = false,
-        bare = true,
-        groupBreak = true,
-    ) { }
-
     /**
-     * 分类标题：不套卡片，裸渲染在分组卡片之上。
-     * [summary] 与标题同组渲染（标题在上、说明在下），
-     * 不再作为独立的文字组件悬在分类之下。
+     * 一张分组卡片：卡片里的行由 [content] 直接声明，行间分隔线由渲染层自动插，不用手写 divider。
+     *
+     * [title]/[summary] 画在卡片上方（标题一行、说明一行，见 [PrefCategoryHeader]），
+     * [footer] 画在卡片下方；三个都可以省略，全省略就是一张无标题卡片。
+     * 卡片之间的留白由渲染层统一给，不要再自己加 padding。
      */
-    fun category(title: String, summary: String? = null) =
-        emit(null, null, null, null, groupable = false, bare = true) { _ ->
-            if (LocalUiMode.current == UiMode.Coui) {
-                CouiCategoryHeader(title = title, summary = summary)
-            } else {
-                Column(modifier = Modifier.fillMaxWidth()) {
-                    Text(
-                        text = title,
-                        style = MaterialTheme.typography.titleSmall,
-                        color = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(start = 16.dp)
-                            .padding(vertical = 8.dp),
-                    )
-                    if (summary != null) {
-                        Text(
-                            text = summary,
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(start = 16.dp, end = 16.dp, bottom = 8.dp),
-                        )
-                    }
-                }
-            }
+    fun group(
+        title: String? = null,
+        summary: String? = null,
+        footer: String? = null,
+        content: PrefScopeBuilder.() -> Unit,
+    ) {
+        emit(
+            null, null, null, null,
+            groupable = false,
+            raw = true,
+            groupStart = true,
+            sectionTitle = title,
+            sectionSummary = summary,
+        ) { _ ->
+            // 仅 material 线会走到这里（COUI 线由 CouiPrefGroup 画标题）；没标题就没有可画的内容
+            if (!title.isNullOrEmpty()) PrefCategoryHeader(title = title, summary = summary)
         }
+        content()
+        emit(
+            null, null, null, null,
+            groupable = false,
+            raw = true,
+            groupBreak = true,
+            sectionFooter = footer?.takeIf { it.isNotEmpty() },
+        ) { _ ->
+            // 同理：只有 material 线需要自己画卡片下方这行说明
+            if (!footer.isNullOrEmpty()) PrefGroupFooter(footer)
+        }
+    }
 
     /** 开关（对应 SwitchPreference + setOnPreferenceChangeListener）：整行点击 + Expressive 开关 */
     fun switch(
@@ -1069,21 +1250,23 @@ class PrefScopeBuilder internal constructor(
     /**
      * 逃生舱：任意自定义 Composable（ColorPicker、应用选择器等特殊控件用），receiver 可访问 state 等。
      *
-     * [standalone] = true 时独占一张卡片（非「选项行」内容，如搜索框、页面级 body）；
-     * 默认 false 时并入所在分组卡片——分类分组内不允许出现独立卡片。
-     * [bare] = true 的条目自身不套卡片容器，因而永远不参与分组合并。
+     * 默认就是一个普通分组行：并入所在分组卡片、参与自动分隔线；要它独占一张卡片就连着 [group] 用
+     *（`group { custom { ... } }`，渲染结果与普通单行成组完全一致）。分组内不要再自己画卡片。
+     * 组外调用时不套卡片、不与相邻条目拼卡（整页自定义内容、宿主容器就是这么写的）；
+     * [raw] = true 用于「在组内但要标题、又不能进卡片体」的内容（整页拖拽区这类），
+     * 它永远不参与卡片体，只按顺序裸渲染。
      */
     fun custom(
         key: String? = null,
         title: String? = null,
         summary: String? = null,
-        bare: Boolean = false,
-        standalone: Boolean = false,
+        raw: Boolean = false,
         content: @Composable PrefScopeBuilder.(slot: Int) -> Unit,
     ) = emit(
         key, key, title, summary,
-        groupable = !standalone && !bare,
-        bare = bare,
+        groupable = !raw,
+        raw = raw,
+        custom = true,
         render = { slot -> content(this, slot) },
     )
 }
@@ -1124,6 +1307,7 @@ fun ScopeScreen(
     builder.computeSegments()
 
     val listState = rememberLazyListState()
+    val coui = LocalUiMode.current == UiMode.Coui
     LaunchedEffect(scrollTarget) {
         val target = scrollTarget ?: return@LaunchedEffect
         val slot = if (target.key.isNotBlank()) {
@@ -1132,7 +1316,10 @@ fun ScopeScreen(
         } else {
             target.position.takeIf { it >= 0 } ?: return@LaunchedEffect
         }
-        listState.animateScrollToItem(slot)
+        // COUI 线的列表 item 是分组块而不是单行，槽位要先换成块下标
+        val itemIndex = if (coui) builder.blockIndexOf(slot) else slot
+        if (itemIndex < 0) return@LaunchedEffect
+        listState.animateScrollToItem(itemIndex)
         builder.highlightSlot.value = slot
         delay(2500.milliseconds)
         if (builder.highlightSlot.value == slot) builder.highlightSlot.value = null
@@ -1169,63 +1356,90 @@ fun ScopeScreen(
         if (pageFullContent != null) {
             item(key = "full") { pageFullContent(this, builder) }
         } else {
-            builder.entries.forEachIndexed { index, entry ->
-                item(key = entry.itemKey) {
-                    if (entry.groupBreak) {
-                        // 保留零高度槽位，让搜索索引和滚动定位仍与 entry.slot 一致。
-                        return@item
-                    }
-                    // 逐行增删动画：只挂到 DSL 显式声明 animate 的行，其余页面行为完全不变。
-                    // 淡出/淡入按 key 认身份，所以这类行必须同时传稳定的 itemKey（默认槽位 key 会漂移）。
-                    val animModifier = if (entry.animate) Modifier.animateItem() else Modifier
-                    if (entry.bare) {
-                        // 分类标题：不套卡片，裸渲染在分组卡片之上。
-                        // 顶部间距沿用原卡片路径的取值，纵向节奏与改动前一致。
-                        val topGap = when {
-                            // COUI 线：首个分类不额外留白（页面骨架已给顶栏留白），
-                            // 其余分类与上一组之间用 COUI 的分组前间距
-                            LocalUiMode.current == UiMode.Coui ->
-                                if (entry.slot == 0) 0.dp else CouiPageDefaults.categoryTopSpacing
-                            else -> if (entry.slot == 0) 0.dp else 8.dp
-                        }
-                        Box(modifier = animModifier.padding(top = topGap)) {
-                            entry.render(entry.slot)
-                        }
-                    } else if (LocalUiMode.current == UiMode.Coui) {
-                        CouiScopeCard(
-                            index = entry.segIndex,
-                            count = entry.segCount,
-                            highlighted = builder.highlightSlot.value == entry.slot,
-                            modifier = animModifier.padding(
-                                top = when {
-                                    entry.slot == 0 -> 0.dp
-                                    // 组首与上一组之间用 COUI 的分组间距，组内条目直接连成一张卡片。
-                                    // 但组首上方是分类标题时不再叠加：标题自身带下留白，叠加后离卡片太远，
-                                    // 与 coui demo Group 标题行贴紧卡片不一致。
-                                    entry.segIndex == 0 -> {
-                                        val previous = builder.entries.getOrNull(index - 1)
-                                        if (previous != null && previous.bare && !previous.groupBreak) 0.dp
-                                        else CouiPageDefaults.groupSpacing
-                                    }
-                                    else -> 0.dp
-                                }
-                            ),
-                        ) {
-                            entry.render(entry.slot)
-                        }
-                    } else {
-                        AppItem(index = entry.segIndex, count = entry.segCount) {
-                            Box(
-                                modifier = animModifier.padding(
-                                    top = when {
-                                        entry.slot == 0 -> 0.dp
-                                        entry.segIndex == 0 -> 8.dp
-                                        // 组内条目：0dp，同一分组拼成一张连续卡片
-                                        else -> DesignTokens.ItemGap
-                                    }
-                                )
+            if (coui) {
+                // COUI 线：一个分组块就是一个 LazyColumn item，整张卡片交给 CouiPrefGroup
+                //（标题/说明/底部说明 + 分组前后留白 + 行间分隔线），行内容只负责自己那一行。
+                builder.blocks.forEach { block ->
+                    item(key = block.itemKey) {
+                        val head = block.head
+                        val animated = head?.animate == true || block.rows.any { it.animate }
+                        val animModifier = if (animated) Modifier.animateItem() else Modifier
+                        if (block.rows.isEmpty()) {
+                            // 裸条目（组外的 custom、`raw = true` 的页面级内容、没有行的分组标题）：自身不套卡片。
+                            val topGap = if (head!!.slot == 0) 0.dp else CouiPageDefaults.categoryTopSpacing
+                            Box(modifier = animModifier.padding(top = topGap)) {
+                                head.render(head.slot)
+                            }
+                        } else {
+                            val overlay = couiHighlightOverlay(CouiPageDefaults.themeColors().card)
+                            CouiPrefGroup(
+                                title = head?.sectionTitle,
+                                summary = head?.sectionSummary,
+                                footer = block.footer,
+                                modifier = animModifier,
                             ) {
+                                block.rows.forEachIndexed { rowIndex, entry ->
+                                    if (rowIndex > 0) CouiDivider()
+                                    Box(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .then(
+                                                if (builder.highlightSlot.value == entry.slot) {
+                                                    Modifier.background(overlay)
+                                                } else {
+                                                    Modifier
+                                                },
+                                            ),
+                                    ) {
+                                        entry.render(entry.slot)
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            } else {
+                builder.entries.forEach { entry ->
+                    item(key = entry.itemKey) {
+                        if (entry.groupBreak) {
+                            // 分组结束标记：带 footer 的画卡片下方那行说明，其余保留零高度槽位，
+                            // 让搜索索引和滚动定位仍与 entry.slot 一致。
+                            entry.render(entry.slot)
+                            return@item
+                        }
+                        // 逐行增删动画：只挂到 DSL 显式声明 animate 的行，其余页面行为完全不变。
+                        // 淡出/淡入按 key 认身份，所以这类行必须同时传稳定的 itemKey（默认槽位 key 会漂移）。
+                        val animModifier = if (entry.animate) Modifier.animateItem() else Modifier
+                        if (entry.groupStart) {
+                            // 分组起始标记：material 线由它画分类标题（COUI 线由 CouiPrefGroup 画）
+                            if (entry.sectionTitle != null || entry.sectionSummary != null) {
+                                val topGap = if (entry.slot == 0) 0.dp else 8.dp
+                                Box(modifier = animModifier.padding(top = topGap)) {
+                                    entry.render(entry.slot)
+                                }
+                            }
+                            return@item
+                        }
+                        if (entry.raw) {
+                            // 裸条目：不套卡片，裸渲染在分组卡片之上。
+                            val topGap = if (entry.slot == 0) 0.dp else 8.dp
+                            Box(modifier = animModifier.padding(top = topGap)) {
                                 entry.render(entry.slot)
+                            }
+                        } else {
+                            AppItem(index = entry.segIndex, count = entry.segCount) {
+                                Box(
+                                    modifier = animModifier.padding(
+                                        top = when {
+                                            entry.slot == 0 -> 0.dp
+                                            entry.segIndex == 0 -> 8.dp
+                                            // 组内条目：0dp，同一分组拼成一张连续卡片
+                                            else -> DesignTokens.ItemGap
+                                        }
+                                    )
+                                ) {
+                                    entry.render(entry.slot)
+                                }
                             }
                         }
                     }
@@ -1249,13 +1463,13 @@ fun ScopeScreen(
     val listBottomPadding = 8.dp + LocalShellBottomInset.current
     val list: @Composable (Modifier) -> Unit = { listModifier ->
         if (LocalUiMode.current == UiMode.Coui) {
-            // COUI 线：卡片自带 16dp 横向内缩（见 CouiScopeCard），列表不再叠一层；
-            // 顶部额外留一组间距，让首卡与顶栏之间保持和其他列表页（FunctionList）一致的间距
+            // COUI 线：卡片自带 16dp 横向内缩，分组前后留白也由 Group 自己给，
+            // 列表层只补顶栏高度，否则首块会离顶栏多出一组间距。
             LazyColumn(
                 modifier = listModifier,
                 state = listState,
                 contentPadding = PaddingValues(
-                    top = LocalScopeTopInset.current + CouiPageDefaults.groupSpacing,
+                    top = LocalScopeTopInset.current,
                     bottom = listBottomPadding,
                 ),
                 overscrollEffect = couiOverscroll,

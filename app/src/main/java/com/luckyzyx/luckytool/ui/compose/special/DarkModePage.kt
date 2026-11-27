@@ -240,7 +240,7 @@ internal fun LazyItemScope.DarkModeContent(builder: PrefScopeBuilder) {
         modifier = Modifier.fillParentMaxHeight(),
     ) {
         Column(Modifier.fillParentMaxHeight()) {
-            // COUI 线的分组卡片自带 16dp 水平内缩（CouiScopeCard），页级 padding 只补给 Material 线，
+            // COUI 线的分组卡片自带 16dp 水平内缩（CouiCard / 库的 Group），页级 padding 只补给 Material 线，
             // 否则开关卡左右各多缩 16dp，与搜索框 / 列表对不齐。
             PrefGroup(
                 modifier = if (LocalUiMode.current == UiMode.Coui) Modifier else Modifier.padding(horizontal = 16.dp),

@@ -158,86 +158,47 @@ fun SearchPage(isCurrentPage: Boolean, onOpen: (ScopeRoute) -> Unit) {
             val historyClearText = stringResource(R.string.search_history_clear)
             CompositionLocalProvider(LocalScopeTopInset provides topInset) {
                 ScopeScreen(state = settings, modifier = scopeModifier) {
-                // 搜索框不是「选项行」，独占一张卡片（否则会与紧随其后的结果行拼在一起）
-                custom(key = "search_field", standalone = true) {
-                    // 顶栏折叠/展开由列表滚动驱动：滚动一开始就清掉搜索框焦点并收键盘，
-                    // 否则仍聚焦的字段会在布局变化时被平台恢复输入法。
-                    val scopeListState = LocalScopeListState.current
-                    val focusManager = LocalFocusManager.current
-                    LaunchedEffect(scopeListState, focusManager, keyboardController) {
-                        if (scopeListState == null) return@LaunchedEffect
-                        snapshotFlow { scopeListState.isScrollInProgress }
-                            .collect { scrolling ->
-                                if (scrolling) {
-                                    // freeFocus 只释放 Captured 焦点，对普通聚焦的输入框无效，
-                                    // 必须用 FocusManager.clearFocus 才能真正清焦并收键盘。
-                                    focusManager.clearFocus(force = true)
-                                    keyboardController?.hide()
-                                }
-                            }
-                    }
-                    MaterialTextField(
-                        value = queryNow,
-                        onValueChange = { query = it },
-                        placeholder = { Text(stringResource(R.string.menu_search)) },
-                        singleLine = true,
-                        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
-                        keyboardActions = androidx.compose.foundation.text.KeyboardActions(
-                            onSearch = { recordHistory(queryNow) },
-                        ),
-                        focusRequester = searchFocusRequester,
-                        leadingContent = {
-                            Icon(
-                                painterResource(R.drawable.ic_baseline_search_24),
-                                contentDescription = null,
-                            )
-                        },
-                        trailingContent = if (queryNow.isNotEmpty()) {
-                            {
-                                // 清空按钮跟随当前渲染线：搜索框两条线共用同一个入口，
-                                // 里面混进另一种线族的按钮会在 COUI 线上露出 Material 的点击态
-                                when (LocalUiMode.current) {
-                                    UiMode.Material -> IconButton(onClick = { query = "" }) {
-                                        Icon(
-                                            painterResource(R.drawable.ic_baseline_close_24),
-                                            contentDescription = stringResource(R.string.clear),
-                                        )
-                                    }
-
-                                    UiMode.Coui -> CouiIconButton(
-                                        onClick = { query = "" },
-                                        contentDescription = stringResource(R.string.clear),
-                                    ) {
-                                        // 图标语义由按钮统一声明，这里传 null 免得读屏播报两遍
-                                        Icon(
-                                            painterResource(R.drawable.ic_baseline_close_24),
-                                            contentDescription = null,
-                                            tint = CouiTheme.colorScheme.onSurface,
-                                        )
+                group {
+                    // 搜索框不是「选项行」：单独成一组，卡片由 group 给，不与紧随其后的结果行拼在一起
+                    custom(key = "search_field") {
+                        // 顶栏折叠/展开由列表滚动驱动：滚动一开始就清掉搜索框焦点并收键盘，
+                        // 否则仍聚焦的字段会在布局变化时被平台恢复输入法。
+                        val scopeListState = LocalScopeListState.current
+                        val focusManager = LocalFocusManager.current
+                        LaunchedEffect(scopeListState, focusManager, keyboardController) {
+                            if (scopeListState == null) return@LaunchedEffect
+                            snapshotFlow { scopeListState.isScrollInProgress }
+                                .collect { scrolling ->
+                                    if (scrolling) {
+                                        // freeFocus 只释放 Captured 焦点，对普通聚焦的输入框无效，
+                                        // 必须用 FocusManager.clearFocus 才能真正清焦并收键盘。
+                                        focusManager.clearFocus(force = true)
+                                        keyboardController?.hide()
                                     }
                                 }
-                            }
-                        } else {
-                            null
-                        },
-                    )
-                }
-                if (queryNow.isBlank()) {
-                    // 空查询时给最近搜索历史留出入口：点一条即填入，右侧按钮只删这一条
-                    if (historyNow.isNotEmpty()) {
-                        // 分类标题裸渲染在分组之上，不套卡片
-                        category(historyTitleText)
-                        historyNow.forEach { term ->
-                            click(
-                                title = term,
-                                trailing = {
+                        }
+                        MaterialTextField(
+                            value = queryNow,
+                            onValueChange = { query = it },
+                            placeholder = { Text(stringResource(R.string.menu_search)) },
+                            singleLine = true,
+                            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
+                            keyboardActions = androidx.compose.foundation.text.KeyboardActions(
+                                onSearch = { recordHistory(queryNow) },
+                            ),
+                            focusRequester = searchFocusRequester,
+                            leadingContent = {
+                                Icon(
+                                    painterResource(R.drawable.ic_baseline_search_24),
+                                    contentDescription = null,
+                                )
+                            },
+                            trailingContent = if (queryNow.isNotEmpty()) {
+                                {
+                                    // 清空按钮跟随当前渲染线：搜索框两条线共用同一个入口，
+                                    // 里面混进另一种线族的按钮会在 COUI 线上露出 Material 的点击态
                                     when (LocalUiMode.current) {
-                                        UiMode.Material -> IconButton(
-                                            onClick = {
-                                                history = history.filterNot { it == term }
-                                                writeSearchHistory(context, history)
-                                            },
-                                        ) {
+                                        UiMode.Material -> IconButton(onClick = { query = "" }) {
                                             Icon(
                                                 painterResource(R.drawable.ic_baseline_close_24),
                                                 contentDescription = stringResource(R.string.clear),
@@ -245,30 +206,72 @@ fun SearchPage(isCurrentPage: Boolean, onOpen: (ScopeRoute) -> Unit) {
                                         }
 
                                         UiMode.Coui -> CouiIconButton(
-                                            onClick = {
-                                                history = history.filterNot { it == term }
-                                                writeSearchHistory(context, history)
-                                            },
+                                            onClick = { query = "" },
                                             contentDescription = stringResource(R.string.clear),
                                         ) {
+                                            // 图标语义由按钮统一声明，这里传 null 免得读屏播报两遍
                                             Icon(
                                                 painterResource(R.drawable.ic_baseline_close_24),
                                                 contentDescription = null,
-                                                tint = CouiTheme.colorScheme.onSurfaceVariant,
+                                                tint = CouiTheme.colorScheme.onSurface,
                                             )
                                         }
                                     }
-                                },
-                                onClick = { query = term },
-                            )
-                        }
-                        click(
-                            title = historyClearText,
-                            onClick = {
-                                history = emptyList()
-                                writeSearchHistory(context, history)
+                                }
+                            } else {
+                                null
                             },
                         )
+                    }
+                }
+                if (queryNow.isBlank()) {
+                    // 空查询时给最近搜索历史留出入口：点一条即填入，右侧按钮只删这一条
+                    if (historyNow.isNotEmpty()) {
+                        // 分类标题裸渲染在分组之上，不套卡片
+                        group(title = historyTitleText) {
+                            historyNow.forEach { term ->
+                                click(
+                                    title = term,
+                                    trailing = {
+                                        when (LocalUiMode.current) {
+                                            UiMode.Material -> IconButton(
+                                                onClick = {
+                                                    history = history.filterNot { it == term }
+                                                    writeSearchHistory(context, history)
+                                                },
+                                            ) {
+                                                Icon(
+                                                    painterResource(R.drawable.ic_baseline_close_24),
+                                                    contentDescription = stringResource(R.string.clear),
+                                                )
+                                            }
+
+                                            UiMode.Coui -> CouiIconButton(
+                                                onClick = {
+                                                    history = history.filterNot { it == term }
+                                                    writeSearchHistory(context, history)
+                                                },
+                                                contentDescription = stringResource(R.string.clear),
+                                            ) {
+                                                Icon(
+                                                    painterResource(R.drawable.ic_baseline_close_24),
+                                                    contentDescription = null,
+                                                    tint = CouiTheme.colorScheme.onSurfaceVariant,
+                                                )
+                                            }
+                                        }
+                                    },
+                                    onClick = { query = term },
+                                )
+                            }
+                            click(
+                                title = historyClearText,
+                                onClick = {
+                                    history = emptyList()
+                                    writeSearchHistory(context, history)
+                                },
+                            )
+                        }
                     }
                 } else {
                     if (entriesNow.isEmpty()) {

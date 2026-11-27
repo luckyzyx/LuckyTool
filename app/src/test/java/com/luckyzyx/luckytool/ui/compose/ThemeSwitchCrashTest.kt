@@ -56,15 +56,16 @@ class ThemeSwitchCrashTest {
                             state = settings,
                             modifier = Modifier.fillMaxSize().padding(padding),
                         ) {
-                            group()
-                            list(
-                                key = ThemeController.KEY_UI_MODE,
-                                title = "界面风格",
-                                entries = UiMode.entries.map { it.name }.toTypedArray(),
-                                entryValues = UiMode.entries.map { it.value }.toTypedArray(),
-                                default = UiMode.DEFAULT_VALUE,
-                                onChange = { ThemePrefs.notifyChanged() },
-                            )
+                            group(title = "外观") {
+                                list(
+                                    key = ThemeController.KEY_UI_MODE,
+                                    title = "界面风格",
+                                    entries = UiMode.entries.map { it.name }.toTypedArray(),
+                                    entryValues = UiMode.entries.map { it.value }.toTypedArray(),
+                                    default = UiMode.DEFAULT_VALUE,
+                                    onChange = { ThemePrefs.notifyChanged() },
+                                )
+                            }
                         }
                     }
                 }

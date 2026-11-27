@@ -43,75 +43,76 @@ object OplusOTAPage {
             key = "remove_ota_auto_download_dialog",
             title = c.getString(R.string.remove_ota_auto_download_dialog),
         )
-        category("OTA")
-        // 纯信息型（不可点击）：展示当前 OTA 校验结果
-        // shell 调用只在渲染期执行：headless 索引构建不得执行任何 IO
-        val verifyTitle = c.getString(R.string.get_ota_verify_result)
-        custom(key = "get_ota_verify_result", title = verifyTitle) {
-            val verifySummary = stringResource(
-                R.string.get_ota_verify_result_summary,
-                formatStringAuto(
-                    runCatching {
-                        ShellUtils.fastCmd("${CommandUtils.getprop} ${CommandUtils.otaVerifyResult}")
-                            .split(",")
-                    }.getOrDefault(emptyList()),
-                    ",", false,
-                ),
-            )
-            PrefRowInset {
-                PrefRow(
-                    title = verifyTitle,
-                    summary = verifySummary,
+        group(title = "OTA") {
+            // 纯信息型（不可点击）：展示当前 OTA 校验结果
+            // shell 调用只在渲染期执行：headless 索引构建不得执行任何 IO
+            val verifyTitle = c.getString(R.string.get_ota_verify_result)
+            custom(key = "get_ota_verify_result", title = verifyTitle) {
+                val verifySummary = stringResource(
+                    R.string.get_ota_verify_result_summary,
+                    formatStringAuto(
+                        runCatching {
+                            ShellUtils.fastCmd("${CommandUtils.getprop} ${CommandUtils.otaVerifyResult}")
+                                .split(",")
+                        }.getOrDefault(emptyList()),
+                        ",", false,
+                    ),
                 )
+                PrefRowInset {
+                    PrefRow(
+                        title = verifyTitle,
+                        summary = verifySummary,
+                    )
+                }
             }
-        }
-        // 解锁本地升级（原 Preference 点击执行 shell 命令序列）
-        custom(
-            key = "unlock_local_upgrade",
-            title = c.getString(R.string.unlock_local_upgrade),
-            summary = c.getString(R.string.unlock_local_upgrade_summary),
-        ) {
-            val lifecycleOwner = LocalLifecycleOwner.current
-            PrefRowInset {
-                PrefRow(
-                    title = stringResource(R.string.unlock_local_upgrade),
-                    summary = stringResource(R.string.unlock_local_upgrade_summary),
-                    onClick = {
-                        lifecycleOwner.scopeLife {
-                            val command = arrayOf(
-                                "settings put global development_settings_enabled 1",
-                                "pm clear com.oplus.ota",
-                                "settings put global airplane_mode_on 1",
-                                "am broadcast --user all -a android.intent.action.AIRPLANE_MODE --ez 'state' 'true'",
-                                "am start com.oplus.ota/com.oplus.otaui.activity.EntryActivity"
-                            )
-                            withDefault { ShellUtils.fastCmd(*command) }
-                        }
-                    },
-                )
+            // 解锁本地升级（原 Preference 点击执行 shell 命令序列）
+            custom(
+                key = "unlock_local_upgrade",
+                title = c.getString(R.string.unlock_local_upgrade),
+                summary = c.getString(R.string.unlock_local_upgrade_summary),
+            ) {
+                val lifecycleOwner = LocalLifecycleOwner.current
+                PrefRowInset {
+                    PrefRow(
+                        title = stringResource(R.string.unlock_local_upgrade),
+                        summary = stringResource(R.string.unlock_local_upgrade_summary),
+                        onClick = {
+                            lifecycleOwner.scopeLife {
+                                val command = arrayOf(
+                                    "settings put global development_settings_enabled 1",
+                                    "pm clear com.oplus.ota",
+                                    "settings put global airplane_mode_on 1",
+                                    "am broadcast --user all -a android.intent.action.AIRPLANE_MODE --ez 'state' 'true'",
+                                    "am start com.oplus.ota/com.oplus.otaui.activity.EntryActivity"
+                                )
+                                withDefault { ShellUtils.fastCmd(*command) }
+                            }
+                        },
+                    )
+                }
             }
-        }
-        switch(
-            key = "remove_ota_local_update_verity",
-            title = c.getString(R.string.remove_ota_local_update_verity),
-        )
-        if (osCode >= 30 && SystemProperties.getBoolean("oplus.opex.merge", false)) {
             switch(
-                key = "enable_opex_local_install",
-                title = c.getString(R.string.enable_opex_local_install),
-                summary = c.getString(R.string.enable_opex_local_install_summary),
+                key = "remove_ota_local_update_verity",
+                title = c.getString(R.string.remove_ota_local_update_verity),
             )
-        }
-        switch(
-            key = "disable_dm_verity_verification",
-            title = c.getString(R.string.disable_dm_verity_verification),
-        )
-        if (osCode < 37) {
-            page(
-                title = c.getString(R.string.extract_ota_information),
-                target = "extractOTAFragment",
-                summary = c.getString(R.string.extract_ota_information_summary),
+            if (osCode >= 30 && SystemProperties.getBoolean("oplus.opex.merge", false)) {
+                switch(
+                    key = "enable_opex_local_install",
+                    title = c.getString(R.string.enable_opex_local_install),
+                    summary = c.getString(R.string.enable_opex_local_install_summary),
+                )
+            }
+            switch(
+                key = "disable_dm_verity_verification",
+                title = c.getString(R.string.disable_dm_verity_verification),
             )
+            if (osCode < 37) {
+                page(
+                    title = c.getString(R.string.extract_ota_information),
+                    target = "extractOTAFragment",
+                    summary = c.getString(R.string.extract_ota_information_summary),
+                )
+            }
         }
     }
 }

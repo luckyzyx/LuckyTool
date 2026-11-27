@@ -44,83 +44,85 @@ object FingerPrintRelatedPage {
         restartEnabled = true,
     ) {
         val c = requireNotNull(context) { "ScopeScreen 未注入 Context" }
-        list(
-            key = "remove_fingerprint_icon_mode",
-            title = c.getString(R.string.remove_fingerprint_icon_mode),
-            entries = c.resources.getStringArray(R.array.remove_fingerprint_icon_mode_entries),
-            entryValues = arrayOf("0", "1", "2", "3"),
-            default = "0",
-            summary = c.getString(R.string.current_mode) + ": %s",
-        )
-        switch(
-            key = "replace_fingerprint_icon_switch",
-            title = c.getString(R.string.replace_fingerprint_icon_switch),
-            summary = c.getString(R.string.replace_fingerprint_icon_switch_summary),
-        )
-        if (state.getBoolean("replace_fingerprint_icon_switch")) {
-            val pathTitle = c.getString(R.string.replace_fingerprint_icon_path)
-            val path = state.getString("replace_fingerprint_icon_path", "") ?: ""
-            val pathSummary = if (path.isBlank()) "Null" else path
-            custom(
-                key = "replace_fingerprint_icon_path",
-                title = pathTitle,
-                summary = pathSummary,
-            ) {
-                val launcher = rememberLauncherForActivityResult(CropImageContract()) {
-                    if (it.second.isSuccessful) {
-                        val uri = it.second.uriContent
-                        val resultPath = uri?.path ?: ""
-                        if (uri == null || uri == Uri.EMPTY) {
-                            return@rememberLauncherForActivityResult
-                        }
-                        if (resultPath.isNotBlank()) {
-                            c.showToast(resultPath)
-                            c.putString(ModulePrefs, it.first, resultPath)
-                        }
-                    } else {
-                        LogUtils.e("CropImage", it.first, it.second.error.toString(), true)
-                    }
-                }
-                val bitmap = remember(path) {
-                    if (path.isBlank()) null else BitmapFactory.decodeFile(path)
-                }
-                PrefRowInset {
-                    PrefRow(
-                        title = pathTitle,
-                        summary = pathSummary,
-                        leading = {
-                            bitmap?.let {
-                                Image(
-                                    it.asImageBitmap(),
-                                    contentDescription = null,
-                                    modifier = Modifier.size(36.dp),
-                                )
+        group {
+            list(
+                key = "remove_fingerprint_icon_mode",
+                title = c.getString(R.string.remove_fingerprint_icon_mode),
+                entries = c.resources.getStringArray(R.array.remove_fingerprint_icon_mode_entries),
+                entryValues = arrayOf("0", "1", "2", "3"),
+                default = "0",
+                summary = c.getString(R.string.current_mode) + ": %s",
+            )
+            switch(
+                key = "replace_fingerprint_icon_switch",
+                title = c.getString(R.string.replace_fingerprint_icon_switch),
+                summary = c.getString(R.string.replace_fingerprint_icon_switch_summary),
+            )
+            if (state.getBoolean("replace_fingerprint_icon_switch")) {
+                val pathTitle = c.getString(R.string.replace_fingerprint_icon_path)
+                val path = state.getString("replace_fingerprint_icon_path", "") ?: ""
+                val pathSummary = if (path.isBlank()) "Null" else path
+                custom(
+                    key = "replace_fingerprint_icon_path",
+                    title = pathTitle,
+                    summary = pathSummary,
+                ) {
+                    val launcher = rememberLauncherForActivityResult(CropImageContract()) {
+                        if (it.second.isSuccessful) {
+                            val uri = it.second.uriContent
+                            val resultPath = uri?.path ?: ""
+                            if (uri == null || uri == Uri.EMPTY) {
+                                return@rememberLauncherForActivityResult
                             }
-                        },
-                        onClick = {
-                            val cacheImageFile = FileUtils.createCacheFile(c, "png")
-                            val cacheImageUri = FileProvider.getUriForFile(
-                                c, "${BuildConfig.APPLICATION_ID}.FileProvider", cacheImageFile
-                            )
-                            launcher.launch(
-                                "replace_fingerprint_icon_path" to CropImageContractOptions(
-                                    null, CropImageOptions().apply {
-                                        activityTitle = pathTitle
-                                        cropShape = CropImageView.CropShape.RECTANGLE
-                                        guidelines = CropImageView.Guidelines.ON_TOUCH
-                                        aspectRatioX = 216
-                                        aspectRatioY = 216
-                                        maxCropResultWidth = 216
-                                        maxCropResultHeight = 216
-                                        fixAspectRatio = true
-                                        customOutputUri = cacheImageUri
-                                        outputCompressFormat = Bitmap.CompressFormat.PNG
-                                        outputCompressQuality = 100
-                                    }
+                            if (resultPath.isNotBlank()) {
+                                c.showToast(resultPath)
+                                c.putString(ModulePrefs, it.first, resultPath)
+                            }
+                        } else {
+                            LogUtils.e("CropImage", it.first, it.second.error.toString(), true)
+                        }
+                    }
+                    val bitmap = remember(path) {
+                        if (path.isBlank()) null else BitmapFactory.decodeFile(path)
+                    }
+                    PrefRowInset {
+                        PrefRow(
+                            title = pathTitle,
+                            summary = pathSummary,
+                            leading = {
+                                bitmap?.let {
+                                    Image(
+                                        it.asImageBitmap(),
+                                        contentDescription = null,
+                                        modifier = Modifier.size(36.dp),
+                                    )
+                                }
+                            },
+                            onClick = {
+                                val cacheImageFile = FileUtils.createCacheFile(c, "png")
+                                val cacheImageUri = FileProvider.getUriForFile(
+                                    c, "${BuildConfig.APPLICATION_ID}.FileProvider", cacheImageFile
                                 )
-                            )
-                        },
-                    )
+                                launcher.launch(
+                                    "replace_fingerprint_icon_path" to CropImageContractOptions(
+                                        null, CropImageOptions().apply {
+                                            activityTitle = pathTitle
+                                            cropShape = CropImageView.CropShape.RECTANGLE
+                                            guidelines = CropImageView.Guidelines.ON_TOUCH
+                                            aspectRatioX = 216
+                                            aspectRatioY = 216
+                                            maxCropResultWidth = 216
+                                            maxCropResultHeight = 216
+                                            fixAspectRatio = true
+                                            customOutputUri = cacheImageUri
+                                            outputCompressFormat = Bitmap.CompressFormat.PNG
+                                            outputCompressQuality = 100
+                                        }
+                                    )
+                                )
+                            },
+                        )
+                    }
                 }
             }
         }

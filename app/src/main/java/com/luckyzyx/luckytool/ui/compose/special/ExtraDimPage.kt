@@ -88,7 +88,7 @@ object ExtraDimPage {
         onRefresh = { reloader?.invoke() },
     ) {
         val c = requireNotNull(context) { "ScopeScreen 未注入 Context" }
-        custom(key = "extra_dim_body", bare = true) {
+        custom(key = "extra_dim_body") {
             // 未读到真实能力前按「不支持」渲染：宁可短暂禁用，也不给黑屏留窗口
             var supported by remember { mutableStateOf(false) }
             var activated by remember { mutableStateOf<Boolean?>(null) }

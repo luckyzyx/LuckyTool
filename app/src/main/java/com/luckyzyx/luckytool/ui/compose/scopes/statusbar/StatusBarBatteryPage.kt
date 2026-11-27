@@ -53,63 +53,64 @@ object StatusBarBatteryPage {
         }
         // 状态栏电池通知
         if (SDK >= A12) {
-            category(c.getString(R.string.StatusBarBatteryNotify))
-            list(
-                key = "battery_information_display_mode",
-                title = c.getString(R.string.battery_information_display_mode),
-                entries = c.resources.getStringArray(R.array.statusbar_battery_information_notify_entries),
-                entryValues = arrayOf("0", "1", "2"),
-                default = "0",
-                summary = arraySummaryLine(
-                    c.getString(R.string.current_mode) + ": %s",
-                    c.getString(R.string.battery_information_display_mode_summary),
-                ),
-                notify = true,
-            )
-            if (state.getString("battery_information_display_mode", "0") != "0") {
-                switch(
-                    key = "battery_information_show_charge_info",
-                    title = c.getString(R.string.battery_information_show_charge),
-                    summary = c.getString(R.string.battery_information_show_charge_summary),
-                    notify = true,
-                )
+            group(title = c.getString(R.string.StatusBarBatteryNotify)) {
                 list(
-                    key = "battery_information_voltage_display_mode",
-                    title = c.getString(R.string.battery_information_voltage_display_mode),
-                    entries = c.resources.getStringArray(R.array.battery_information_voltage_display_mode_entries),
+                    key = "battery_information_display_mode",
+                    title = c.getString(R.string.battery_information_display_mode),
+                    entries = c.resources.getStringArray(R.array.statusbar_battery_information_notify_entries),
                     entryValues = arrayOf("0", "1", "2"),
                     default = "0",
-                    summary = arraySummaryLine(c.getString(R.string.current_mode) + ": %s"),
+                    summary = arraySummaryLine(
+                        c.getString(R.string.current_mode) + ": %s",
+                        c.getString(R.string.battery_information_display_mode_summary),
+                    ),
                     notify = true,
                 )
-                switch(
-                    key = "battery_information_show_battery_health",
-                    title = c.getString(R.string.battery_information_show_battery_health),
-                    notify = true,
-                )
-                switch(
-                    key = "battery_information_always_show_positive_current",
-                    title = c.getString(R.string.battery_information_always_show_positive_current),
-                    notify = true,
-                )
-                switch(
-                    key = "battery_information_show_simple_mode",
-                    title = c.getString(R.string.battery_information_show_simple_mode),
-                    notify = true,
-                )
-                switch(
-                    key = "battery_information_show_update_time",
-                    title = c.getString(R.string.battery_information_show_update_time),
-                    summary = c.getString(R.string.battery_information_show_update_time_summary),
-                    notify = true,
-                )
-                slider(
-                    key = "battery_information_custom_font_size",
-                    title = c.getString(R.string.battery_information_custom_font_size),
-                    valueRange = 11..20,
-                    default = 11,
-                    notify = true,
-                )
+                if (state.getString("battery_information_display_mode", "0") != "0") {
+                    switch(
+                        key = "battery_information_show_charge_info",
+                        title = c.getString(R.string.battery_information_show_charge),
+                        summary = c.getString(R.string.battery_information_show_charge_summary),
+                        notify = true,
+                    )
+                    list(
+                        key = "battery_information_voltage_display_mode",
+                        title = c.getString(R.string.battery_information_voltage_display_mode),
+                        entries = c.resources.getStringArray(R.array.battery_information_voltage_display_mode_entries),
+                        entryValues = arrayOf("0", "1", "2"),
+                        default = "0",
+                        summary = arraySummaryLine(c.getString(R.string.current_mode) + ": %s"),
+                        notify = true,
+                    )
+                    switch(
+                        key = "battery_information_show_battery_health",
+                        title = c.getString(R.string.battery_information_show_battery_health),
+                        notify = true,
+                    )
+                    switch(
+                        key = "battery_information_always_show_positive_current",
+                        title = c.getString(R.string.battery_information_always_show_positive_current),
+                        notify = true,
+                    )
+                    switch(
+                        key = "battery_information_show_simple_mode",
+                        title = c.getString(R.string.battery_information_show_simple_mode),
+                        notify = true,
+                    )
+                    switch(
+                        key = "battery_information_show_update_time",
+                        title = c.getString(R.string.battery_information_show_update_time),
+                        summary = c.getString(R.string.battery_information_show_update_time_summary),
+                        notify = true,
+                    )
+                    slider(
+                        key = "battery_information_custom_font_size",
+                        title = c.getString(R.string.battery_information_custom_font_size),
+                        valueRange = 11..20,
+                        default = 11,
+                        notify = true,
+                    )
+                }
             }
         }
     }

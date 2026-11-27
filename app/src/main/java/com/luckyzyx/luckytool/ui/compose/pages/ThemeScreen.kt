@@ -388,6 +388,9 @@ private fun ThemeScreenList(
     val isDark = state.colorMode.resolveDarkTheme()
     // LazyColumn 的 item 作用域在 lambda 里，外观线的读取在这里取好再传进去。
     val isCouiLine = LocalUiMode.current == UiMode.Coui
+    // COUI 线的块间留白由库的 Group 自带（无标题组 16dp），列表不再叠加；
+    // 非分组项（取色行、模式选择、缩放卡）在这里补同档间距，Material 线仍靠列表的 13dp。
+    val couiBlockGap = if (isCouiLine) CouiPageDefaults.groupSpacing else 0.dp
     val appSettings = AppSettings(
         colorMode = state.colorMode,
         keyColor = state.keyColor,
@@ -403,7 +406,7 @@ private fun ThemeScreenList(
             top = topInset,
             bottom = bottomSpace,
         ),
-        verticalArrangement = Arrangement.spacedBy(13.dp),
+        verticalArrangement = if (isCouiLine) Arrangement.Top else Arrangement.spacedBy(13.dp),
     ) {
         item {
             ThemePreviewCard(
@@ -418,6 +421,7 @@ private fun ThemeScreenList(
                 visible = !isCouiLine || state.couiDynamicColor,
                 enter = fadeIn() + expandVertically(),
                 exit = fadeOut() + shrinkVertically(),
+                modifier = Modifier.padding(top = couiBlockGap),
             ) {
                 LazyRow(
                     modifier = Modifier.fillMaxWidth(),
@@ -459,7 +463,7 @@ private fun ThemeScreenList(
         }
 
         item {
-            ThemeModeSelector(state = state)
+            Box(modifier = Modifier.padding(top = couiBlockGap)) { ThemeModeSelector(state = state) }
         }
 
         // 调色风格 / 色彩规格两条外观线共用；COUI 未开启「跟随 Material 配色」时整组隐藏。
@@ -470,7 +474,6 @@ private fun ThemeScreenList(
                 exit = fadeOut() + shrinkVertically(),
             ) {
                 AppGroup(
-                    modifier = Modifier.padding(horizontal = 16.dp),
                     content = listOf(
                         {
                             val styles = PaletteStyle.entries
@@ -519,7 +522,6 @@ private fun ThemeScreenList(
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S || isCouiLine) {
             item {
                 AppGroup(
-                    modifier = Modifier.padding(horizontal = 16.dp),
                     content = buildList<@Composable () -> Unit> {
                         // COUI 线单独决定用预设配色还是跟随 Material 的取色设置；放在动态取色上方
                         if (isCouiLine) add {
@@ -574,7 +576,6 @@ private fun ThemeScreenList(
         // 分类页图标配色 + 应用内手势；系统不支持预测性返回时，另外两项仍可配置。
         item {
             AppGroup(
-                modifier = Modifier.padding(horizontal = 16.dp),
                 content = buildList<@Composable () -> Unit> {
                     // 模糊开关只对 Material 线生效：低于 API 31 没有 RenderEffect，
                     // COUI 底栏的玻璃质感由自身渲染器提供，两种情况都不出现
@@ -674,25 +675,27 @@ private fun ThemeScreenList(
 
         // 界面缩放（page_scale）：拖动只更新页内状态，松手才提交偏好，避免重建全应用密度
         item {
-            ThemeSliderCard(
-                icon = Icons.Rounded.AspectRatio,
-                painter = painterResource(LucideR.drawable.lucide_ic_scaling),
-                title = stringResource(R.string.settings_page_scale),
-                summary = stringResource(R.string.settings_page_scale_summary),
-                valueText = "${(state.pageScale * 100).roundToInt()}%",
-                value = state.pageScale,
-                valueRange = PageScaleMin..PageScaleMax,
-                steps = 0,
-                onValueChange = { state.pageScale = it },
-                onValueChangeFinished = {
-                    context.putFloat(
-                        SettingsPrefs,
-                        ShellSettingsController.KEY_PAGE_SCALE,
-                        state.pageScale
-                    )
-                    ThemePrefs.notifyChanged()
-                },
-            )
+            Box(modifier = Modifier.padding(top = couiBlockGap)) {
+                ThemeSliderCard(
+                    icon = Icons.Rounded.AspectRatio,
+                    painter = painterResource(LucideR.drawable.lucide_ic_scaling),
+                    title = stringResource(R.string.settings_page_scale),
+                    summary = stringResource(R.string.settings_page_scale_summary),
+                    valueText = "${(state.pageScale * 100).roundToInt()}%",
+                    value = state.pageScale,
+                    valueRange = PageScaleMin..PageScaleMax,
+                    steps = 0,
+                    onValueChange = { state.pageScale = it },
+                    onValueChangeFinished = {
+                        context.putFloat(
+                            SettingsPrefs,
+                            ShellSettingsController.KEY_PAGE_SCALE,
+                            state.pageScale
+                        )
+                        ThemePrefs.notifyChanged()
+                    },
+                )
+            }
         }
 
         item {

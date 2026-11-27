@@ -192,176 +192,180 @@ fun SettingPage(activity: MainActivity, onOpenTheme: () -> Unit = {}) {
                 ) {
                 // ---------------- 主题 ----------------
                 // 主题模式 / 主题色 / 调色风格 / 色彩规格 / 动态取色 全部迁至独立主题页
-                group()
-                // 界面风格切换（Material / COUI）：放在设置页而不是主题页，界面风格在上，主题入口在下。
-                // COUI 的顶栏 / 底栏 / 悬浮按钮依赖 API 34 的材质采样，低版本不给切换，
-                // 但仍保留一行禁用的说明，避免用户以为这条外观线不存在。
-                val couiAvailable = UiMode.Coui.isAvailable
-                val selectableUiModes = if (couiAvailable) {
-                    UiMode.entries
-                } else {
-                    UiMode.entries.filter { it != UiMode.Coui }
-                }
-                list(
-                    key = ThemeController.KEY_UI_MODE,
-                    title = settingsUiModeTitle,
-                    entries = selectableUiModes.map { it.name }.toTypedArray(),
-                    entryValues = selectableUiModes.map { it.value }.toTypedArray(),
-                    default = UiMode.DEFAULT_VALUE,
-                    summary = settingsUiModeSummary,
-                    leading = { PrefIcon(Icons.Rounded.DisplaySettings, painter = painterResource(LucideR.drawable.lucide_ic_monitor_cog)) },
-                    onChange = { ThemePrefs.notifyChanged() },
-                )
-                if (!couiAvailable) {
-                    click(
-                        title = "COUI",
-                        summary = settingsUiModeCouiUnavailable,
-                        enabled = false,
+                group {
+                    // 界面风格切换（Material / COUI）：放在设置页而不是主题页，界面风格在上，主题入口在下。
+                    // COUI 的顶栏 / 底栏 / 悬浮按钮依赖 API 34 的材质采样，低版本不给切换，
+                    // 但仍保留一行禁用的说明，避免用户以为这条外观线不存在。
+                    val couiAvailable = UiMode.Coui.isAvailable
+                    val selectableUiModes = if (couiAvailable) {
+                        UiMode.entries
+                    } else {
+                        UiMode.entries.filter { it != UiMode.Coui }
+                    }
+                    list(
+                        key = ThemeController.KEY_UI_MODE,
+                        title = settingsUiModeTitle,
+                        entries = selectableUiModes.map { it.name }.toTypedArray(),
+                        entryValues = selectableUiModes.map { it.value }.toTypedArray(),
+                        default = UiMode.DEFAULT_VALUE,
+                        summary = settingsUiModeSummary,
                         leading = { PrefIcon(Icons.Rounded.DisplaySettings, painter = painterResource(LucideR.drawable.lucide_ic_monitor_cog)) },
+                        onChange = { ThemePrefs.notifyChanged() },
                     )
-                }
-                // 导航入口用箭头，不暴露内部色板名称。
-                click(
-                    title = themeSettingsTitle,
-                    summary = themePaletteSummary,
-                    leading = { PrefIcon(Icons.Rounded.Palette, painter = painterResource(LucideR.drawable.lucide_ic_palette)) },
-                    value = "",
-                    trailing = {
-                        if (LocalUiMode.current == UiMode.Coui) {
-                            Icon(
-                                painter = painterResource(
-                                    if (LocalLayoutDirection.current == LayoutDirection.Rtl) LucideR.drawable.lucide_ic_chevron_left
-                                    else LucideR.drawable.lucide_ic_chevron_right
-                                ),
-                                contentDescription = null,
-                            )
-                        } else {
-                            Icon(Icons.AutoMirrored.Rounded.KeyboardArrowRight, contentDescription = null)
-                        }
-                    },
-                    onClick = onOpenTheme,
-                )
-
-                // ---------------- 其他 ----------------
-                group()
-                switch(
-                    key = "auto_check_update",
-                    title = autoCheckUpdateTitle,
-                    summary = autoCheckUpdateSummary,
-                    default = true,
-                    leading = { PrefIcon(Icons.Rounded.SystemUpdate, painter = painterResource(LucideR.drawable.lucide_ic_refresh_cw)) },
-                )
-                if (deviceSecure) {
-                    switch(
-                        key = "enable_biometric_unlock_verification",
-                        title = biometricUnlockTitle,
-                        leading = { PrefIcon(Icons.Rounded.Fingerprint, painter = painterResource(LucideR.drawable.lucide_ic_fingerprint_pattern)) },
-                        beforeApply = { enable, apply ->
-                            if (enable) {
-                                // 验证通过才真正写入（取消或失败则不写）
-                                BiometricUtils.showBiometricPrompt(
-                                    activity,
-                                    onSucceed = { apply(true) })
+                    if (!couiAvailable) {
+                        click(
+                            title = "COUI",
+                            summary = settingsUiModeCouiUnavailable,
+                            enabled = false,
+                            leading = { PrefIcon(Icons.Rounded.DisplaySettings, painter = painterResource(LucideR.drawable.lucide_ic_monitor_cog)) },
+                        )
+                    }
+                    // 导航入口用箭头，不暴露内部色板名称。
+                    click(
+                        title = themeSettingsTitle,
+                        summary = themePaletteSummary,
+                        leading = { PrefIcon(Icons.Rounded.Palette, painter = painterResource(LucideR.drawable.lucide_ic_palette)) },
+                        value = "",
+                        trailing = {
+                            if (LocalUiMode.current == UiMode.Coui) {
+                                Icon(
+                                    painter = painterResource(
+                                        if (LocalLayoutDirection.current == LayoutDirection.Rtl) LucideR.drawable.lucide_ic_chevron_left
+                                        else LucideR.drawable.lucide_ic_chevron_right
+                                    ),
+                                    contentDescription = null,
+                                )
                             } else {
-                                apply(false)
+                                Icon(Icons.AutoMirrored.Rounded.KeyboardArrowRight, contentDescription = null)
                             }
                         },
+                        onClick = onOpenTheme,
                     )
+
                 }
-                switch(
-                    key = "tile_auto_start",
-                    title = tileAutoStartTitle,
-                    summary = tileAutoStartSummary,
-                    default = true,
-                    leading = { PrefIcon(Icons.Rounded.Widgets, painter = painterResource(LucideR.drawable.lucide_ic_shapes)) },
-                )
-                switch(
-                    key = "hide_desktop_module_icon",
-                    title = hideModuleIconTitle,
-                    summary = hideModuleIconSummary,
-                    leading = { PrefIcon(Icons.Rounded.VisibilityOff, painter = painterResource(LucideR.drawable.lucide_ic_eye_off)) },
-                    onChange = { value ->
-                        AppUtils(context).setComponentDisabled(
-                            ComponentName(
-                                context.packageName,
-                                "${context.packageName}.Hide",
-                            ),
-                            value,
+                // ---------------- 其他 ----------------
+                group {
+                    switch(
+                        key = "auto_check_update",
+                        title = autoCheckUpdateTitle,
+                        summary = autoCheckUpdateSummary,
+                        default = true,
+                        leading = { PrefIcon(Icons.Rounded.SystemUpdate, painter = painterResource(LucideR.drawable.lucide_ic_refresh_cw)) },
+                    )
+                    if (deviceSecure) {
+                        switch(
+                            key = "enable_biometric_unlock_verification",
+                            title = biometricUnlockTitle,
+                            leading = { PrefIcon(Icons.Rounded.Fingerprint, painter = painterResource(LucideR.drawable.lucide_ic_fingerprint_pattern)) },
+                            beforeApply = { enable, apply ->
+                                if (enable) {
+                                    // 验证通过才真正写入（取消或失败则不写）
+                                    BiometricUtils.showBiometricPrompt(
+                                        activity,
+                                        onSucceed = { apply(true) })
+                                } else {
+                                    apply(false)
+                                }
+                            },
                         )
-                    },
-                )
-
-                // 应用权限：与冷启动权限阻塞门是同一个页面内容（pageKey = app_permission）
-                click(
-                    title = appPermissionTitle,
-                    summary = appPermissionSummary,
-                    leading = { PrefIcon(Icons.Rounded.AdminPanelSettings, painter = painterResource(LucideR.drawable.lucide_ic_user_cog)) },
-                    value = "",
-                    trailing = {
-                        if (LocalUiMode.current == UiMode.Coui) {
-                            Icon(
-                                painter = painterResource(
-                                    if (LocalLayoutDirection.current == LayoutDirection.Rtl) LucideR.drawable.lucide_ic_chevron_left
-                                    else LucideR.drawable.lucide_ic_chevron_right
+                    }
+                    switch(
+                        key = "tile_auto_start",
+                        title = tileAutoStartTitle,
+                        summary = tileAutoStartSummary,
+                        default = true,
+                        leading = { PrefIcon(Icons.Rounded.Widgets, painter = painterResource(LucideR.drawable.lucide_ic_shapes)) },
+                    )
+                    switch(
+                        key = "hide_desktop_module_icon",
+                        title = hideModuleIconTitle,
+                        summary = hideModuleIconSummary,
+                        leading = { PrefIcon(Icons.Rounded.VisibilityOff, painter = painterResource(LucideR.drawable.lucide_ic_eye_off)) },
+                        onChange = { value ->
+                            AppUtils(context).setComponentDisabled(
+                                ComponentName(
+                                    context.packageName,
+                                    "${context.packageName}.Hide",
                                 ),
-                                contentDescription = null,
+                                value,
                             )
-                        } else {
-                            Icon(Icons.AutoMirrored.Rounded.KeyboardArrowRight, contentDescription = null)
-                        }
-                    },
-                    onClick = {
-                        activity.requestFunctionNavigation("app_permission", appPermissionTitle)
-                    },
-                )
+                        },
+                    )
 
+                    // 应用权限：与冷启动权限阻塞门是同一个页面内容（pageKey = app_permission）
+                    click(
+                        title = appPermissionTitle,
+                        summary = appPermissionSummary,
+                        leading = { PrefIcon(Icons.Rounded.AdminPanelSettings, painter = painterResource(LucideR.drawable.lucide_ic_user_cog)) },
+                        value = "",
+                        trailing = {
+                            if (LocalUiMode.current == UiMode.Coui) {
+                                Icon(
+                                    painter = painterResource(
+                                        if (LocalLayoutDirection.current == LayoutDirection.Rtl) LucideR.drawable.lucide_ic_chevron_left
+                                        else LucideR.drawable.lucide_ic_chevron_right
+                                    ),
+                                    contentDescription = null,
+                                )
+                            } else {
+                                Icon(Icons.AutoMirrored.Rounded.KeyboardArrowRight, contentDescription = null)
+                            }
+                        },
+                        onClick = {
+                            activity.requestFunctionNavigation("app_permission", appPermissionTitle)
+                        },
+                    )
+
+                }
                 // ---------------- 备份/恢复/清除 ----------------
-                group()
-                click(
-                    title = backupDataTitle,
-                    leading = { PrefIcon(Icons.Rounded.SaveAlt, painter = painterResource(LucideR.drawable.lucide_ic_download)) },
-                    onClick = { showBackupDialog = true },
-                )
-                click(
-                    title = restoreDataTitle,
-                    leading = { PrefIcon(Icons.Rounded.Restore, painter = painterResource(LucideR.drawable.lucide_ic_history)) },
-                    onClick = {
-                        FileUtils.checkDownloadDir(context, "LuckyTool").apply {
-                            if (isFile) delete()
-                            if (!exists()) mkdirs()
-                        }
-                        restoreLauncher.launch("application/json")
-                    },
-                )
-                click(
-                    title = clearAllDataTitle,
-                    summary = clearAllDataSummary,
-                    leading = { PrefIcon(Icons.Rounded.Delete, painter = painterResource(LucideR.drawable.lucide_ic_trash_2)) },
-                    onClick = { showClearDialog = true },
-                )
+                group {
+                    click(
+                        title = backupDataTitle,
+                        leading = { PrefIcon(Icons.Rounded.SaveAlt, painter = painterResource(LucideR.drawable.lucide_ic_download)) },
+                        onClick = { showBackupDialog = true },
+                    )
+                    click(
+                        title = restoreDataTitle,
+                        leading = { PrefIcon(Icons.Rounded.Restore, painter = painterResource(LucideR.drawable.lucide_ic_history)) },
+                        onClick = {
+                            FileUtils.checkDownloadDir(context, "LuckyTool").apply {
+                                if (isFile) delete()
+                                if (!exists()) mkdirs()
+                            }
+                            restoreLauncher.launch("application/json")
+                        },
+                    )
+                    click(
+                        title = clearAllDataTitle,
+                        summary = clearAllDataSummary,
+                        leading = { PrefIcon(Icons.Rounded.Delete, painter = painterResource(LucideR.drawable.lucide_ic_trash_2)) },
+                        onClick = { showClearDialog = true },
+                    )
 
+                }
                 // ---------------- 关于 ----------------
-                group()
-                click(
-                    title = donateTitle,
-                    summary = donateSummary,
-                    leading = { PrefIcon(Icons.Rounded.FavoriteBorder, painter = painterResource(LucideR.drawable.lucide_ic_heart)) },
-                    onClick = { showDonateList = true },
-                )
-                click(
-                    title = feedbackDownloadTitle,
-                    summary = feedbackDownloadSummary,
-                    leading = { PrefIcon(Icons.Rounded.Feedback, painter = painterResource(LucideR.drawable.lucide_ic_message_square_warning)) },
-                    onClick = { showFeedbackDialog = true },
-                )
-                click(
-                    title = participateTranslationTitle,
-                    summary = participateTranslationSummary,
-                    leading = { PrefIcon(Icons.Rounded.Translate, painter = painterResource(LucideR.drawable.lucide_ic_languages)) },
-                    onClick = {
-                        context.openUrl("https://github.com/luckyzyx/LuckyTool-Localization")
-                    },
-                )
+                group {
+                    click(
+                        title = donateTitle,
+                        summary = donateSummary,
+                        leading = { PrefIcon(Icons.Rounded.FavoriteBorder, painter = painterResource(LucideR.drawable.lucide_ic_heart)) },
+                        onClick = { showDonateList = true },
+                    )
+                    click(
+                        title = feedbackDownloadTitle,
+                        summary = feedbackDownloadSummary,
+                        leading = { PrefIcon(Icons.Rounded.Feedback, painter = painterResource(LucideR.drawable.lucide_ic_message_square_warning)) },
+                        onClick = { showFeedbackDialog = true },
+                    )
+                    click(
+                        title = participateTranslationTitle,
+                        summary = participateTranslationSummary,
+                        leading = { PrefIcon(Icons.Rounded.Translate, painter = painterResource(LucideR.drawable.lucide_ic_languages)) },
+                        onClick = {
+                            context.openUrl("https://github.com/luckyzyx/LuckyTool-Localization")
+                        },
+                    )
+                    }
                 }
             }
         }
