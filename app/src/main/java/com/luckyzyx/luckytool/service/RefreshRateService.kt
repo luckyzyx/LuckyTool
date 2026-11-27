@@ -92,12 +92,12 @@ object RefreshRateService : BaseControllerService<IRefreshRateController>() {
                         val display = displayManager.getDisplay(0)
                         val displayInfo = DisplayInfo()
                         if (!display.getDisplayInfo(displayInfo)) {
-                            LogUtils.e(TAG, "getSupportModes", "getDisplayInfo -> false", true)
+                            LogUtils.d(TAG, "getSupportModes", "getDisplayInfo -> false", true)
                             return@apply
                         }
                         val dynamicInfo = getDynamicDisplayInfo(displayInfo)
                         if (dynamicInfo == null) {
-                            LogUtils.e(
+                            LogUtils.d(
                                 TAG,
                                 "getSupportModes",
                                 "dynamicInfo is null, address = ${displayInfo.address}",
@@ -116,7 +116,7 @@ object RefreshRateService : BaseControllerService<IRefreshRateController>() {
                             allDisplayModes.forEach {
                                 val mode = getDisplayMode(it)
                                 if (mode == null) {
-                                    LogUtils.e(
+                                    LogUtils.d(
                                         TAG, "getSupportModes", "parse mode failed -> $it", true
                                     )
                                 } else {
@@ -126,7 +126,7 @@ object RefreshRateService : BaseControllerService<IRefreshRateController>() {
                             }
                         }
                     }
-                    LogUtils.e(TAG, "getSupportModes", "Final size ${list.size}", true)
+                    LogUtils.d(TAG, "getSupportModes", "Final size ${list.size}", true)
                     list
                 } catch (e: Exception) {
                     LogUtils.e(TAG, "getSupportModes", "$e", true)
