@@ -33,10 +33,6 @@
     <string name="settings_navigation_badge_summary">Show an update badge on the navigation bar when a new version is available</string>
     <string name="settings_enable_predictive_back">Predictive back gesture</string>
     <string name="settings_enable_predictive_back_summary">Enable predictive back gesture support.</string>
-    <string name="settings_pager_gesture_mode">Pager gesture mode</string>
-    <string name="settings_pager_gesture_native">Default</string>
-    <string name="settings_pager_gesture_cross_axis">Cross-axis</string>
-    <string name="settings_pager_gesture_ios_like">iOS-like</string>
     <string name="settings_page_scale">Page Scale</string>
     <string name="settings_page_scale_summary">Adjust the global display scale.</string>
     <string name="settings_ui_mode">UI Style</string>

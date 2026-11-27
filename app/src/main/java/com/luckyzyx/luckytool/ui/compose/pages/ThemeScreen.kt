@@ -63,7 +63,6 @@ import androidx.compose.material.icons.rounded.DesignServices
 import androidx.compose.material.icons.rounded.Palette
 import androidx.compose.material.icons.rounded.Style
 import androidx.compose.material.icons.rounded.Swipe
-import androidx.compose.material.icons.rounded.ViewCarousel
 import androidx.compose.material.icons.rounded.Wallpaper
 import androidx.compose.material3.ButtonGroupDefaults
 import androidx.compose.material3.Icon
@@ -247,8 +246,6 @@ private class ThemeScreenState(context: Context) {
         ShellSettingsController.get(context).floatingBottomBarStyle
     )
 
-    var pagerMode by mutableIntStateOf(ShellSettingsController.get(context).pagerInterceptionMode)
-
     /** 预测式返回手势（需 Android 14+，反射 ApplicationInfo.setEnableOnBackInvokedCallback） */
     var predictiveBack by mutableStateOf(
         context.getBoolean(SettingsPrefs, ShellSettingsController.KEY_PREDICTIVE_BACK, true)
@@ -280,7 +277,7 @@ private fun rememberThemeScreenState(): ThemeScreenState {
  *
  * 页面组成：
  * 主题预览卡片 → 主题色选择（跟随系统 + 15 预设）→ 主题模式分段按钮
- * → 调色风格 / 色彩规格下拉 → 动态取色开关 →（COUI 线）跟随 Material 配色开关 → 返回与切页手势。
+ * → 调色风格 / 色彩规格下拉 → 动态取色开关 →（COUI 线）跟随 Material 配色开关 → 预测性返回手势。
  *
  * 两条外观线共用同一份列表与偏好；COUI 线额外显示「跟随 Material 配色」开关
  * （coui_dynamic_color，默认关，用 COUI 预设配色），并隐藏本线无意义的悬浮底栏项。
@@ -288,7 +285,7 @@ private fun rememberThemeScreenState(): ThemeScreenState {
  * 偏好键沿用 LuckyTool 既有约定（SettingsPrefs）：
  * dark_theme（0 跟随系统 / 1 深色 / 2 浅色 / 3 深色 AMOLED）、key_color、
  * palette_style、color_spec、use_dynamic_color、coui_dynamic_color（COUI 线专用）、
- * enable_predictive_back、enable_swipe_dismiss、pager_interception_mode。
+ * enable_predictive_back、enable_swipe_dismiss。
  * 写入后通过 [ThemePrefs.notifyChanged] 让应用主题即时重算，无需 recreate。
  */
 @Composable
@@ -670,24 +667,6 @@ private fun ThemeScreenList(
                                 },
                             )
                         }
-                    }
-                    add {
-                        AppDropdownItem(
-                            icon = Icons.Rounded.ViewCarousel,
-                            painter = painterResource(LucideR.drawable.lucide_ic_gallery_horizontal),
-                            title = stringResource(R.string.settings_pager_gesture_mode),
-                            items = listOf(
-                                stringResource(R.string.settings_pager_gesture_native),
-                                stringResource(R.string.settings_pager_gesture_cross_axis),
-                                stringResource(R.string.settings_pager_gesture_ios_like),
-                            ),
-                            selectedIndex = state.pagerMode,
-                            onItemSelected = {
-                                state.pagerMode = it
-                                context.putInt(SettingsPrefs, ShellSettingsController.KEY_PAGER_MODE, it)
-                                ThemePrefs.notifyChanged()
-                            },
-                        )
                     }
                 },
             )

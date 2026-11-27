@@ -5,14 +5,9 @@ import androidx.compose.animation.core.spring
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.pager.PagerState
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
-import androidx.compose.ui.input.nestedscroll.NestedScrollSource
-import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.input.pointer.util.VelocityTracker
@@ -20,7 +15,6 @@ import androidx.compose.ui.input.pointer.util.addPointerInputChange
 import androidx.compose.ui.unit.Velocity
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.util.fastFirstOrNull
-import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import kotlin.math.abs
@@ -60,10 +54,9 @@ internal fun Modifier.crossAxisPagerDrag(
     scope: CoroutineScope,
     enabled: Boolean = true,
     rtl: Boolean = false,
-    onIntercepted: (() -> Unit)? = null,
 ): Modifier {
     if (!enabled) return this
-    return pointerInput(pagerState, onIntercepted, rtl) {
+    return pointerInput(pagerState, rtl) {
             val touchSlop = viewConfiguration.touchSlop
             val minimumVelocity = PagerMinimumFlingVelocity.toPx()
             awaitEachGesture {
@@ -102,7 +95,6 @@ internal fun Modifier.crossAxisPagerDrag(
                         val dy = abs(accumulated.y)
                         if (dx > touchSlop && dx > dy) {
                             dragging = true
-                            onIntercepted?.invoke()
                             change.consume()
                             // 把越过触摸阈值的那一段也算进拖拽，手感才跟手。
                             val overSlop = accumulated.x - sign(accumulated.x) * touchSlop
@@ -136,79 +128,3 @@ private suspend fun PagerState.settle(velocity: Float, minimumVelocity: Float) {
     animateScrollToPage(target.coerceIn(0, pageCount - 1), animationSpec = PagerSnapSpring)
 }
 
-/**
- * 记录子级列表是否正在惯性滚动，并让下一次横向手势只停住惯性、不翻页。
- *
- * [isChildFlinging] 由子级的 fling 事件维护；[haltFling] 置位后子级的惯性会在下一帧被取消，
- * 于是第一次横向滑动只把列表停住，用户再滑一次才翻页。
- */
-internal class ChildFlingTracker : NestedScrollConnection {
-    var isChildFlinging by mutableStateOf(false)
-        internal set
-
-    var haltFling by mutableStateOf(false)
-        internal set
-
-    override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset {
-        if (source == NestedScrollSource.UserInput && available.y != 0f) {
-            haltFling = false
-            isChildFlinging = false
-        } else if (source == NestedScrollSource.SideEffect && available.y != 0f &&
-            isChildFlinging && haltFling
-        ) {
-            isChildFlinging = false
-            // 消费惯性位移只会让惯性少走一帧，取消这次滚动才能真正停住。
-            throw CancellationException("child fling halted by pager gesture")
-        }
-        return Offset.Zero
-    }
-
-    override suspend fun onPreFling(available: Velocity): Velocity {
-        haltFling = false
-        isChildFlinging = available.y != 0f
-        return Velocity.Zero
-    }
-
-    override suspend fun onPostFling(consumed: Velocity, available: Velocity): Velocity {
-        val halted = if (haltFling) Velocity(0f, available.y) else Velocity.Zero
-        isChildFlinging = false
-        haltFling = false
-        return halted
-    }
-}
-
-/**
- * 子级惯性滚动中按下并横向拖动时，吃掉这次手势，只把惯性停住。
- * 子级没有惯性时不做任何事，横向滑动仍由分页器自己处理。
- */
-internal fun Modifier.iosStyleMomentumHalt(
-    tracker: ChildFlingTracker,
-    enabled: Boolean = true,
-    onHalted: (() -> Unit)? = null,
-): Modifier {
-    if (!enabled) return this
-    return nestedScroll(tracker).pointerInput(tracker, onHalted) {
-        val touchSlop = viewConfiguration.touchSlop
-        awaitEachGesture {
-            val down = awaitFirstDown(requireUnconsumed = false, pass = PointerEventPass.Initial)
-            if (!tracker.isChildFlinging) return@awaitEachGesture
-            tracker.haltFling = true
-            onHalted?.invoke()
-            var halting = false
-            while (true) {
-                val event = awaitPointerEvent(PointerEventPass.Initial)
-                val change = event.changes.fastFirstOrNull { it.id == down.id } ?: break
-                if (!change.pressed) break
-                val dx = abs(change.position.x - down.position.x)
-                val dy = abs(change.position.y - down.position.y)
-                if (!halting && dx > touchSlop && dx > dy * 2f) halting = true
-                if (halting) {
-                    change.consume()
-                } else if (dy > touchSlop && dy > dx) {
-                    tracker.haltFling = false
-                    break
-                }
-            }
-        }
-    }
-}

@@ -19,7 +19,6 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -41,10 +40,6 @@ import com.luckyzyx.luckytool.ui.shell.LocalEnableBlur
 import com.luckyzyx.luckytool.ui.shell.ShellBadgeState
 import com.luckyzyx.luckytool.ui.shell.LocalEnableFloatingBottomBar
 import com.luckyzyx.luckytool.ui.shell.LocalFloatingBottomBarStyle
-import com.luckyzyx.luckytool.ui.shell.LocalPagerInterceptionMode
-import com.luckyzyx.luckytool.ui.shell.PagerModeCrossAxis
-import com.luckyzyx.luckytool.ui.shell.PagerModeIosLike
-import com.luckyzyx.luckytool.ui.shell.PagerModeNative
 import com.luckyzyx.luckytool.ui.theme.AppSettings
 import com.luckyzyx.luckytool.ui.theme.ColorMode
 import com.luckyzyx.luckytool.ui.theme.LocalUiMode
@@ -124,44 +119,31 @@ class MainPagerTest {
     }
 
     @Test
-    fun `all gesture modes allow resting horizontal paging and leave vertical scroll to the list`() {
-        for (mode in listOf(PagerModeNative, PagerModeCrossAxis, PagerModeIosLike)) {
-            PagerHost().use { h ->
-                h.gestureMode = mode
-                h.ui.advance()
-                h.ui.drag(410f, 300f, 410f, 300f)
-                assertEquals("Paging must not consume row taps", 1, h.clicks[MainTab.Home])
-                h.ui.drag(410f, 1300f, 410f, 450f)
-                h.assertSettled(2)
-                assertTrue(h.lists.getValue(MainTab.Home).firstVisibleItemIndex > 0)
-                h.ui.drag(700f, 800f, 120f, 800f)
-                h.assertSettled(3)
-                h.ui.drag(120f, 800f, 700f, 800f)
-                h.assertSettled(2)
-                assertTrue("Returning must preserve the list position", h.lists.getValue(MainTab.Home).firstVisibleItemIndex > 0)
-            }
+    fun `resting horizontal paging leaves row taps and vertical scroll to the list`() {
+        PagerHost().use { h ->
+            h.ui.advance()
+            h.ui.drag(410f, 300f, 410f, 300f)
+            assertEquals("Paging must not consume row taps", 1, h.clicks[MainTab.Home])
+            h.ui.drag(410f, 1300f, 410f, 450f)
+            h.assertSettled(2)
+            assertTrue(h.lists.getValue(MainTab.Home).firstVisibleItemIndex > 0)
+            h.ui.drag(700f, 800f, 120f, 800f)
+            h.assertSettled(3)
+            h.ui.drag(120f, 800f, 700f, 800f)
+            h.assertSettled(2)
+            assertTrue("Returning must preserve the list position", h.lists.getValue(MainTab.Home).firstVisibleItemIndex > 0)
         }
     }
 
     @Test
-    fun `cross-axis interrupts list momentum while iOS mode requires a second horizontal swipe`() {
+    fun `horizontal drag interrupts list momentum and turns the page in one stroke`() {
         for (appearance in UiMode.entries) {
-            for (mode in listOf(PagerModeCrossAxis, PagerModeIosLike)) {
-                PagerHost(appearance).use { h ->
-                    h.gestureMode = mode
-                    h.ui.advance()
-                    h.ui.drag(410f, 1400f, 410f, 350f, holdBeforeUp = false, settle = false)
-                    assertTrue("The scenario must start with list momentum", h.lists.getValue(MainTab.Home).isScrollInProgress)
-                    h.ui.drag(700f, 800f, 120f, 800f)
-                    if (mode == PagerModeCrossAxis) {
-                        h.assertSettled(3)
-                    } else {
-                        h.assertSettled(2)
-                        assertFalse(h.lists.getValue(MainTab.Home).isScrollInProgress)
-                        h.ui.drag(700f, 800f, 120f, 800f)
-                        h.assertSettled(3)
-                    }
-                }
+            PagerHost(appearance).use { h ->
+                h.ui.advance()
+                h.ui.drag(410f, 1400f, 410f, 350f, holdBeforeUp = false, settle = false)
+                assertTrue("The scenario must start with list momentum", h.lists.getValue(MainTab.Home).isScrollInProgress)
+                h.ui.drag(700f, 800f, 120f, 800f)
+                h.assertSettled(3)
             }
         }
     }
@@ -441,7 +423,6 @@ class MainPagerTest {
         var blur by mutableStateOf(blur)
         var mode by mutableStateOf(mode)
         var floating by mutableStateOf(floating)
-        var gestureMode by mutableIntStateOf(PagerModeCrossAxis)
         var active by mutableStateOf(true)
         lateinit var state: MainPagerState
         val lists = mutableMapOf<MainTab, LazyListState>()
@@ -461,7 +442,6 @@ class MainPagerTest {
                     LocalEnableFloatingBottomBar provides this.floating,
                     LocalFloatingBottomBarStyle provides this.floatingStyle,
                     LocalEnableBlur provides this.blur,
-                    LocalPagerInterceptionMode provides gestureMode,
                 ) {
                     AppTheme(AppSettings(colorMode = color, dynamicColor = false), uiMode = this.mode) {
                         val pager = rememberPagerState(initialPage = 2) { MainTab.entries.size }
