@@ -133,10 +133,8 @@ dependencies {
     implementation(libs.androidx.lifecycle.runtime.compose)
     implementation(libs.androidx.lifecycle.viewmodel.compose)
     implementation(libs.androidx.activity.compose)
-    //返回事件分发：自建页面栈与一级分页共用的返回手势入口
+    //一级分页返回主页；二级页面使用系统 Activity 返回
     implementation(libs.androidx.navigationevent.compose)
-    //页面导航：NavHost 承载一级标签与二级页面
-    implementation(libs.androidx.navigation.compose)
 
     //Compose (BOM 统一版本)
     platform(libs.androidx.compose.bom)
