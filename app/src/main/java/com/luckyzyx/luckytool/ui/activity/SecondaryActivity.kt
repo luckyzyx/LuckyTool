@@ -1,11 +1,12 @@
 package com.luckyzyx.luckytool.ui.activity
 
+import android.annotation.SuppressLint
 import android.content.Context
-import android.content.Intent
 import android.os.Bundle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
+import com.highcapable.betterandroid.ui.extension.component.startActivity
 import com.luckyzyx.luckytool.ui.compose.ScopePageHost
 import com.luckyzyx.luckytool.ui.compose.ScopeRoute
 import com.luckyzyx.luckytool.ui.compose.pages.ThemeScreen
@@ -34,9 +35,9 @@ class SecondaryActivity : AppCompatActivity() {
 
         /** 打开主题设置页。 */
         fun openTheme(activity: Context) {
-            activity.startActivity(Intent(activity, SecondaryActivity::class.java).apply {
+            activity.startActivity<SecondaryActivity> {
                 putExtra(EXTRA_PAGE_TYPE, PAGE_THEME)
-            })
+            }
         }
 
         /** 打开一个功能作用域页。 */
@@ -46,16 +47,17 @@ class SecondaryActivity : AppCompatActivity() {
 
         /** 打开一个功能作用域页（带搜索定位参数）。 */
         fun openScope(activity: Context, route: ScopeRoute) {
-            activity.startActivity(Intent(activity, SecondaryActivity::class.java).apply {
+            activity.startActivity<SecondaryActivity> {
                 putExtra(EXTRA_PAGE_TYPE, PAGE_SCOPE)
                 putExtra(EXTRA_PAGE_KEY, route.pageKey)
                 putExtra(EXTRA_TITLE, route.title)
                 putExtra(EXTRA_SCROLL_KEY, route.scrollKey)
                 putExtra(EXTRA_SCROLL_POSITION, route.scrollPosition)
-            })
+            }
         }
     }
 
+    @SuppressLint("ReplaceWithSystemBarsController")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         ThemeUtils.initTheme(this)
@@ -75,7 +77,13 @@ class SecondaryActivity : AppCompatActivity() {
                     else -> ScopePageHost(
                         route = route,
                         onBack = { finish() },
-                        onNavigate = { key, title -> openScope(this@SecondaryActivity, key, title.orEmpty()) },
+                        onNavigate = { key, title ->
+                            openScope(
+                                this@SecondaryActivity,
+                                key,
+                                title.orEmpty()
+                            )
+                        },
                     )
                 }
             }

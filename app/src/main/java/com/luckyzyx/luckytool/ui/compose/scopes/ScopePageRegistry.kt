@@ -21,12 +21,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.luckyzyx.luckytool.R
+import com.luckyzyx.luckytool.ui.compose.components.LocalTopBarCollapsedFraction
 import com.luckyzyx.luckytool.ui.compose.components.PrefIndexItem
 import com.luckyzyx.luckytool.ui.compose.components.PrefScopeBuilder
 import com.luckyzyx.luckytool.ui.compose.components.ScopeScreen
 import com.luckyzyx.luckytool.ui.compose.components.ScrollTarget
 import com.luckyzyx.luckytool.ui.compose.components.coui.CouiPullToRefreshBox
-import com.luckyzyx.luckytool.ui.compose.components.LocalTopBarCollapsedFraction
 import com.luckyzyx.luckytool.ui.compose.scopes.apps.OplusAlarmClockPage
 import com.luckyzyx.luckytool.ui.compose.scopes.apps.OplusBatteryPage
 import com.luckyzyx.luckytool.ui.compose.scopes.apps.OplusBeaconLinkPage
@@ -315,7 +315,7 @@ internal fun ScopePageContent(
         }
         listState.animateScrollToItem(targetSlot)
         builder.highlightSlot.value = targetSlot
-        delay(2500.milliseconds)
+        delay(2000.milliseconds)
         if (builder.highlightSlot.value == targetSlot) builder.highlightSlot.value = null
     }
 
@@ -359,6 +359,7 @@ internal fun ScopePageContent(
             ) {
                 page(Modifier.fillMaxSize())
             }
+
             UiMode.Coui -> CouiPullToRefreshBox(
                 isRefreshing = refreshing,
                 onRefresh = refresh,
