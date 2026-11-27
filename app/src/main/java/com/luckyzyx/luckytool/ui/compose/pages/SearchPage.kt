@@ -42,6 +42,7 @@ import com.luckyzyx.luckytool.ui.compose.ScopeRoute
 import com.luckyzyx.luckytool.ui.compose.components.LocalScopeListState
 import com.luckyzyx.luckytool.ui.compose.components.LocalScopeTopInset
 import com.luckyzyx.luckytool.ui.compose.components.PageScaffold
+import com.luckyzyx.luckytool.ui.compose.components.pageInset
 import com.luckyzyx.luckytool.ui.compose.components.ScopeScreen
 import com.luckyzyx.luckytool.ui.compose.components.coui.CouiIconButton
 import com.luckyzyx.luckytool.ui.compose.components.material.MaterialTextField
@@ -158,71 +159,79 @@ fun SearchPage(isCurrentPage: Boolean, onOpen: (ScopeRoute) -> Unit) {
             val historyClearText = stringResource(R.string.search_history_clear)
             CompositionLocalProvider(LocalScopeTopInset provides topInset) {
                 ScopeScreen(state = settings, modifier = scopeModifier) {
-                group {
-                    // 搜索框不是「选项行」：单独成一组，卡片由 group 给，不与紧随其后的结果行拼在一起
-                    custom(key = "search_field") {
-                        // 顶栏折叠/展开由列表滚动驱动：滚动一开始就清掉搜索框焦点并收键盘，
-                        // 否则仍聚焦的字段会在布局变化时被平台恢复输入法。
-                        val scopeListState = LocalScopeListState.current
-                        val focusManager = LocalFocusManager.current
-                        LaunchedEffect(scopeListState, focusManager, keyboardController) {
-                            if (scopeListState == null) return@LaunchedEffect
-                            snapshotFlow { scopeListState.isScrollInProgress }
-                                .collect { scrolling ->
-                                    if (scrolling) {
-                                        // freeFocus 只释放 Captured 焦点，对普通聚焦的输入框无效，
-                                        // 必须用 FocusManager.clearFocus 才能真正清焦并收键盘。
-                                        focusManager.clearFocus(force = true)
-                                        keyboardController?.hide()
-                                    }
+                // 搜索框不套分组卡片：搜索条直接铺在页面上（coui demo 的 SearchBar 也是裸放），
+                // 再套一层卡片只是在输入框外多画一圈底色与圆角。
+                custom(key = "search_field", raw = true) {
+                    // 顶栏折叠/展开由列表滚动驱动：滚动一开始就清掉搜索框焦点并收键盘，
+                    // 否则仍聚焦的字段会在布局变化时被平台恢复输入法。
+                    val scopeListState = LocalScopeListState.current
+                    val focusManager = LocalFocusManager.current
+                    LaunchedEffect(scopeListState, focusManager, keyboardController) {
+                        if (scopeListState == null) return@LaunchedEffect
+                        snapshotFlow { scopeListState.isScrollInProgress }
+                            .collect { scrolling ->
+                                if (scrolling) {
+                                    // freeFocus 只释放 Captured 焦点，对普通聚焦的输入框无效，
+                                    // 必须用 FocusManager.clearFocus 才能真正清焦并收键盘。
+                                    focusManager.clearFocus(force = true)
+                                    keyboardController?.hide()
                                 }
-                        }
-                        MaterialTextField(
-                            value = queryNow,
-                            onValueChange = { query = it },
-                            placeholder = { Text(stringResource(R.string.menu_search)) },
-                            singleLine = true,
-                            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
-                            keyboardActions = androidx.compose.foundation.text.KeyboardActions(
-                                onSearch = { recordHistory(queryNow) },
-                            ),
-                            focusRequester = searchFocusRequester,
-                            leadingContent = {
-                                Icon(
-                                    painterResource(R.drawable.ic_baseline_search_24),
-                                    contentDescription = null,
-                                )
-                            },
-                            trailingContent = if (queryNow.isNotEmpty()) {
-                                {
-                                    // 清空按钮跟随当前渲染线：搜索框两条线共用同一个入口，
-                                    // 里面混进另一种线族的按钮会在 COUI 线上露出 Material 的点击态
-                                    when (LocalUiMode.current) {
-                                        UiMode.Material -> IconButton(onClick = { query = "" }) {
-                                            Icon(
-                                                painterResource(R.drawable.ic_baseline_close_24),
-                                                contentDescription = stringResource(R.string.clear),
-                                            )
-                                        }
-
-                                        UiMode.Coui -> CouiIconButton(
-                                            onClick = { query = "" },
-                                            contentDescription = stringResource(R.string.clear),
-                                        ) {
-                                            // 图标语义由按钮统一声明，这里传 null 免得读屏播报两遍
-                                            Icon(
-                                                painterResource(R.drawable.ic_baseline_close_24),
-                                                contentDescription = null,
-                                                tint = CouiTheme.colorScheme.onSurface,
-                                            )
-                                        }
-                                    }
-                                }
-                            } else {
-                                null
-                            },
-                        )
+                            }
                     }
+
+                    // COUI 行的 CouiTextRow 自带 16dp 行内缩，裸放本身就是一条搜索框；
+                    // material 行的 MaterialListItem 是一整块分段卡片、自己不带内缩，
+                    // 补 pageInset 才与页面上的分组卡片左右对齐
+                    val fieldInset = when (LocalUiMode.current) {
+                        UiMode.Material -> Modifier.pageInset()
+                        UiMode.Coui -> Modifier
+                    }
+                    MaterialTextField(
+                        modifier = fieldInset,
+                        value = queryNow,
+                        onValueChange = { query = it },
+                        placeholder = { Text(stringResource(R.string.menu_search)) },
+                        singleLine = true,
+                        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
+                        keyboardActions = androidx.compose.foundation.text.KeyboardActions(
+                            onSearch = { recordHistory(queryNow) },
+                        ),
+                        focusRequester = searchFocusRequester,
+                        leadingContent = {
+                            Icon(
+                                painterResource(R.drawable.ic_baseline_search_24),
+                                contentDescription = null,
+                            )
+                        },
+                        trailingContent = if (queryNow.isNotEmpty()) {
+                            {
+                                // 清空按钮跟随当前渲染线：搜索框两条线共用同一个入口，
+                                // 里面混进另一种线族的按钮会在 COUI 线上露出 Material 的点击态
+                                when (LocalUiMode.current) {
+                                    UiMode.Material -> IconButton(onClick = { query = "" }) {
+                                        Icon(
+                                            painterResource(R.drawable.ic_baseline_close_24),
+                                            contentDescription = stringResource(R.string.clear),
+                                        )
+                                    }
+
+                                    UiMode.Coui -> CouiIconButton(
+                                        onClick = { query = "" },
+                                        contentDescription = stringResource(R.string.clear),
+                                    ) {
+                                        // 图标语义由按钮统一声明，这里传 null 免得读屏播报两遍
+                                        Icon(
+                                            painterResource(R.drawable.ic_baseline_close_24),
+                                            contentDescription = null,
+                                            tint = CouiTheme.colorScheme.onSurface,
+                                        )
+                                    }
+                                }
+                            }
+                        } else {
+                            null
+                        },
+                    )
                 }
                 if (queryNow.isBlank()) {
                     // 空查询时给最近搜索历史留出入口：点一条即填入，右侧按钮只删这一条

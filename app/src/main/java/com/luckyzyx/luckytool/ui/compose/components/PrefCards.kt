@@ -86,6 +86,12 @@ import com.luckyzyx.luckytool.ui.theme.UiMode
  * 版式归属：水平内缩与分组上沿留白都由本入口给（COUI 线卡片自带内缩，material 线这里补 16dp），
  * 调用方不要再加水平 padding（会叠成 32dp），也不要在相邻分组之间插 Spacer。
  *
+ * [content] 是**登记块**而不是组合块：只调用 `item()`，不要在里面直接写 composable。
+ * 条目在 [content] 执行时就定下来、随后整批交给 [PrefSectionRows]；如果 [content] 自己也成了
+ * 可组合 lambda（例如在里面直接调 `stringResource`），它就带上独立的组合作用域 —— 状态变化时
+ * 只有它自己重跑，新登记的行进不了已经画出来的卡片，卡片会一直停在首次组合时的内容
+ *（数据后到的分组就是空卡）。需要状态的行把读取放进 `item { }` 里。
+ *
  * @param title 分组标题，null / 空表示无标题（不占标题行）
  * @param summary 标题下方的分组说明
  * @param footer 卡片下方的分组说明
@@ -96,7 +102,7 @@ fun PrefGroup(
     summary: String? = null,
     footer: String? = null,
     modifier: Modifier = Modifier,
-    content: @Composable PrefCardScope.() -> Unit,
+    content: PrefCardScope.() -> Unit,
 ) {
     val collected = PrefCardEntries()
     content(

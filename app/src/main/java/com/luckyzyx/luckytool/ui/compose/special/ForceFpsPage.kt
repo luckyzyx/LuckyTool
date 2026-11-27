@@ -22,18 +22,19 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
 import com.itos.coui.layout.CouiPageDefaults
 import com.itos.coui.text.CouiTextKind
-import com.itos.coui.text.Text as CouiText
 import com.itos.coui.theme.CouiTheme
 import com.luckyzyx.luckytool.IRefreshRateController
 import com.luckyzyx.luckytool.R
 import com.luckyzyx.luckytool.data.DisplayMode
 import com.luckyzyx.luckytool.service.RefreshRateService
-import com.luckyzyx.luckytool.ui.compose.components.PrefGroup
-import com.luckyzyx.luckytool.ui.compose.components.pageInset
-import com.luckyzyx.luckytool.ui.compose.components.PrefSwitchRow
 import com.luckyzyx.luckytool.ui.compose.components.AppRadioItem
+import com.luckyzyx.luckytool.ui.compose.components.PrefGroup
+import com.luckyzyx.luckytool.ui.compose.components.PrefSwitchRow
 import com.luckyzyx.luckytool.ui.compose.components.coui.CouiFilledButton
+import com.luckyzyx.luckytool.ui.compose.components.pageInset
 import com.luckyzyx.luckytool.ui.compose.scopes.ScopePageSpec
+import com.luckyzyx.luckytool.ui.compose.special.ForceFpsPage.BIND_TIMEOUT_MS
+import com.luckyzyx.luckytool.ui.compose.special.ForceFpsPage.reloader
 import com.luckyzyx.luckytool.ui.theme.LocalUiMode
 import com.luckyzyx.luckytool.ui.theme.UiMode
 import com.luckyzyx.luckytool.utils.GlobalKeyValue.keyFpsAutoStart
@@ -44,6 +45,8 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
+import kotlin.time.Duration.Companion.milliseconds
+import com.itos.coui.text.Text as CouiText
 
 /**
  * 强制刷新率页：列出 SurfaceFlinger 支持的模式，设置当前刷新率、显示刷新率开关与开机自启。
@@ -115,7 +118,7 @@ object ForceFpsPage {
             var loading by remember { mutableStateOf(true) }
 
             suspend fun fetchController(): IRefreshRateController? =
-                withTimeoutOrNull(BIND_TIMEOUT_MS) {
+                withTimeoutOrNull(BIND_TIMEOUT_MS.milliseconds) {
                     suspendCancellableCoroutine { cont ->
                         RefreshRateService.get(c) { cont.resume(it) { _, _, _ -> } }
                     }
