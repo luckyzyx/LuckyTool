@@ -33,9 +33,13 @@ object HookFloatMirageWindow : YukiBaseHooker() {
 
     override fun onHook() {
         if (preferences(ModulePrefs).getBoolean("run_floating_window_tasks_in_foreground", false)) {
-            loadHooker(MultiAppFloatWindowBackRun)
-            //后台保活（Game HangUp）从 ColorOS 15 起才有贴边最小化入口，C14 无此类
-            if (getOSVersionCode >= 35) loadHooker(HangUpKeepAlive)
+            if (getOSVersionCode >= 37) {
+                loadHooker(FloatHandleForeground)
+            } else {
+                loadHooker(MultiAppFloatWindowBackRun)
+                //后台保活（Game HangUp）从 ColorOS 15 起才有贴边最小化入口，C14 无此类
+                if (getOSVersionCode >= 35) loadHooker(HangUpKeepAlive)
+            }
         }
     }
 
@@ -540,4 +544,70 @@ object HangUpKeepAlive : YukiBaseHooker() {
         taskInfo.asResolver().firstFieldOrNull { type = Intent::class;superclass() }
             ?.get<Intent>()?.let { Intent(it) }
     }.getOrNull()
+}
+
+@Obfuscate
+object FloatHandleForeground : YukiBaseHooker() {
+
+    override fun onHook() {
+        "com.android.server.wm.TaskFragment".toClass().resolve().apply {
+            //Source TaskFragment.startPausing
+            firstMethod { name = "startPausing";parameterCount = 5 }.hook {
+                before {
+                    val task = arg(2).get<Any?>()?.asResolver()
+                        ?.firstFieldOrNull { name = "task" }?.get<Any?>() ?: return@before
+                    val taskId = MirageHangUpState.taskIdOf(task)
+                    if (taskId < 0) return@before
+                    val floating = runCatching {
+                        "com.android.server.wm.FloatHandleController".toClass().resolve()
+                            .firstMethod { name = "getInstance";emptyParameters() }
+                            .invoke<Any?>()?.asResolver()
+                            ?.firstMethod { name = "isInFloatingList";parameterCount = 1 }
+                            ?.invoke<Boolean>(taskId) == true
+                    }.getOrDefault(false)
+                    if (floating) result = false
+                }
+            }
+        }
+        "com.android.server.wm.ActivityRecord".toClass().resolve().apply {
+            //Source ActivityRecord.setState
+            firstMethod { name = "setState";parameterCount = 2 }.hook {
+                before {
+                    val task = instance.asResolver()
+                        .firstFieldOrNull { name = "task" }?.get<Any?>() ?: return@before
+                    val taskId = MirageHangUpState.taskIdOf(task)
+                    if (taskId < 0) return@before
+                    when ((firstArg().get<Any?>() as? Enum<*>)?.name) {
+                        "PAUSED", "STOPPING", "STOPPED" -> {
+                            val floating = runCatching {
+                                "com.android.server.wm.FloatHandleController".toClass().resolve()
+                                    .firstMethod { name = "getInstance";emptyParameters() }
+                                    .invoke<Any?>()?.asResolver()
+                                    ?.firstMethod { name = "isInFloatingList";parameterCount = 1 }
+                                    ?.invoke<Boolean>(taskId) == true
+                            }.getOrDefault(false)
+                            if (floating) result = null
+                        }
+                    }
+                }
+            }
+            //Source ActivityRecord.addToStopping
+            firstMethod { name = "addToStopping";parameterCount = 2 }.hook {
+                before {
+                    val task = instance.asResolver()
+                        .firstFieldOrNull { name = "task" }?.get<Any?>() ?: return@before
+                    val taskId = MirageHangUpState.taskIdOf(task)
+                    if (taskId < 0) return@before
+                    val floating = runCatching {
+                        "com.android.server.wm.FloatHandleController".toClass().resolve()
+                            .firstMethod { name = "getInstance";emptyParameters() }
+                            .invoke<Any?>()?.asResolver()
+                            ?.firstMethod { name = "isInFloatingList";parameterCount = 1 }
+                            ?.invoke<Boolean>(taskId) == true
+                    }.getOrDefault(false)
+                    if (floating) result = null
+                }
+            }
+        }
+    }
 }
