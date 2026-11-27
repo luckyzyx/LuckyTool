@@ -1,6 +1,11 @@
 package com.luckyzyx.luckytool.ui.compose.pages
 
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -278,12 +283,26 @@ private fun HomeDeviceCard(
     val details = entries?.filterNot { it.labelRes in listOf(R.string.model, R.string.system, R.string.version) }
     HomeCard(colors.card, colors.foreground, onLongClick = onCopy) {
         Column(Modifier.fillMaxWidth().padding(20.dp)) {
-            if (primary == null) {
-                HomeText(stringResource(R.string.home_info_loading), HomeTextRole.Body, colors.secondary)
-            } else {
-                primary.forEachIndexed { index, entry ->
-                    if (index > 0) Spacer(Modifier.height(20.dp))
-                    HomeDeviceRow(entry, colors)
+            // 读完设备信息时用淡入淡出换掉占位文案，OTA 变化后的刷新也走同一过渡，
+            // 避免整块文字瞬间替换；高度由 AnimatedContent 一并动画。
+            AnimatedContent(
+                targetState = primary,
+                transitionSpec = {
+                    fadeIn(tween(DeviceInfoFadeMillis)) togetherWith fadeOut(tween(DeviceInfoFadeMillis / 2))
+                },
+                modifier = Modifier.fillMaxWidth(),
+                contentAlignment = Alignment.TopStart,
+                label = "home_device_info",
+            ) { rows ->
+                Column(Modifier.fillMaxWidth()) {
+                    if (rows == null) {
+                        HomeText(stringResource(R.string.home_info_loading), HomeTextRole.Body, colors.secondary)
+                    } else {
+                        rows.forEachIndexed { index, entry ->
+                            if (index > 0) Spacer(Modifier.height(20.dp))
+                            HomeDeviceRow(entry, colors)
+                        }
+                    }
                 }
             }
             AnimatedVisibility(visible = expanded && !details.isNullOrEmpty()) {
@@ -381,6 +400,8 @@ private fun HomeCard(
         content = content,
     )
 }
+
+private const val DeviceInfoFadeMillis = 220
 
 private data class HomeColors(val card: Color, val foreground: Color, val secondary: Color, val accent: Color, val error: Color)
 
