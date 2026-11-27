@@ -767,7 +767,8 @@ private fun ThemeModeSelector(state: ThemeScreenState) {
                                         ColorMode.SYSTEM -> LucideR.drawable.lucide_ic_sun_moon
                                         ColorMode.LIGHT -> LucideR.drawable.lucide_ic_sun
                                         ColorMode.DARK -> LucideR.drawable.lucide_ic_moon
-                                        else -> LucideR.drawable.lucide_ic_sun_medium
+                                        // AMOLED 是纯黑底，比普通深色更暗；太阳系图标只留给系统/亮色，这里用带星月亮区分
+                                        else -> LucideR.drawable.lucide_ic_moon_star
                                     }
                                 ),
                                 contentDescription = label,
@@ -793,6 +794,9 @@ private fun ThemeModeSelector(state: ThemeScreenState) {
 /**
  * 滑杆卡片：图标 + 标题 / 说明 + 当前值，下面一条滑杆。
  *
+ * 行首图标按外观线取：[painter] 给 COUI 线，[icon] 给 Material 线，前景色也随线走，
+ * 与同页开关 / 下拉行的行首图标保持同一来源与同一颜色。
+ *
  * 取值由调用方持有（页内状态），[AppSlider] 在两条外观线上写回的都是同一份；
  * material3 的 SliderState 是非受控语义，值必须由调用方写回，否则滑块不跟手。
  * 松手回调用于提交偏好，拖动过程中不落盘。
@@ -810,10 +814,14 @@ private fun ThemeSliderCard(
     onValueChange: (Float) -> Unit,
     onValueChangeFinished: () -> Unit,
 ) {
+    // 行首图标与同页开关 / 下拉行同一套取法：Material 线用 Material 矢量图与 onSurface（行首图标取卡片前景色），
+    // COUI 线用 Lucide 图与页面标题色，两条线都不再固定用 onSurfaceVariant 这类淡色
+    val isCoui = LocalUiMode.current == UiMode.Coui
     val iconTint = when (LocalUiMode.current) {
-        UiMode.Material -> MaterialTheme.colorScheme.onSurfaceVariant
-        UiMode.Coui -> CouiTheme.colorScheme.onSurfaceVariant
+        UiMode.Material -> MaterialTheme.colorScheme.onSurface
+        UiMode.Coui -> CouiPageDefaults.themeColors().title
     }
+    val iconPainter = if (isCoui) painter ?: rememberVectorPainter(icon) else rememberVectorPainter(icon)
     AppCard(
         modifier = Modifier
             .fillMaxWidth()
@@ -825,9 +833,10 @@ private fun ThemeSliderCard(
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Icon(
-                    painter = painter ?: rememberVectorPainter(icon),
+                    painter = iconPainter,
                     contentDescription = title,
                     tint = iconTint,
+                    modifier = if (isCoui) Modifier.size(CouiPageDefaults.iconSize) else Modifier,
                 )
                 Spacer(modifier = Modifier.width(12.dp))
                 Column(modifier = Modifier.weight(1f)) {
