@@ -1,6 +1,7 @@
-package com.luckyzyx.luckytool.ui.compose.scopes
+package com.luckyzyx.luckytool.ui.compose.scopes.statusbar
 
 import com.luckyzyx.luckytool.R
+import com.luckyzyx.luckytool.ui.compose.scopes.ScopePageSpec
 import com.luckyzyx.luckytool.utils.ModulePrefs
 import com.luckyzyx.luckytool.utils.formatDate
 
@@ -30,13 +31,28 @@ object StatusBarClockPage {
         when (state.getString("statusbar_clock_mode", "0")) {
             "1" -> {
                 switch("statusbar_clock_show_year", c.getString(R.string.statusbar_clock_show_year))
-                switch("statusbar_clock_show_month", c.getString(R.string.statusbar_clock_show_month))
+                switch(
+                    "statusbar_clock_show_month",
+                    c.getString(R.string.statusbar_clock_show_month)
+                )
                 switch("statusbar_clock_show_day", c.getString(R.string.statusbar_clock_show_day))
                 switch("statusbar_clock_show_week", c.getString(R.string.statusbar_clock_show_week))
-                switch("statusbar_clock_show_period", c.getString(R.string.statusbar_clock_show_period))
-                switch("statusbar_clock_show_double_hour", c.getString(R.string.statusbar_clock_show_double_hour))
-                switch("statusbar_clock_show_second", c.getString(R.string.statusbar_clock_show_second))
-                switch("statusbar_clock_hide_spaces", c.getString(R.string.statusbar_clock_hide_spaces))
+                switch(
+                    "statusbar_clock_show_period",
+                    c.getString(R.string.statusbar_clock_show_period)
+                )
+                switch(
+                    "statusbar_clock_show_double_hour",
+                    c.getString(R.string.statusbar_clock_show_double_hour)
+                )
+                switch(
+                    "statusbar_clock_show_second",
+                    c.getString(R.string.statusbar_clock_show_second)
+                )
+                switch(
+                    "statusbar_clock_hide_spaces",
+                    c.getString(R.string.statusbar_clock_hide_spaces)
+                )
                 switch(
                     key = "statusbar_clock_show_doublerow",
                     title = c.getString(R.string.statusbar_clock_show_doublerow),
@@ -67,6 +83,7 @@ object StatusBarClockPage {
                     notify = true,
                 )
             }
+
             "2" -> {
                 editText(
                     key = "statusbar_clock_custom_format",
@@ -78,7 +95,9 @@ object StatusBarClockPage {
                     maxLines = 3,
                 )
                 // 自定义格式含多行（带换行）才显示对齐选项
-                if ((state.getString("statusbar_clock_custom_format", "HH:mm:ss") ?: "HH:mm:ss").split("\n").size >= 2) {
+                if ((state.getString("statusbar_clock_custom_format", "HH:mm:ss")
+                        ?: "HH:mm:ss").split("\n").size >= 2
+                ) {
                     list(
                         key = "statusbar_clock_text_alignment",
                         title = c.getString(R.string.statusbar_clock_text_alignment),

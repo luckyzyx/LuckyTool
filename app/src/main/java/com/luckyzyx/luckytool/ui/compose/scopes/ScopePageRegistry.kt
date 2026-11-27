@@ -84,7 +84,9 @@ import com.luckyzyx.luckytool.ui.compose.scopes.related.LauncherRelatedPage
 import com.luckyzyx.luckytool.ui.compose.scopes.related.LockScreenRelatedPage
 import com.luckyzyx.luckytool.ui.compose.scopes.related.MiscellaneousPage
 import com.luckyzyx.luckytool.ui.compose.scopes.related.SoundRelatedPage
+import com.luckyzyx.luckytool.ui.compose.scopes.related.StatusBarRelatedPage
 import com.luckyzyx.luckytool.ui.compose.scopes.statusbar.StatusBarBatteryPage
+import com.luckyzyx.luckytool.ui.compose.scopes.statusbar.StatusBarClockPage
 import com.luckyzyx.luckytool.ui.compose.scopes.statusbar.StatusBarControlCenterPage
 import com.luckyzyx.luckytool.ui.compose.scopes.statusbar.StatusBarIconOrderPage
 import com.luckyzyx.luckytool.ui.compose.scopes.statusbar.StatusBarIconPage

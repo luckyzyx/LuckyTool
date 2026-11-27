@@ -1,21 +1,20 @@
-package com.luckyzyx.luckytool.ui.compose.scopes
+package com.luckyzyx.luckytool.ui.compose.scopes.related
 
 import androidx.compose.material3.Text
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.itos.coui.layout.CouiPageDefaults
 import com.itos.coui.text.CouiTextKind
-import com.itos.coui.text.Text as CouiText
 import com.itos.coui.theme.CouiTheme
 import com.luckyzyx.luckytool.R
-import com.luckyzyx.luckytool.ui.compose.components.AppPickerDialog
 import com.luckyzyx.luckytool.ui.compose.components.AppListItem
+import com.luckyzyx.luckytool.ui.compose.components.AppPickerDialog
 import com.luckyzyx.luckytool.ui.compose.components.PrefRowInset
+import com.luckyzyx.luckytool.ui.compose.scopes.ScopePageSpec
 import com.luckyzyx.luckytool.ui.theme.LocalUiMode
 import com.luckyzyx.luckytool.ui.theme.UiMode
 import com.luckyzyx.luckytool.utils.A13
@@ -23,6 +22,7 @@ import com.luckyzyx.luckytool.utils.ModulePrefs
 import com.luckyzyx.luckytool.utils.SDK
 import com.luckyzyx.luckytool.utils.getOSVersionCode
 import com.luckyzyx.luckytool.utils.sendPrefsValue
+import com.itos.coui.text.Text as CouiText
 
 /**
  * 状态栏相关页：8 个状态栏子页入口 + 状态栏事件 + 音乐流体云（osCode 33/35 门控）。
@@ -75,7 +75,7 @@ object StatusBarRelatedPage {
                 entryValues = arrayOf("0", "1", "2"),
                 default = "0",
                 summary = c.getString(R.string.current_mode) + ": %s\n" +
-                    c.getString(R.string.need_restart_system),
+                        c.getString(R.string.need_restart_system),
             )
         }
         // 音乐流体云
