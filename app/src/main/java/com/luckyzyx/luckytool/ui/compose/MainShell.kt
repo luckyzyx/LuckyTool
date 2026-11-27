@@ -126,6 +126,25 @@ internal fun MainTab.icon(): ImageVector = when (this) {
     MainTab.Setting -> CouiIcons.Filled.Setting
 }
 
+/** 底栏页签图标的一对形态：未选中描边、选中实心。 */
+internal class MainTabIcons(val unselected: ImageVector, val selected: ImageVector)
+
+/**
+ * 要表达选中态的底栏图标对。
+ *
+ * COUI 底栏在库内部画图标，染色固定成黑/白、没有逐项的透明度，改色调或渐变都没有入口，
+ * 能区分选中态的只有换图形，所以未选中给描边、选中给实心。官方集里只有齿轮两态齐全，
+ * 其余页签缺的那一半由 [CouiIconsExt] 补齐。
+ */
+@Composable
+internal fun MainTab.iconPair(): MainTabIcons = when (this) {
+    MainTab.Other -> MainTabIcons(CouiIconsExt.GridOutlined, CouiIcons.Filled.Grid)
+    MainTab.Function -> MainTabIcons(CouiIcons.Outlined.SliderCustom, CouiIconsExt.SliderCustomFilled)
+    MainTab.Home -> MainTabIcons(CouiIconsExt.Home, CouiIconsExt.HomeFilled)
+    MainTab.Search -> MainTabIcons(CouiIcons.Outlined.Search, CouiIconsExt.SearchFilled)
+    MainTab.Setting -> MainTabIcons(CouiIcons.Outlined.Setting, CouiIcons.Filled.Setting)
+}
+
 @Composable
 fun MainShell(activity: MainActivity) {
     val pagerState = rememberPagerState(initialPage = MainTab.Home.ordinal) { MainTab.entries.size }
@@ -411,10 +430,10 @@ private fun CouiTabsBottomBar(
             CouiNavigationBar(
                 modifier = Modifier.requiredWidth(menuWidth + CouiBarAttachmentSpace + 32.dp),
                 renderer = renderer,
-                // COUI 图标集没有选中/未选中成对的页签图标，两态共用同一个图形，
-                // 选中态由底栏用文字透明度区分。
+                // 两态在图形上就分开（未选中描边、选中实心），文字透明度只是附加区分。
                 items = tabs.map { tab ->
-                    CouiNavigationItem(stringResource(tab.labelRes), tab.icon(), tab.icon())
+                    val icons = tab.iconPair()
+                    CouiNavigationItem(stringResource(tab.labelRes), icons.unselected, icons.selected)
                 },
                 selectedIndex = selectedIndex,
                 dark = CouiTheme.isDark,
@@ -432,7 +451,8 @@ private fun CouiTabsBottomBar(
 }
 
 /**
- * 不依赖渲染器的 Coui 底栏：整条铺满宽度、页签均分，选中项用强调色、未选中用次级文字色。
+ * 不依赖渲染器的 Coui 底栏：整条铺满宽度、页签均分，选中项用实心图标 + 强调色，
+ * 未选中用描边图标 + 次级文字色。
  *
  * 系统底部安全区由底栏自己消费（与悬浮底栏一致），正文侧因此不必再为底栏留白；
  * 每个页签是整块可点的胶囊区，按下时长按悬停反馈由 [couiNavigationFeedback] 画；
@@ -476,8 +496,9 @@ private fun CouiFlatTabsBottomBar(
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
                 val tabIcon: @Composable () -> Unit = {
+                    val icons = tab.iconPair()
                     Icon(
-                        imageVector = tab.icon(),
+                        imageVector = if (selected) icons.selected else icons.unselected,
                         contentDescription = null,
                         modifier = Modifier.size(24.dp),
                         tint = tint,

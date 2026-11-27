@@ -49,6 +49,7 @@ Entries for versions before `1.3.5_beta` are currently only available in the
 - Confirmation dialog before restarting the system and before a fast reboot
 - Add the panorama work station 3-split view (@天伞桜)
 - Remove the app list whitelist for the high-energy outdoor mode (Rider Mode)
+- Selected state for COUI bottom bar icons (outlined when idle, filled when selected)
 
 #### Optimized
 
