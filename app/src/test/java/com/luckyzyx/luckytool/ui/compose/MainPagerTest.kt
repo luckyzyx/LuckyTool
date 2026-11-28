@@ -345,6 +345,115 @@ class MainPagerTest {
             }
         }
     }
+
+    /** 高亮必须落在 [tab] 上：选中语义在它的标签上，滑块中心与它的图标中心对齐。 */
+    private fun assertHighlight(ui: ComposeGestureHost, tab: MainTab) {
+        val label = ui.activity.getString(tab.labelRes)
+        val icon = requireNotNull(ui.nodes().firstOrNull {
+            it.config.getOrNull(SemanticsProperties.ContentDescription)?.contains(label) == true
+        }) { "缺少标签 $label 的图标" }
+        val selected = requireNotNull(ui.nodes().firstOrNull {
+            it.config.getOrNull(SemanticsProperties.Role) == Role.Tab &&
+                it.config.getOrNull(SemanticsActions.OnClick)?.action != null &&
+                it.config.getOrNull(SemanticsProperties.Selected) == true
+        }) { "底栏没有声明为选中的标签" }
+        assertTrue(
+            "选中语义应落在 $label 所在标签上：${selected.boundsInRoot} vs ${icon.boundsInRoot}",
+            selected.boundsInRoot.contains(icon.boundsInRoot.center),
+        )
+        assertEquals(
+            "滑块中心必须与 $label 所在标签对齐",
+            selected.boundsInRoot.center.x,
+            ui.nodes().first {
+                it.config.getOrNull(SemanticsProperties.TestTag) == "materialFloatingIndicator"
+            }.boundsInRoot.center.x,
+            1f,
+        )
+    }
+
+    @Test
+    fun `switching floating style at runtime keeps the selected tab highlighted`() {
+        listOf(false, true).forEach { blur -> PagerHost(floating = true, blur = blur).use { h ->
+            h.ui.clickLabel("设置")
+            h.ui.advance()
+            h.assertSettled(4)
+            assertHighlight(h.ui, MainTab.Setting)
+            h.floatingStyle = FloatingBottomBarStyle.IosLike
+            h.ui.advance()
+            h.assertSettled(4)
+            assertHighlight(h.ui, MainTab.Setting)
+            h.ui.clickLabel("主页")
+            h.ui.advance()
+            h.assertSettled(2)
+            assertHighlight(h.ui, MainTab.Home)
+            h.floatingStyle = FloatingBottomBarStyle.Classic
+            h.ui.advance()
+            h.assertSettled(2)
+            assertHighlight(h.ui, MainTab.Home)
+            h.ui.clickLabel("功能")
+            h.ui.advance()
+            h.assertSettled(1)
+            assertHighlight(h.ui, MainTab.Function)
+        } }
+    }
+
+    @Test
+    fun `style switched while the shell is stopped keeps the selected tab highlighted`() {
+        PagerHost(floating = true).use { h ->
+            h.ui.clickLabel("设置")
+            h.ui.advance()
+            h.assertSettled(4)
+            assertHighlight(h.ui, MainTab.Setting)
+            // 主题页在独立 Activity 里写字，主壳此时已 stop：恢复后必须按新样式重画，
+            // 且选中态仍在切样式前那个标签上，之后点标签高亮要继续跟手。
+            h.ui.controller.pause().stop()
+            h.floatingStyle = FloatingBottomBarStyle.IosLike
+            h.ui.controller.start().resume()
+            h.ui.advance()
+            h.assertSettled(4)
+            assertHighlight(h.ui, MainTab.Setting)
+            h.ui.clickLabel("主页")
+            h.ui.advance()
+            h.assertSettled(2)
+            assertHighlight(h.ui, MainTab.Home)
+        }
+    }
+
+    @Test
+    fun `pointer taps keep the highlight on the tapped tab after a style switch`() {
+        PagerHost(floating = true).use { h ->
+            // 真机点标签走的是底栏的拖拽手势（onDragStarted/onDragStopped），不是语义点击，
+            // 所以这里用零距离拖拽复现，避免只测到语义 onClick 那条路。
+            fun center(label: String) = h.ui.nodes().first {
+                it.boundsInRoot.width > 0 && it.boundsInRoot.top > 1200f &&
+                    it.config.getOrNull(SemanticsProperties.ContentDescription)?.contains(label) == true
+            }.boundsInRoot.center
+            fun tap(label: String) {
+                val at = center(label)
+                h.ui.drag(at.x, at.y, at.x, at.y)
+                h.ui.advance()
+            }
+            tap("设置")
+            h.assertSettled(4)
+            assertHighlight(h.ui, MainTab.Setting)
+            for (style in listOf(FloatingBottomBarStyle.IosLike, FloatingBottomBarStyle.Classic)) {
+                h.floatingStyle = style
+                h.ui.advance()
+                h.assertSettled(4)
+                assertHighlight(h.ui, MainTab.Setting)
+                tap("主页")
+                h.assertSettled(2)
+                assertHighlight(h.ui, MainTab.Home)
+                tap("功能")
+                h.assertSettled(1)
+                assertHighlight(h.ui, MainTab.Function)
+                tap("设置")
+                h.assertSettled(4)
+                assertHighlight(h.ui, MainTab.Setting)
+            }
+        }
+    }
+
     @Test
     @Config(sdk = [31, 32, 35])
     fun `floating pointer taps and iOS drag selection work across effect support levels`() {
@@ -470,7 +579,7 @@ class MainPagerTest {
                                         )
                                     }
                                 }
-                                // Match ScopeScreen's separate list nodes while retaining their shared state.
+                                // Match PageScreen's separate list nodes while retaining their shared state.
                                 if (this.mode == UiMode.Coui) {
                                     LazyColumn(
                                         state = list,

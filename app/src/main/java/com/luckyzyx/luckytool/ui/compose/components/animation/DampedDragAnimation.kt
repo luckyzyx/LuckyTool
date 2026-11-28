@@ -75,7 +75,9 @@ internal class DampedDragAnimation(
     val scaleY: Float get() = scaleYAnimation.value
     val velocity: Float get() = velocityAnimation.value
 
-    val modifier: Modifier = Modifier.pointerInput(Unit) {
+    // `pointerInput` 的协程只在 key 变化时重装，换实例（如切换底栏样式重建动画）后它仍然驱动旧对象，
+    // 表现是页面照常切换但滑块停着不动，所以拿实例自己当 key：换实例就重装手势。
+    val modifier: Modifier = Modifier.pointerInput(this) {
         inspectDragGestures(
             onDragStart = { down ->
                 onDragStarted(down.position)
