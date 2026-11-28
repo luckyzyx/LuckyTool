@@ -4,8 +4,10 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.luckyzyx.luckytool.R
 import com.luckyzyx.luckytool.service.UserService
+import com.luckyzyx.luckytool.ui.compose.components.AppPickerDialog
 import com.luckyzyx.luckytool.ui.compose.components.ChoiceItem
 import com.luckyzyx.luckytool.ui.compose.components.PrefRow
 import com.luckyzyx.luckytool.ui.compose.components.PrefRowInset
@@ -17,7 +19,7 @@ import com.luckyzyx.luckytool.utils.sendPrefsValue
 import com.luckyzyx.luckytool.utils.showToast
 
 /**
- * 安全权限页：恶意应用拦截、应用启动弹窗与权限限制开关，以及按用户编辑的启动白名单。
+ * 安全权限页：恶意应用拦截、应用启动弹窗与权限限制开关，以及按用户编辑的跳转应用拦截扩展名单。
  * enable_always_allow_app_start_dialog 受 app_start_dialog_use_old_version 依赖；
  * remove_always_allow_app_start_list 为用户多选对话框 custom 条目。
  */
@@ -47,6 +49,37 @@ object OplusSecuritypPermissionPage {
                     title = c.getString(R.string.disable_malicious_app_intercept),
                     summary = c.getString(R.string.need_restart_system),
                 )
+            }
+            val additionalInterceptTitle = c.getString(R.string.app_start_intercept_additional_list)
+            custom(key = "app_start_intercept_additional_list", title = additionalInterceptTitle) {
+                val selected by state.stringSetFlow("app_start_intercept_additional_list")
+                    .collectAsStateWithLifecycle()
+                var showPicker by remember { mutableStateOf(false) }
+                PrefRowInset {
+                    PrefRow(
+                        title = additionalInterceptTitle,
+                        summary = c.getString(R.string.app_start_intercept_additional_list_summary),
+                        onClick = { showPicker = true },
+                    )
+                }
+                if (showPicker) {
+                    AppPickerDialog(
+                        title = additionalInterceptTitle,
+                        multiMode = true,
+                        showSystemApps = true,
+                        enabledList = selected,
+                        onDismiss = { showPicker = false },
+                        onConfirm = { apps ->
+                            val selectedPackages = apps.map { it.packageName }.toSet()
+                            state.set("app_start_intercept_additional_list", selectedPackages)
+                            c.sendPrefsValue(
+                                "android",
+                                "app_start_intercept_additional_list",
+                                selectedPackages,
+                            )
+                        },
+                    )
+                }
             }
             switch(
                 key = "app_start_dialog_use_old_version",
