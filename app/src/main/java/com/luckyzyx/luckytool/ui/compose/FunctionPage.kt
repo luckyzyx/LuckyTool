@@ -1,13 +1,17 @@
 package com.luckyzyx.luckytool.ui.compose
 
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.calculateEndPadding
 import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowRight
 import androidx.compose.material.icons.filled.PowerSettingsNew
@@ -19,6 +23,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -58,7 +63,8 @@ import com.luckyzyx.luckytool.ui.compose.components.coui.CouiIconButton
 import com.luckyzyx.luckytool.ui.compose.components.PageScaffold
 import com.luckyzyx.luckytool.ui.compose.components.NoteTone
 import com.luckyzyx.luckytool.ui.compose.components.PrefNote
-import com.luckyzyx.luckytool.ui.compose.components.currentDialogStyle
+import com.luckyzyx.luckytool.ui.compose.components.currentPrefStyle
+import com.luckyzyx.luckytool.ui.compose.components.dialogListMaxHeight
 import com.luckyzyx.luckytool.ui.compose.components.material.MaterialTextField
 import com.luckyzyx.luckytool.ui.theme.LocalUiMode
 import com.luckyzyx.luckytool.ui.theme.UiMode
@@ -79,12 +85,11 @@ fun FunctionPage(
     activity: MainActivity,
     onOpenPage: (pageKey: String, title: String) -> Unit,
 ) {
-    var showVersionInfo by remember { mutableStateOf(false) }
+    // 面板外壳自己要按 visible 常驻组合才能跑退场动画，所以状态留在这里、外壳不包 if
+    val showVersionInfo = remember { mutableStateOf(false) }
     var showRestartMenu by remember { mutableStateOf(false) }
 
-    if (showVersionInfo) {
-        VersionInfoDialog(onDismiss = { showVersionInfo = false })
-    }
+    VersionInfoSheet(visible = showVersionInfo)
 
     if (showRestartMenu) {
         RestartMenuUtils.RestartMenuDialog(activity) { showRestartMenu = false }
@@ -92,7 +97,7 @@ fun FunctionPage(
 
     FunctionTreeScreen(
         onOpenPage = onOpenPage,
-        onShowVersionInfo = { showVersionInfo = true },
+        onShowVersionInfo = { showVersionInfo.value = true },
         onShowRestartMenu = { showRestartMenu = true },
     )
 }
@@ -260,9 +265,34 @@ internal fun PageHost(
     }
 }
 
-/** 版本信息对话框：xposed_scope 各包版本表（Markdown 表格经 Markwon 渲染） */
+/**
+ * 版本信息面板：xposed_scope 各包版本表（Markdown 表格经 Markwon 渲染）。
+ *
+ * visible 常驻传入，两种主题各自由自己的面板实现决定挂载与退场。
+ */
 @Composable
-private fun VersionInfoDialog(onDismiss: () -> Unit) {
+private fun VersionInfoSheet(visible: MutableState<Boolean>) {
+    currentPrefStyle().Sheet(
+        visible = visible,
+        title = stringResource(R.string.menu_versioninfo),
+        modifier = Modifier,
+        closeLabel = stringResource(R.string.close),
+        doneLabel = stringResource(R.string.sheet_done),
+    ) {
+        VersionInfoTable()
+    }
+}
+
+/**
+ * 版本表正文。
+ *
+ * 只在面板内容槽里组合：两种面板实现都会在不可见时跳过内容，所以每次进功能页不会白跑一遍包信息查询。
+ *
+ * 高度上限加纵向滚动是补 material 那一侧的：ModalBottomSheet 不替正文滚动，长表格会被裁掉；
+ * COUI 面板本来就滚正文、视口还更小，这里的上限只在内层生效，不会和面板抢手势。
+ */
+@Composable
+private fun VersionInfoTable() {
     val context = LocalContext.current
     // 数组资源走 Compose API，避免 LocalContext 取值在配置变化后陈旧
     val pkgs = stringArrayResource(R.array.xposed_scope)
@@ -282,21 +312,19 @@ private fun VersionInfoDialog(onDismiss: () -> Unit) {
     val markwon = remember(context) {
         Markwon.builder(context).usePlugin(TablePlugin.create(context)).build()
     }
-    // 长表格只让正文滚动：外壳已经给了滚动区，这里不再套 verticalScroll
-    currentDialogStyle().Alert(
-        onDismissRequest = onDismiss,
-        confirmLabel = stringResource(android.R.string.ok),
-        onConfirm = onDismiss,
-        title = stringResource(R.string.menu_versioninfo),
-        content = {
-            AndroidView(
-                factory = { ctx -> android.widget.TextView(ctx) },
-                modifier = Modifier.fillMaxWidth(),
-                update = { tv ->
-                    tv.setTextIsSelectable(true)
-                    markwon.setMarkdown(tv, markdown)
-                },
-            )
-        },
-    )
+    Column(
+        Modifier
+            .fillMaxWidth()
+            .heightIn(max = dialogListMaxHeight(designMax = 420.dp, chrome = 160.dp))
+            .verticalScroll(rememberScrollState())
+    ) {
+        AndroidView(
+            factory = { ctx -> android.widget.TextView(ctx) },
+            modifier = Modifier.fillMaxWidth(),
+            update = { tv ->
+                tv.setTextIsSelectable(true)
+                markwon.setMarkdown(tv, markdown)
+            },
+        )
+    }
 }
