@@ -515,23 +515,42 @@ class PrefPageBuilder internal constructor(
      *
      * 分组起止标记与页面级裸 body（`custom(raw = true)`）都是 groupable = false，各自把相邻条目切开；
      * 滑条、自定义控件等选项行一律并入所在分组卡片。
+     *
+     * 收起的行不参与分段：它不占高度，卡片端点（圆角/组间距）只按可见行算，所以夹在中间的
+     * 条件行（如随 ADB 服务异步出现的「远程 ADB 调试」）显隐不会把上面几行切成两张卡。
      */
     internal fun computeSegments() {
         var i = 0
         while (i < entries.size) {
-            // 收起的行不算分段成员：它不占高度，相邻两行要各自拿到卡片端点（圆角/组间距）
-            if (!entries[i].groupable || !entries[i].visible) {
+            if (!entries[i].groupable) {
                 entries[i].segIndex = 0
                 entries[i].segCount = 1
                 i++
                 continue
             }
             var j = i
-            while (j + 1 < entries.size && entries[j + 1].groupable && entries[j + 1].visible) j++
-            val count = j - i + 1
-            for (k in i..j) {
-                entries[k].segIndex = k - i
-                entries[k].segCount = count
+            while (j + 1 < entries.size && entries[j + 1].groupable) j++
+            val members = (i..j).filter { entries[it].visible }
+            if (members.isEmpty()) {
+                for (k in i..j) {
+                    entries[k].segIndex = 0
+                    entries[k].segCount = 1
+                }
+            } else {
+                val count = members.size
+                var seen = 0
+                for (k in i..j) {
+                    val entry = entries[k]
+                    if (entry.visible) {
+                        entry.segIndex = seen
+                        entry.segCount = count
+                        seen++
+                    } else {
+                        // 收起态沿用前一个可见行的位置：展开/收起动画中途不会闪出一张单独的卡片
+                        entry.segIndex = (seen - 1).coerceIn(0, count - 1)
+                        entry.segCount = count
+                    }
+                }
             }
             i = j + 1
         }
