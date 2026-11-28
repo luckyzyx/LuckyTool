@@ -86,6 +86,7 @@ internal interface PrefStyle {
     /**
      * 图标底座的配色：[colorful] 时用 [color]（为空回落 [FallbackBadgeColor]）铺底，
      * 否则用本线的强调色；前景色由实现挑自己那套。
+     * 多彩只在支持它的线生效（目前是 COUI），其余线忽略 [colorful] 走强调色。
      */
     @Composable
     fun iconBadgeColors(colorful: Boolean, color: Color?): IconBadgeColors

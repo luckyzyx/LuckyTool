@@ -61,7 +61,7 @@ Entries for versions before `1.3.5_beta` are currently only available in the
 - Redesigned the remote ADB debug dialog
 - Clarified the descriptions of the "app clone limit" options
 - Function page data is preloaded in the background at app start
-- Colored badges for the "XX-related" category rows on the function page
+- Colored badges for the "XX-related" category rows on the function page (COUI UI style only)
 - Settings backup/restore records where each storage lives
 - Settings backup/restore pickers default to Download/LuckyTool
 - Reworked keep-alive for docked floating windows, restored on ColorOS 15+ (ColorOS 14 uses the SystemUI path)

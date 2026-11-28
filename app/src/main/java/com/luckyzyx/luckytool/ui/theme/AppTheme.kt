@@ -182,7 +182,9 @@ fun AppTheme(content: @Composable () -> Unit) {
         LocalEnableBlur provides shellSettings.enableBlur,
         LocalEnableFloatingBottomBar provides shellSettings.enableFloatingBottomBar,
         LocalFloatingBottomBarStyle provides shellSettings.floatingBottomBarStyle,
-        LocalCategoryBadgeColors provides shellSettings.categoryBadgeColors,
+        // 多彩分类徽标只属于 COUI 线：Material 线始终是主题色的单色徽标，偏好只在 COUI 线生效
+        LocalCategoryBadgeColors provides
+            (uiMode == UiMode.Coui && shellSettings.categoryBadgeColors),
     ) {
         AppTheme(appSettings = appSettings, uiMode = uiMode, content = content)
     }

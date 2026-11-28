@@ -531,7 +531,7 @@ private fun ThemeScreenList(
             }
         }
 
-        // 分类页图标配色 + 应用内手势；系统不支持预测性返回时，另外两项仍可配置。
+        // 分类页图标配色（COUI 专属）+ 应用内手势；系统不支持预测性返回时，手势项仍可配置。
         item {
             AppGroup(
                 content = buildList<@Composable () -> Unit> {
@@ -588,7 +588,8 @@ private fun ThemeScreenList(
                             )
                         }
                     }
-                    add {
+                    // 多彩徽标是 COUI 线的观感，Material 线固定用主题色单色徽标，所以开关只在 COUI 线出现
+                    if (isCouiLine) add {
                         AppSwitchItem(
                             icon = Icons.Rounded.Palette,
                             painter = painterResource(LucideR.drawable.lucide_ic_palette),

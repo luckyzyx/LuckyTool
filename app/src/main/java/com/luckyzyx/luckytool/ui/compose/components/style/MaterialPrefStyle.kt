@@ -1,6 +1,5 @@
 package com.luckyzyx.luckytool.ui.compose.components.style
 
-import com.luckyzyx.luckytool.ui.compose.components.FallbackBadgeColor
 import com.luckyzyx.luckytool.ui.compose.components.IconBadgeColors
 import com.luckyzyx.luckytool.ui.compose.components.NoteTone
 
@@ -393,13 +392,7 @@ internal object MaterialPrefStyle : PrefStyle {
 
     @Composable
     override fun iconBadgeColors(colorful: Boolean, color: Color?): IconBadgeColors {
-        // 多彩色在 material 线也只当底色用：前景统一取 onSecondaryContainer，避免亮色图标配白字看不清
-        if (colorful) {
-            return IconBadgeColors(
-                container = color ?: FallbackBadgeColor,
-                content = MaterialTheme.colorScheme.onSecondaryContainer,
-            )
-        }
+        // 多彩徽标只在 COUI 线出现，material 线忽略 colorful，底色与前景都取主题色的容器色对
         return IconBadgeColors(
             container = MaterialTheme.colorScheme.secondaryContainer,
             content = MaterialTheme.colorScheme.onSecondaryContainer,
