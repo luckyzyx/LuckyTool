@@ -21,18 +21,28 @@ import java.util.concurrent.CopyOnWriteArrayList
  * 数据源切换（service 绑定/解绑）时自动重新注册监听并全量刷新已缓存 Flow。
  */
 class PrefState private constructor(
+    /** 数据源归属的 Application；[ofProvider] 注入的来源没有归属，为 null */
+    private val owner: Context?,
     private val provider: () -> SharedPreferences,
 ) {
 
     companion object {
         private val cache = ConcurrentHashMap<String, PrefState>()
 
-        /** 按 prefs 文件名缓存实例（进程生命周期）；测试或需强制重建时可显式 [invalidate] */
-        fun of(context: Context, prefsName: String): PrefState =
-            cache.getOrPut(prefsName) { PrefState { context.appPrefs(prefsName) } }
+        /**
+         * 按 prefs 文件名缓存实例（进程生命周期）；测试或需强制重建时可显式 [invalidate]。
+         *
+         * 归属变了就换一个实例：缓存里的实例把 Context 绑在 provider 上，Application 重建
+         *（测试换宿主即如此）后继续用旧实例会把值写进已经失效的那份 prefs，读侧却看不到。
+         */
+        fun of(context: Context, prefsName: String): PrefState {
+            val app = context.applicationContext
+            cache[prefsName]?.let { if (it.owner === app) return it }
+            return PrefState(app) { app.appPrefs(prefsName) }.also { cache[prefsName] = it }
+        }
 
         /** 测试/过渡用：直接注入 prefs 来源 */
-        internal fun ofProvider(provider: () -> SharedPreferences): PrefState = PrefState(provider)
+        internal fun ofProvider(provider: () -> SharedPreferences): PrefState = PrefState(null, provider)
 
         fun invalidate(prefsName: String) {
             cache.remove(prefsName)
