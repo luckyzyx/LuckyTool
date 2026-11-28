@@ -1,0 +1,227 @@
+package com.luckyzyx.luckytool.ui.compose.components.liquid
+
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.spring
+import androidx.compose.foundation.MutatorMutex
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
+import androidx.compose.runtime.snapshotFlow
+import androidx.compose.runtime.withFrameMillis
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.input.pointer.AwaitPointerEventScope
+import androidx.compose.ui.input.pointer.PointerEventPass
+import androidx.compose.ui.input.pointer.PointerId
+import androidx.compose.ui.input.pointer.PointerInputChange
+import androidx.compose.ui.input.pointer.PointerInputScope
+import androidx.compose.ui.input.pointer.changedToUpIgnoreConsumed
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.input.pointer.positionChangeIgnoreConsumed
+import androidx.compose.ui.input.pointer.util.VelocityTracker
+import androidx.compose.ui.unit.IntSize
+import androidx.compose.ui.util.fastFirstOrNull
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
+import kotlin.math.abs
+import kotlin.time.TimeSource
+
+/**
+ * 带阻尼与惯性回弹的拖动状态机：维护位移值、按压进度与缩放三条动画。
+ *
+ * [modifier] 负责手势，[value]、[pressProgress]、[scaleX]/[scaleY] 负责绘制，
+ * 松开后按弹簧收敛到最近的整格位置。改样式重建本实例时，[modifier] 上的手势会随实例一起重建。
+ */
+internal class LiquidDampedDragAnimation(
+    private val animationScope: CoroutineScope,
+    val initialValue: Float,
+    val valueRange: ClosedRange<Float>,
+    val visibilityThreshold: Float,
+    val initialScale: Float,
+    val pressedScale: Float,
+    val canDrag: (Offset) -> Boolean = { true },
+    val onDragStarted: LiquidDampedDragAnimation.(position: Offset) -> Unit,
+    val onDragStopped: LiquidDampedDragAnimation.() -> Unit,
+    val onDragCancelled: LiquidDampedDragAnimation.() -> Unit = onDragStopped,
+    val onDrag: LiquidDampedDragAnimation.(size: IntSize, dragAmount: Offset) -> Unit,
+) {
+
+    private val valueAnimationSpec = spring(1f, 1000f, visibilityThreshold)
+    private val velocityAnimationSpec = spring(0.5f, 300f, visibilityThreshold * 10f)
+    private val pressProgressAnimationSpec = spring(1f, 1000f, 0.001f)
+    private val scaleXAnimationSpec = spring(0.6f, 250f, 0.001f)
+    private val scaleYAnimationSpec = spring(0.7f, 250f, 0.001f)
+
+    private val valueAnimation = Animatable(initialValue, visibilityThreshold)
+    private val velocityAnimation = Animatable(0f, 5f)
+    private val pressProgressAnimation = Animatable(0f, 0.001f)
+    private val scaleXAnimation = Animatable(initialScale, 0.001f)
+    private val scaleYAnimation = Animatable(initialScale, 0.001f)
+
+    private val mutatorMutex = MutatorMutex()
+
+    private var pressJob: Job? = null
+    private var releaseJob: Job? = null
+
+    private val velocityTracker = VelocityTracker()
+
+    private val startMark = TimeSource.Monotonic.markNow()
+
+    private fun nowMillis(): Long = startMark.elapsedNow().inWholeMilliseconds
+
+    val value: Float get() = valueAnimation.value
+    val targetValue: Float get() = valueAnimation.targetValue
+    val pressProgress: Float get() = pressProgressAnimation.value
+    val scaleX: Float get() = scaleXAnimation.value
+    val scaleY: Float get() = scaleYAnimation.value
+    val velocity: Float get() = velocityAnimation.value
+
+    // 手势以实例自身作为 key：换样式重建本对象后，旧手势块随之废弃并绑定到新实例，
+    // 否则页面能切换但滑块仍由已丢弃的旧对象驱动、视觉不动。
+    val modifier: Modifier = Modifier.pointerInput(this) {
+        inspectDragGestures(
+            onDragStart = { down ->
+                onDragStarted(down.position)
+                press()
+            },
+            onDragEnd = {
+                onDragStopped()
+                release()
+            },
+            onDragCancel = {
+                onDragCancelled()
+                release()
+            },
+        ) { change, dragAmount ->
+            val isInside = canDrag(change.position)
+            val wasInside = canDrag(change.previousPosition)
+            if (isInside && wasInside) {
+                onDrag(size, dragAmount)
+            }
+        }
+    }
+
+    fun press() {
+        releaseJob?.cancel()
+        pressJob?.cancel()
+        velocityTracker.resetTracking()
+        pressJob = animationScope.launch {
+            launch { pressProgressAnimation.animateTo(1f, pressProgressAnimationSpec) }
+            launch { scaleXAnimation.animateTo(pressedScale, scaleXAnimationSpec) }
+            launch { scaleYAnimation.animateTo(pressedScale, scaleYAnimationSpec) }
+        }
+    }
+
+    fun release() {
+        releaseJob?.cancel()
+        releaseJob = animationScope.launch {
+            withFrameMillis { }
+            if (value != targetValue) {
+                val threshold = (valueRange.endInclusive - valueRange.start) * 0.025f
+                snapshotFlow { valueAnimation.value }.first { abs(it - valueAnimation.targetValue) < threshold }
+            }
+            launch { pressProgressAnimation.animateTo(0f, pressProgressAnimationSpec) }
+            launch { scaleXAnimation.animateTo(initialScale, scaleXAnimationSpec) }
+            launch { scaleYAnimation.animateTo(initialScale, scaleYAnimationSpec) }
+        }
+    }
+
+    fun updateValue(value: Float) {
+        val targetValue = value.coerceIn(valueRange)
+        animationScope.launch(start = CoroutineStart.UNDISPATCHED) {
+            valueAnimation.animateTo(targetValue, valueAnimationSpec) { updateVelocity() }
+        }
+    }
+
+    fun animateToValue(value: Float) {
+        animationScope.launch {
+            mutatorMutex.mutate {
+                press()
+                val targetValue = value.coerceIn(valueRange)
+                launch { valueAnimation.animateTo(targetValue, valueAnimationSpec) }
+                if (velocity != 0f) {
+                    launch { velocityAnimation.animateTo(0f, velocityAnimationSpec) }
+                }
+                release()
+            }
+        }
+    }
+
+    private fun updateVelocity() {
+        velocityTracker.addPosition(nowMillis(), Offset(value, 0f))
+        val span = (valueRange.endInclusive - valueRange.start).coerceAtLeast(1e-6f)
+        val targetVelocity = velocityTracker.calculateVelocity().x / span
+        animationScope.launch(start = CoroutineStart.UNDISPATCHED) {
+            velocityAnimation.snapTo(targetVelocity)
+        }
+    }
+}
+
+/**
+ * 统一按下/拖动/抬起事件序列：按下立即回报一次零位移拖动，抬起交给 [onDragEnd]，
+ * 被系统取消时交给 [onDragCancel]，便于调用方在取消时恢复原状态。
+ */
+internal suspend fun PointerInputScope.inspectDragGestures(
+    onDragStart: (down: PointerInputChange) -> Unit = {},
+    onDragEnd: (change: PointerInputChange) -> Unit = {},
+    onDragCancel: () -> Unit = {},
+    onDrag: (change: PointerInputChange, dragAmount: Offset) -> Unit,
+) {
+    awaitEachGesture {
+        val down = awaitFirstDown(
+            requireUnconsumed = false,
+            pass = PointerEventPass.Initial,
+        )
+        onDragStart(down)
+        onDrag(down, Offset.Zero)
+        val upEvent = drag(
+            pointerId = down.id,
+            onDrag = { onDrag(it, it.positionChangeIgnoreConsumed()) },
+        )
+        if (upEvent == null) {
+            onDragCancel()
+        } else {
+            onDragEnd(upEvent)
+        }
+    }
+}
+
+private suspend inline fun AwaitPointerEventScope.drag(
+    pointerId: PointerId,
+    onDrag: (PointerInputChange) -> Unit,
+): PointerInputChange? {
+    val isPointerUp = currentEvent.changes.fastFirstOrNull { it.id == pointerId }?.pressed != true
+    if (isPointerUp) return null
+    var pointer = pointerId
+    while (true) {
+        val change = awaitDragOrUp(pointer) ?: return null
+        if (change.changedToUpIgnoreConsumed()) return change
+        onDrag(change)
+        pointer = change.id
+    }
+}
+
+private suspend inline fun AwaitPointerEventScope.awaitDragOrUp(
+    pointerId: PointerId,
+): PointerInputChange? {
+    var pointer = pointerId
+    while (true) {
+        val event = awaitPointerEvent(PointerEventPass.Initial)
+        val dragEvent = event.changes.fastFirstOrNull { it.id == pointer } ?: return null
+        if (dragEvent.changedToUpIgnoreConsumed()) {
+            // Compose 将 ACTION_CANCEL 转成已消费的抬起事件；取消时恢复选中项。
+            if (dragEvent.isConsumed) return null
+            val otherDown = event.changes.fastFirstOrNull { it.pressed }
+            if (otherDown == null) {
+                return dragEvent
+            } else {
+                pointer = otherDown.id
+            }
+        } else {
+            val hasDragged = dragEvent.previousPosition != dragEvent.position
+            if (hasDragged) return dragEvent
+        }
+    }
+}
