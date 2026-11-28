@@ -29,8 +29,6 @@ import androidx.compose.foundation.layout.calculateEndPadding
 import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.captionBar
 import androidx.compose.foundation.layout.consumeWindowInsets
-import androidx.compose.foundation.layout.displayCutout
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -38,7 +36,6 @@ import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
@@ -59,15 +56,14 @@ import androidx.compose.material.icons.rounded.DesignServices
 import androidx.compose.material.icons.rounded.Flare
 import androidx.compose.material.icons.rounded.Palette
 import androidx.compose.material.icons.rounded.Style
-import androidx.compose.material.icons.rounded.Swipe
-import androidx.compose.material.icons.rounded.Wallpaper
 import androidx.compose.material3.ButtonGroupDefaults
 import androidx.compose.material3.Icon
-import androidx.compose.material3.rememberSliderState
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.rememberSliderState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
@@ -92,37 +88,30 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.unit.Dp
-import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import com.composables.icons.lucide.R as LucideR
 import com.itos.coui.layout.CouiPageDefaults
 import com.itos.coui.text.CouiTextKind
-import com.itos.coui.text.Text as CouiText
 import com.itos.coui.theme.CouiTheme
 import com.luckyzyx.luckytool.R
-import com.luckyzyx.luckytool.ui.compose.components.pageInset
-import com.luckyzyx.luckytool.ui.compose.components.PageScaffold
-import com.luckyzyx.luckytool.ui.compose.components.PrefIcon
-import com.luckyzyx.luckytool.ui.compose.components.PrefNote
-import com.luckyzyx.luckytool.ui.compose.components.PrefRowTitle
-import com.luckyzyx.luckytool.ui.compose.components.currentUiStyle
-import com.luckyzyx.luckytool.ui.compose.components.material.MaterialToggleButton
-import com.luckyzyx.luckytool.ui.compose.components.AppGroup
-import com.luckyzyx.luckytool.ui.compose.components.AppDropdownItem
-import com.luckyzyx.luckytool.ui.compose.components.AppSwitchItem
 import com.luckyzyx.luckytool.ui.compose.components.AppCard
 import com.luckyzyx.luckytool.ui.compose.components.AppSlider
-import com.luckyzyx.luckytool.ui.compose.MainTab
+import com.luckyzyx.luckytool.ui.compose.components.LocalPageTopInset
+import com.luckyzyx.luckytool.ui.compose.components.PageScaffold
+import com.luckyzyx.luckytool.ui.compose.components.PageScreen
+import com.luckyzyx.luckytool.ui.compose.components.PrefIcon
+import com.luckyzyx.luckytool.ui.compose.components.PrefNote
+import com.luckyzyx.luckytool.ui.compose.components.PrefPageBuilder
+import com.luckyzyx.luckytool.ui.compose.components.PrefRowTitle
+import com.luckyzyx.luckytool.ui.compose.components.material.LocalShellBottomInset
+import com.luckyzyx.luckytool.ui.compose.components.material.MaterialToggleButton
+import com.luckyzyx.luckytool.ui.compose.components.pageInset
+import com.luckyzyx.luckytool.ui.compose.isRenderEffectSupported
 import com.luckyzyx.luckytool.ui.shell.FloatingBottomBarStyle
 import com.luckyzyx.luckytool.ui.shell.PageScaleMax
 import com.luckyzyx.luckytool.ui.shell.PageScaleMin
 import com.luckyzyx.luckytool.ui.shell.ShellSettingsController
 import com.luckyzyx.luckytool.ui.theme.AppSettings
 import com.luckyzyx.luckytool.ui.theme.ColorMode
-import com.luckyzyx.luckytool.ui.compose.isRenderEffectSupported
-import com.luckyzyx.luckytool.ui.theme.LocalAppColorScheme
 import com.luckyzyx.luckytool.ui.theme.LocalUiMode
 import com.luckyzyx.luckytool.ui.theme.ThemeController
 import com.luckyzyx.luckytool.ui.theme.ThemePrefs
@@ -132,6 +121,7 @@ import com.luckyzyx.luckytool.ui.theme.rememberAppColorScheme
 import com.luckyzyx.luckytool.ui.theme.rememberSeedColor
 import com.luckyzyx.luckytool.ui.theme.resolveDarkTheme
 import com.luckyzyx.luckytool.utils.PredictiveBackUtils
+import com.luckyzyx.luckytool.utils.PrefState
 import com.luckyzyx.luckytool.utils.SettingsPrefs
 import com.luckyzyx.luckytool.utils.ThemeUtils
 import com.luckyzyx.luckytool.utils.getBoolean
@@ -145,6 +135,8 @@ import com.luckyzyx.luckytool.utils.putString
 import com.materialkolor.PaletteStyle
 import com.materialkolor.dynamiccolor.ColorSpec
 import kotlin.math.roundToInt
+import com.composables.icons.lucide.R as LucideR
+import com.itos.coui.text.Text as CouiText
 
 /**
  * 主题与配色页入口。
@@ -158,6 +150,9 @@ import kotlin.math.roundToInt
  * 两条外观线共用同一份列表与偏好；COUI 线额外显示「跟随 Material 配色」开关
  * （coui_dynamic_color，默认关，用 COUI 预设配色），并隐藏本线无意义的悬浮底栏项。
  *
+ * 骨架与其余页面一致：外壳用 [PageScaffold]，列表与行交给 [PageScreen]，行声明走 DSL；
+ * 只有预览卡、取色横滑、模式选择与缩放滑条用 [PrefPageBuilder.custom] 的 `raw = true` 原样排版。
+ *
  * 偏好键沿用 LuckyTool 既有约定（SettingsPrefs）：
  * dark_theme（0 跟随系统 / 1 深色 / 2 浅色 / 3 深色 AMOLED）、key_color、
  * palette_style、color_spec、use_dynamic_color、coui_dynamic_color 与
@@ -167,7 +162,24 @@ import kotlin.math.roundToInt
  */
 @Composable
 fun ThemeScreen(onBack: () -> Unit) {
+    val context = LocalContext.current
     val state = rememberThemeScreenState()
+    val isCouiLine = LocalUiMode.current == UiMode.Coui
+    val isDark = state.colorMode.resolveDarkTheme()
+    // 行文案在这里一次取好：DSL 的行 lambda 不是 composable，stringResource 不能在里面读
+    val text = themeScreenText()
+    val appSettings = AppSettings(
+        colorMode = state.colorMode,
+        keyColor = state.keyColor,
+        paletteStyle = state.paletteStyle,
+        colorSpec = state.colorSpec,
+        dynamicColor = state.dynamicColor,
+        couiDynamicColor = state.couiDynamicColor,
+        couiContourGlow = state.couiContourGlow,
+    )
+    // 本页偏好文件（SettingsPrefs）：行由 DSL 统一读写，页面只声明行与页面级状态
+    val prefsState = remember { PrefState.of(context.applicationContext, SettingsPrefs) }
+
     PageScaffold(
         title = stringResource(R.string.settings_theme),
         onBack = onBack,
@@ -175,23 +187,37 @@ fun ThemeScreen(onBack: () -> Unit) {
         collapseEnabled = false,
     ) { padding ->
         val layoutDirection = LocalLayoutDirection.current
-        // 末尾留白 = 视觉留白 16dp + 外壳没含的底部系统栏高度；外壳已含的部分不能重复叠加
+        // 外壳没含的底部系统栏高度经 [LocalShellBottomInset] 交给 PageScreen，末尾留白与其余页面
+        // 同一口径（PageScreen 收 8dp + 该值）：本页原来的 16dp + 未含系统栏高度因此保持不变
         val systemBarBottom = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding() +
             WindowInsets.captionBar.asPaddingValues().calculateBottomPadding()
-        ThemeScreenList(
-            state = state,
-            modifier = Modifier
-                .fillMaxSize()
-                .consumeWindowInsets(padding)
-                .padding(
-                    start = padding.calculateStartPadding(layoutDirection),
-                    end = padding.calculateEndPadding(layoutDirection),
-                    bottom = padding.calculateBottomPadding(),
-                ),
-            topInset = padding.calculateTopPadding(),
-            bottomSpace = 16.dp + (systemBarBottom - padding.calculateBottomPadding())
-                .coerceAtLeast(0.dp),
-        )
+        val leftoverBottom = 8.dp + (systemBarBottom - padding.calculateBottomPadding())
+            .coerceAtLeast(0.dp)
+        CompositionLocalProvider(
+            LocalPageTopInset provides padding.calculateTopPadding(),
+            LocalShellBottomInset provides leftoverBottom,
+        ) {
+            PageScreen(
+                state = prefsState,
+                modifier = Modifier
+                    .fillMaxSize()
+                    .consumeWindowInsets(padding)
+                    .padding(
+                        start = padding.calculateStartPadding(layoutDirection),
+                        end = padding.calculateEndPadding(layoutDirection),
+                        bottom = padding.calculateBottomPadding(),
+                    ),
+            ) {
+                themeScreenRows(
+                    state = state,
+                    text = text,
+                    isCouiLine = isCouiLine,
+                    isDark = isDark,
+                    appSettings = appSettings,
+                    context = context,
+                )
+            }
+        }
     }
 }
 
@@ -307,359 +333,337 @@ private fun rememberThemeScreenState(): ThemeScreenState {
 }
 
 /**
- * 主题页正文：骨架在 [PageScaffold] 里，列表内容与状态两条线共用这一份。
+ * 主题页行的静态文案。
  *
- * @param modifier 已带上外壳水平/底部内边距的列表修饰符；
- *   顶栏高度单独经 [topInset] 放进 contentPadding
- * @param topInset 顶栏高度：作为列表 contentPadding 的 top，让滚动中的行能进入顶栏下方
- * @param bottomSpace 列表末尾留白；外壳已消费的底部内边距不要在列表里重复叠加
+ * DSL 的行 lambda 不是 composable，[stringResource] 不能在里面读，所以文案在 [themeScreenText] 里
+ * 一次取好，再按字段传给各个行。
  */
+private class ThemeScreenText(
+    val paletteStyle: String,
+    val colorSpec: String,
+    val couiFollowMaterial: String,
+    val couiFollowMaterialSummary: String,
+    val couiContourGlow: String,
+    val couiContourGlowSummary: String,
+    val useDynamicColor: String,
+    val useDynamicColorSummary: String,
+    val enableBlur: String,
+    val enableBlurSummary: String,
+    val floatingBottomBar: String,
+    val floatingBottomBarSummary: String,
+    val floatingBottomBarStyle: String,
+    val floatingStyleClassic: String,
+    val floatingStyleLiquidGlass: String,
+    val categoryBadgeColors: String,
+    val categoryBadgeColorsSummary: String,
+    val predictiveBack: String,
+    val predictiveBackSummary: String,
+    val pageScale: String,
+    val pageScaleSummary: String,
+)
+
 @Composable
-private fun ThemeScreenList(
+private fun themeScreenText(): ThemeScreenText = ThemeScreenText(
+    paletteStyle = stringResource(R.string.palette_style_title),
+    colorSpec = stringResource(R.string.color_spec_title),
+    couiFollowMaterial = stringResource(R.string.coui_follow_material_color),
+    couiFollowMaterialSummary = stringResource(R.string.coui_follow_material_color_summary),
+    couiContourGlow = stringResource(R.string.coui_contour_glow),
+    couiContourGlowSummary = stringResource(R.string.coui_contour_glow_summary),
+    useDynamicColor = stringResource(R.string.use_dynamic_color),
+    useDynamicColorSummary = stringResource(R.string.use_dynamic_color_summary),
+    enableBlur = stringResource(R.string.settings_enable_blur),
+    enableBlurSummary = stringResource(R.string.settings_enable_blur_summary),
+    floatingBottomBar = stringResource(R.string.settings_floating_bottom_bar),
+    floatingBottomBarSummary = stringResource(R.string.settings_floating_bottom_bar_summary),
+    floatingBottomBarStyle = stringResource(R.string.settings_floating_bottom_bar_style),
+    floatingStyleClassic = stringResource(R.string.settings_floating_style_classic),
+    floatingStyleLiquidGlass = stringResource(R.string.settings_floating_style_liquid_glass),
+    categoryBadgeColors = stringResource(R.string.settings_category_badge_colors),
+    categoryBadgeColorsSummary = stringResource(R.string.settings_category_badge_colors_summary),
+    predictiveBack = stringResource(R.string.settings_enable_predictive_back),
+    predictiveBackSummary = stringResource(R.string.settings_enable_predictive_back_summary),
+    pageScale = stringResource(R.string.settings_page_scale),
+    pageScaleSummary = stringResource(R.string.settings_page_scale_summary),
+)
+
+/**
+ * 主题页正文：两条外观线共用一份行声明，行写法与其他页面一致（DSL 的 switch / list）。
+ *
+ * 预览卡、取色横滑、模式选择与缩放滑条在 DSL 里没有对应行，用 [PrefPageBuilder.custom] 的
+ * `raw = true` 原样排版：不套卡片、不参与分组，位置由这里的声明顺序决定。
+ */
+private fun PrefPageBuilder.themeScreenRows(
     state: ThemeScreenState,
-    modifier: Modifier,
-    topInset: Dp,
-    bottomSpace: Dp,
+    text: ThemeScreenText,
+    isCouiLine: Boolean,
+    isDark: Boolean,
+    appSettings: AppSettings,
+    context: Context,
 ) {
-    val context = LocalContext.current
-    val isDark = state.colorMode.resolveDarkTheme()
-    // LazyColumn 的 item 作用域在 lambda 里，外观线的读取在这里取好再传进去。
-    // 本页剩下的外观分叉只有「本线有没有这项功能」（COUI 专属开关、Material 专属底栏项）
-    // 与「按线选图标资源集」；控件外形、配色、内缩一律从样式位取。
-    val isCouiLine = LocalUiMode.current == UiMode.Coui
-    // 块间留白取样式位的分组间距：COUI 的分组容器已自带这档留白，非分组项（取色行、
-    // 模式选择、缩放卡）要自己补同档间距；Material 线为 0，纵向间距由列表行距统一给
-    val blockGap = currentUiStyle().groupSpacing
-    val appSettings = AppSettings(
-        colorMode = state.colorMode,
-        keyColor = state.keyColor,
-        paletteStyle = state.paletteStyle,
-        colorSpec = state.colorSpec,
-        dynamicColor = state.dynamicColor,
-        couiDynamicColor = state.couiDynamicColor,
-        couiContourGlow = state.couiContourGlow,
-    )
+    custom(raw = true) {
+        ThemePreviewCard(
+            appSettings = appSettings,
+            isDark = isDark,
+        )
+    }
 
-    LazyColumn(
-        modifier = modifier,
-        contentPadding = PaddingValues(
-            top = topInset,
-            bottom = bottomSpace,
-        ),
-        verticalArrangement = if (isCouiLine) Arrangement.Top else Arrangement.spacedBy(13.dp),
-    ) {
-        item {
-            ThemePreviewCard(
-                appSettings = appSettings,
-                isDark = isDark,
-            )
-        }
-
-        // 首个按钮是「跟随壁纸取色」，其余为固定主题色；COUI 未开启「跟随 Material 配色」时整行隐藏。
-        item {
-            AnimatedVisibility(
-                visible = !isCouiLine || state.couiDynamicColor,
-                enter = fadeIn() + expandVertically(),
-                exit = fadeOut() + shrinkVertically(),
-                modifier = Modifier.padding(top = blockGap),
+    // 首个按钮是「跟随壁纸取色」，其余为固定主题色；COUI 未开启「跟随 Material 配色」时整行隐藏。
+    custom(raw = true) {
+        AnimatedVisibility(
+            visible = !isCouiLine || state.couiDynamicColor,
+            enter = fadeIn() + expandVertically(),
+            exit = fadeOut() + shrinkVertically(),
+        ) {
+            LazyRow(
+                modifier = Modifier.fillMaxWidth(),
+                contentPadding = PaddingValues(horizontal = 16.dp),
+                horizontalArrangement = Arrangement.spacedBy(16.dp),
             ) {
-                LazyRow(
-                    modifier = Modifier.fillMaxWidth(),
-                    contentPadding = PaddingValues(horizontal = 16.dp),
-                    horizontalArrangement = Arrangement.spacedBy(16.dp),
-                ) {
-                    item {
-                        ColorButtonMaterial(
-                            color = Color.Unspecified,
-                            isSelected = state.dynamicColor,
-                            appSettings = appSettings,
-                            isDark = isDark,
-                            onClick = {
-                                state.keyColor = 0
-                                context.putInt(SettingsPrefs, "key_color", 0)
-                                state.dynamicColor = true
-                                context.putBoolean(SettingsPrefs, "use_dynamic_color", true)
-                                ThemePrefs.notifyChanged()
-                            },
-                        )
-                    }
-                    items(keyColorOptions) { color ->
-                        ColorButtonMaterial(
-                            color = Color(color),
-                            isSelected = !state.dynamicColor && state.keyColor == color,
-                            appSettings = appSettings,
-                            isDark = isDark,
-                            onClick = {
-                                state.keyColor = color
-                                context.putInt(SettingsPrefs, "key_color", color)
-                                state.dynamicColor = false
-                                context.putBoolean(SettingsPrefs, "use_dynamic_color", false)
-                                ThemePrefs.notifyChanged()
-                            },
-                        )
-                    }
+                item {
+                    ColorButtonMaterial(
+                        color = Color.Unspecified,
+                        isSelected = state.dynamicColor,
+                        appSettings = appSettings,
+                        isDark = isDark,
+                        onClick = {
+                            state.keyColor = 0
+                            context.putInt(SettingsPrefs, "key_color", 0)
+                            state.dynamicColor = true
+                            context.putBoolean(SettingsPrefs, "use_dynamic_color", true)
+                            ThemePrefs.notifyChanged()
+                        },
+                    )
+                }
+                items(keyColorOptions) { color ->
+                    ColorButtonMaterial(
+                        color = Color(color),
+                        isSelected = !state.dynamicColor && state.keyColor == color,
+                        appSettings = appSettings,
+                        isDark = isDark,
+                        onClick = {
+                            state.keyColor = color
+                            context.putInt(SettingsPrefs, "key_color", color)
+                            state.dynamicColor = false
+                            context.putBoolean(SettingsPrefs, "use_dynamic_color", false)
+                            ThemePrefs.notifyChanged()
+                        },
+                    )
                 }
             }
         }
+    }
 
-        item {
-            Box(modifier = Modifier.padding(top = blockGap)) { ThemeModeSelector(state = state) }
-        }
+    custom(raw = true) { ThemeModeSelector(state = state) }
 
-        // 调色风格 / 色彩规格两条外观线共用；COUI 未开启「跟随 Material 配色」时整组隐藏。
-        item {
-            AnimatedVisibility(
-                visible = !isCouiLine || state.couiDynamicColor,
-                enter = fadeIn() + expandVertically(),
-                exit = fadeOut() + shrinkVertically(),
-            ) {
-                AppGroup(
-                    content = listOf(
-                        {
-                            val styles = PaletteStyle.entries
-                            AppDropdownItem(
-                                icon = Icons.Rounded.Style,
-                                painter = painterResource(LucideR.drawable.lucide_ic_paintbrush),
-                                title = stringResource(R.string.palette_style_title),
-                                items = styles.map { it.name },
-                                selectedIndex = styles.indexOf(state.paletteStyle),
-                                onItemSelected = { index ->
-                                    state.paletteStyle = styles[index]
-                                    context.putString(
-                                        SettingsPrefs,
-                                        KeyPaletteStyle,
-                                        styles[index].name
-                                    )
-                                    ThemePrefs.notifyChanged()
-                                },
-                            )
-                        },
-                        {
-                            val specs = ColorSpec.SpecVersion.entries
-                            AppDropdownItem(
-                                icon = Icons.Rounded.DesignServices,
-                                painter = painterResource(LucideR.drawable.lucide_ic_pencil_ruler),
-                                title = stringResource(R.string.color_spec_title),
-                                items = specs.map { it.name },
-                                selectedIndex = specs.indexOf(state.colorSpec).coerceAtLeast(0),
-                                onItemSelected = { index ->
-                                    state.colorSpec = specs[index]
-                                    context.putString(
-                                        SettingsPrefs,
-                                        KeyColorSpec,
-                                        specs[index].name
-                                    )
-                                    ThemePrefs.notifyChanged()
-                                },
-                            )
-                        },
-                    ),
-                )
-            }
-        }
-
-        // 动态取色依赖 API 31（Monet）；COUI 线的「跟随 Material 配色」开关不依赖取色能力，API 31 以下也要出现。
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S || isCouiLine) {
-            item {
-                AppGroup(
-                    content = buildList<@Composable () -> Unit> {
-                        // COUI 线单独决定用预设配色还是跟随 Material 的取色设置；放在动态取色上方
-                        if (isCouiLine) add {
-                            AppSwitchItem(
-                                icon = Icons.Rounded.Colorize,
-                                painter = painterResource(LucideR.drawable.lucide_ic_pipette),
-                                title = stringResource(R.string.coui_follow_material_color),
-                                summary = stringResource(R.string.coui_follow_material_color_summary),
-                                checked = state.couiDynamicColor,
-                                onCheckedChange = {
-                                    state.couiDynamicColor = it
-                                    context.putBoolean(
-                                        SettingsPrefs,
-                                        ThemeController.KEY_COUI_DYNAMIC_COLOR,
-                                        it,
-                                    )
-                                    ThemePrefs.notifyChanged()
-                                },
-                            )
-                        }
-                        // 轮廓光只作用在 COUI 组件表面的描边与内光晕上，与配色选择互不影响
-                        if (isCouiLine) add {
-                            AppSwitchItem(
-                                icon = Icons.Rounded.Flare,
-                                title = stringResource(R.string.coui_contour_glow),
-                                summary = stringResource(R.string.coui_contour_glow_summary),
-                                checked = state.couiContourGlow,
-                                onCheckedChange = {
-                                    state.couiContourGlow = it
-                                    context.putBoolean(
-                                        SettingsPrefs,
-                                        ThemeController.KEY_COUI_CONTOUR_GLOW,
-                                        it,
-                                    )
-                                    ThemePrefs.notifyChanged()
-                                },
-                            )
-                        }
-                        // COUI 未开启「跟随 Material 配色」时隐藏动态取色；API 31 以下同样不出现
-                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) add {
-                            AnimatedVisibility(
-                                visible = !isCouiLine || state.couiDynamicColor,
-                                enter = fadeIn() + expandVertically(),
-                                exit = fadeOut() + shrinkVertically(),
-                            ) {
-                                AppSwitchItem(
-                                    icon = Icons.Rounded.Style,
-                                    painter = painterResource(LucideR.drawable.lucide_ic_paintbrush),
-                                    title = stringResource(R.string.use_dynamic_color),
-                                    summary = stringResource(R.string.use_dynamic_color_summary),
-                                    checked = state.dynamicColor,
-                                    onCheckedChange = {
-                                        state.dynamicColor = it
-                                        context.putBoolean(SettingsPrefs, "use_dynamic_color", it)
-                                        // 开启动态取色时把自定义主题色归零，保证"跟随系统"色板与开关状态一致
-                                        if (it) {
-                                            state.keyColor = 0
-                                            context.putInt(SettingsPrefs, "key_color", 0)
-                                        }
-                                        ThemePrefs.notifyChanged()
-                                    },
-                                )
-                            }
-                        }
-                    },
-                )
-            }
-        }
-
-        // 分类页图标配色（COUI 专属）+ 应用内手势；系统不支持预测性返回时，手势项仍可配置。
-        item {
-            AppGroup(
-                content = buildList<@Composable () -> Unit> {
-                    // 模糊开关只对 Material 线生效：低于 API 31 没有 RenderEffect，
-                    // COUI 底栏的玻璃质感由自身渲染器提供，两种情况都不出现
-                    if (isRenderEffectSupported() && !isCouiLine) add {
-                        AppSwitchItem(
-                            icon = Icons.Rounded.BlurOn,
-                            title = stringResource(R.string.settings_enable_blur),
-                            summary = stringResource(R.string.settings_enable_blur_summary),
-                            checked = state.enableBlur,
-                            onCheckedChange = {
-                                state.enableBlur = it
-                                context.putBoolean(SettingsPrefs, KeyEnableBlur, it)
-                                ThemePrefs.notifyChanged()
-                            },
-                        )
-                    }
-                    // COUI 底栏本身就是浮起胶囊，悬浮底栏开关只对 Material 线有意义
-                    if (!isCouiLine) add {
-                        AppSwitchItem(
-                            icon = Icons.Rounded.CallToAction,
-                            title = stringResource(R.string.settings_floating_bottom_bar),
-                            summary = stringResource(R.string.settings_floating_bottom_bar_summary),
-                            checked = state.enableFloatingBottomBar,
-                            onCheckedChange = {
-                                state.enableFloatingBottomBar = it
-                                context.putBoolean(SettingsPrefs, KeyEnableFloatingBottomBar, it)
-                                ThemePrefs.notifyChanged()
-                            },
-                        )
-                    }
-                    // 悬浮形态只在开启悬浮底栏时才有意义
-                    if (!isCouiLine && state.enableFloatingBottomBar) {
-                        add {
-                            AppDropdownItem(
-                                icon = Icons.Rounded.Style,
-                                title = stringResource(R.string.settings_floating_bottom_bar_style),
-                                items = listOf(
-                                    stringResource(R.string.settings_floating_style_classic),
-                                    stringResource(R.string.settings_floating_style_liquid_glass),
-                                ),
-                                selectedIndex = state.floatingBottomBarStyle.ordinal,
-                                onItemSelected = { index ->
-                                    val style = FloatingBottomBarStyle.entries[index]
-                                    state.floatingBottomBarStyle = style
-                                    context.putString(
-                                        SettingsPrefs,
-                                        ShellSettingsController.KEY_FLOATING_BOTTOM_BAR_STYLE,
-                                        style.value,
-                                    )
-                                    ThemePrefs.notifyChanged()
-                                },
-                            )
-                        }
-                    }
-                    // 多彩徽标是 COUI 线的观感，Material 线固定用主题色单色徽标，所以开关只在 COUI 线出现
-                    if (isCouiLine) add {
-                        AppSwitchItem(
-                            icon = Icons.Rounded.Palette,
-                            painter = painterResource(LucideR.drawable.lucide_ic_palette),
-                            title = stringResource(R.string.settings_category_badge_colors),
-                            summary = stringResource(R.string.settings_category_badge_colors_summary),
-                            checked = state.categoryBadgeColors,
-                            onCheckedChange = {
-                                state.categoryBadgeColors = it
-                                context.putBoolean(
-                                    SettingsPrefs,
-                                    ShellSettingsController.KEY_CATEGORY_BADGE_COLORS,
-                                    it
-                                )
-                                ThemePrefs.notifyChanged()
-                            },
-                        )
-                    }
-                    if (PredictiveBackUtils.isSupported()) {
-                        add {
-                            AppSwitchItem(
-                                icon = Icons.AutoMirrored.Rounded.MenuOpen,
-                                painter = painterResource(LucideR.drawable.lucide_ic_panel_left_open),
-                                title = stringResource(R.string.settings_enable_predictive_back),
-                                summary = stringResource(R.string.settings_enable_predictive_back_summary),
-                                checked = state.predictiveBack,
-                                onCheckedChange = {
-                                    state.predictiveBack = it
-                                    context.putBoolean(
-                                        SettingsPrefs,
-                                        ShellSettingsController.KEY_PREDICTIVE_BACK,
-                                        it
-                                    )
-                                    // 即时生效：反射改写 ApplicationInfo 后重建 Activity（新窗口读取新 flag）
-                                    PredictiveBackUtils.applyImmediately(context, it)
-                                },
-                            )
-                        }
-                    }
+    // 调色风格 / 色彩规格两条外观线共用；COUI 未开启「跟随 Material 配色」时整组隐藏。
+    if (!isCouiLine || state.couiDynamicColor) {
+        group {
+            val styles = PaletteStyle.entries
+            list(
+                key = KeyPaletteStyle,
+                title = text.paletteStyle,
+                entries = styles.map { it.name }.toTypedArray(),
+                entryValues = styles.map { it.name }.toTypedArray(),
+                default = PaletteStyle.TonalSpot.name,
+                leading = {
+                    PrefIcon(
+                        icon = Icons.Rounded.Style,
+                        painter = painterResource(LucideR.drawable.lucide_ic_paintbrush),
+                    )
+                },
+                onChange = { name ->
+                    state.paletteStyle = styles.firstOrNull { it.name == name } ?: PaletteStyle.TonalSpot
+                    ThemePrefs.notifyChanged()
+                },
+            )
+            val specs = ColorSpec.SpecVersion.entries
+            list(
+                key = KeyColorSpec,
+                title = text.colorSpec,
+                entries = specs.map { it.name }.toTypedArray(),
+                entryValues = specs.map { it.name }.toTypedArray(),
+                default = ColorSpec.SpecVersion.SPEC_2025.name,
+                leading = {
+                    PrefIcon(
+                        icon = Icons.Rounded.DesignServices,
+                        painter = painterResource(LucideR.drawable.lucide_ic_pencil_ruler),
+                    )
+                },
+                onChange = { name ->
+                    state.colorSpec =
+                        specs.firstOrNull { it.name == name } ?: ColorSpec.SpecVersion.SPEC_2025
+                    ThemePrefs.notifyChanged()
                 },
             )
         }
+    }
 
-        // 界面缩放（page_scale）：拖动只更新页内状态，松手才提交偏好，避免重建全应用密度
-        item {
-            Box(modifier = Modifier.padding(top = blockGap)) {
-                ThemeSliderCard(
-                    icon = Icons.Rounded.AspectRatio,
-                    painter = painterResource(LucideR.drawable.lucide_ic_scaling),
-                    title = stringResource(R.string.settings_page_scale),
-                    summary = stringResource(R.string.settings_page_scale_summary),
-                    valueText = "${(state.pageScale * 100).roundToInt()}%",
-                    value = state.pageScale,
-                    valueRange = PageScaleMin..PageScaleMax,
-                    steps = 0,
-                    onValueChange = { state.pageScale = it },
-                    onValueChangeFinished = {
-                        context.putFloat(
-                            SettingsPrefs,
-                            ShellSettingsController.KEY_PAGE_SCALE,
-                            state.pageScale
+    // 动态取色依赖 API 31（Monet）；COUI 线的「跟随 Material 配色」开关不依赖取色能力，API 31 以下也要出现。
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S || isCouiLine) {
+        group {
+            // COUI 线单独决定用预设配色还是跟随 Material 的取色设置；放在动态取色上方
+            if (isCouiLine) {
+                switch(
+                    key = ThemeController.KEY_COUI_DYNAMIC_COLOR,
+                    title = text.couiFollowMaterial,
+                    summary = text.couiFollowMaterialSummary,
+                    default = false,
+                    leading = {
+                        PrefIcon(
+                            icon = Icons.Rounded.Colorize,
+                            painter = painterResource(LucideR.drawable.lucide_ic_pipette),
                         )
+                    },
+                    onChange = {
+                        state.couiDynamicColor = it
+                        ThemePrefs.notifyChanged()
+                    },
+                )
+                // 轮廓光只作用在 COUI 组件表面的描边与内光晕上，与配色选择互不影响
+                switch(
+                    key = ThemeController.KEY_COUI_CONTOUR_GLOW,
+                    title = text.couiContourGlow,
+                    summary = text.couiContourGlowSummary,
+                    default = true,
+                    leading = { PrefIcon(Icons.Rounded.Flare) },
+                    onChange = {
+                        state.couiContourGlow = it
+                        ThemePrefs.notifyChanged()
+                    },
+                )
+            }
+            // COUI 未开启「跟随 Material 配色」时收起动态取色；API 31 以下同样不出现
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                switch(
+                    key = "use_dynamic_color",
+                    title = text.useDynamicColor,
+                    summary = text.useDynamicColorSummary,
+                    default = true,
+                    visible = !isCouiLine || state.couiDynamicColor,
+                    leading = {
+                        PrefIcon(
+                            icon = Icons.Rounded.Style,
+                            painter = painterResource(LucideR.drawable.lucide_ic_paintbrush),
+                        )
+                    },
+                    onChange = { enabled ->
+                        state.dynamicColor = enabled
+                        // 开启动态取色时把自定义主题色归零，保证"跟随系统"色板与开关状态一致
+                        if (enabled) {
+                            state.keyColor = 0
+                            context.putInt(SettingsPrefs, "key_color", 0)
+                        }
                         ThemePrefs.notifyChanged()
                     },
                 )
             }
         }
+    }
 
-        item {
-            Spacer(modifier = Modifier.height(bottomSpace))
+    group {
+        // 模糊开关只对 Material 线生效：低于 API 31 没有 RenderEffect，
+        // COUI 底栏的玻璃质感由自身渲染器提供，两种情况都不出现
+        if (isRenderEffectSupported() && !isCouiLine) {
+            switch(
+                key = KeyEnableBlur,
+                title = text.enableBlur,
+                summary = text.enableBlurSummary,
+                default = false,
+                leading = { PrefIcon(Icons.Rounded.BlurOn) },
+                onChange = {
+                    state.enableBlur = it
+                    ThemePrefs.notifyChanged()
+                },
+            )
         }
+        // COUI 底栏本身就是浮起胶囊，悬浮底栏开关只对 Material 线有意义
+        if (!isCouiLine) {
+            switch(
+                key = KeyEnableFloatingBottomBar,
+                title = text.floatingBottomBar,
+                summary = text.floatingBottomBarSummary,
+                default = false,
+                leading = { PrefIcon(Icons.Rounded.CallToAction) },
+                onChange = {
+                    state.enableFloatingBottomBar = it
+                    ThemePrefs.notifyChanged()
+                },
+            )
+            // 悬浮形态只在开启悬浮底栏时才有意义；存的不一定是当前生效形态（旧键回流），默认值取生效值
+            if (state.enableFloatingBottomBar) {
+                list(
+                    key = ShellSettingsController.KEY_FLOATING_BOTTOM_BAR_STYLE,
+                    title = text.floatingBottomBarStyle,
+                    entries = arrayOf(text.floatingStyleClassic, text.floatingStyleLiquidGlass),
+                    entryValues = FloatingBottomBarStyle.entries.map { it.value }.toTypedArray(),
+                    default = state.floatingBottomBarStyle.value,
+                    leading = { PrefIcon(Icons.Rounded.Style) },
+                    onChange = { value ->
+                        state.floatingBottomBarStyle = FloatingBottomBarStyle.fromValue(value)
+                        ThemePrefs.notifyChanged()
+                    },
+                )
+            }
+        }
+        // 多彩徽标是 COUI 线的观感，Material 线固定用主题色单色徽标，所以开关只在 COUI 线出现
+        if (isCouiLine) {
+            switch(
+                key = ShellSettingsController.KEY_CATEGORY_BADGE_COLORS,
+                title = text.categoryBadgeColors,
+                summary = text.categoryBadgeColorsSummary,
+                default = true,
+                leading = {
+                    PrefIcon(
+                        icon = Icons.Rounded.Palette,
+                        painter = painterResource(LucideR.drawable.lucide_ic_palette),
+                    )
+                },
+                onChange = {
+                    state.categoryBadgeColors = it
+                    ThemePrefs.notifyChanged()
+                },
+            )
+        }
+        if (PredictiveBackUtils.isSupported()) {
+            switch(
+                key = ShellSettingsController.KEY_PREDICTIVE_BACK,
+                title = text.predictiveBack,
+                summary = text.predictiveBackSummary,
+                default = true,
+                leading = {
+                    PrefIcon(
+                        icon = Icons.AutoMirrored.Rounded.MenuOpen,
+                        painter = painterResource(LucideR.drawable.lucide_ic_panel_left_open),
+                    )
+                },
+                onChange = { enabled ->
+                    state.predictiveBack = enabled
+                    // 即时生效：反射改写 ApplicationInfo 后重建 Activity（新窗口读取新 flag）
+                    PredictiveBackUtils.applyImmediately(context, enabled)
+                },
+            )
+        }
+    }
+
+    // 界面缩放（page_scale）：DSL 滑条只有 Int 档，这里是 Float 且存的就是 float，
+    // 用 raw 自定义卡保留原控件与「拖动只更新页内状态、松手才提交」的语义
+    custom(raw = true) {
+        ThemeSliderCard(
+            icon = Icons.Rounded.AspectRatio,
+            painter = painterResource(LucideR.drawable.lucide_ic_scaling),
+            title = text.pageScale,
+            summary = text.pageScaleSummary,
+            valueText = "${(state.pageScale * 100).roundToInt()}%",
+            value = state.pageScale,
+            valueRange = PageScaleMin..PageScaleMax,
+            steps = 0,
+            onValueChange = { state.pageScale = it },
+            onValueChangeFinished = {
+                context.putFloat(SettingsPrefs, ShellSettingsController.KEY_PAGE_SCALE, state.pageScale)
+                ThemePrefs.notifyChanged()
+            },
+        )
     }
 }
 
