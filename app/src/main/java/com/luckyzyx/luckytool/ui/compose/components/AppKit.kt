@@ -66,8 +66,6 @@ import com.itos.coui.switch.Switch as CouiSwitch
 import com.itos.coui.theme.CouiTheme
 import com.itos.coui.theme.LocalCouiContentColor
 import com.luckyzyx.luckytool.ui.compose.components.material.MaterialDropdownItem
-import com.luckyzyx.luckytool.ui.compose.components.material.MaterialGroup
-import com.luckyzyx.luckytool.ui.compose.components.material.MaterialGroupScope
 import com.luckyzyx.luckytool.ui.compose.components.material.MaterialItem
 import com.luckyzyx.luckytool.ui.compose.components.material.MaterialListItem
 import com.luckyzyx.luckytool.ui.compose.components.material.MaterialRadioItem
@@ -127,44 +125,6 @@ private fun CouiRowFrame(content: @Composable () -> Unit) {
             content()
         }
     }
-}
-
-/**
- * 分组：静态条目列表。
- *
- * 与 DSL 的 `group()`、[PrefGroup] 是同一份实现（[PrefSectionRows]）：标题、卡片、行间分隔线、
- * 分组前后的留白都只在那一处给，这里不再自己判外观线、补内缩或直接接库的 Group。
- */
-@Composable
-fun AppGroup(
-    modifier: Modifier = Modifier,
-    title: String = "",
-    content: List<@Composable () -> Unit>,
-) {
-    if (content.isEmpty()) return
-    PrefSectionRows(
-        modifier = modifier,
-        title = title.takeIf { it.isNotEmpty() },
-        rows = content.map { row -> PrefCardRow { row() } },
-    )
-}
-
-/** 分组：条目可显隐，显隐时整行展开/收起（渲染同样走 [PrefSectionRows]） */
-@Composable
-fun AppGroup(
-    modifier: Modifier = Modifier,
-    title: String = "",
-    content: MaterialGroupScope.() -> Unit,
-) {
-    val entries = MaterialGroupScope().apply(content).entries
-    if (entries.isEmpty()) return
-    PrefSectionRows(
-        modifier = modifier,
-        title = title.takeIf { it.isNotEmpty() },
-        rows = entries.map { entry ->
-            PrefCardRow(key = entry.key, visible = entry.visible) { entry.content() }
-        },
-    )
 }
 
 /** 单条目形状提供者：Material 侧给分段圆角，COUI 侧把行标成组内条目 */

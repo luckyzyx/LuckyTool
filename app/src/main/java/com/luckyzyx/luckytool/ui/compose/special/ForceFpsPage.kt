@@ -22,13 +22,13 @@ import com.luckyzyx.luckytool.IRefreshRateController
 import com.luckyzyx.luckytool.R
 import com.luckyzyx.luckytool.data.DisplayMode
 import com.luckyzyx.luckytool.service.RefreshRateService
+import com.luckyzyx.luckytool.ui.compose.PageSpec
 import com.luckyzyx.luckytool.ui.compose.components.PrefButton
 import com.luckyzyx.luckytool.ui.compose.components.PrefGroup
 import com.luckyzyx.luckytool.ui.compose.components.PrefNote
 import com.luckyzyx.luckytool.ui.compose.components.PrefSelectRow
 import com.luckyzyx.luckytool.ui.compose.components.PrefSwitchRow
 import com.luckyzyx.luckytool.ui.compose.components.pageInset
-import com.luckyzyx.luckytool.ui.compose.PageSpec
 import com.luckyzyx.luckytool.ui.compose.special.ForceFpsPage.BIND_TIMEOUT_MS
 import com.luckyzyx.luckytool.ui.compose.special.ForceFpsPage.reloader
 import com.luckyzyx.luckytool.utils.GlobalKeyValue.keyFpsAutoStart
@@ -159,10 +159,10 @@ object ForceFpsPage {
                 // FPS 数据卡：displayMode 模式列表置顶，独立一张卡片
                 // 单选以列表位置 index 为准：点击与选中态比的都是 index，mode.id 仅用于展示文本，
                 // 选中/设置/持久化都用 index，保证恰一项选中且与 keyFpsCur 自启语义一致
-                PrefGroup {
+                PrefGroup(state = state) {
                     if (!isUnsupport) {
                         modes.forEachIndexed { index, mode ->
-                            item {
+                            custom {
                                 val title =
                                     "${mode.id}   ${mode.width} x ${mode.height}   ${mode.refreshRate}"
                                 val onSelect: () -> Unit = {
@@ -195,8 +195,8 @@ object ForceFpsPage {
                     )
                 }
                 // 自启动 + 显示刷新率：设置项合并为一张卡片，位于 FPS 数据卡之下
-                PrefGroup {
-                    item {
+                PrefGroup(state = state) {
+                    custom {
                         PrefSwitchRow(
                             title = stringResource(R.string.fps_autostart),
                             checked = fpsAutostart,
@@ -204,7 +204,7 @@ object ForceFpsPage {
                             onCheckedChange = { v -> state.set(keyFpsAutoStart, v) },
                         )
                     }
-                    item {
+                    custom {
                         PrefSwitchRow(
                             title = stringResource(R.string.display_refresh_rate),
                             checked = displayRefreshRate,

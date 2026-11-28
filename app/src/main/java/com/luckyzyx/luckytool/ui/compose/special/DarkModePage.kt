@@ -221,8 +221,8 @@ internal fun LazyItemScope.DarkModeContent(builder: PrefPageBuilder) {
     ) {
         Column(Modifier.fillParentMaxHeight()) {
             // 开关卡的水平内缩由 PrefGroup 按外观线统一给，与下方搜索框、列表保持同一左右边界
-            PrefGroup {
-                item {
+            PrefGroup(state = builder.state) {
+                custom {
                     PrefSwitchRow(
                         title = stringResource(R.string.enable_dark_mode_list),
                         checked = context.getBoolean(ModulePrefs, DarkModePage.ENABLE_KEY, false),

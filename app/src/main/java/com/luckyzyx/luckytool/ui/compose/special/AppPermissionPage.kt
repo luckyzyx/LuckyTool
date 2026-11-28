@@ -31,6 +31,7 @@ import com.luckyzyx.luckytool.ui.service.XposedServiceBridge
 import com.luckyzyx.luckytool.utils.AppPermission
 import com.luckyzyx.luckytool.utils.DeviceUtils
 import com.luckyzyx.luckytool.utils.PermissionUtils
+import com.luckyzyx.luckytool.utils.PrefState
 import com.luckyzyx.luckytool.utils.SettingsPrefs
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -95,6 +96,8 @@ fun AppPermissionContent(
     onExit: () -> Unit = {},
 ) {
     val context = LocalContext.current
+    // 本页的偏好文件（SettingsPrefs）：分组体只用展示行，也要一个 state 承接行 API
+    val prefsState = remember { PrefState.of(context.applicationContext, SettingsPrefs) }
 
     // 授予状态快照：revision 自增即重算（从系统设置页返回、逐项申请回调后）
     var revision by remember { mutableIntStateOf(0) }
@@ -149,25 +152,26 @@ fun AppPermissionContent(
         val moduleStatus = stringResource(
             if (moduleActive) R.string.app_permission_module_active else R.string.app_permission_module_inactive
         )
-        PrefGroup(title = stringResource(R.string.app_permission_root_section)) {
+        PrefGroup(state = prefsState, title = stringResource(R.string.app_permission_root_section)) {
             // 行都带显式 key：缺省 key 是条目序号，条件行一插一删会让后面各行换 key、连带换掉行状态
             // 顺序固定：Root 状态 → Root 来源 → Xposed 状态 → 框架版本
-            item(key = "root_status") {
+            custom(key = "root_status") {
                 PrefRow(title = "${stringResource(R.string.app_permission_root_status)}: $rootStatus")
             }
             // 版本行始终在位：查询未就绪时只占位，避免整行忽隐忽现（起 shell 的查询可能要等一会儿）
-            item(key = "root_version") {
+            custom(key = "root_version") {
                 PrefRow(title = rootInfo?.rootVersion ?: "${stringResource(R.string.root_source)} —")
             }
-            item(key = "xposed_status") {
+            custom(key = "xposed_status") {
                 PrefRow(title = "${stringResource(R.string.app_permission_module_status)}: $moduleStatus")
             }
-            item(key = "framework_version") {
+            custom(key = "framework_version") {
                 PrefRow(title = rootInfo?.frameworkVersion ?: "${stringResource(R.string.framework_version)} —")
             }
         }
 
         PrefGroup(
+            state = prefsState,
             title = stringResource(
                 if (blocking) R.string.app_permission_blocked_title else R.string.app_permission
             ),
@@ -196,7 +200,7 @@ fun AppPermissionContent(
                     } else {
                         null
                     }
-                item(key = kind.name) {
+                custom(key = kind.name) {
                     PrefRow(
                         title = stringResource(kind.labelRes),
                         summary = stringResource(
@@ -239,8 +243,8 @@ fun AppPermissionContent(
 
         if (blocking) {
             // 无跳过出口：阻塞态只提供逐项授权与退出应用
-            PrefGroup {
-                item(key = "exit") {
+            PrefGroup(state = prefsState) {
+                custom(key = "exit") {
                     PrefRow(
                         title = stringResource(R.string.app_permission_exit),
                         onClick = onExit,

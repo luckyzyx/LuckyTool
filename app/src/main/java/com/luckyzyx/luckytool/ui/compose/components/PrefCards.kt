@@ -8,21 +8,31 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.luckyzyx.luckytool.utils.PrefState
 
 /**
  * 卡片行 / 卡原语，支持分段卡片与独立卡片。
  *
- * **「设置区块」的唯一 API 是 PrefPage DSL**（group() / switch() / click() / list() /
- * custom()，见 ui/compose/components/PrefPage.kt）—— 所有标准设置页与功能页都走它。
- * 走不了 DSL 的页面（custom() 里的自定义内容）用 [PrefGroup]：它与 DSL 的 group() 共用同一份
- * 标题 / 卡片 / 行分隔线实现，页面因此不必再自判内缩、自画标题。
+ * **分组只有一个入口、一份实现**：[PrefGroup] 与 DSL 的 group() 都落到 [PrefSectionRows]，
+ * 区别只在位置 —— group() 把行拆成 LazyColumn 的逐行 item（逐行动画、搜索高亮、槽位定位靠它），
+ * [PrefGroup] 把整组一次性交给渲染层。页面是 PageScreen 时优先写 group()。
+ *
+ * **行只有一套写法**：两个位置都写 DSL 行 —— switch() / check() / select() / list() / slider() /
+ * editText() / page() / click() / note() / custom()，一段分组内容可以在两处之间原样搬动；
+ * 自定义 composable 就是一行，用 custom() 装，不要另立「行原语 + item {}」的写法。
+ *
+ * [PrefGroup] 必须给 state：行读写哪个偏好文件由它决定，即使这一段全是展示行也照传所在页面的 state。
+ *
  * 本文件其余部分是 custom() 逃生舱里的卡原语：[PrefCard] + [PrefSwitchCard]
  *（不属于任何分段组的独立卡片）、[PrefIcon]（行首图标）、[PrefColorPreview]（行尾颜色预览色块）。
  * 行本身（[PrefRow] / [PrefSwitchRow] / [PrefCheckRow] / [PrefSelectRow]）在 PrefRows.kt。
@@ -35,64 +45,68 @@ import androidx.compose.ui.unit.dp
  * 1. 页面：只决定分组的先后与分组之外的内容，整页不判外观线；需要与卡片左右对齐时用 [pageInset]；
  * 2. 分组：唯一入口是 DSL 的 group() 与本文件的 [PrefGroup]（两者都落到 [PrefSectionRows]），
  *    标题 / 说明 / 卡片 / 行间分隔线 / 分组上沿留白都在那里给；
- * 3. 行：DSL 页面用 switch() / check() / select() / list() / click()，custom() 里用
- *    [PrefRow] / [PrefSwitchRow] / [PrefCheckRow] / [PrefSelectRow]（见 PrefRows.kt），
- *    行本身不再判外观线内缩。
+ * 3. 行：偏好行写 switch() / check() / select() / list() / editText() / page()，其余写 click() / note() /
+ *    custom()；custom() 的内容里才用 [PrefRow] / [PrefSwitchRow] / [PrefCheckRow] / [PrefSelectRow]
+ *    （见 PrefRows.kt），行本身不再判外观线内缩。
  *
  * 特殊组件（滑条、图表、自定义卡）放 custom() / fullContent —— 那是 DSL 的正规逃生舱：
  * 只放内容与交互，卡片、分组标题、分组间距仍由上面分层给。
  */
 
 /**
- * 设置区块：页面自绘的行 + 一套统一的分组版式（内缩 / 标题 / 说明 / 卡片 / 行间分隔线）。
+ * 设置区块（组合位置）：行与 DSL 页面里的 group() 一字不差，渲染也同一份 [PrefSectionRows]。
  *
- * 一份实现、两个作者面：DSL 页面在 PrefPageBuilder 作用域写 group(title, summary) { ... }
- *（见 PrefPage.kt），走不了 DSL 的页面（custom() / fullContent 里的组合式内容、应用权限页）
- * 写本函数。两者最后都落到 [PrefSectionRows]，所以标题、卡片、行间分隔线、行级显隐只有一份，
- * 页面不必再自己画分组标题、判断外观线内缩、或用 Spacer 分隔分组：
- *
- * PrefGroup(title = "标题", summary = "说明", footer = "底部说明") {
- *     item { PrefSwitchRow("开关", checked = a, onCheckedChange = { ... }) }
- *     // 显隐不定的行给显式 key：缺省 key 是条目序号，前面的行增减会让后面的行跟着换 key
- *     item(key = "advanced", visible = advanced) { PrefSwitchRow("高级", ...) }
+ * PrefGroup(state = state, title = "标题", summary = "说明") {
+ *     switch("key", "开关")
+ *     if (state.getBoolean("advanced", false)) {   // 条件行：偏好写入后自动重求值
+ *         slider("level", "等级", 1..5)
+ *     }
+ *     custom { MyChart() }                          // 自定义 composable 就是一行
  * }
+ *
+ * 与 group() 的差别只在承载方式：group() 逐行进 LazyColumn（行级 animateItem、搜索高亮、
+ * 槽位滚动定位都靠它），本函数把整组一次性交给 [PrefSectionRows]（一张卡，行级显隐仍有动画，
+ * 但没有逐行 item 动画与搜索定位）。参数与 group() 一致，只多出 state —— 行读写哪个偏好文件由它决定。
  *
  * 版式归属：水平内缩与分组上沿留白都由本入口给（COUI 线卡片自带内缩，material 线这里补 16dp），
  * 调用方不要再加水平 padding（会叠成 32dp），也不要在相邻分组之间插 Spacer。
  *
- * [content] 是**登记块**而不是组合块：只调用 item()，不要在里面直接写 composable。
- * 条目在 [content] 执行时就定下来、随后整批交给 [PrefSectionRows]；如果 [content] 自己也成了
- * 可组合 lambda（例如在里面直接调 stringResource），它就带上独立的组合作用域 —— 状态变化时
- * 只有它自己重跑，新登记的行进不了已经画出来的卡片，卡片会一直停在首次组合时的内容
- *（数据后到的分组就是空卡）。需要状态的行把读取放进 item { } 里。
- *
- * @param title 分组标题，null / 空表示无标题（不占标题行）
- * @param summary 标题下方的分组说明
- * @param footer 卡片下方的分组说明
+ * @param state 行的读写源；同时订阅它的 [PrefState.revision]，条件行才会随偏好写入重求值
+ * @param sendValue 写值后给宿主进程的通知，含义与 PageScreen 的 sendValue 相同
+ * @param onNavigate page 行（页面跳转）的目标解析，不给则该行不出现
  */
 @Composable
 fun PrefGroup(
+    state: PrefState,
     title: String? = null,
     summary: String? = null,
     footer: String? = null,
-    modifier: Modifier = Modifier,
-    content: PrefCardScope.() -> Unit,
+    sendValue: (key: String, value: Any) -> Unit = { _, _ -> },
+    onNavigate: ((target: String, title: String?) -> Unit)? = null,
+    content: PrefPageBuilder.() -> Unit,
 ) {
-    val collected = PrefCardEntries()
-    content(
-        object : PrefCardScope {
-            override fun item(key: Any?, visible: Boolean, content: @Composable () -> Unit) {
-                collected.add(key, visible, content)
-            }
-        },
-    )
+    // 必须读取 .value：只调用 collectAsStateWithLifecycle() 并丢弃返回值不会建立快照订阅，
+    // 组内 if (state.getXxx(...)) 这类条件行就再也不会随偏好写入重求值。
+    val revisionState = state.revision.collectAsStateWithLifecycle()
+    revisionState.value
+
+    // 复用页面 DSL 的构建器：行 API、行原语、写值语义因此只有一份，不需要在这里重写一遍
+    val builder = remember(state) { PrefPageBuilder(state) }
+    builder.sendValue = sendValue
+    builder.navigate = onNavigate
+    builder.context = LocalContext.current.applicationContext
+    builder.highlightSlot.value = null
+    builder.beginBuild()
+    builder.content()
+    builder.computeSegments()
+
     PrefSectionRows(
         title = title,
         summary = summary,
         footer = footer,
-        modifier = modifier,
-        rows = collected.entries.map { entry ->
-            PrefCardRow(key = entry.key, visible = entry.visible) { entry.content() }
+        rows = builder.entries.map { entry ->
+            // 没给 itemKey 的行用槽位兜底：行 key 不带 null，显隐动画与列表复用才有稳定的键
+            PrefCardRow(key = entry.itemKey ?: entry.slot, visible = entry.visible) { entry.render(entry.slot) }
         },
     )
 }

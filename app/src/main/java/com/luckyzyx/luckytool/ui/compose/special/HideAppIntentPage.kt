@@ -66,6 +66,7 @@ import com.luckyzyx.luckytool.ui.compose.components.currentUiStyle
 import com.luckyzyx.luckytool.utils.IntentPrefs
 import com.luckyzyx.luckytool.utils.IntentUtils
 import com.luckyzyx.luckytool.utils.PackageUtils
+import com.luckyzyx.luckytool.utils.PrefState
 import com.luckyzyx.luckytool.utils.clearPrefs
 import com.luckyzyx.luckytool.utils.getBoolean
 import com.luckyzyx.luckytool.utils.getStringSet
@@ -431,8 +432,10 @@ internal fun LazyItemScope.HideAppIntentContent() {
     ) {
         Column(Modifier.fillParentMaxHeight()) {
             // 开关卡的水平内缩由 PrefGroup 按外观线统一给，与下方搜索框、列表保持同一左右边界
-            PrefGroup {
-                item {
+            // 本页的偏好文件（IntentPrefs）：分组体只用展示行，也要一个 state 承接行 API
+            val prefsState = remember { PrefState.of(context.applicationContext, IntentPrefs) }
+            PrefGroup(state = prefsState) {
+                custom {
                     PrefSwitchRow(
                         title = stringResource(R.string.custom_config_app_intent_list),
                         checked = context.getBoolean(IntentPrefs, HIDE_APP_INTENT_ENABLE_KEY, false),

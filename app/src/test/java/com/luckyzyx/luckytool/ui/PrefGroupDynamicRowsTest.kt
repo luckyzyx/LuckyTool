@@ -23,14 +23,13 @@ import org.robolectric.Shadows.shadowOf
 import org.robolectric.annotation.Config
 
 /**
- * 回归测试：[PrefGroup] 的行登记必须在状态变化后重新落到卡片上。
+ * 回归测试：[PrefGroup] 的行必须在状态变化后重新落到卡片上。
  *
  * 对应真机缺陷：强制刷新率页的 displayMode 列表由 root IPC 异步返回，首帧 modes 为空、
  * 回来之后数据卡一直是空的（只剩下面的开关卡片）。
  *
- * 根因：`PrefGroup` 的 content 若是可组合 lambda，它就自带独立组合作用域 —— 状态变化时只有它自己
- * 重跑，新登记的条目进不了已经画出来的那批行（卡片停在首帧的空内容）。content 必须是普通登记块，
- * 读取落在 `PrefGroup` 自己的作用域里，状态一变整组重新登记。
+ * 根因：分组内容若在独立作用域里登记、结果又被缓存住，状态变化后新行进不了已经画出来的那批行，
+ * 卡片会停在首帧的空内容。因此 content 必须在 `PrefGroup` 自己的作用域里执行，状态一变整组重建。
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [34])
@@ -61,9 +60,9 @@ class PrefGroupDynamicRowsTest {
             MaterialTheme {
                 PageScreen(state = state) {
                     custom(key = "body") { _ ->
-                        PrefGroup {
+                        PrefGroup(state = state) {
                             if (show.value) {
-                                item {
+                                custom {
                                     renders++
                                     Text("dynamic")
                                 }
