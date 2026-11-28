@@ -667,8 +667,9 @@ class PrefPageBuilder internal constructor(
         notify: Boolean = false,
         leading: (@Composable () -> Unit)? = null,
         beforeApply: ((Boolean, (Boolean) -> Unit) -> Unit)? = null,
+        visible: Boolean = true,
         onChange: ((Boolean) -> Unit)? = null,
-    ) = emit(key, key, title, summary) { slot ->
+    ) = emit(key, key, title, summary, visible = visible) { slot ->
         val checked by state.booleanFlow(key, default).collectAsStateWithLifecycle()
         fun apply(newValue: Boolean) {
             state.set(key, newValue)
@@ -733,8 +734,9 @@ class PrefPageBuilder internal constructor(
         enabled: Boolean = true,
         notify: Boolean = false,
         leading: (@Composable () -> Unit)? = null,
+        visible: Boolean = true,
         onChange: ((Boolean) -> Unit)? = null,
-    ) = emit(key, key, title, summary) { slot ->
+    ) = emit(key, key, title, summary, visible = visible) { slot ->
         val checked by state.booleanFlow(key, default).collectAsStateWithLifecycle()
         PrefRowInset {
             PrefCheckRow(
@@ -767,11 +769,12 @@ class PrefPageBuilder internal constructor(
         default: String = "",
         enabled: Boolean = true,
         notify: Boolean = false,
+        visible: Boolean = true,
         onChange: ((String) -> Unit)? = null,
     ) {
         entries.forEachIndexed { index, label ->
             val entryValue = entryValues.getOrNull(index) ?: return@forEachIndexed
-            emit("${key}#$entryValue", null, label, null) { slot ->
+            emit("${key}#$entryValue", null, label, null, visible = visible) { slot ->
                 val current by state.stringFlow(key, default).collectAsStateWithLifecycle()
                 PrefRowInset {
                     PrefSelectRow(
@@ -801,8 +804,9 @@ class PrefPageBuilder internal constructor(
         leading: (@Composable () -> Unit)? = null,
         enabled: Boolean = true,
         notify: Boolean = false,
+        visible: Boolean = true,
         onChange: ((String) -> Unit)? = null,
-    ) = emit(key, key, title, summary) { slot ->
+    ) = emit(key, key, title, summary, visible = visible) { slot ->
         val current by state.stringFlow(key, default).collectAsStateWithLifecycle()
         val currentLabel = entries.getOrNull(entryValues.indexOf(current)) ?: current
         val shownSummary = summary?.replace("%s", currentLabel)
@@ -840,8 +844,9 @@ class PrefPageBuilder internal constructor(
         valueLabel: ((Int) -> String)? = null,
         enabled: Boolean = true,
         notify: Boolean = false,
+        visible: Boolean = true,
         onChange: ((Int) -> Unit)? = null,
-    ) = emit(key, key, title, summary) { slot ->
+    ) = emit(key, key, title, summary, visible = visible) { slot ->
         val stored by state.intFlow(key, default ?: valueRange.first).collectAsStateWithLifecycle()
         PrefRowInset {
             PrefSliderRow(
@@ -921,8 +926,9 @@ class PrefPageBuilder internal constructor(
         enabled: Boolean = true,
         notify: Boolean = false,
         maxLines: Int = 1,
+        visible: Boolean = true,
         onChange: ((String) -> Unit)? = null,
-    ) = emit(key, key, title, summary) { slot ->
+    ) = emit(key, key, title, summary, visible = visible) { slot ->
         val current by state.stringFlow(key, default).collectAsStateWithLifecycle()
         var showDialog by remember { mutableStateOf(false) }
         PrefRowInset {
@@ -970,12 +976,13 @@ class PrefPageBuilder internal constructor(
         target: String,
         summary: String? = null,
         enabled: Boolean = true,
+        visible: Boolean = true,
     ) {
         val ctx = context
         if (ctx != null && !PageRegistry.isPageReachable(ctx, PageRegistry.pageTargetMap[target] ?: target)) {
             return
         }
-        emit("page:$target", "page:$target", title, summary, pageTarget = target) { slot ->
+        emit("page:$target", "page:$target", title, summary, pageTarget = target, visible = visible) { slot ->
             PrefRowInset {
                 PrefRow(
                     title = title,
@@ -1039,18 +1046,27 @@ class PrefPageBuilder internal constructor(
      * 组外调用时不套卡片、不与相邻条目拼卡（整页自定义内容、宿主容器就是这么写的）；
      * [raw] = true 用于「在组内但要标题、又不能进卡片体」的内容（整页拖拽区这类），
      * 它永远不参与卡片体，只按顺序裸渲染。
+     *
+     * [visible] = false 时这一项不占位（与 switch / slider 同义，用于能力门槛、依赖项显隐）；
+     * 取值在构建 lambda 里求值，偏好写入触发重组时会重新判断。
+     *
+     * [key] 是这一行对应的偏好键：它同时是列表身份与搜索跳转键，搜到这项时按它滚动并高亮该行；
+     * 行内容自己不读写 prefs 时，传它所代表那项功能的键即可。没有偏好键的动态行用
+     * [note] 或不带键的 [switch] 重载，那边的 [itemKey] 只做列表身份，不进搜索索引。
      */
     fun custom(
         key: String? = null,
         title: String? = null,
         summary: String? = null,
         raw: Boolean = false,
+        visible: Boolean = true,
         content: @Composable PrefPageBuilder.(slot: Int) -> Unit,
     ) = emit(
         key, key, title, summary,
         groupable = !raw,
         raw = raw,
         custom = true,
+        visible = visible,
         render = { slot -> content(this, slot) },
     )
 }
