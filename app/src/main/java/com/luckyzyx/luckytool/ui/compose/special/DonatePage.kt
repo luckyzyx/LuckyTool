@@ -1,19 +1,14 @@
-@file:OptIn(ExperimentalMaterial3Api::class)
-
 package com.luckyzyx.luckytool.ui.compose.special
 
 import android.content.Context
-import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FilterChip
-import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -25,30 +20,20 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import com.drake.net.Get
-import com.itos.coui.layout.Divider as CouiDivider
-import com.itos.coui.sheet.BottomSheet
-import com.itos.coui.sheet.CouiSheetButton
-import com.itos.coui.switch.Switch as CouiSwitch
-import com.itos.coui.text.CouiTextKind
-import com.itos.coui.text.Text as CouiText
-import com.itos.coui.theme.CouiTheme
 import com.luckyzyx.luckytool.R
 import com.luckyzyx.luckytool.data.DonateDetailInfo
 import com.luckyzyx.luckytool.data.DonateInfo
 import com.luckyzyx.luckytool.ui.compose.components.AppSearchBar
+import com.luckyzyx.luckytool.ui.compose.components.currentPrefStyle
 import com.luckyzyx.luckytool.ui.compose.components.pageInset
 import com.luckyzyx.luckytool.ui.compose.components.PrefScopeBuilder
-import com.luckyzyx.luckytool.ui.compose.components.coui.CouiFilterChip
-import com.luckyzyx.luckytool.ui.compose.components.material.MaterialSwitch
 import com.luckyzyx.luckytool.ui.compose.scopes.ScopePageSpec
-import com.luckyzyx.luckytool.ui.theme.LocalUiMode
-import com.luckyzyx.luckytool.ui.theme.UiMode
 import com.luckyzyx.luckytool.utils.AESCrypt
 import com.luckyzyx.luckytool.utils.LogUtils
 import com.luckyzyx.luckytool.utils.SettingsPrefs
@@ -73,8 +58,8 @@ import java.text.DecimalFormat
  * Markwon(+TablePlugin) 渲染为 Markdown 表格；筛选/排序选项在排序过滤弹层中。
  * 下拉刷新（onRefresh）重跑 initData 管线。
  *
- * 数据管线与渲染都集中在 [DonateBody]：搜索框复用 [AppSearchField]，
- * 排序过滤弹层用 Material3 的 ModalBottomSheet + FilterChip。
+ * 数据管线与渲染都集中在 [DonateBody]：搜索框复用 [AppSearchBar]，
+ * 排序过滤弹层的形态由样式位决定。
  */
 
 internal val showDetailedKey = "show_detailed_donate_data"
@@ -264,8 +249,8 @@ internal fun formatUserDetailInfo(
 
 /**
  * Donate 页渲染体：数据管线与渲染都在此。
- * 搜索框复用 [AppSearchField]（label 传入 "Name"）；排序过滤弹层用
- * `ModalBottomSheet` + `FilterChip`。
+ * 搜索框复用 [AppSearchBar]（label 传入 "Name"）；排序过滤弹层的内容在
+ * [DonateSortSheet]，外壳与控件由样式位提供。
  */
 @Composable
 internal fun PrefScopeBuilder.DonateBody(c: Context) {
@@ -416,7 +401,7 @@ internal fun PrefScopeBuilder.DonateBody(c: Context) {
         if (showDetail) list.removeLastOrNull()
         list
     }
-    // 弹层内容按渲染线分两份，状态与回调只在这里建一次
+    // 弹层参数只在这里建一次，状态与回调都由页面持有
     val sheet = DonateSortSheetModel(
         sorts = sorts,
         sortMode = sortMode,
@@ -443,15 +428,12 @@ internal fun PrefScopeBuilder.DonateBody(c: Context) {
             rerunFilter()
         },
     )
-    when (LocalUiMode.current) {
-        UiMode.Material -> if (sheet.visible.value) DonateSortSheetMaterial(sheet)
-        UiMode.Coui -> DonateSortSheetCoui(sheet)
-    }
+    DonateSortSheet(sheet)
 }
 
 /**
  * 排序过滤弹层的渲染参数：排序项、勾选态与回调都在页面里持有，
- * 两条线只换承载控件，弹层自身不缓存任何状态。
+ * 弹层自身不缓存任何状态，只把这些字段摆出来。
  */
 private class DonateSortSheetModel(
     val sorts: List<String>,
@@ -466,147 +448,94 @@ private class DonateSortSheetModel(
     val onToggleOtherCurrency: () -> Unit,
 )
 
-/** Material 线排序过滤弹层：底部面板 + M3 筛选片 */
+/**
+ * 排序过滤弹层内容：外壳、独立开关、筛选片与分隔线交给样式位，这里只排内容。
+ *
+ * 排序项与筛选项都折行排，项数变化时不会被挤出屏幕外。开关与筛选片即时生效，
+ * 这里只上报操作，状态由页面持有并据此重算 markdown。
+ */
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun DonateSortSheetMaterial(sheet: DonateSortSheetModel) {
-    ModalBottomSheet(onDismissRequest = { sheet.visible.value = false }) {
-        Column(
-            Modifier.fillMaxWidth().pageInset().padding(bottom = 24.dp)
+private fun DonateSortSheet(sheet: DonateSortSheetModel) {
+    currentPrefStyle().Sheet(
+        visible = sheet.visible,
+        title = stringResource(R.string.appinfo_sort_and_filter),
+        modifier = Modifier,
+        closeLabel = stringResource(R.string.close),
+        doneLabel = stringResource(R.string.sheet_done),
+    ) {
+        Row(
+            Modifier
+                .fillMaxWidth()
+                .padding(top = 12.dp),
+            verticalAlignment = Alignment.CenterVertically,
         ) {
-            Text(
-                stringResource(R.string.appinfo_sort_and_filter),
-                modifier = Modifier.align(Alignment.CenterHorizontally),
+            currentPrefStyle().Title(
+                text = stringResource(R.string.appinfo_sort_by),
+                enabled = true,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
             )
-            Row(
-                Modifier.fillMaxWidth().padding(top = 12.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Text(stringResource(R.string.appinfo_sort_by), Modifier.weight(1f))
-                Text(stringResource(R.string.appinfo_reverse))
-                MaterialSwitch(
-                    checked = sheet.reverse,
-                    onCheckedChange = sheet.onReverseChange,
-                )
-            }
-            Row(
-                Modifier.fillMaxWidth().horizontalScroll(rememberScrollState())
-            ) {
-                sheet.sorts.forEachIndexed { index, title ->
-                    FilterChip(
-                        selected = sheet.sortMode == index,
-                        onClick = { sheet.onSortModeChange(index) },
-                        label = { Text(title) },
-                    )
-                }
-            }
-            HorizontalDivider(Modifier.padding(vertical = 8.dp))
-            Text(stringResource(R.string.appinfo_filter))
-            Row(
-                Modifier.fillMaxWidth().horizontalScroll(rememberScrollState())
-            ) {
-                FilterChip(
-                    selected = sheet.showDetail,
-                    onClick = sheet.onToggleDetail,
-                    label = { Text(stringResource(R.string.donate_detailed_data)) },
-                )
-                FilterChip(
-                    selected = sheet.otherCurrency,
-                    onClick = sheet.onToggleOtherCurrency,
-                    label = { Text(stringResource(R.string.donate_other_currency)) },
+            // 撑开标题后面的空隙，把开关推到行尾
+            Spacer(Modifier.weight(1f))
+            currentPrefStyle().Title(
+                text = stringResource(R.string.appinfo_reverse),
+                enabled = true,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+            currentPrefStyle().Switch(
+                checked = sheet.reverse,
+                onCheckedChange = sheet.onReverseChange,
+                modifier = Modifier.padding(start = 8.dp),
+                enabled = true,
+            )
+        }
+        FlowRow(
+            Modifier
+                .fillMaxWidth()
+                .padding(top = 8.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            sheet.sorts.forEachIndexed { index, title ->
+                currentPrefStyle().FilterChip(
+                    label = title,
+                    selected = sheet.sortMode == index,
+                    onClick = { sheet.onSortModeChange(index) },
+                    modifier = Modifier,
+                    enabled = true,
                 )
             }
         }
-    }
-}
-
-/**
- * COUI 线排序过滤弹层：半屏 [BottomSheet] 承载（自带内部纵向滚动与导航栏内边距），
- * 标题进顶栏，左右按钮走顶栏槽位——左边关闭、右边完成，都只是收起面板。
- * 排序/筛选项用 [CouiFilterChip]，行间补 8dp 间距——COUI 标签本身不带外边距。
- */
-@Composable
-private fun DonateSortSheetCoui(sheet: DonateSortSheetModel) {
-    BottomSheet(
-        visible = sheet.visible,
-        sheetHeight = LocalConfiguration.current.screenHeightDp.dp / 2,
-        showDragHandle = true,
-        leadingButton = CouiSheetButton(
-            label = stringResource(R.string.close),
-            onClick = { sheet.visible.value = false },
-        ),
-        titleContent = {
-            CouiText(
-                text = stringResource(R.string.appinfo_sort_and_filter),
-                kind = CouiTextKind.SheetTitle,
-            )
-        },
-        trailingButton = CouiSheetButton(
-            label = stringResource(R.string.sheet_done),
-            onClick = { sheet.visible.value = false },
-        ),
-    ) {
-        Column(
-            Modifier.fillMaxWidth().pageInset().padding(bottom = 24.dp)
+        currentPrefStyle().Divider(Modifier.padding(vertical = 8.dp))
+        currentPrefStyle().Title(
+            text = stringResource(R.string.appinfo_filter),
+            enabled = true,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+        )
+        FlowRow(
+            Modifier
+                .fillMaxWidth()
+                .padding(top = 8.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
-            Row(
-                Modifier.fillMaxWidth().padding(top = 12.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                CouiText(
-                    text = stringResource(R.string.appinfo_sort_by),
-                    kind = CouiTextKind.ItemTitle,
-                    modifier = Modifier.weight(1f),
-                )
-                CouiText(
-                    text = stringResource(R.string.appinfo_reverse),
-                    kind = CouiTextKind.ItemTitle,
-                )
-                CouiSwitch(
-                    modifier = Modifier.padding(start = 8.dp),
-                    checked = sheet.reverse,
-                    // 轻点与拖动的结果都直接回传模型，不在本地取反
-                    onCheckedChange = sheet.onReverseChange,
-                    onDragCheckedChange = sheet.onReverseChange,
-                    dark = CouiTheme.isDark,
-                )
-            }
-            Row(
-                Modifier.fillMaxWidth().horizontalScroll(rememberScrollState())
-            ) {
-                sheet.sorts.forEachIndexed { index, title ->
-                    CouiFilterChip(
-                        label = title,
-                        selected = sheet.sortMode == index,
-                        onClick = { sheet.onSortModeChange(index) },
-                        modifier = Modifier.padding(end = 8.dp),
-                    )
-                }
-            }
-            CouiDivider(
-                modifier = Modifier.padding(vertical = 8.dp),
-                startIndent = 0.dp,
-                endIndent = 0.dp,
+            currentPrefStyle().FilterChip(
+                label = stringResource(R.string.donate_detailed_data),
+                selected = sheet.showDetail,
+                onClick = sheet.onToggleDetail,
+                modifier = Modifier,
+                enabled = true,
             )
-            CouiText(
-                text = stringResource(R.string.appinfo_filter),
-                kind = CouiTextKind.ItemTitle,
+            currentPrefStyle().FilterChip(
+                label = stringResource(R.string.donate_other_currency),
+                selected = sheet.otherCurrency,
+                onClick = sheet.onToggleOtherCurrency,
+                modifier = Modifier,
+                enabled = true,
             )
-            Row(
-                Modifier.fillMaxWidth().horizontalScroll(rememberScrollState())
-            ) {
-                CouiFilterChip(
-                    label = stringResource(R.string.donate_detailed_data),
-                    selected = sheet.showDetail,
-                    onClick = sheet.onToggleDetail,
-                    modifier = Modifier.padding(end = 8.dp),
-                )
-                CouiFilterChip(
-                    label = stringResource(R.string.donate_other_currency),
-                    selected = sheet.otherCurrency,
-                    onClick = sheet.onToggleOtherCurrency,
-                    modifier = Modifier.padding(end = 8.dp),
-                )
-            }
         }
     }
 }

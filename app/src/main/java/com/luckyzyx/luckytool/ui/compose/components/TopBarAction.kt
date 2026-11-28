@@ -92,18 +92,12 @@ fun TopBarActionButton(
     painter: Painter,
     modifier: Modifier = Modifier,
 ) {
-    if (LocalUiMode.current == UiMode.Coui) {
-        CouiTopBarActionButton(
-            onClick = onClick,
-            contentDescription = contentDescription,
-            painter = painter,
-            modifier = modifier,
-        )
-        return
-    }
-    IconButton(onClick = onClick, modifier = modifier) {
-        Icon(painter, contentDescription)
-    }
+    currentUiStyle().TopBarIconAction(
+        onClick = onClick,
+        contentDescription = contentDescription,
+        painter = painter,
+        modifier = modifier,
+    )
 }
 
 /** 矢量图标版：按钮触摸区域与按压效果沿用组件默认值。 */
@@ -134,14 +128,33 @@ fun TopBarOverflowMenu(
     contentDescription: String?,
     modifier: Modifier = Modifier,
 ) {
-    if (LocalUiMode.current == UiMode.Coui) {
-        CouiTopBarOverflowMenu(
-            items = items,
-            contentDescription = contentDescription,
-            modifier = modifier,
-        )
-        return
+    currentUiStyle().TopBarOverflow(
+        items = items,
+        contentDescription = contentDescription,
+        modifier = modifier,
+    )
+}
+
+/** material 线动作键：material3 [IconButton]，触摸区与图标配色沿用组件默认值 */
+@Composable
+internal fun MaterialTopBarActionButton(
+    onClick: () -> Unit,
+    contentDescription: String?,
+    painter: Painter,
+    modifier: Modifier = Modifier,
+) {
+    IconButton(onClick = onClick, modifier = modifier) {
+        Icon(painter, contentDescription)
     }
+}
+
+/** material 线溢出菜单：动作键 + Expressive [DropdownMenuPopup] 的弹出列表 */
+@Composable
+internal fun MaterialTopBarOverflowMenu(
+    items: List<TopBarOverflowItem>,
+    contentDescription: String?,
+    modifier: Modifier = Modifier,
+) {
     var expanded by remember { mutableStateOf(false) }
     Box(modifier = modifier) {
         IconButton(onClick = { expanded = true }) {
@@ -172,7 +185,7 @@ fun TopBarOverflowMenu(
  * 48dp 纯点击面；两种形态的图标、按压反馈与语义统一由 [CouiTopBarIconButton] 处理。
  */
 @Composable
-private fun CouiTopBarActionButton(
+internal fun CouiTopBarActionButton(
     onClick: () -> Unit,
     contentDescription: String?,
     painter: Painter,
@@ -196,7 +209,7 @@ private fun CouiTopBarActionButton(
  * 与 COUI 的其余浮层保持同一观感；条目按下用 [couiButtonFeedback] 画高光，弹出位置贴动作键右下角。
  */
 @Composable
-private fun CouiTopBarOverflowMenu(
+internal fun CouiTopBarOverflowMenu(
     items: List<TopBarOverflowItem>,
     contentDescription: String?,
     modifier: Modifier = Modifier,

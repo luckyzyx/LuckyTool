@@ -19,7 +19,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.RestartAlt
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -54,12 +53,15 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import com.composables.icons.lucide.R as LucideR
 import com.itos.coui.layout.CouiPageDefaults
-import com.itos.coui.layout.Divider as CouiDivider
 import com.itos.coui.text.CouiTextKind
 import com.itos.coui.text.Text as CouiText
 import com.itos.coui.theme.CouiTheme
 import com.luckyzyx.luckytool.R
 import com.luckyzyx.luckytool.ui.compose.components.LocalScopeListState
+import com.luckyzyx.luckytool.ui.compose.components.PrefIcon
+import com.luckyzyx.luckytool.ui.compose.components.PrefRowSummary
+import com.luckyzyx.luckytool.ui.compose.components.PrefRowTitle
+import com.luckyzyx.luckytool.ui.compose.components.currentPrefStyle
 import com.luckyzyx.luckytool.ui.theme.LocalUiMode
 import com.luckyzyx.luckytool.ui.theme.UiMode
 import kotlinx.coroutines.isActive
@@ -687,48 +689,15 @@ private fun OrderResetRow(onReset: () -> Unit) {
             .padding(horizontal = 16.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        when (LocalUiMode.current) {
-            UiMode.Material -> {
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = title,
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = MaterialTheme.colorScheme.onSurface,
-                    )
-                    Text(
-                        text = summary,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
-                Icon(
-                    imageVector = Icons.Filled.RestartAlt,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
-            // COUI 线：标题/说明取自页面配色，尾随图标的色调跟随前景色
-            UiMode.Coui -> {
-                val colors = CouiPageDefaults.themeColors()
-                Column(modifier = Modifier.weight(1f)) {
-                    CouiText(
-                        text = title,
-                        kind = CouiTextKind.ItemTitle,
-                        color = colors.title,
-                    )
-                    CouiText(
-                        text = summary,
-                        kind = CouiTextKind.ItemSummary,
-                        color = colors.summary,
-                    )
-                }
-                Icon(
-                    painter = painterResource(LucideR.drawable.lucide_ic_rotate_ccw),
-                    contentDescription = null,
-                    tint = CouiTheme.colorScheme.onSurface,
-                )
-            }
+        Column(modifier = Modifier.weight(1f)) {
+            PrefRowTitle(title)
+            PrefRowSummary(summary)
         }
+        // 行尾图标：两条线各有一套资源，两份一起交给样式位，由它取自己那套
+        PrefIcon(
+            icon = Icons.Filled.RestartAlt,
+            painter = painterResource(LucideR.drawable.lucide_ic_rotate_ccw),
+        )
     }
 }
 
@@ -738,6 +707,9 @@ private fun ZoneHeader(text: String, topPadding: Dp) {
     val modifier = Modifier
         .fillMaxWidth()
         .padding(start = 16.dp, end = 16.dp, top = topPadding, bottom = 4.dp)
+    // 区头是铺在自绘卡片里的强调文字：Material 线走 labelLarge + 主色、COUI 线走 GroupTitle + 强调色，
+    // 内缩与间距由调用点传入。样式位现成的 CategoryHeader 在最接近的一条线上会把字色降成说明色、
+    // 水平内缩改 32dp，与本卡片内部 16dp 的排版规则冲突，故这里按外观取字色与字号。
     when (LocalUiMode.current) {
         UiMode.Material -> Text(
             text = text,
@@ -758,11 +730,7 @@ private fun ZoneHeader(text: String, topPadding: Dp) {
 /** 区界分隔线（列表内的分组线，两侧留 16dp 内缩） */
 @Composable
 private fun ZoneDivider(modifier: Modifier = Modifier) {
-    when (LocalUiMode.current) {
-        UiMode.Material -> HorizontalDivider(modifier)
-        // COUI 线用库内分隔线，两端内缩仍由调用点的修饰符决定
-        UiMode.Coui -> CouiDivider(modifier = modifier, startIndent = 0.dp, endIndent = 0.dp)
-    }
+    currentPrefStyle().Divider(modifier)
 }
 
 /**
@@ -774,6 +742,9 @@ private fun ZoneDivider(modifier: Modifier = Modifier) {
 @Composable
 private fun LeftZoneEmptyRow(modifier: Modifier, highlighted: Boolean) {
     val text = stringResource(R.string.statusbar_icon_order_left_empty)
+    // 占位行同时是左区的落位槽：高亮铺的是落位色（强调色 10%），与拖拽行的落位槽同源。
+    // 样式位的 highlightContainer 表达的是「命中底」（Material 实底色、COUI 不铺底），表达不了落位色，
+    // 因此这一行的取色与说明文字仍按外观取。
     when (LocalUiMode.current) {
         UiMode.Material -> Row(
             modifier = Modifier
@@ -841,6 +812,9 @@ private fun OrderItemRow(
     rowDragModifier: Modifier,
     handleDragModifier: Modifier,
 ) {
+    // 拖拽行按外观分两包实现：几何、拖拽手势、绘制偏移完全一致，只有取色与图标资源集不同。
+    // 它铺在 raw=true 的自绘卡片里（不套卡片/分组容器，否则 clip 会吃掉指针事件），
+    // 拖起色与落位槽高亮都属于这条自绘列表自己的绘制语义，样式位没有对应成员。
     when (LocalUiMode.current) {
         UiMode.Material -> MaterialOrderItemRow(
             number,

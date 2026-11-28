@@ -13,7 +13,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.AddToHomeScreen
-import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowRight
 import androidx.compose.material.icons.automirrored.rounded.OpenInNew
 import androidx.compose.material.icons.rounded.Adb
 import androidx.compose.material.icons.rounded.GridView
@@ -21,8 +20,6 @@ import androidx.compose.material.icons.rounded.PushPin
 import androidx.compose.material.icons.rounded.Speed
 import androidx.compose.material.icons.rounded.TouchApp
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
@@ -34,10 +31,8 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.unit.LayoutDirection
 import androidx.core.graphics.drawable.toBitmap
 import com.highcapable.kavaref.extension.classOf
-import com.itos.coui.theme.CouiTheme
 import com.luckyzyx.luckytool.ITileServiceController
 import com.luckyzyx.luckytool.R
 import com.luckyzyx.luckytool.service.AdbService
@@ -53,11 +48,10 @@ import com.luckyzyx.luckytool.ui.compose.components.MultiChoiceDialog
 import com.luckyzyx.luckytool.ui.compose.components.OtherTopBarActions
 import com.luckyzyx.luckytool.ui.compose.components.PageScaffold
 import com.luckyzyx.luckytool.ui.compose.components.PrefIcon
+import com.luckyzyx.luckytool.ui.compose.components.PrefIconButton
+import com.luckyzyx.luckytool.ui.compose.components.PrefRowChevron
 import com.luckyzyx.luckytool.ui.compose.components.ScopeScreen
 import com.luckyzyx.luckytool.ui.compose.components.SingleChoiceDialog
-import com.luckyzyx.luckytool.ui.compose.components.coui.CouiIconButton
-import com.luckyzyx.luckytool.ui.theme.LocalUiMode
-import com.luckyzyx.luckytool.ui.theme.UiMode
 import com.luckyzyx.luckytool.utils.A13
 import com.luckyzyx.luckytool.utils.GlobalKeyValue.keyTouchSamplingRateLevel
 import com.luckyzyx.luckytool.utils.OtherPrefs
@@ -153,22 +147,7 @@ fun OtherPage(activity: MainActivity, isCurrentPage: Boolean = true) {
                                 )
                             },
                             value = "",
-                            trailing = {
-                                if (LocalUiMode.current == UiMode.Coui) {
-                                    Icon(
-                                        painter = painterResource(
-                                            if (LocalLayoutDirection.current == LayoutDirection.Rtl) LucideR.drawable.lucide_ic_chevron_left
-                                            else LucideR.drawable.lucide_ic_chevron_right
-                                        ),
-                                        contentDescription = null,
-                                    )
-                                } else {
-                                    Icon(
-                                        Icons.AutoMirrored.Rounded.KeyboardArrowRight,
-                                        contentDescription = null
-                                    )
-                                }
-                            },
+                            trailing = { PrefRowChevron() },
                             onClick = {
                                 activity.requestFunctionNavigation("quick_entry", quickEntryTitle)
                             },
@@ -210,22 +189,7 @@ fun OtherPage(activity: MainActivity, isCurrentPage: Boolean = true) {
                                 )
                             },
                             value = "",
-                            trailing = {
-                                if (LocalUiMode.current == UiMode.Coui) {
-                                    Icon(
-                                        painter = painterResource(
-                                            if (LocalLayoutDirection.current == LayoutDirection.Rtl) LucideR.drawable.lucide_ic_chevron_left
-                                            else LucideR.drawable.lucide_ic_chevron_right
-                                        ),
-                                        contentDescription = null,
-                                    )
-                                } else {
-                                    Icon(
-                                        Icons.AutoMirrored.Rounded.KeyboardArrowRight,
-                                        contentDescription = null
-                                    )
-                                }
-                            },
+                            trailing = { PrefRowChevron() },
                             onClick = {
                                 activity.requestFunctionNavigation("force_fps", fpsTitle)
                             },
@@ -382,27 +346,14 @@ private fun ShortcutDialog(context: Context, onDismiss: () -> Unit) {
                     shortcutUtils.requestPinShortcut(bean.toShortcutInfo(context))
                 }
             }
-            // 行尾动作也在多选列表里：COUI 线要用同一套圆形按压反馈，
-            // M3 的 IconButton 在 COUI 下会留下 Material 的方形波纹与默认尺寸。
-            when (LocalUiMode.current) {
-                UiMode.Material -> IconButton(onClick = onClick) {
-                    Icon(
-                        imageVector = Icons.Rounded.PushPin,
-                        contentDescription = pinContentDescription,
-                    )
-                }
-                // 描述挂在 CouiIconButton 的点击面上，图标自身不再重复声明，避免读屏播报两次。
-                UiMode.Coui -> CouiIconButton(
-                    onClick = onClick,
-                    contentDescription = pinContentDescription,
-                ) {
-                    Icon(
-                        painter = painterResource(LucideR.drawable.lucide_ic_pin),
-                        contentDescription = null,
-                        tint = CouiTheme.colorScheme.onSurface,
-                    )
-                }
-            }
+            // 行尾动作在多选列表里：按钮形态（圆形点击面 / M3 图标按钮）与图标集由外观线给，
+            // 描述挂在点击面上，图标自身不再重复声明，避免读屏播报两次。
+            PrefIconButton(
+                onClick = onClick,
+                contentDescription = pinContentDescription,
+                icon = Icons.Rounded.PushPin,
+                painter = painterResource(LucideR.drawable.lucide_ic_pin),
+            )
         }
     } else null
     MultiChoiceDialog(

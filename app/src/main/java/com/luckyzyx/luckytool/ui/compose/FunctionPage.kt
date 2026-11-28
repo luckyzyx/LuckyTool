@@ -6,21 +6,16 @@ import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowRight
 import androidx.compose.material.icons.filled.PowerSettingsNew
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
@@ -47,25 +42,23 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.composables.icons.lucide.R as LucideR
-import com.itos.coui.dialog.CouiDialogAction
-import com.itos.coui.dialog.CouiDialogActionStyle
-import com.itos.coui.dialog.CouiDialogDefaults
 import com.itos.coui.text.CouiTextKind
 import com.itos.coui.text.Text as CouiText
 import com.itos.coui.theme.CouiTheme
 import com.luckyzyx.luckytool.R
 import com.luckyzyx.luckytool.ui.activity.MainActivity
 import com.luckyzyx.luckytool.ui.compose.components.FunctionTopBarActions
-import com.luckyzyx.luckytool.ui.compose.components.dialogBodyMaxHeight
 import com.luckyzyx.luckytool.ui.compose.components.LocalScopeTopInset
 import com.luckyzyx.luckytool.ui.compose.components.ScopeScreen
 import com.luckyzyx.luckytool.ui.compose.components.ScrollTarget
 import com.luckyzyx.luckytool.ui.compose.components.TopBarActionButton
 import com.luckyzyx.luckytool.ui.compose.components.TopBarOverflowItem
 import com.luckyzyx.luckytool.ui.compose.components.TopBarOverflowMenu
-import com.luckyzyx.luckytool.ui.compose.components.coui.CouiAlertDialog
 import com.luckyzyx.luckytool.ui.compose.components.coui.CouiIconButton
 import com.luckyzyx.luckytool.ui.compose.components.PageScaffold
+import com.luckyzyx.luckytool.ui.compose.components.NoteTone
+import com.luckyzyx.luckytool.ui.compose.components.PrefNote
+import com.luckyzyx.luckytool.ui.compose.components.currentDialogStyle
 import com.luckyzyx.luckytool.ui.compose.components.material.MaterialTextField
 import com.luckyzyx.luckytool.ui.compose.scopes.ScopePageContent
 import com.luckyzyx.luckytool.ui.compose.scopes.ScopePageRegistry
@@ -207,21 +200,9 @@ internal fun ScopePageHost(
                     .padding(padding),
                 contentAlignment = Alignment.Center,
             ) {
-                when (LocalUiMode.current) {
-                    UiMode.Material -> Text(
-                        "Unknown page: ${route.pageKey}",
-                        color = MaterialTheme.colorScheme.error,
-                    )
-
-                    // COUI 的色板没有 error 角色：错误态用 onSurface 满强度表达，
-                    // 整屏只有这一行字，用常态正文色也不会被误读成普通提示
-                    UiMode.Coui -> CouiText(
-                        text = "Unknown page: ${route.pageKey}",
-                        kind = CouiTextKind.Search,
-                        textAlign = TextAlign.Start,
-                        color = CouiTheme.colorScheme.onSurface,
-                    )
-                }
+                // 错误态文字：Material 用 error 色，COUI 的色板没有 error 角色，
+                // 由样式位退回 onSurface 满强度（整屏只有这一行字，不会被误读成普通提示）
+                PrefNote(text = "Unknown page: ${route.pageKey}", tone = NoteTone.Error)
             }
         } else {
             val state = remember(spec) { PrefState.of(context.applicationContext, spec.prefsName) }
@@ -303,49 +284,21 @@ private fun VersionInfoDialog(onDismiss: () -> Unit) {
     val markwon = remember(context) {
         Markwon.builder(context).usePlugin(TablePlugin.create(context)).build()
     }
-    when (LocalUiMode.current) {
-        UiMode.Material -> AlertDialog(
-            onDismissRequest = onDismiss,
-            title = { Text(stringResource(R.string.menu_versioninfo)) },
-            text = {
-                AndroidView(
-                    factory = { ctx -> android.widget.TextView(ctx) },
-                    modifier = Modifier.fillMaxWidth().heightIn(max = dialogBodyMaxHeight(chrome = 160.dp)).verticalScroll(rememberScrollState()),
-                    update = { tv ->
-                        tv.setTextIsSelectable(true)
-                        markwon.setMarkdown(tv, markdown)
-                    },
-                )
-            },
-            confirmButton = {
-                TextButton(onClick = onDismiss) { Text(stringResource(android.R.string.ok)) }
-            },
-        )
-
-        UiMode.Coui -> CouiAlertDialog(
-            onDismissRequest = onDismiss,
-            title = stringResource(R.string.menu_versioninfo),
-            confirmAction = CouiDialogAction(
-                text = stringResource(android.R.string.ok),
-                onClick = onDismiss,
-                style = CouiDialogActionStyle.Primary,
-                // Primary 样式必须显式给按钮配色，缺 colors 构造即抛异常
-                colors = CouiDialogDefaults.primaryActionColors(CouiTheme.colorScheme.accent),
-            ),
-            content = {
-                // 正文槽本身已经是纵向滚动容器，这里不再套 verticalScroll：
-                // 两层同向滚动会先被内层吃掉手势，长表格滚不到底
-                AndroidView(
-                    factory = { ctx -> android.widget.TextView(ctx) },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = CouiDialogDefaults.contentPadding),
-                    update = { tv ->
-                        tv.setTextIsSelectable(true)
-                        markwon.setMarkdown(tv, markdown)
-                    },
-                )
-            },
-        )
-    }
+    // 长表格只让正文滚动：外壳已经给了滚动区，这里不再套 verticalScroll
+    currentDialogStyle().Alert(
+        onDismissRequest = onDismiss,
+        confirmLabel = stringResource(android.R.string.ok),
+        onConfirm = onDismiss,
+        title = stringResource(R.string.menu_versioninfo),
+        content = {
+            AndroidView(
+                factory = { ctx -> android.widget.TextView(ctx) },
+                modifier = Modifier.fillMaxWidth(),
+                update = { tv ->
+                    tv.setTextIsSelectable(true)
+                    markwon.setMarkdown(tv, markdown)
+                },
+            )
+        },
+    )
 }

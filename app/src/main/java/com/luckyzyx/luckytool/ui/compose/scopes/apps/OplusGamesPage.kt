@@ -1,16 +1,11 @@
 package com.luckyzyx.luckytool.ui.compose.scopes.apps
 
 import android.content.Intent
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.luckyzyx.luckytool.R
 import com.luckyzyx.luckytool.ui.compose.components.AppPickerDialog
@@ -59,19 +54,13 @@ object OplusGamesPage {
                     )
                 )
             ) {
-                custom(title = c.getString(R.string.game_assistant_page)) {
-                    PrefRowInset {
-                        PrefRow(
-                            title = stringResource(R.string.game_assistant_page),
-                            summary = "(${appUtils.getAppLabel("com.oplus.games")})",
-                            onClick = {
-                                launchShell(
-                                    "com.oplus.games/business.compact.activity.GameBoxCoverActivity"
-                                )
-                            },
-                        )
-                    }
-                }
+                click(
+                    title = c.getString(R.string.game_assistant_page),
+                    summary = "(${appUtils.getAppLabel("com.oplus.games")})",
+                    onClick = {
+                        launchShell("com.oplus.games/business.compact.activity.GameBoxCoverActivity")
+                    },
+                )
             }
             // 游戏空间页面入口
             if (c.checkPackName("com.nearme.gamecenter") && c.checkResolveActivity(
@@ -81,20 +70,16 @@ object OplusGamesPage {
                     )
                 )
             ) {
-                custom(title = c.getString(R.string.game_space_page)) {
-                    PrefRowInset {
-                        PrefRow(
-                            title = stringResource(R.string.game_space_page),
-                            summary = "(${appUtils.getAppLabel("com.nearme.gamecenter")})",
-                            onClick = {
-                                launchShell(
-                                    "com.nearme.gamecenter/" +
-                                        "com.nearme.gamespace.desktopspace.ui.DesktopSpaceMainActivity"
-                                )
-                            },
+                click(
+                    title = c.getString(R.string.game_space_page),
+                    summary = "(${appUtils.getAppLabel("com.nearme.gamecenter")})",
+                    onClick = {
+                        launchShell(
+                            "com.nearme.gamecenter/" +
+                                "com.nearme.gamespace.desktopspace.ui.DesktopSpaceMainActivity"
                         )
-                    }
-                }
+                    },
+                )
             }
         }
         // 布局
@@ -133,24 +118,20 @@ object OplusGamesPage {
                 title = c.getString(R.string.enable_developer_page),
                 summary = c.getString(R.string.enable_developer_page_summary),
             )
-            if (state.getBoolean("enable_developer_page")) {
-                if (c.checkPackName("com.oplus.games")) {
-                    custom(title = c.getString(R.string.game_assistant_develop_page)) {
-                        PrefRowInset {
-                            PrefRow(
-                                title = stringResource(R.string.game_assistant_develop_page),
-                                summary = "(${appUtils.getAppLabel("com.oplus.games")})",
-                                onClick = {
-                                    launchShell(
-                                        "com.oplus.games/" +
-                                            "business.compact.activity.GameDevelopOptionsActivity"
-                                    )
-                                },
-                            )
-                        }
-                    }
-                }
-            }
+            // 开发者页面入口：PrefState 驱动的可见性用 visible 表达，由行原地展开/收起
+            click(
+                title = c.getString(R.string.game_assistant_develop_page),
+                summary = "(${appUtils.getAppLabel("com.oplus.games")})",
+                itemKey = "game_assistant_develop_page",
+                visible = state.getBoolean("enable_developer_page") &&
+                    c.checkPackName("com.oplus.games"),
+                onClick = {
+                    launchShell(
+                        "com.oplus.games/" +
+                            "business.compact.activity.GameDevelopOptionsActivity"
+                    )
+                },
+            )
             custom(
                 key = "custom_media_player_support_list",
                 title = c.getString(R.string.custom_media_player_support),

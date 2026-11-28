@@ -49,6 +49,11 @@ import com.itos.coui.theme.CouiTheme
 import com.luckyzyx.luckytool.ui.compose.components.material.LocalShellBottomInset
 import com.luckyzyx.luckytool.ui.compose.components.AppItem
 import com.luckyzyx.luckytool.ui.compose.components.AppListItem
+import com.luckyzyx.luckytool.ui.compose.components.PrefRowChevron
+import com.luckyzyx.luckytool.ui.compose.components.PrefRowSummary
+import com.luckyzyx.luckytool.ui.compose.components.PrefRowTitle
+import com.luckyzyx.luckytool.ui.compose.components.currentPrefStyle
+import com.luckyzyx.luckytool.ui.compose.components.currentUiStyle
 import com.luckyzyx.luckytool.ui.shell.LocalCategoryBadgeColors
 import com.luckyzyx.luckytool.ui.theme.LocalUiMode
 import com.luckyzyx.luckytool.ui.theme.UiMode
@@ -92,19 +97,18 @@ internal fun FunctionList(
     val contentPadding = PaddingValues(
         start = 16.dp,
         end = 16.dp,
-        // COUI 的首张分段卡片与折叠顶栏之间留出分组间距；Material 仍贴着顶栏起排
-        top = padding.calculateTopPadding() + if (LocalUiMode.current == UiMode.Coui) CouiPageDefaults.groupSpacing else 0.dp,
+        // 首张分段卡片与折叠顶栏之间的距离由外观样式给（Material 为 0，仍贴着顶栏起排）
+        top = padding.calculateTopPadding() + currentUiStyle().groupSpacing,
         bottom = 16.dp + LocalShellBottomInset.current,
     )
-    val isCoui = LocalUiMode.current == UiMode.Coui
-    // 跟手回弹：一个 OverscrollEffect 只能挂在一个 LazyColumn 上，因此两线各自在 @Composable 里取好后传下去。
-    val listOverscroll = if (isCoui) rememberCouiOverscrollEffect() else rememberOverscrollEffect()
+    // 跟手回弹：一个 OverscrollEffect 只能挂在一个 LazyColumn 上，因此在这里取好后传下去。
+    val listOverscroll = currentUiStyle().overscrollEffect()
     LazyColumn(
         state = listState,
         modifier = listModifier,
         contentPadding = contentPadding,
-        // COUI 行自带分段卡片，段间不能留缝，否则一张卡片被切断；Material 仍按 2dp 分段。
-        verticalArrangement = if (isCoui) Arrangement.Top else Arrangement.spacedBy(2.dp),
+        // 段间距由外观样式给：COUI 行自带分段卡片，段间不能留缝，否则一张卡片被切断
+        verticalArrangement = Arrangement.spacedBy(currentUiStyle().listRowSpacing),
         overscrollEffect = listOverscroll,
     ) {
         itemsIndexed(
@@ -117,54 +121,13 @@ internal fun FunctionList(
                 AppListItem(
                     onClick = onClick,
                     iconSize = 48.dp,
-                    headlineContent = {
-                        // 行内排版按外观分派：COUI 线用 COUI 语义字体（ItemTitle/ItemSummary）
-                        // 与页面配色，Material 线保持 M3 Text。
-                        if (isCoui) {
-                            CouiText(
-                                text = row.title,
-                                kind = CouiTextKind.ItemTitle,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis,
-                            )
-                        } else {
-                            Text(row.title, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                        }
-                    },
+                    // 行内标题/说明/箭头按外观线取各自的字体与配色，行容器仍由 AppListItem 决定
+                    headlineContent = { PrefRowTitle(row.title, maxLines = 1) },
                     supportingContent = row.summary?.let { summary ->
-                        {
-                            if (isCoui) {
-                                CouiText(
-                                    text = summary,
-                                    kind = CouiTextKind.ItemSummary,
-                                    color = CouiPageDefaults.themeColors(CouiTheme.isDark).summary,
-                                    maxLines = FUNCTION_SUMMARY_MAX_LINES,
-                                    overflow = TextOverflow.Ellipsis,
-                                )
-                            } else {
-                                Text(
-                                    text = summary,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                    maxLines = FUNCTION_SUMMARY_MAX_LINES,
-                                    overflow = TextOverflow.Ellipsis,
-                                )
-                            }
-                        }
+                        { PrefRowSummary(summary, maxLines = FUNCTION_SUMMARY_MAX_LINES) }
                     },
                     leadingContent = { FunctionRowIcon(row) },
-                    trailingContent = {
-                        if (isCoui) {
-                            // 尾部箭头尺寸与 COUI 偏好行一致（细长箭头），颜色弱于正文前景
-                            Icon(
-                                CouiIconsExt.Next,
-                                contentDescription = null,
-                                modifier = Modifier.size(width = 12.dp, height = 24.dp),
-                                tint = CouiPageDefaults.themeColors(CouiTheme.isDark).disabled,
-                            )
-                        } else {
-                            Icon(Icons.AutoMirrored.Rounded.KeyboardArrowRight, contentDescription = null)
-                        }
-                    },
+                    trailingContent = { PrefRowChevron() },
                 )
             }
         }
@@ -224,19 +187,10 @@ private val CategoryBadgeCornerSize = 10.dp
 @Composable
 private fun CategoryBadgeIcon(badge: CategoryBadge?) {
     val colorful = LocalCategoryBadgeColors.current
-    // 单色徽标的底色与前景按外观取：COUI 线用强调色与其反色（色板保证可读），Material 线用容器色与其前景
-    val background: Color
-    val foreground: Color
-    if (LocalUiMode.current == UiMode.Coui) {
-        val colorScheme = CouiTheme.colorScheme
-        background = if (colorful) badge?.color ?: Color(0xFF607D8B) else colorScheme.accent
-        foreground = if (colorful) Color.White else colorScheme.onAccent
-    } else {
-        // Material 线专用：多彩色相同，单色徽标取 M3 容器色
-        val colorScheme = MaterialTheme.colorScheme
-        background = if (colorful) badge?.color ?: Color(0xFF607D8B) else colorScheme.secondaryContainer
-        foreground = if (colorful) Color.White else colorScheme.onSecondaryContainer
-    }
+    // 徽标底色与前景由外观样式给：多彩时用分类自带的颜色，单色时用主题色的容器/前景色对
+    val badgeColors = currentPrefStyle().iconBadgeColors(colorful, badge?.color)
+    val background = badgeColors.container
+    val foreground = badgeColors.content
     Box(
         modifier = Modifier
             .size(CategoryBadgeSize)

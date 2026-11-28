@@ -11,24 +11,12 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyItemScope
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.SecondaryTabRow
-import androidx.compose.material3.Tab
-import androidx.compose.material3.TabRowDefaults
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -43,13 +31,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import com.itos.coui.dialog.CouiDialogAction
-import com.itos.coui.dialog.CouiDialogActionStyle
-import com.itos.coui.dialog.CouiDialogDefaults
-import com.itos.coui.text.CouiTextKind
-import com.itos.coui.text.Text as CouiText
 import com.itos.coui.theme.CouiTheme
 import com.luckyzyx.luckytool.R
 import com.luckyzyx.luckytool.data.MemcConfigActivity
@@ -57,20 +39,19 @@ import com.luckyzyx.luckytool.data.MemcConfigPackage
 import com.luckyzyx.luckytool.ui.compose.components.ActionListDialog
 import com.luckyzyx.luckytool.ui.compose.components.pageInset
 import com.luckyzyx.luckytool.ui.compose.components.AppPickerDialog
-import com.luckyzyx.luckytool.ui.compose.components.dialogBodyMaxHeight
 import com.luckyzyx.luckytool.ui.compose.components.ChoiceItem
 import com.luckyzyx.luckytool.ui.compose.components.ConfirmDialog
 import com.luckyzyx.luckytool.ui.compose.components.PrefCard
+import com.luckyzyx.luckytool.ui.compose.components.PrefNote
+import com.luckyzyx.luckytool.ui.compose.components.PrefRowSummary
+import com.luckyzyx.luckytool.ui.compose.components.PrefRowTitle
 import com.luckyzyx.luckytool.ui.compose.components.AppItem
 import com.luckyzyx.luckytool.ui.compose.components.AppListItem
-import com.luckyzyx.luckytool.ui.compose.components.coui.CouiAlertDialog
-import com.luckyzyx.luckytool.ui.compose.components.coui.CouiSegmentedTabs
-import com.luckyzyx.luckytool.ui.compose.components.coui.CouiTextField
+import com.luckyzyx.luckytool.ui.compose.components.currentDialogStyle
+import com.luckyzyx.luckytool.ui.compose.components.currentPrefStyle
 import com.luckyzyx.luckytool.ui.compose.scopes.ScopePageAction
 import com.luckyzyx.luckytool.ui.compose.scopes.ScopePageSpec
 import com.luckyzyx.luckytool.ui.theme.DesignTokens
-import com.luckyzyx.luckytool.ui.theme.LocalUiMode
-import com.luckyzyx.luckytool.ui.theme.UiMode
 import com.luckyzyx.luckytool.utils.CommandUtils
 import com.luckyzyx.luckytool.utils.FileUtils
 import com.luckyzyx.luckytool.utils.GlobalKeyValue
@@ -394,48 +375,27 @@ internal fun LazyItemScope.MemcConfigContent() {
 /**
  * 顶部双 Tab：选中态由调用方持有，点击只回传下标。
  *
- * Material 线是带下划线的 SecondaryTabRow，Coui 线是官方分段选择器（低版本回退等宽胶囊分段条）；
- * 两条线共用同一个下标语义，切换只改调用方的 [selected]。
+ * 控件形态由样式位给（Material 线是带下划线的次级 Tab 行，COUI 线是库的分段选择器，
+ * 低版本回退等宽胶囊分段条）；两条线共用同一个下标语义，切换只改调用方的 [selected]。
+ *
+ * 水平内缩两条线统一取 pageInset：COUI 的分段条本来就要这段留白，material 的 Tab 行虽然能满幅，
+ * 但同页的搜索框、新增卡与列表都从这一档起排，满幅会让 Tab 文案与下划线和内容列错位。
  */
 @Composable
 private fun MemcTabRow(selected: Int, onSelect: (Int) -> Unit) {
-    val labels = listOf("Packages", "Activitys")
-    when (LocalUiMode.current) {
-        UiMode.Material -> SecondaryTabRow(
-            selected,
-            Modifier.padding(vertical = 8.dp),
-            TabRowDefaults.primaryContainerColor,
-            TabRowDefaults.primaryContentColor,
-            @Composable {
-                TabRowDefaults.SecondaryIndicator(
-                    Modifier.tabIndicatorOffset(selected)
-                )
-            },
-            @Composable { HorizontalDivider() },
-            {
-                Tab(
-                    selected = selected == 0,
-                    onClick = { onSelect(0) },
-                    text = { Text("Packages") },
-                )
-                Tab(
-                    selected = selected == 1,
-                    onClick = { onSelect(1) },
-                    text = { Text("Activitys") },
-                )
-            })
-
-        UiMode.Coui -> CouiSegmentedTabs(
-            labels = labels,
-            selectedIndex = selected,
-            onSelect = onSelect,
-            modifier = Modifier.pageInset().padding(vertical = 8.dp),
-        )
-    }
+    currentPrefStyle().Tabs(
+        labels = listOf("Packages", "Activitys"),
+        selected = selected,
+        onSelect = onSelect,
+        modifier = Modifier.pageInset().padding(vertical = 8.dp),
+    )
 }
 
-
-/** 面板搜索框：仅搜索（无排序按钮）。 */
+/**
+ * 面板搜索框：仅搜索（无排序按钮）。
+ *
+ * 控件与配色由样式位给；水平内缩留在调用点，与下面列表的内容内缩对齐。
+ */
 @Composable
 private fun MemcSearchField(
     value: String,
@@ -443,35 +403,25 @@ private fun MemcSearchField(
     enabled: Boolean,
     placeholder: String,
 ) {
-    when (LocalUiMode.current) {
-        UiMode.Material -> OutlinedTextField(
-            value = value,
-            onValueChange = onValueChange,
-            enabled = enabled,
-            singleLine = true,
-            placeholder = { Text(placeholder) },
-            modifier = Modifier
-                .fillMaxWidth()
-                .pageInset(),
-        )
-
-        UiMode.Coui -> CouiTextField(
-            value = value,
-            onValueChange = onValueChange,
-            enabled = enabled,
-            singleLine = true,
-            placeholder = placeholder,
-            modifier = Modifier
-                .fillMaxWidth()
-                .pageInset(),
-        )
-    }
+    currentPrefStyle().TextField(
+        value = value,
+        onValueChange = onValueChange,
+        placeholder = placeholder,
+        modifier = Modifier
+            .fillMaxWidth()
+            .pageInset(),
+        enabled = enabled,
+        singleLine = true,
+        leadingIcon = null,
+    )
 }
 
 /**
  * 包名前缀面板：搜索 + 新增卡 + 列表。
  *
- * 两条线共用同一份 [state] 与回调，只有行内文字、空态文字与列表骨架用各自线的原语。
+ * 行内文字与空态走行层原语，两条线共用一份排版；新增卡的水平内缩由 containerInset() 给——
+ * COUI 线的卡片底色自带 16dp 内缩（CouiCard），material 线的卡片不自带，要自己补，
+ * 否则会与搜索框、列表行错位。
  */
 @Composable
 internal fun MemcPackagePanel(
@@ -479,18 +429,7 @@ internal fun MemcPackagePanel(
     modifier: Modifier = Modifier,
     onEdit: (MemcConfigPackage?) -> Unit,
 ) {
-    when (LocalUiMode.current) {
-        UiMode.Material -> MaterialMemcPackagePanel(state, modifier, onEdit)
-        UiMode.Coui -> CouiMemcPackagePanel(state, modifier, onEdit)
-    }
-}
-
-@Composable
-private fun MaterialMemcPackagePanel(
-    state: MemcConfigState,
-    modifier: Modifier,
-    onEdit: (MemcConfigPackage?) -> Unit,
-) {
+    val addCardModifier = currentPrefStyle().containerInset()
     Column(
         modifier = modifier,
         verticalArrangement = Arrangement.spacedBy(8.dp),
@@ -504,7 +443,7 @@ private fun MaterialMemcPackagePanel(
         PrefCard(
             title = "＋ Add",
             onClick = { onEdit(null) },
-            modifier = Modifier.pageInset(),
+            modifier = addCardModifier,
         )
         if (state.pkgFilter.isEmpty() && !state.pkgLoading) {
             Box(
@@ -513,71 +452,10 @@ private fun MaterialMemcPackagePanel(
                     .weight(1f),
                 contentAlignment = Alignment.Center,
             ) {
-                Text(stringResource(R.string.no_memc_data))
-            }
-        } else {
-            LazyColumn(
-                modifier = Modifier.weight(1f),
-                contentPadding = PaddingValues(start = 16.dp, end = 16.dp, bottom = 16.dp),
-                verticalArrangement = Arrangement.spacedBy(DesignTokens.ItemGap),
-            ) {
-                itemsIndexed(
-                    state.pkgFilter,
-                    key = { _, info -> "${info.packName}|${info.rate}|${info.type}" },
-                ) { index, info ->
-                    AppItem(index = index, count = state.pkgFilter.size) {
-                        AppListItem(
-                            onClick = { onEdit(info) },
-                            headlineContent = { Text(info.packName) },
-                            supportingContent = {
-                                Column {
-                                    Text("Rate: ${info.rate}")
-                                    Text("Type: ${info.type}")
-                                }
-                            },
-                        )
-                    }
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun CouiMemcPackagePanel(
-    state: MemcConfigState,
-    modifier: Modifier,
-    onEdit: (MemcConfigPackage?) -> Unit,
-) {
-    val colors = CouiTheme.colorScheme
-    Column(
-        modifier = modifier,
-        verticalArrangement = Arrangement.spacedBy(8.dp),
-    ) {
-        MemcSearchField(
-            value = state.pkgQuery,
-            onValueChange = { state.applyPkgQuery(it) },
-            enabled = !state.pkgLoading,
-            placeholder = "PackageName",
-        )
-        // COUI 线的卡片自带 16dp 水平内缩（CouiCard / 库的 Group），这里再补会与搜索框、列表行差 16dp；
-        // Material 线的卡片不自带内缩，那边保留 16dp
-        PrefCard(
-            title = "＋ Add",
-            onClick = { onEdit(null) },
-        )
-        if (state.pkgFilter.isEmpty() && !state.pkgLoading) {
-            Box(
-                Modifier
-                    .fillMaxWidth()
-                    .weight(1f),
-                contentAlignment = Alignment.Center,
-            ) {
-                CouiText(
+                PrefNote(
                     text = stringResource(R.string.no_memc_data),
-                    kind = CouiTextKind.Search,
-                    textAlign = TextAlign.Start,
-                    color = colors.onSurfaceVariant,
+                    modifier = Modifier.fillMaxWidth(),
+                    textAlign = TextAlign.Center,
                 )
             }
         } else {
@@ -593,25 +471,11 @@ private fun CouiMemcPackagePanel(
                     AppItem(index = index, count = state.pkgFilter.size) {
                         AppListItem(
                             onClick = { onEdit(info) },
-                            headlineContent = {
-                                CouiText(
-                                    text = info.packName,
-                                    kind = CouiTextKind.ItemTitle,
-                                    color = colors.onSurface,
-                                )
-                            },
+                            headlineContent = { PrefRowTitle(info.packName) },
                             supportingContent = {
                                 Column {
-                                    CouiText(
-                                        text = "Rate: ${info.rate}",
-                                        kind = CouiTextKind.ItemSummary,
-                                        color = colors.onSurfaceVariant,
-                                    )
-                                    CouiText(
-                                        text = "Type: ${info.type}",
-                                        kind = CouiTextKind.ItemSummary,
-                                        color = colors.onSurfaceVariant,
-                                    )
+                                    PrefRowSummary("Rate: ${info.rate}")
+                                    PrefRowSummary("Type: ${info.type}")
                                 }
                             },
                         )
@@ -625,7 +489,7 @@ private fun CouiMemcPackagePanel(
 /**
  * 精确 Activity 面板：搜索 + 新增卡 + 列表。
  *
- * 与包名面板同样只换渲染原语，[state] 的过滤与加载状态两条线共用。
+ * 与包名面板同一套行层原语，[state] 的过滤与加载状态两条线共用；新增卡的内缩同样取 containerInset()。
  */
 @Composable
 internal fun MemcActivityPanel(
@@ -633,18 +497,7 @@ internal fun MemcActivityPanel(
     modifier: Modifier = Modifier,
     onEdit: (MemcConfigActivity?) -> Unit,
 ) {
-    when (LocalUiMode.current) {
-        UiMode.Material -> MaterialMemcActivityPanel(state, modifier, onEdit)
-        UiMode.Coui -> CouiMemcActivityPanel(state, modifier, onEdit)
-    }
-}
-
-@Composable
-private fun MaterialMemcActivityPanel(
-    state: MemcConfigState,
-    modifier: Modifier,
-    onEdit: (MemcConfigActivity?) -> Unit,
-) {
+    val addCardModifier = currentPrefStyle().containerInset()
     Column(
         modifier = modifier,
         verticalArrangement = Arrangement.spacedBy(8.dp),
@@ -658,7 +511,7 @@ private fun MaterialMemcActivityPanel(
         PrefCard(
             title = "＋ Add",
             onClick = { onEdit(null) },
-            modifier = Modifier.pageInset(),
+            modifier = addCardModifier,
         )
         if (state.actFilter.isEmpty() && !state.actLoading) {
             Box(
@@ -667,75 +520,10 @@ private fun MaterialMemcActivityPanel(
                     .weight(1f),
                 contentAlignment = Alignment.Center,
             ) {
-                Text(stringResource(R.string.no_memc_data))
-            }
-        } else {
-            LazyColumn(
-                modifier = Modifier.weight(1f),
-                contentPadding = PaddingValues(start = 16.dp, end = 16.dp, bottom = 16.dp),
-                verticalArrangement = Arrangement.spacedBy(DesignTokens.ItemGap),
-            ) {
-                itemsIndexed(
-                    state.actFilter,
-                    key = { _, info -> "${info.packName}|${info.activity}|${info.type}" },
-                ) { index, info ->
-                    AppItem(index = index, count = state.actFilter.size) {
-                        AppListItem(
-                            onClick = { onEdit(info) },
-                            headlineContent = { Text(info.packName) },
-                            supportingContent = {
-                                Column {
-                                    Text(
-                                        info.activity,
-                                        maxLines = 1,
-                                        overflow = TextOverflow.Ellipsis,
-                                    )
-                                    Text("Type: ${info.type}")
-                                }
-                            },
-                        )
-                    }
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun CouiMemcActivityPanel(
-    state: MemcConfigState,
-    modifier: Modifier,
-    onEdit: (MemcConfigActivity?) -> Unit,
-) {
-    val colors = CouiTheme.colorScheme
-    Column(
-        modifier = modifier,
-        verticalArrangement = Arrangement.spacedBy(8.dp),
-    ) {
-        MemcSearchField(
-            value = state.actQuery,
-            onValueChange = { state.applyActQuery(it) },
-            enabled = !state.actLoading,
-            placeholder = "PackageName / ActivityName",
-        )
-        // COUI 线的卡片自带 16dp 水平内缩（CouiCard / 库的 Group），这里再补会与搜索框、列表行差 16dp；
-        // Material 线的卡片不自带内缩，那边保留 16dp
-        PrefCard(
-            title = "＋ Add",
-            onClick = { onEdit(null) },
-        )
-        if (state.actFilter.isEmpty() && !state.actLoading) {
-            Box(
-                Modifier
-                    .fillMaxWidth()
-                    .weight(1f),
-                contentAlignment = Alignment.Center,
-            ) {
-                CouiText(
+                PrefNote(
                     text = stringResource(R.string.no_memc_data),
-                    kind = CouiTextKind.Search,
-                    textAlign = TextAlign.Start,
-                    color = colors.onSurfaceVariant,
+                    modifier = Modifier.fillMaxWidth(),
+                    textAlign = TextAlign.Center,
                 )
             }
         } else {
@@ -751,27 +539,12 @@ private fun CouiMemcActivityPanel(
                     AppItem(index = index, count = state.actFilter.size) {
                         AppListItem(
                             onClick = { onEdit(info) },
-                            headlineContent = {
-                                CouiText(
-                                    text = info.packName,
-                                    kind = CouiTextKind.ItemTitle,
-                                    color = colors.onSurface,
-                                )
-                            },
+                            headlineContent = { PrefRowTitle(info.packName) },
                             supportingContent = {
                                 Column {
-                                    CouiText(
-                                        text = info.activity,
-                                        kind = CouiTextKind.ItemSummary,
-                                        color = colors.onSurfaceVariant,
-                                        maxLines = 1,
-                                        overflow = TextOverflow.Ellipsis,
-                                    )
-                                    CouiText(
-                                        text = "Type: ${info.type}",
-                                        kind = CouiTextKind.ItemSummary,
-                                        color = colors.onSurfaceVariant,
-                                    )
+                                    // activity 名可能很长：单行省略，不让行被撑高
+                                    PrefRowSummary(info.activity, maxLines = 1)
+                                    PrefRowSummary("Type: ${info.type}")
                                 }
                             },
                         )
@@ -820,7 +593,7 @@ internal fun MemcPackageDialog(
         R.string.edit_memc_configuration_tips,
         CommandUtils.memcHdrConfigHelp,
     )
-    // 校验与落盘只写一处：两条线共用同一个确认回调，只有按钮皮肤不同
+    // 校验与落盘只写一处：两条线共用同一个确认回调
     val confirm: () -> Unit = {
         if (packName.isBlank() || rate.isBlank() || type.isBlank()) {
             context.showToast("Data is incomplete!")
@@ -829,37 +602,33 @@ internal fun MemcPackageDialog(
         }
     }
 
-    when (LocalUiMode.current) {
-        UiMode.Material -> MaterialMemcPackageDialog(
-            packName = packName,
-            onPackNameChange = { packName = it },
-            rate = rate,
-            onRateChange = { rate = it },
-            type = type,
-            onTypeChange = { type = it },
-            canRemove = initial != null,
-            tips = tips,
-            onPickPackage = { showAppPicker = true },
-            onDismiss = onDismiss,
-            onConfirm = confirm,
-            onRemove = { showDeleteConfirm = true },
-        )
-
-        UiMode.Coui -> CouiMemcPackageDialog(
-            packName = packName,
-            onPackNameChange = { packName = it },
-            rate = rate,
-            onRateChange = { rate = it },
-            type = type,
-            onTypeChange = { type = it },
-            canRemove = initial != null,
-            tips = tips,
-            onPickPackage = { showAppPicker = true },
-            onDismiss = onDismiss,
-            onConfirm = confirm,
-            onRemove = { showDeleteConfirm = true },
-        )
+    val canRemove = initial != null
+    // 可以移除时点次级按钮执行移除，否则等同取消
+    val onSecondary: () -> Unit = if (canRemove) {
+        { showDeleteConfirm = true }
+    } else {
+        onDismiss
     }
+    currentDialogStyle().Alert(
+        onDismissRequest = onDismiss,
+        confirmLabel = stringResource(android.R.string.ok),
+        onConfirm = confirm,
+        secondaryLabel = stringResource(if (canRemove) R.string.remove else android.R.string.cancel),
+        onSecondary = onSecondary,
+        content = {
+            // 外壳与按钮行两条线共用，正文的输入框由样式位按外观线画
+            MemcPackageFields(
+                packName = packName,
+                onPackNameChange = { packName = it },
+                rate = rate,
+                onRateChange = { rate = it },
+                type = type,
+                onTypeChange = { type = it },
+                tips = tips,
+                onPickPackage = { showAppPicker = true },
+            )
+        },
+    )
 
     if (showAppPicker) {
         AppPickerDialog(
@@ -890,150 +659,64 @@ internal fun MemcPackageDialog(
 }
 
 /**
- * 包名配置弹窗的 Material 皮肤：三个字段 + 提示 + 确认/移除（无初始值时为取消）。
+ * 包名配置弹窗正文：三个字段 + 提示，字段的外形与配色由样式位按外观线画。
  *
- * 只负责渲染与回调透传，校验与落盘由调用方统一持有，避免两条线各写一份。
+ * 只负责渲染与回调透传，校验、落盘与按钮行动由调用方统一持有。
+ * 字段间 8dp 由容器给，两条线一致。
+ *
+ * 包名格只用于展示选中的应用：空白浮层接住点击后打开选择器（输入框自己会吞掉按下/抬起），
+ * 所以它带 readOnly——material 线的输入框真的进只读态；COUI 库没有只读态，只作语义声明，
+ * 实际可编辑性由浮层挡掉，值只能由选择器写入。
  */
 @Composable
-private fun MaterialMemcPackageDialog(
+private fun MemcPackageFields(
     packName: String,
     onPackNameChange: (String) -> Unit,
     rate: String,
     onRateChange: (String) -> Unit,
     type: String,
     onTypeChange: (String) -> Unit,
-    canRemove: Boolean,
     tips: String,
     onPickPackage: () -> Unit,
-    onDismiss: () -> Unit,
-    onConfirm: () -> Unit,
-    onRemove: () -> Unit,
 ) {
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        text = {
-            Column(
-                Modifier
-                    .fillMaxWidth()
-                    .heightIn(max = dialogBodyMaxHeight(chrome = 128.dp))
-                    .verticalScroll(rememberScrollState()),
-            ) {
-                PickerField(onClick = onPickPackage) {
-                    OutlinedTextField(
-                        value = packName,
-                        onValueChange = onPackNameChange,
-                        readOnly = true,
-                        singleLine = true,
-                        label = { Text("PackageName") },
-                        modifier = Modifier.fillMaxWidth(),
-                    )
-                }
-                OutlinedTextField(
-                    value = rate,
-                    onValueChange = onRateChange,
-                    singleLine = true,
-                    label = { Text("ScreenRate") },
-                    modifier = Modifier.fillMaxWidth(),
-                )
-                OutlinedTextField(
-                    value = type,
-                    onValueChange = onTypeChange,
-                    singleLine = true,
-                    label = { Text("Type") },
-                    modifier = Modifier.fillMaxWidth(),
-                )
-                Text(
-                    tips,
-                    style = MaterialTheme.typography.bodySmall,
-                    modifier = Modifier.padding(top = 8.dp),
-                )
-            }
-        },
-        confirmButton = {
-            TextButton(onClick = onConfirm) { Text(stringResource(android.R.string.ok)) }
-        },
-        dismissButton = {
-            if (canRemove) {
-                TextButton(onClick = onRemove) { Text(stringResource(R.string.remove)) }
-            } else {
-                TextButton(onClick = onDismiss) { Text(stringResource(android.R.string.cancel)) }
-            }
-        },
-    )
-}
-
-/**
- * 包名配置弹窗的 Coui 皮肤。
- *
- * 包名格只用于展示选中的应用，空白浮层接住点击后打开选择器（输入框自己会吞掉按下/抬起），
- * 因此这里不向输入框透传任何可编辑语义，值只能由选择器写入。
- */
-@Composable
-private fun CouiMemcPackageDialog(
-    packName: String,
-    onPackNameChange: (String) -> Unit,
-    rate: String,
-    onRateChange: (String) -> Unit,
-    type: String,
-    onTypeChange: (String) -> Unit,
-    canRemove: Boolean,
-    tips: String,
-    onPickPackage: () -> Unit,
-    onDismiss: () -> Unit,
-    onConfirm: () -> Unit,
-    onRemove: () -> Unit,
-) {
-    val colors = CouiTheme.colorScheme
-    CouiAlertDialog(
-        onDismissRequest = onDismiss,
-        confirmAction = CouiDialogAction(
-            text = stringResource(android.R.string.ok),
-            onClick = onConfirm,
-            style = CouiDialogActionStyle.Primary,
-            colors = CouiDialogDefaults.primaryActionColors(colors.accent),
-        ),
-        dismissAction = CouiDialogAction(
-            text = stringResource(if (canRemove) R.string.remove else android.R.string.cancel),
-            onClick = if (canRemove) onRemove else onDismiss,
-        ),
+    Column(
+        modifier = Modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
-        // 内容槽自身没有内边距，左右留白在这里补
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = CouiDialogDefaults.contentPadding),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
-        ) {
-            PickerField(onClick = onPickPackage) {
-                CouiTextField(
-                    value = packName,
-                    onValueChange = onPackNameChange,
-                    singleLine = true,
-                    label = "PackageName",
-                    modifier = Modifier.fillMaxWidth(),
-                )
-            }
-            CouiTextField(
-                value = rate,
-                onValueChange = onRateChange,
-                singleLine = true,
-                label = "ScreenRate",
+        PickerField(onClick = onPickPackage) {
+            currentPrefStyle().TextField(
+                value = packName,
+                onValueChange = onPackNameChange,
                 modifier = Modifier.fillMaxWidth(),
-            )
-            CouiTextField(
-                value = type,
-                onValueChange = onTypeChange,
+                enabled = true,
                 singleLine = true,
-                label = "Type",
-                modifier = Modifier.fillMaxWidth(),
-            )
-            CouiText(
-                text = tips,
-                kind = CouiTextKind.ItemSummary,
-                color = colors.onSurfaceVariant,
-                modifier = Modifier.padding(top = 8.dp),
+                leadingIcon = null,
+                label = "PackageName",
+                readOnly = true,
             )
         }
+        currentPrefStyle().TextField(
+            value = rate,
+            onValueChange = onRateChange,
+            modifier = Modifier.fillMaxWidth(),
+            enabled = true,
+            singleLine = true,
+            leadingIcon = null,
+            label = "ScreenRate",
+        )
+        currentPrefStyle().TextField(
+            value = type,
+            onValueChange = onTypeChange,
+            modifier = Modifier.fillMaxWidth(),
+            enabled = true,
+            singleLine = true,
+            leadingIcon = null,
+            label = "Type",
+        )
+        PrefNote(
+            text = tips,
+            modifier = Modifier.padding(top = 8.dp),
+        )
     }
 }
 
@@ -1085,40 +768,28 @@ private fun MemcActivityPickerDialog(
 /**
  * 弹层内搜索框：页面级的 [MemcSearchField] 带水平内边距语义、不适用于弹层正文，
  * 所以这里单独定义；放大镜图标作为 leadingIcon。
+ *
+ * 图标的着色由调用方给（样式位只透传槽位，两条线的输入框对图标默认色的处理不同）：
+ * 这里统一取 COUI 的 onSurface，material 线因此不再随聚焦在 onSurfaceVariant 与 onSurface 之间切换。
+ * 图标沿用 M3 的 Icon（COUI 没有等价图标原语）。
  */
 @Composable
 private fun MemcActivityQueryField(query: String, onQueryChange: (String) -> Unit) {
-    when (LocalUiMode.current) {
-        UiMode.Material -> OutlinedTextField(
-            value = query,
-            onValueChange = onQueryChange,
-            singleLine = true,
-            placeholder = { Text(stringResource(R.string.activity_search_hint)) },
-            leadingIcon = {
-                Icon(
-                    painterResource(R.drawable.ic_baseline_search_24),
-                    contentDescription = null,
-                )
-            },
-            modifier = Modifier.fillMaxWidth(),
-        )
-
-        // 图标沿用 M3 的 Icon（COUI 没有等价图标原语），tint 显式取自 Coui 配色
-        UiMode.Coui -> CouiTextField(
-            value = query,
-            onValueChange = onQueryChange,
-            singleLine = true,
-            placeholder = stringResource(R.string.activity_search_hint),
-            leadingIcon = {
-                Icon(
-                    painterResource(R.drawable.ic_baseline_search_24),
-                    contentDescription = null,
-                    tint = CouiTheme.colorScheme.onSurface,
-                )
-            },
-            modifier = Modifier.fillMaxWidth(),
-        )
-    }
+    currentPrefStyle().TextField(
+        value = query,
+        onValueChange = onQueryChange,
+        placeholder = stringResource(R.string.activity_search_hint),
+        modifier = Modifier.fillMaxWidth(),
+        enabled = true,
+        singleLine = true,
+        leadingIcon = {
+            Icon(
+                painterResource(R.drawable.ic_baseline_search_24),
+                contentDescription = null,
+                tint = CouiTheme.colorScheme.onSurface,
+            )
+        },
+    )
 }
 
 @Composable
@@ -1178,39 +849,34 @@ internal fun MemcActivityDialog(
         }
     }
 
-    when (LocalUiMode.current) {
-        UiMode.Material -> MaterialMemcActivityDialog(
-            packName = packName,
-            onPackNameChange = { packName = it },
-            activity = activity,
-            onActivityChange = { activity = it },
-            type = type,
-            onTypeChange = { type = it },
-            canRemove = initial != null,
-            tips = tips,
-            onPickPackage = { showAppPicker = true },
-            onPickActivity = openActivityPicker,
-            onDismiss = onDismiss,
-            onConfirm = confirm,
-            onRemove = { showDeleteConfirm = true },
-        )
-
-        UiMode.Coui -> CouiMemcActivityDialog(
-            packName = packName,
-            onPackNameChange = { packName = it },
-            activity = activity,
-            onActivityChange = { activity = it },
-            type = type,
-            onTypeChange = { type = it },
-            canRemove = initial != null,
-            tips = tips,
-            onPickPackage = { showAppPicker = true },
-            onPickActivity = openActivityPicker,
-            onDismiss = onDismiss,
-            onConfirm = confirm,
-            onRemove = { showDeleteConfirm = true },
-        )
+    val canRemove = initial != null
+    // 可以移除时点次级按钮执行移除，否则等同取消
+    val onSecondary: () -> Unit = if (canRemove) {
+        { showDeleteConfirm = true }
+    } else {
+        onDismiss
     }
+    currentDialogStyle().Alert(
+        onDismissRequest = onDismiss,
+        confirmLabel = stringResource(android.R.string.ok),
+        onConfirm = confirm,
+        secondaryLabel = stringResource(if (canRemove) R.string.remove else android.R.string.cancel),
+        onSecondary = onSecondary,
+        content = {
+            // 外壳与按钮行两条线共用，正文的输入框由样式位按外观线画
+            MemcActivityFields(
+                packName = packName,
+                onPackNameChange = { packName = it },
+                activity = activity,
+                onActivityChange = { activity = it },
+                type = type,
+                onTypeChange = { type = it },
+                tips = tips,
+                onPickPackage = { showAppPicker = true },
+                onPickActivity = openActivityPicker,
+            )
+        },
+    )
 
     if (showAppPicker) {
         AppPickerDialog(
@@ -1252,154 +918,66 @@ internal fun MemcActivityDialog(
 }
 
 /**
- * Activity 配置弹窗的 Material 皮肤：包名/ActivityName 两个只读格由 [PickerField] 转点击，
- * 类型可编辑，沿用原来的确认/移除（无初始值时为取消）按钮语义。
- */
-@Composable
-private fun MaterialMemcActivityDialog(
-    packName: String,
-    onPackNameChange: (String) -> Unit,
-    activity: String,
-    onActivityChange: (String) -> Unit,
-    type: String,
-    onTypeChange: (String) -> Unit,
-    canRemove: Boolean,
-    tips: String,
-    onPickPackage: () -> Unit,
-    onPickActivity: () -> Unit,
-    onDismiss: () -> Unit,
-    onConfirm: () -> Unit,
-    onRemove: () -> Unit,
-) {
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        text = {
-            Column(
-                Modifier
-                    .fillMaxWidth()
-                    .heightIn(max = dialogBodyMaxHeight(chrome = 128.dp))
-                    .verticalScroll(rememberScrollState()),
-            ) {
-                PickerField(onClick = onPickPackage) {
-                    OutlinedTextField(
-                        value = packName,
-                        onValueChange = onPackNameChange,
-                        readOnly = true,
-                        singleLine = true,
-                        label = { Text("PackageName") },
-                        modifier = Modifier.fillMaxWidth(),
-                    )
-                }
-                PickerField(onClick = onPickActivity) {
-                    OutlinedTextField(
-                        value = activity,
-                        onValueChange = onActivityChange,
-                        readOnly = true,
-                        singleLine = true,
-                        label = { Text("ActivityName") },
-                        modifier = Modifier.fillMaxWidth(),
-                    )
-                }
-                OutlinedTextField(
-                    value = type,
-                    onValueChange = onTypeChange,
-                    singleLine = true,
-                    label = { Text("Type") },
-                    modifier = Modifier.fillMaxWidth(),
-                )
-                Text(
-                    tips,
-                    style = MaterialTheme.typography.bodySmall,
-                    modifier = Modifier.padding(top = 8.dp),
-                )
-            }
-        },
-        confirmButton = {
-            TextButton(onClick = onConfirm) { Text(stringResource(android.R.string.ok)) }
-        },
-        dismissButton = {
-            if (canRemove) {
-                TextButton(onClick = onRemove) { Text(stringResource(R.string.remove)) }
-            } else {
-                TextButton(onClick = onDismiss) { Text(stringResource(android.R.string.cancel)) }
-            }
-        },
-    )
-}
-
-/**
- * Activity 配置弹窗的 Coui 皮肤。
+ * Activity 配置弹窗正文：包名 / ActivityName / 类型 + 提示，字段的外形与配色由样式位按外观线画。
  *
- * 包名与 ActivityName 都是选择结果、只能由选择器写入，所以两格只用空白浮层接点击；
+ * 包名与 ActivityName 都是选择结果、只能由选择器写入，所以两格用 [PickerField] 把点击转给选择器，
+ * 并带 readOnly——material 线的输入框真的进只读态；COUI 库没有只读态，只作语义声明，
+ * 实际可编辑性由浮层挡掉。
  * ActivityName 在未选包名时会由 [onPickActivity] 先弹提示，这里不重复校验。
+ * 字段间 8dp 由容器给，两条线一致。
  */
 @Composable
-private fun CouiMemcActivityDialog(
+private fun MemcActivityFields(
     packName: String,
     onPackNameChange: (String) -> Unit,
     activity: String,
     onActivityChange: (String) -> Unit,
     type: String,
     onTypeChange: (String) -> Unit,
-    canRemove: Boolean,
     tips: String,
     onPickPackage: () -> Unit,
     onPickActivity: () -> Unit,
-    onDismiss: () -> Unit,
-    onConfirm: () -> Unit,
-    onRemove: () -> Unit,
 ) {
-    val colors = CouiTheme.colorScheme
-    CouiAlertDialog(
-        onDismissRequest = onDismiss,
-        confirmAction = CouiDialogAction(
-            text = stringResource(android.R.string.ok),
-            onClick = onConfirm,
-            style = CouiDialogActionStyle.Primary,
-            colors = CouiDialogDefaults.primaryActionColors(colors.accent),
-        ),
-        dismissAction = CouiDialogAction(
-            text = stringResource(if (canRemove) R.string.remove else android.R.string.cancel),
-            onClick = if (canRemove) onRemove else onDismiss,
-        ),
+    Column(
+        modifier = Modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = CouiDialogDefaults.contentPadding),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
-        ) {
-            PickerField(onClick = onPickPackage) {
-                CouiTextField(
-                    value = packName,
-                    onValueChange = onPackNameChange,
-                    singleLine = true,
-                    label = "PackageName",
-                    modifier = Modifier.fillMaxWidth(),
-                )
-            }
-            PickerField(onClick = onPickActivity) {
-                CouiTextField(
-                    value = activity,
-                    onValueChange = onActivityChange,
-                    singleLine = true,
-                    label = "ActivityName",
-                    modifier = Modifier.fillMaxWidth(),
-                )
-            }
-            CouiTextField(
-                value = type,
-                onValueChange = onTypeChange,
-                singleLine = true,
-                label = "Type",
+        PickerField(onClick = onPickPackage) {
+            currentPrefStyle().TextField(
+                value = packName,
+                onValueChange = onPackNameChange,
                 modifier = Modifier.fillMaxWidth(),
-            )
-            CouiText(
-                text = tips,
-                kind = CouiTextKind.ItemSummary,
-                color = colors.onSurfaceVariant,
-                modifier = Modifier.padding(top = 8.dp),
+                enabled = true,
+                singleLine = true,
+                leadingIcon = null,
+                label = "PackageName",
+                readOnly = true,
             )
         }
+        PickerField(onClick = onPickActivity) {
+            currentPrefStyle().TextField(
+                value = activity,
+                onValueChange = onActivityChange,
+                modifier = Modifier.fillMaxWidth(),
+                enabled = true,
+                singleLine = true,
+                leadingIcon = null,
+                label = "ActivityName",
+                readOnly = true,
+            )
+        }
+        currentPrefStyle().TextField(
+            value = type,
+            onValueChange = onTypeChange,
+            modifier = Modifier.fillMaxWidth(),
+            enabled = true,
+            singleLine = true,
+            leadingIcon = null,
+            label = "Type",
+        )
+        PrefNote(
+            text = tips,
+            modifier = Modifier.padding(top = 8.dp),
+        )
     }
 }

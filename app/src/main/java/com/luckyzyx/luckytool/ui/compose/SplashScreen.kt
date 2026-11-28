@@ -16,7 +16,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicText
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -37,9 +36,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.luckyzyx.luckytool.R
-import com.luckyzyx.luckytool.ui.compose.components.coui.CouiCircularProgressIndicator
-import com.luckyzyx.luckytool.ui.theme.LocalUiMode
-import com.luckyzyx.luckytool.ui.theme.UiMode
+import com.luckyzyx.luckytool.ui.compose.components.currentPrefStyle
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -123,15 +120,8 @@ fun ActivationLoadingLayer(modifier: Modifier = Modifier) {
         contentAlignment = Alignment.Center,
     ) {
         val foreground = colorResource(R.color.splash_foreground)
-        // 两条外观线各用各自的原生进度圈：M3 的尺寸与粗细由调用点给，COUI 的固定 32dp。
-        when (LocalUiMode.current) {
-            UiMode.Material -> CircularProgressIndicator(
-                color = foreground,
-                strokeWidth = 3.dp,
-            )
-
-            UiMode.Coui -> CouiCircularProgressIndicator(color = foreground)
-        }
+        // 进度圈由样式位按外观线画，压在自家底色上所以指定前景色
+        currentPrefStyle().Progress(Modifier, color = foreground)
     }
 }
 

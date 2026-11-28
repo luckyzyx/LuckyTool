@@ -17,7 +17,6 @@ import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowRight
 import androidx.compose.material.icons.rounded.AdminPanelSettings
 import androidx.compose.material.icons.rounded.Delete
 import androidx.compose.material.icons.rounded.DisplaySettings
@@ -33,7 +32,6 @@ import androidx.compose.material.icons.rounded.VisibilityOff
 import androidx.compose.material.icons.rounded.Widgets
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -48,7 +46,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.unit.LayoutDirection
 import com.composables.icons.lucide.R as LucideR
 import com.itos.coui.dialog.CouiDialogAction
 import com.itos.coui.dialog.CouiDialogActionStyle
@@ -63,9 +60,9 @@ import com.luckyzyx.luckytool.ui.compose.components.DataResultDialog
 import com.luckyzyx.luckytool.ui.compose.components.LocalScopeTopInset
 import com.luckyzyx.luckytool.ui.compose.components.ScopeScreen
 import com.luckyzyx.luckytool.ui.compose.components.PrefIcon
+import com.luckyzyx.luckytool.ui.compose.components.PrefRowChevron
 import com.luckyzyx.luckytool.ui.compose.components.coui.CouiAlertDialog
 import com.luckyzyx.luckytool.ui.compose.components.PageScaffold
-import com.luckyzyx.luckytool.ui.theme.LocalUiMode
 import com.luckyzyx.luckytool.ui.theme.ThemeController
 import com.luckyzyx.luckytool.ui.theme.ThemePrefs
 import com.luckyzyx.luckytool.ui.theme.UiMode
@@ -226,19 +223,7 @@ fun SettingPage(activity: MainActivity, onOpenTheme: () -> Unit = {}) {
                         summary = themePaletteSummary,
                         leading = { PrefIcon(Icons.Rounded.Palette, painter = painterResource(LucideR.drawable.lucide_ic_palette)) },
                         value = "",
-                        trailing = {
-                            if (LocalUiMode.current == UiMode.Coui) {
-                                Icon(
-                                    painter = painterResource(
-                                        if (LocalLayoutDirection.current == LayoutDirection.Rtl) LucideR.drawable.lucide_ic_chevron_left
-                                        else LucideR.drawable.lucide_ic_chevron_right
-                                    ),
-                                    contentDescription = null,
-                                )
-                            } else {
-                                Icon(Icons.AutoMirrored.Rounded.KeyboardArrowRight, contentDescription = null)
-                            }
-                        },
+                        trailing = { PrefRowChevron() },
                         onClick = onOpenTheme,
                     )
 
@@ -298,19 +283,7 @@ fun SettingPage(activity: MainActivity, onOpenTheme: () -> Unit = {}) {
                         summary = appPermissionSummary,
                         leading = { PrefIcon(Icons.Rounded.AdminPanelSettings, painter = painterResource(LucideR.drawable.lucide_ic_user_cog)) },
                         value = "",
-                        trailing = {
-                            if (LocalUiMode.current == UiMode.Coui) {
-                                Icon(
-                                    painter = painterResource(
-                                        if (LocalLayoutDirection.current == LayoutDirection.Rtl) LucideR.drawable.lucide_ic_chevron_left
-                                        else LucideR.drawable.lucide_ic_chevron_right
-                                    ),
-                                    contentDescription = null,
-                                )
-                            } else {
-                                Icon(Icons.AutoMirrored.Rounded.KeyboardArrowRight, contentDescription = null)
-                            }
-                        },
+                        trailing = { PrefRowChevron() },
                         onClick = {
                             activity.requestFunctionNavigation("app_permission", appPermissionTitle)
                         },

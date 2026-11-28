@@ -1,55 +1,18 @@
 package com.luckyzyx.luckytool.ui.compose.special
 
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Slider
-import androidx.compose.material3.Text
-import androidx.compose.material3.rememberSliderState
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.SideEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableFloatStateOf
+import android.content.Context
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.unit.dp
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.compose.LifecycleEventEffect
-import com.itos.coui.layout.CouiPageDefaults
-import com.itos.coui.slider.CouiSliderDefaults
-import com.itos.coui.slider.Slider as CouiSlider
-import com.itos.coui.text.CouiTextKind
-import com.itos.coui.text.Text as CouiText
-import com.itos.coui.theme.CouiTheme
 import com.luckyzyx.luckytool.R
-import com.luckyzyx.luckytool.ui.compose.components.AppSlider
-import com.luckyzyx.luckytool.ui.compose.components.pageInset
-import com.luckyzyx.luckytool.ui.compose.components.PrefRow
-import com.luckyzyx.luckytool.ui.compose.components.PrefGroup
-import com.luckyzyx.luckytool.ui.compose.components.PrefSwitchRow
-import com.luckyzyx.luckytool.ui.compose.components.material.MaterialItemContainer
 import com.luckyzyx.luckytool.ui.compose.scopes.ScopePageSpec
-import com.luckyzyx.luckytool.ui.theme.LocalUiMode
-import com.luckyzyx.luckytool.ui.theme.UiMode
 import com.luckyzyx.luckytool.utils.ExtraDimUtils
 import com.luckyzyx.luckytool.utils.IntentUtils
 import com.luckyzyx.luckytool.utils.SettingsPrefs
 import com.luckyzyx.luckytool.utils.checkResolveActivity
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import kotlin.math.roundToInt
 
 /**
  * 极暗模式页：直接读写框架监听的那三个 Settings.Secure 键，绕开系统设置页。
@@ -61,25 +24,64 @@ import kotlin.math.roundToInt
  * ## 状态模型
  * 真相在 [android.provider.Settings.Secure]（[ExtraDimUtils] 的三个键），页面状态只做镜像：
  * 每次读/写后都回读真实键值，不做 prefs 落盘，也不长期依赖乐观值。
- * 键未设置时强度读作 null，此时滑块显示 0 并在说明里写明「跟随系统最弱档」，用户拖动前不写键。
+ * 键未设置时强度读作 null，此时滑块显示最低档并在说明里写明「跟随系统最弱档」，用户拖动前不写键。
  *
  * ## 门禁（关键，别删）
  * 颜色变换未加速（[ExtraDimUtils.isSupported] 为 false）时框架套用的是全零颜色矩阵，
- * 把激活键写成 1 会直接黑屏（只能再写 0 恢复）。因此该情况下两个开关一律 disabled：
+ * 把激活键写成 1 会直接黑屏（只能再写 0 恢复）。因此该情况下两个开关与滑条一律禁用：
  * 页面禁用 + [ExtraDimUtils.writeActivated] 内部再挡一次，UI 无法绕过。
  *
  * ## 加载时机
- * 1. 进入页面：`LaunchedEffect(Unit)`；
- * 2. 回到前台：`LifecycleEventEffect(ON_RESUME)` —— 系统设置或磁贴可能改过同样的键；
- * 3. 下拉刷新：`spec.onRefresh` → [reloader]。
+ * 1. 进入页面与回到前台：[ScopePageSpec.onLoad]（系统设置或磁贴可能改过同样的键）；
+ * 2. 下拉刷新：[ScopePageSpec.onRefresh]，复用 [onLoad] 存下的 application context。
  *
- * 分组卡片的水平内缩由 [PrefGroup] 按外观线给（两条线都是 16dp），页级 padding 只留垂直方向；
- * 滑条卡片与提示文字不经分组，各自补水平 16dp 才能与卡片对齐。滑条用 material3 `Slider` 包在自绘卡片里。
+ * ## 写法
+ * 整页都是 DSL 行（分组卡片、开关、滑条、说明、跳转），不再手写 Composable 或卡片：
+ * 卡片与行间分隔线由分组给，行的值与可用性用状态驱动的重载从页面状态取。
  */
 object ExtraDimPage {
 
-    /** 由内容组合时注册的加载器驱动 onRefresh */
-    private var reloader: (suspend () -> Unit)? = null
+    /**
+     * 页面状态的唯一持有处：值来自 [ExtraDimUtils] 读的 Settings.Secure 键，不是 prefs，
+     * 所以放对象里而不是 DSL 的键值槽。行的 lambda 值参数在渲染时求值，改这些状态即重画该行。
+     */
+    private val supported = mutableStateOf(false)
+    private val activated = mutableStateOf<Boolean?>(null)
+    private val level = mutableStateOf<Int?>(null)
+    private val persist = mutableStateOf<Boolean?>(null)
+    private val loaded = mutableStateOf(false)
+
+    /** 系统页可解析才给入口：极暗页在部分 ROM 上是空白页，这里只作为兜底 */
+    private var systemPageAvailable = false
+
+    /** 写键要跑 root shell，事件回调里不能 suspend：写与回读都在这个作用域里串行完成 */
+    private val writer = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
+
+    /** onRefresh 的 lambda 拿不到 Context：首次加载时存下 application context 供下拉刷新复用 */
+    private var appContext: Context? = null
+
+    private suspend fun load(c: Context) {
+        val supportedNow = withContext(Dispatchers.IO) { ExtraDimUtils.isSupported(c) }
+        val activatedNow = withContext(Dispatchers.IO) { ExtraDimUtils.readActivated() }
+        val levelNow = withContext(Dispatchers.IO) { ExtraDimUtils.readLevel() }
+        val persistNow = withContext(Dispatchers.IO) { ExtraDimUtils.readPersist() }
+        supported.value = supportedNow
+        activated.value = activatedNow
+        level.value = levelNow
+        persist.value = persistNow
+        systemPageAvailable = c.checkResolveActivity(
+            "com.android.settings",
+            "com.android.settings.Settings\$ReduceBrightColorsSettingsActivity",
+        )
+        // 放在最后：它置位时上面的镜像已就绪，避免「可用」先于「已加载」被看到
+        loaded.value = true
+    }
+
+    /** 写入后统一回读：键可能被系统策略拦下，界面只反映读回来的真实值 */
+    private suspend fun writeAndReload(c: Context, write: () -> Boolean) {
+        withContext(Dispatchers.IO) { write() }
+        load(c)
+    }
 
     val spec = ScopePageSpec(
         pageKey = "extra_dim",
@@ -87,256 +89,64 @@ object ExtraDimPage {
         packName = "",
         scopes = arrayOf(),
         restartEnabled = false,
-        onRefresh = { reloader?.invoke() },
+        onLoad = { c ->
+            appContext = c.applicationContext
+            load(c)
+        },
+        onRefresh = { appContext?.let { load(it) } },
     ) {
         val c = requireNotNull(context) { "ScopeScreen 未注入 Context" }
-        custom(key = "extra_dim_body") {
-            // 未读到真实能力前按「不支持」渲染：宁可短暂禁用，也不给黑屏留窗口
-            var supported by remember { mutableStateOf(false) }
-            var activated by remember { mutableStateOf<Boolean?>(null) }
-            var level by remember { mutableStateOf<Int?>(null) }
-            var persist by remember { mutableStateOf<Boolean?>(null) }
-            var loading by remember { mutableStateOf(true) }
 
-            suspend fun load() {
-                val supportedNow = withContext(Dispatchers.IO) { ExtraDimUtils.isSupported(c) }
-                val activatedNow = withContext(Dispatchers.IO) { ExtraDimUtils.readActivated() }
-                val levelNow = withContext(Dispatchers.IO) { ExtraDimUtils.readLevel() }
-                val persistNow = withContext(Dispatchers.IO) { ExtraDimUtils.readPersist() }
-                supported = supportedNow
-                activated = activatedNow
-                level = levelNow
-                persist = persistNow
-                loading = false
+        group {
+            switch(
+                title = c.getString(R.string.extra_dim_enable),
+                checked = { activated.value == true },
+                summary = c.getString(R.string.extra_dim_enable_summary),
+                enabled = { supported.value },
+            ) { value ->
+                // 先回显，回读到的真值随后覆盖；写入被挡时界面自动退回真实值
+                activated.value = value
+                writer.launch { writeAndReload(c) { ExtraDimUtils.writeActivated(c, value) } }
             }
-
-            // 写入后统一回读：键可能被系统策略拦下，界面只反映读回来的真实值
-            suspend fun writeAndReload(write: () -> Boolean) {
-                withContext(Dispatchers.IO) { write() }
-                load()
+            switch(
+                title = c.getString(R.string.extra_dim_persist),
+                checked = { persist.value == true },
+                summary = c.getString(R.string.extra_dim_persist_summary),
+                enabled = { supported.value },
+            ) { value ->
+                persist.value = value
+                writer.launch { writeAndReload(c) { ExtraDimUtils.writePersist(value) } }
             }
+        }
 
-            // onRefresh 在组合之外调用加载器：用 SideEffect 注册，保证注册的是本次成功组合的实例
-            SideEffect { reloader = ::load }
-            DisposableEffect(Unit) {
-                onDispose { reloader = null }
-            }
-            LaunchedEffect(Unit) { load() }
-            // LifecycleEventEffect 的回调不是 suspend：经 rememberCoroutineScope 起协程
-            val scope = rememberCoroutineScope()
-            LifecycleEventEffect(Lifecycle.Event.ON_RESUME) { scope.launch { load() } }
-
-            // 系统页可解析才给入口：极暗页在部分 ROM 上是空白页，这里只作为兜底
-            val systemPageAvailable = remember(c) {
-                c.checkResolveActivity(
-                    "com.android.settings",
-                    "com.android.settings.Settings\$ReduceBrightColorsSettingsActivity",
-                )
-            }
-
-            // 页级只留垂直外边距：分组卡片的水平内缩由 PrefGroup 给
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 8.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
-                PrefGroup {
-                    item {
-                        PrefSwitchRow(
-                            title = stringResource(R.string.extra_dim_enable),
-                            summary = stringResource(R.string.extra_dim_enable_summary),
-                            checked = activated == true,
-                            enabled = supported,
-                            onCheckedChange = { value ->
-                                activated = value
-                                scope.launch { writeAndReload { ExtraDimUtils.writeActivated(c, value) } }
-                            },
-                        )
-                    }
-                    item {
-                        PrefSwitchRow(
-                            title = stringResource(R.string.extra_dim_persist),
-                            summary = stringResource(R.string.extra_dim_persist_summary),
-                            checked = persist == true,
-                            enabled = supported,
-                            onCheckedChange = { value ->
-                                persist = value
-                                scope.launch { writeAndReload { ExtraDimUtils.writePersist(value) } }
-                            },
-                        )
-                    }
-                }
-
-                // 强度：拖动结束才写键（每帧写 shell 会卡手势）；键缺失时显示 0 且不写
-                if (LocalUiMode.current == UiMode.Coui) {
-                    CouiLevelCard(
-                        level = level,
-                        supported = supported,
-                        onCommit = { stepped ->
-                            level = stepped
-                            scope.launch {
-                                writeAndReload { ExtraDimUtils.writeLevel(stepped) }
-                            }
-                        },
-                    )
+        group {
+            // 强度：拖动结束才写键（每帧写 shell 会卡手势）；键缺失时显示最低档且不写
+            slider(
+                title = c.getString(R.string.extra_dim_level),
+                value = { level.value ?: ExtraDimUtils.MIN_LEVEL },
+                valueRange = ExtraDimUtils.MIN_LEVEL..ExtraDimUtils.MAX_LEVEL,
+                // 键还没写过时滑条停在最弱档，说明为什么拖动才会写
+                summary = if (level.value == null) {
+                    c.getString(R.string.extra_dim_level_follow_min)
                 } else {
-                    val sliderState = rememberSliderState(
-                        value = (level ?: ExtraDimUtils.MIN_LEVEL).toFloat(),
-                        steps = (ExtraDimUtils.MAX_LEVEL - ExtraDimUtils.MIN_LEVEL - 1).coerceAtLeast(0),
-                        trackRange = ExtraDimUtils.MIN_LEVEL.toFloat()..ExtraDimUtils.MAX_LEVEL.toFloat(),
-                    )
-                    // 外部值变化同步：拖动期间 level 不变，因此不会覆盖用户手势
-                    LaunchedEffect(level) {
-                        sliderState.value = (level ?: ExtraDimUtils.MIN_LEVEL).toFloat()
-                    }
-                    // 滑条卡片不是分组内容，水平 16dp 自己补，才能与 PrefGroup 卡片的左右边界对齐
-                    Box(modifier = Modifier.fillMaxWidth().pageInset()) {
-                        MaterialItemContainer(modifier = Modifier.fillMaxWidth()) {
-                            Column(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(horizontal = 16.dp, vertical = 12.dp),
-                                verticalArrangement = Arrangement.spacedBy(4.dp),
-                            ) {
-                                Row(
-                                    Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.SpaceBetween,
-                                    verticalAlignment = Alignment.CenterVertically,
-                                ) {
-                                    Text(
-                                        stringResource(R.string.extra_dim_level),
-                                        style = MaterialTheme.typography.titleMedium,
-                                    )
-                                    Text(
-                                        sliderState.value.roundToInt().toString(),
-                                        style = MaterialTheme.typography.bodyMedium,
-                                        color = MaterialTheme.colorScheme.primary,
-                                    )
-                                }
-                                if (level == null) {
-                                    Text(
-                                        stringResource(R.string.extra_dim_level_follow_min),
-                                        style = MaterialTheme.typography.bodyMedium,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                    )
-                                }
-                                AppSlider(
-                                    state = sliderState,
-                                    valueRange = ExtraDimUtils.MIN_LEVEL.toFloat()..ExtraDimUtils.MAX_LEVEL.toFloat(),
-                                    steps = (ExtraDimUtils.MAX_LEVEL - ExtraDimUtils.MIN_LEVEL - 1).coerceAtLeast(0),
-                                    onValueChange = { sliderState.value = it },
-                                    onValueChangeFinished = {
-                                        val stepped = sliderState.value.roundToInt()
-                                            .coerceIn(ExtraDimUtils.MIN_LEVEL, ExtraDimUtils.MAX_LEVEL)
-                                        sliderState.value = stepped.toFloat()
-                                        level = stepped
-                                        scope.launch {
-                                            writeAndReload { ExtraDimUtils.writeLevel(stepped) }
-                                        }
-                                    },
-                                    enabled = supported,
-                                )
-                            }
-                        }
-                    }
-                }
-
-                if (!loading && !supported) {
-                    val hint = stringResource(R.string.extra_dim_unsupported)
-                    val hintModifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp)
-                    // 提示挂在卡片之外：COUI 线用说明字重与中性前景色，语气与 PrefRow 的 summary 一致
-                    if (LocalUiMode.current == UiMode.Coui) {
-                        CouiText(
-                            text = hint,
-                            modifier = hintModifier,
-                            kind = CouiTextKind.ItemSummary,
-                            color = CouiTheme.colorScheme.onSurfaceVariant,
-                        )
-                    } else {
-                        Text(
-                            text = hint,
-                            modifier = hintModifier,
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
-                    }
-                }
-                if (systemPageAvailable) {
-                    PrefGroup {
-                        item {
-                            PrefRow(
-                                title = stringResource(R.string.extra_dim_open_system_page),
-                                onClick = { IntentUtils(c).jumpVeryDarkMode() },
-                            )
-                        }
-                    }
-                }
+                    null
+                },
+                enabled = { supported.value },
+            ) { stepped ->
+                level.value = stepped
+                writer.launch { writeAndReload(c) { ExtraDimUtils.writeLevel(stepped) } }
             }
         }
-    }
-}
 
-/**
- * 极暗强度卡片（COUI 线）：标题行给「强度 + 当前值」，滑条独占下一行。
- *
- * COUI 滑条按像素连续取值、不吸附刻度，因此手势期间的值只留在页内，松手才按
- * [ExtraDimUtils.MIN_LEVEL]..[ExtraDimUtils.MAX_LEVEL] 取整并交给 [onCommit] 写键。
- * 键被其他入口改过时回读的 level 会变，[LaunchedEffect] 再把页内值拉回真实值；
- * 拖动期间 level 不变，因此同步不会覆盖用户手势。
- */
-@Composable
-private fun CouiLevelCard(
-    level: Int?,
-    supported: Boolean,
-    onCommit: (Int) -> Unit,
-) {
-    val dark = CouiTheme.isDark
-    val colors = CouiPageDefaults.themeColors()
-    val min = ExtraDimUtils.MIN_LEVEL
-    val max = ExtraDimUtils.MAX_LEVEL
-    val steps = (max - min - 1).coerceAtLeast(0)
-    var dragValue by remember { mutableFloatStateOf((level ?: min).toFloat()) }
-    LaunchedEffect(level) { dragValue = (level ?: min).toFloat() }
-    PrefGroup {
-        item {
-            Column(modifier = Modifier.fillMaxWidth()) {
-                PrefRow(
-                    title = stringResource(R.string.extra_dim_level),
-                    summary = if (level == null) {
-                        stringResource(R.string.extra_dim_level_follow_min)
-                    } else null,
-                    enabled = supported,
-                    trailing = {
-                        CouiText(
-                            text = dragValue.roundToInt().toString(),
-                            kind = CouiTextKind.ItemValue,
-                            color = CouiTheme.colorScheme.accent,
-                        )
-                    },
-                )
-                CouiSlider(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(
-                            start = CouiPageDefaults.rowPadding,
-                            end = CouiPageDefaults.rowPadding,
-                            bottom = 8.dp,
-                        ),
-                    value = dragValue,
-                    onValueChange = { dragValue = it },
-                    valueRange = min.toFloat()..max.toFloat(),
-                    steps = steps,
-                    enabled = supported,
-                    colors = CouiSliderDefaults.colors(colors.accent, dark, supported),
-                    dark = dark,
-                    onValueChangeFinished = {
-                        val stepped = dragValue.roundToInt().coerceIn(min, max)
-                        dragValue = stepped.toFloat()
-                        onCommit(stepped)
-                    },
-                )
-            }
-        }
+        // 提示挂在卡片之外：字号与配色由 PrefNote 统一（两条线都是说明字重 + 中性前景色）
+        note(
+            text = c.getString(R.string.extra_dim_unsupported),
+            visible = loaded.value && !supported.value,
+        )
+
+        click(
+            title = c.getString(R.string.extra_dim_open_system_page),
+            visible = systemPageAvailable,
+        ) { IntentUtils(c).jumpVeryDarkMode() }
     }
 }

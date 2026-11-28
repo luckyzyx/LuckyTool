@@ -8,8 +8,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.lazy.LazyItemScope
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -19,6 +17,8 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.luckyzyx.luckytool.R
 import com.luckyzyx.luckytool.ui.compose.components.LocalTopBarCollapsedFraction
@@ -26,7 +26,7 @@ import com.luckyzyx.luckytool.ui.compose.components.PrefIndexItem
 import com.luckyzyx.luckytool.ui.compose.components.PrefScopeBuilder
 import com.luckyzyx.luckytool.ui.compose.components.ScopeScreen
 import com.luckyzyx.luckytool.ui.compose.components.ScrollTarget
-import com.luckyzyx.luckytool.ui.compose.components.coui.CouiPullToRefreshBox
+import com.luckyzyx.luckytool.ui.compose.components.currentUiStyle
 import com.luckyzyx.luckytool.ui.compose.scopes.apps.OplusAlarmClockPage
 import com.luckyzyx.luckytool.ui.compose.scopes.apps.OplusBatteryPage
 import com.luckyzyx.luckytool.ui.compose.scopes.apps.OplusBeaconLinkPage
@@ -107,8 +107,6 @@ import com.luckyzyx.luckytool.ui.compose.special.MemcConfigPage
 import com.luckyzyx.luckytool.ui.compose.special.MultiAppPage
 import com.luckyzyx.luckytool.ui.compose.special.QuickEntryPage
 import com.luckyzyx.luckytool.ui.compose.special.ZoomWindowPage
-import com.luckyzyx.luckytool.ui.theme.LocalUiMode
-import com.luckyzyx.luckytool.ui.theme.UiMode
 import com.luckyzyx.luckytool.utils.LogUtils
 import com.luckyzyx.luckytool.utils.PrefState
 import com.luckyzyx.luckytool.utils.checkPackName
@@ -178,6 +176,11 @@ class ScopePageSpec(
      * 必须由页面自己声明（不要用 [fullContent] 非空之类的结构特征反推）。
      */
     val selfRendered: Boolean = false,
+    /**
+     * 页面级加载器：首次进入页面与回到前台各跑一次（宿主调度），页面自身状态因此不必为加载
+     * 包一层 `custom { }` —— 整页都能用 DSL 行声明，值由行的 lambda 参数从页面状态取。
+     */
+    val onLoad: (suspend (Context) -> Unit)? = null,
     val onRefresh: (suspend () -> Unit)? = null,
     val fullContent: (@Composable LazyItemScope.(PrefScopeBuilder) -> Unit)? = null,
     /**
@@ -267,7 +270,6 @@ internal class MaterialScopeContentScope(delegate: ScopeContentScope) :
  *
  * [modifier] 由调用方的页面骨架给出，是骨架算好的整块 innerPadding。
  */
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun ScopePageContent(
     spec: ScopePageSpec,
@@ -277,6 +279,9 @@ internal fun ScopePageContent(
     scrollTarget: ScrollTarget? = null,
     onNavigate: ((target: String, title: String?) -> Unit)? = null,
 ) {
+    // 页面级加载与外观线无关：两条渲染路径都从这里触发
+    PageLoadEffect(spec.onLoad)
+
     val contentSlot = spec.contentMaterial
     if (contentSlot == null) {
         // 未提供槽位：与今天逐字一致的共享渲染层路径
@@ -350,29 +355,29 @@ internal fun ScopePageContent(
                 }
             }
         }
-        // 下拉刷新按外观分派：COUI 用自己的指示器与嵌套滚动实现，Material 仍用 M3 的容器。
-        // 两条线都包同一份页面内容，刷新回调与修饰符完全一致。
-        when (LocalUiMode.current) {
-            UiMode.Material -> PullToRefreshBox(
-                isRefreshing = refreshing,
-                onRefresh = refresh,
-                modifier = modifier,
-                enabled = LocalTopBarCollapsedFraction.current <= 0f,
-            ) {
-                page(Modifier.fillMaxSize())
-            }
-
-            UiMode.Coui -> CouiPullToRefreshBox(
-                isRefreshing = refreshing,
-                onRefresh = refresh,
-                modifier = modifier,
-            ) {
-                page(Modifier.fillMaxSize())
-            }
+        // 下拉刷新交给当前外观的骨架实现：指示器与手势由样式位决定，
+        // 这里只包同一份页面内容，刷新回调与修饰符对两条线完全一致。
+        currentUiStyle().RefreshBox(
+            isRefreshing = refreshing,
+            onRefresh = refresh,
+            enabled = LocalTopBarCollapsedFraction.current <= 0f,
+            modifier = modifier,
+        ) {
+            page(Modifier.fillMaxSize())
         }
     } else {
         page(modifier)
     }
+}
+
+/** 页面级加载器：首次进入与回到前台各跑一次；[onLoad] 为空时不挂任何观察者 */
+@Composable
+private fun PageLoadEffect(onLoad: (suspend (Context) -> Unit)?) {
+    if (onLoad == null) return
+    val context = LocalContext.current.applicationContext
+    val scope = rememberCoroutineScope()
+    LaunchedEffect(onLoad) { onLoad(context) }
+    LifecycleEventEffect(Lifecycle.Event.ON_RESUME) { scope.launch { onLoad(context) } }
 }
 
 /** Compose 页注册表：ComposeScopeFragment 按 page_key 查表渲染 */

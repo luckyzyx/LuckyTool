@@ -2,16 +2,10 @@ package com.luckyzyx.luckytool.ui.compose.pages
 
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.combinedClickable
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -25,9 +19,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.itos.coui.dialog.CouiDialogAction
-import com.itos.coui.dialog.CouiDialogActionStyle
-import com.itos.coui.dialog.CouiDialogDefaults
 import com.itos.coui.text.CouiTextKind
 import com.itos.coui.text.Text as CouiText
 import com.itos.coui.theme.CouiTheme
@@ -37,8 +28,7 @@ import com.luckyzyx.luckytool.ui.activity.MainActivity
 import com.luckyzyx.luckytool.ui.compose.components.ActionListDialog
 import com.luckyzyx.luckytool.ui.compose.components.ChoiceItem
 import com.luckyzyx.luckytool.ui.compose.components.MainPageActivationEffect
-import com.luckyzyx.luckytool.ui.compose.components.dialogBodyMaxHeight
-import com.luckyzyx.luckytool.ui.compose.components.coui.CouiAlertDialog
+import com.luckyzyx.luckytool.ui.compose.components.currentDialogStyle
 import com.luckyzyx.luckytool.ui.service.XposedServiceBridge
 import com.luckyzyx.luckytool.ui.shell.ShellBadgeState
 import com.luckyzyx.luckytool.ui.theme.LocalUiMode
@@ -210,43 +200,13 @@ fun HomePage(activity: MainActivity, isCurrentPage: Boolean = true) {
     if (!isCurrentPage) return
 
     if (showAbout) {
-        when (LocalUiMode.current) {
-            UiMode.Material -> AlertDialog(
-                onDismissRequest = { showAbout = false },
-                title = { Text(stringResource(R.string.about_author)) },
-                text = {
-                    Column(
-                        Modifier
-                            .fillMaxWidth()
-                            .heightIn(max = dialogBodyMaxHeight(chrome = 160.dp))
-                            .verticalScroll(rememberScrollState()),
-                    ) {
-                        Text(
-                            text = aboutText,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(20.dp)
-                                .combinedClickable(
-                                    onClick = {},
-                                    onLongClick = { toggleHiddenFunction() },
-                                ),
-                        )
-                    }
-                },
-                confirmButton = {
-                    TextButton(onClick = { showAbout = false }) {
-                        Text(stringResource(android.R.string.ok))
-                    }
-                },
-            )
-
-            UiMode.Coui -> CouiAboutDialog(
-                title = stringResource(R.string.about_author),
-                text = aboutText,
-                onDismissRequest = { showAbout = false },
-                onLongPress = { toggleHiddenFunction() },
-            )
-        }
+        currentDialogStyle().Alert(
+            onDismissRequest = { showAbout = false },
+            confirmLabel = stringResource(android.R.string.ok),
+            onConfirm = { showAbout = false },
+            title = stringResource(R.string.about_author),
+            content = { AboutDialogText(aboutText, onLongClick = { toggleHiddenFunction() }) },
+        )
     }
 
     if (showRestartMenu) {
@@ -254,45 +214,20 @@ fun HomePage(activity: MainActivity, isCurrentPage: Boolean = true) {
     }
 
     if (dexDialogVisible) {
-        when (LocalUiMode.current) {
-            UiMode.Material -> AlertDialog(
-                onDismissRequest = { dexDialogVisible = false },
-                title = { Text(stringResource(R.string.re_optimize_dex)) },
-                text = {
-                    Column(
-                        Modifier
-                            .fillMaxWidth()
-                            .heightIn(max = dialogBodyMaxHeight(chrome = 128.dp))
-                            .verticalScroll(rememberScrollState()),
-                    ) {
-                        Text(stringResource(R.string.optimize_dex_after_system_update))
-                    }
-                },
-                confirmButton = {
-                    TextButton(onClick = {
-                        dexDialogVisible = false
-                        settings.set("current_os_version", pendingOsVersion)
-                        showOptimizeDex = true
-                    }) { Text(stringResource(android.R.string.ok)) }
-                },
-                dismissButton = {
-                    TextButton(onClick = { dexDialogVisible = false }) {
-                        Text(stringResource(R.string.ignore))
-                    }
-                },
-            )
-
-            UiMode.Coui -> CouiDexOptimizeDialog(
-                message = stringResource(R.string.optimize_dex_after_system_update),
-                onDismissRequest = { dexDialogVisible = false },
-                onConfirm = {
-                    dexDialogVisible = false
-                    settings.set("current_os_version", pendingOsVersion)
-                    showOptimizeDex = true
-                },
-                onIgnore = { dexDialogVisible = false },
-            )
-        }
+        currentDialogStyle().Alert(
+            onDismissRequest = { dexDialogVisible = false },
+            confirmLabel = stringResource(android.R.string.ok),
+            onConfirm = {
+                dexDialogVisible = false
+                settings.set("current_os_version", pendingOsVersion)
+                showOptimizeDex = true
+            },
+            title = stringResource(R.string.re_optimize_dex),
+            message = stringResource(R.string.optimize_dex_after_system_update),
+            // 「先不优化」不是危险操作，落在次级位而不是中性位
+            secondaryLabel = stringResource(R.string.ignore),
+            onSecondary = { dexDialogVisible = false },
+        )
     }
 
     if (showOptimizeDex) {
@@ -377,74 +312,19 @@ fun HomePage(activity: MainActivity, isCurrentPage: Boolean = true) {
 }
 
 /**
- * Coui 线的「关于作者」弹窗：正文要能被长按，只能走自定义内容槽。
+ * 关于弹窗的正文：整段可长按（连续点击若干次解锁隐藏功能）。
  *
- * 内容槽的左右内边距由调用方补（正文槽本身不带横向留白），它已经是纵向滚动容器，
- * 这里不再套 verticalScroll。点击故意留空动作：只为了让长按手势成立。
+ * 文字控件按外观线取各自的组件库与配色：直接混用会在深色外观下取到不合适的正文色。
+ * 点击故意留空动作：只为了让长按手势成立。
  */
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-private fun CouiAboutDialog(
-    title: String,
-    text: String,
-    onDismissRequest: () -> Unit,
-    onLongPress: () -> Unit,
-) {
-    CouiAlertDialog(
-        onDismissRequest = onDismissRequest,
-        title = title,
-        confirmAction = CouiDialogAction(
-            text = stringResource(android.R.string.ok),
-            onClick = onDismissRequest,
-            style = CouiDialogActionStyle.Primary,
-            // Primary 样式必须显式给按钮配色，构造时缺 colors 会直接抛异常
-            colors = CouiDialogDefaults.primaryActionColors(CouiTheme.colorScheme.accent),
-        ),
-        content = {
-            CouiText(
-                text = text,
-                kind = CouiTextKind.Search,
-                textAlign = TextAlign.Start,
-                color = CouiTheme.colorScheme.onSurface,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(
-                        horizontal = CouiDialogDefaults.contentPadding,
-                        vertical = 16.dp,
-                    )
-                    .combinedClickable(onClick = {}, onLongClick = onLongPress),
-            )
-        },
-    )
-}
-
-/**
- * Coui 线的「系统更新后优化 dex」提示：只有一句正文，动作是确定与忽略。
- *
- * 忽略放取消位而不是中性位：中性位固定按警示色渲染，而「先不优化」不是危险操作。
- */
-@Composable
-private fun CouiDexOptimizeDialog(
-    message: String,
-    onDismissRequest: () -> Unit,
-    onConfirm: () -> Unit,
-    onIgnore: () -> Unit,
-) {
-    CouiAlertDialog(
-        onDismissRequest = onDismissRequest,
-        title = stringResource(R.string.re_optimize_dex),
-        message = message,
-        confirmAction = CouiDialogAction(
-            text = stringResource(android.R.string.ok),
-            onClick = onConfirm,
-            style = CouiDialogActionStyle.Primary,
-            colors = CouiDialogDefaults.primaryActionColors(CouiTheme.colorScheme.accent),
-        ),
-        dismissAction = CouiDialogAction(
-            text = stringResource(R.string.ignore),
-            onClick = onIgnore,
-        ),
-    )
+private fun AboutDialogText(text: String, onLongClick: () -> Unit) {
+    val longPressable = Modifier
+        .fillMaxWidth()
+        .combinedClickable(onClick = {}, onLongClick = onLongClick)
+    // 正文样式与留白由弹窗样式位给：调用方只负责长按手势
+    currentDialogStyle().BodyText(text = text, modifier = longPressable)
 }
 
 /**

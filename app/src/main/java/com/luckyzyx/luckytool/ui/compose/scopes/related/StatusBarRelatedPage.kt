@@ -1,28 +1,21 @@
 package com.luckyzyx.luckytool.ui.compose.scopes.related
 
-import androidx.compose.material3.Text
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.itos.coui.layout.CouiPageDefaults
-import com.itos.coui.text.CouiTextKind
-import com.itos.coui.theme.CouiTheme
 import com.luckyzyx.luckytool.R
-import com.luckyzyx.luckytool.ui.compose.components.AppListItem
 import com.luckyzyx.luckytool.ui.compose.components.AppPickerDialog
+import com.luckyzyx.luckytool.ui.compose.components.PrefRow
 import com.luckyzyx.luckytool.ui.compose.components.PrefRowInset
 import com.luckyzyx.luckytool.ui.compose.scopes.ScopePageSpec
-import com.luckyzyx.luckytool.ui.theme.LocalUiMode
-import com.luckyzyx.luckytool.ui.theme.UiMode
 import com.luckyzyx.luckytool.utils.A13
 import com.luckyzyx.luckytool.utils.ModulePrefs
 import com.luckyzyx.luckytool.utils.SDK
 import com.luckyzyx.luckytool.utils.getOSVersionCode
 import com.luckyzyx.luckytool.utils.sendPrefsValue
-import com.itos.coui.text.Text as CouiText
 
 /**
  * 状态栏相关页：8 个状态栏子页入口 + 状态栏事件 + 音乐流体云（osCode 33/35 门控）。
@@ -98,33 +91,14 @@ object StatusBarRelatedPage {
                             .collectAsStateWithLifecycle()
                         val enabled = !state.getBoolean("disable_music_fluid_cloud_display")
                         var showPicker by remember { mutableStateOf(false) }
+                        // 标题与当前白名单都交给行层：两条线的字形与配色由 PrefRow 分派，页面不再判断外观线
                         PrefRowInset {
-                            AppListItem(
+                            PrefRow(
+                                title = stringResource(R.string.set_custom_music_fluid_cloud_whitelist),
+                                summary = whitelist.toString(),
                                 onClick = { if (enabled) showPicker = true },
-                                supportingContent = {
-                                    // 槽位文字由调用方绘制：COUI 线改用 COUI 说明排版与页面配色，Material 线保持 M3 文本
-                                    if (LocalUiMode.current == UiMode.Coui) {
-                                        CouiText(
-                                            text = whitelist.toString(),
-                                            kind = CouiTextKind.ItemSummary,
-                                            color = CouiPageDefaults.themeColors(CouiTheme.isDark).summary,
-                                        )
-                                    } else {
-                                        Text(whitelist.toString())
-                                    }
-                                },
                                 enabled = enabled,
                                 colors = itemColors(slot),
-                                headlineContent = {
-                                    if (LocalUiMode.current == UiMode.Coui) {
-                                        CouiText(
-                                            text = stringResource(R.string.set_custom_music_fluid_cloud_whitelist),
-                                            kind = CouiTextKind.ItemTitle,
-                                        )
-                                    } else {
-                                        Text(stringResource(R.string.set_custom_music_fluid_cloud_whitelist))
-                                    }
-                                },
                             )
                         }
                         if (showPicker) {

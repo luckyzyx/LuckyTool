@@ -1,18 +1,11 @@
 package com.luckyzyx.luckytool.ui.compose.special
 
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Text
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import com.itos.coui.text.CouiTextKind
-import com.itos.coui.text.Text as CouiText
-import com.itos.coui.theme.CouiTheme
+import com.luckyzyx.luckytool.ui.compose.components.PrefNote
 import com.luckyzyx.luckytool.ui.compose.scopes.ScopePageSpec
-import com.luckyzyx.luckytool.ui.theme.LocalUiMode
-import com.luckyzyx.luckytool.ui.theme.UiMode
 import com.luckyzyx.luckytool.utils.SettingsPrefs
 
 /**
@@ -25,7 +18,7 @@ import com.luckyzyx.luckytool.utils.SettingsPrefs
  * "android.intent.action.ADDITIONAL_BATTERY_CHANGED" 在本模块里没有可驱动的东西
  * （既不读电量、也没有要刷新的 UI），接进来只会多一条空转的 receiver。
  *
- * 文本按外观分派：COUI 线用 COUI 正文字号与页面前景色，Material 线仍用 material3 `Text`。
+ * 占位文本交给行层的 [PrefNote]：字号与配色由它按外观线分派，这里只给内缩。
  */
 object BatteryInfoPage {
 
@@ -37,20 +30,11 @@ object BatteryInfoPage {
         restartEnabled = false,
     ) {
         custom(key = "battery_info_placeholder") {
-            val isCoui = LocalUiMode.current == UiMode.Coui
-            Column(Modifier.fillMaxWidth().padding(16.dp)) {
-                // 本页唯一的可见内容：静态占位文本
-                if (isCoui) {
-                    CouiText(
-                        text = "Test",
-                        kind = CouiTextKind.Search,
-                        textAlign = TextAlign.Start,
-                        color = CouiTheme.colorScheme.onSurface,
-                    )
-                } else {
-                    Text("Test")
-                }
-            }
+            // 本页唯一的可见内容：静态占位文本
+            PrefNote(
+                text = "Test",
+                modifier = Modifier.fillMaxWidth().padding(16.dp),
+            )
         }
     }
 }

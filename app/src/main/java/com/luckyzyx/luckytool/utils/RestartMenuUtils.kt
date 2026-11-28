@@ -11,7 +11,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -26,10 +25,6 @@ import androidx.compose.ui.unit.dp
 import com.highcapable.betterandroid.ui.extension.view.toast
 import com.highcapable.yukihookapi.YukiHook
 import com.highcapable.yukihookapi.hook.xposed.reload.entity.ModuleReloadStatus
-import com.itos.coui.dialog.CouiDialogAction
-import com.itos.coui.dialog.CouiDialogActionStyle
-import com.itos.coui.dialog.CouiDialogDefaults
-import com.itos.coui.theme.CouiTheme
 import com.luckyzyx.luckytool.IPackageServiceController
 import com.luckyzyx.luckytool.R
 import com.luckyzyx.luckytool.service.ActivityManagerService
@@ -38,8 +33,8 @@ import com.luckyzyx.luckytool.service.PowerService
 import com.luckyzyx.luckytool.ui.compose.components.ActionListDialog
 import com.luckyzyx.luckytool.ui.compose.components.ChoiceItem
 import com.luckyzyx.luckytool.ui.compose.components.ConfirmDialog
-import com.luckyzyx.luckytool.ui.compose.components.coui.CouiAlertDialog
 import com.luckyzyx.luckytool.ui.compose.components.coui.CouiProgressDialog
+import com.luckyzyx.luckytool.ui.compose.components.currentDialogStyle
 import com.luckyzyx.luckytool.ui.theme.LocalUiMode
 import com.luckyzyx.luckytool.ui.theme.UiMode
 import com.topjohnwu.superuser.Shell
@@ -438,11 +433,12 @@ object RestartMenuUtils {
                         }
                     }
                 }
-                val title = stringResource(R.string.re_optimize_dex_optimizing)
-                when (LocalUiMode.current) {
-                    UiMode.Material -> MaterialOptimizeRunningDialog(title, progressText)
-                    UiMode.Coui -> CouiOptimizeRunningDialog(title, progressText)
-                }
+                // 没有可点动作，返回键与外点都不关闭：优化还在跑，弹层不该消失；
+                // 进度文案把计数与应用名分成两行，长应用名不会挤掉「还剩多少」的计数
+                currentDialogStyle().Busy(
+                    title = stringResource(R.string.re_optimize_dex_optimizing),
+                    message = progressText,
+                )
             }
 
             OptimizeStage.Failed -> {
@@ -451,105 +447,20 @@ object RestartMenuUtils {
                     R.string.re_optimize_dex_faile_message,
                     failedApps.values.joinToString("\n")
                 )
-                when (LocalUiMode.current) {
-                    UiMode.Material -> MaterialOptimizeFailedDialog(
-                        title = title,
-                        message = message,
-                        onRetry = { launch(failedApps) },
-                        onDismiss = onDismiss,
-                    )
-
-                    UiMode.Coui -> CouiOptimizeFailedDialog(
-                        title = title,
-                        message = message,
-                        onRetry = { launch(failedApps) },
-                        onDismiss = onDismiss,
-                    )
-                }
+                // 失败清单可能几十行，正文槽自带高度上限与滚动；重试是主操作，取消放次级位
+                currentDialogStyle().Alert(
+                    onDismissRequest = onDismiss,
+                    confirmLabel = stringResource(android.R.string.ok),
+                    onConfirm = { launch(failedApps) },
+                    title = title,
+                    message = message,
+                    secondaryLabel = stringResource(android.R.string.cancel),
+                    onSecondary = onDismiss,
+                )
             }
         }
     }
 
-
-    /** Material 线：执行中的进度弹窗，居中的进度圈下显示两行进度文字（计数与应用名各一行） */
-    @Composable
-    private fun MaterialOptimizeRunningDialog(title: String, progressText: String) {
-        AlertDialog(
-            onDismissRequest = {},
-            title = { Text(title) },
-            text = {
-                Column(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                ) {
-                    CircularProgressIndicator()
-                    Text(
-                        text = progressText,
-                        textAlign = TextAlign.Center,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(top = 12.dp),
-                    )
-                }
-            },
-            confirmButton = {})
-    }
-
-    /**
-     * Coui 线：执行中的进度弹窗，标题写明在做什么，进度文案放在标题下面。
-     *
-     * 没有可点动作，返回键与外点都不关闭：优化还在跑，弹层不该消失。
-     * 进度文案把计数与应用名分成两行，长应用名不会挤掉「还剩多少」的计数。
-     */
-    @Composable
-    private fun CouiOptimizeRunningDialog(title: String, progressText: String) {
-        CouiProgressDialog(title = title, message = progressText)
-    }
-
-    /** Material 线：有失败应用时列出包名，确认后重新执行 */
-    @Composable
-    private fun MaterialOptimizeFailedDialog(
-        title: String,
-        message: String,
-        onRetry: () -> Unit,
-        onDismiss: () -> Unit,
-    ) {
-        AlertDialog(
-            onDismissRequest = onDismiss,
-            title = { Text(title) },
-            text = { Text(message) },
-            confirmButton = {
-                TextButton(onClick = onRetry) { Text(stringResource(android.R.string.ok)) }
-            },
-            dismissButton = {
-                TextButton(onClick = onDismiss) { Text(stringResource(android.R.string.cancel)) }
-            })
-    }
-
-    /** Coui 线：失败提示，重新执行是主操作，取消放取消位 */
-    @Composable
-    private fun CouiOptimizeFailedDialog(
-        title: String,
-        message: String,
-        onRetry: () -> Unit,
-        onDismiss: () -> Unit,
-    ) {
-        CouiAlertDialog(
-            onDismissRequest = onDismiss,
-            title = title,
-            message = message,
-            confirmAction = CouiDialogAction(
-                text = stringResource(android.R.string.ok),
-                onClick = onRetry,
-                style = CouiDialogActionStyle.Primary,
-                colors = CouiDialogDefaults.primaryActionColors(CouiTheme.colorScheme.accent),
-            ),
-            dismissAction = CouiDialogAction(
-                text = stringResource(android.R.string.cancel),
-                onClick = onDismiss,
-            ),
-        )
-    }
 
     private enum class OptimizeStage { Confirm, Running, Failed }
 

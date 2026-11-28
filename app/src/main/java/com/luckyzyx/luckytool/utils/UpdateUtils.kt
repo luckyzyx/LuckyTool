@@ -3,14 +3,8 @@ package com.luckyzyx.luckytool.utils
 import android.content.Context
 import android.content.Intent
 import android.provider.Settings
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -29,16 +23,10 @@ import com.drake.net.interfaces.ProgressListener
 import com.drake.net.scope.NetCoroutineScope
 import com.drake.net.utils.scopeNet
 import com.highcapable.betterandroid.ui.extension.view.toast
-import com.itos.coui.dialog.CouiDialogAction
-import com.itos.coui.dialog.CouiDialogActionStyle
-import com.itos.coui.dialog.CouiDialogDefaults
-import com.itos.coui.theme.CouiTheme
 import com.luckyzyx.luckytool.R
 import com.luckyzyx.luckytool.ui.compose.components.ActionListDialog
 import com.luckyzyx.luckytool.ui.compose.components.ChoiceItem
-import com.luckyzyx.luckytool.ui.compose.components.coui.CouiAlertDialog
-import com.luckyzyx.luckytool.ui.theme.LocalUiMode
-import com.luckyzyx.luckytool.ui.theme.UiMode
+import com.luckyzyx.luckytool.ui.compose.components.currentDialogStyle
 import io.noties.markwon.Markwon
 import org.json.JSONArray
 import org.json.JSONObject
@@ -153,100 +141,22 @@ fun UpdateChangelogDialog(
     val finalText =
         "# LuckyTool v${info.name}\n- $version\n- $count\n- $size\n- $time\n${info.changeLog}"
     val markwon = remember(context) { Markwon.create(context) }
-    // 两个按钮由两条线共用：Material 线放进 dismissButton，Coui 线放进取消位
+    // 直接更新是主操作，下载页放次级位；release 版不允许关闭
     val onOpenDownloadPage = {
         context.startActivity(Intent(Intent.ACTION_VIEW, info.downloadPage.toUri()))
     }
-    when (LocalUiMode.current) {
-        UiMode.Material -> MaterialUpdateChangelogDialog(
-            finalText = finalText,
-            markwon = markwon,
-            isDev = isDev,
-            onDismiss = onDismiss,
-            onDownload = onDownload,
-            onOpenDownloadPage = onOpenDownloadPage,
-        )
-
-        UiMode.Coui -> CouiUpdateChangelogDialog(
-            finalText = finalText,
-            markwon = markwon,
-            isDev = isDev,
-            onDismiss = onDismiss,
-            onDownload = onDownload,
-            onOpenDownloadPage = onOpenDownloadPage,
-        )
-    }
-}
-
-/** Material 线：material3 弹窗，正文是 Markwon 渲染的更新日志，可滚动可选词 */
-@Composable
-private fun MaterialUpdateChangelogDialog(
-    finalText: String,
-    markwon: Markwon,
-    isDev: Boolean,
-    onDismiss: () -> Unit,
-    onDownload: () -> Unit,
-    onOpenDownloadPage: () -> Unit,
-) {
-    AlertDialog(
+    // 正文是 Markwon 渲染出的可选择 TextView，自己不套滚动：滚动与高度上限由弹层正文槽给
+    currentDialogStyle().Alert(
         onDismissRequest = { if (isDev) onDismiss() },
-        title = { Text(stringResource(R.string.check_update_hint)) },
-        text = {
-            AndroidView(
-                factory = { ctx -> android.widget.TextView(ctx) },
-                modifier = Modifier.fillMaxWidth().verticalScroll(rememberScrollState()),
-                update = { tv ->
-                    tv.setTextIsSelectable(true)
-                    markwon.setMarkdown(tv, finalText)
-                },
-            )
-        },
-        confirmButton = {
-            TextButton(onClick = onDownload) { Text(stringResource(R.string.direct_update)) }
-        },
-        dismissButton = {
-            TextButton(onClick = onOpenDownloadPage) {
-                Text(stringResource(R.string.go_download_page))
-            }
-        }
-    )
-}
-
-/**
- * Coui 线：COUI 弹窗。
- *
- * 更新日志交给同一个 Markwon 渲染的 TextView，横向留白由这里补足（内容槽自己不带内边距）；
- * 内容槽本身已是纵向滚动容器，不再套 verticalScroll。
- */
-@Composable
-private fun CouiUpdateChangelogDialog(
-    finalText: String,
-    markwon: Markwon,
-    isDev: Boolean,
-    onDismiss: () -> Unit,
-    onDownload: () -> Unit,
-    onOpenDownloadPage: () -> Unit,
-) {
-    val colors = CouiTheme.colorScheme
-    CouiAlertDialog(
-        onDismissRequest = { if (isDev) onDismiss() },
+        confirmLabel = stringResource(R.string.direct_update),
+        onConfirm = onDownload,
         title = stringResource(R.string.check_update_hint),
-        confirmAction = CouiDialogAction(
-            text = stringResource(R.string.direct_update),
-            onClick = onDownload,
-            style = CouiDialogActionStyle.Primary,
-            colors = CouiDialogDefaults.primaryActionColors(colors.accent),
-        ),
-        dismissAction = CouiDialogAction(
-            text = stringResource(R.string.go_download_page),
-            onClick = onOpenDownloadPage,
-        ),
+        secondaryLabel = stringResource(R.string.go_download_page),
+        onSecondary = onOpenDownloadPage,
     ) {
         AndroidView(
             factory = { ctx -> android.widget.TextView(ctx) },
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = CouiDialogDefaults.contentPadding, vertical = 12.dp),
+            modifier = Modifier.fillMaxWidth().padding(vertical = 12.dp),
             update = { tv ->
                 tv.setTextIsSelectable(true)
                 markwon.setMarkdown(tv, finalText)
@@ -297,73 +207,16 @@ fun UpdateDownloadedDialog(
 ) {
     val size = formatFileSize(FileUtils.getFileSize(apkFile).toFloat())
     val detail = "${apkFile.name}\n$size"
-    when (LocalUiMode.current) {
-        UiMode.Material -> MaterialUpdateDownloadedDialog(
-            detail = detail,
-            isDev = isDev,
-            onDismiss = onDismiss,
-            onDownloadAgain = onDownloadAgain,
-            onInstall = onInstall,
-        )
-
-        UiMode.Coui -> CouiUpdateDownloadedDialog(
-            detail = detail,
-            isDev = isDev,
-            onDismiss = onDismiss,
-            onDownloadAgain = onDownloadAgain,
-            onInstall = onInstall,
-        )
-    }
-}
-
-/** Material 线：material3 弹窗，标题 + 文件名与大小，安装 / 重新下载 */
-@Composable
-private fun MaterialUpdateDownloadedDialog(
-    detail: String,
-    isDev: Boolean,
-    onDismiss: () -> Unit,
-    onDownloadAgain: () -> Unit,
-    onInstall: () -> Unit,
-) {
-    AlertDialog(
-        onDismissRequest = { if (isDev) onDismiss() },
-        title = { Text(stringResource(R.string.downloaded)) },
-        text = { Text(detail) },
-        confirmButton = {
-            TextButton(onClick = onInstall) { Text(stringResource(R.string.install)) }
-        },
-        dismissButton = {
-            TextButton(onClick = onDownloadAgain) {
-                Text(stringResource(R.string.download_again))
-            }
-        }
-    )
-}
-
-/** Coui 线：COUI 弹窗，安装是主操作，重新下载放取消位 */
-@Composable
-private fun CouiUpdateDownloadedDialog(
-    detail: String,
-    isDev: Boolean,
-    onDismiss: () -> Unit,
-    onDownloadAgain: () -> Unit,
-    onInstall: () -> Unit,
-) {
-    val colors = CouiTheme.colorScheme
-    CouiAlertDialog(
-        onDismissRequest = { if (isDev) onDismiss() },
+    // 安装是主操作，重新下载放次级位；release 版不允许关闭，返回键与点击外部都不生效
+    currentDialogStyle().Alert(
+        onDismissRequest = onDismiss,
+        confirmLabel = stringResource(R.string.install),
+        onConfirm = onInstall,
         title = stringResource(R.string.downloaded),
         message = detail,
-        confirmAction = CouiDialogAction(
-            text = stringResource(R.string.install),
-            onClick = onInstall,
-            style = CouiDialogActionStyle.Primary,
-            colors = CouiDialogDefaults.primaryActionColors(colors.accent),
-        ),
-        dismissAction = CouiDialogAction(
-            text = stringResource(R.string.download_again),
-            onClick = onDownloadAgain,
-        ),
+        secondaryLabel = stringResource(R.string.download_again),
+        onSecondary = onDownloadAgain,
+        dismissible = isDev,
     )
 }
 
@@ -414,58 +267,19 @@ fun UpdateDownloadProgressDialog(
             onDismiss()
         }
     }
-    // 取消动作两条线共用：Material 线画在正文下方，Coui 线放弹窗的按钮行
+    // 取消：中止下载、删掉半成品，再收起弹窗
     val cancelDownload = {
         downloadScope?.cancel()
         apkFile.delete()
         onDismiss()
     }
-    when (LocalUiMode.current) {
-        UiMode.Material -> MaterialUpdateDownloadProgressDialog(progressText, cancelDownload)
-        UiMode.Coui -> CouiUpdateDownloadProgressDialog(progressText, cancelDownload)
-    }
-}
-
-/** Material 线：material3 弹窗，正文是实时进度，取消按钮画在正文下方 */
-@Composable
-private fun MaterialUpdateDownloadProgressDialog(
-    progressText: String,
-    onCancel: () -> Unit,
-) {
-    AlertDialog(
+    // 弹窗只有「取消」一条出路，它就是主操作，放确认位；进度还没出来时不给正文，避免留一块空白
+    currentDialogStyle().Alert(
         onDismissRequest = {},
-        title = { Text(stringResource(R.string.downloading)) },
-        text = {
-            Column {
-                Text(progressText)
-                TextButton(onClick = onCancel) {
-                    Text(stringResource(R.string.cancel_button))
-                }
-            }
-        },
-        confirmButton = {}
-    )
-}
-
-/**
- * Coui 线：COUI 弹窗。
- *
- * 进度数字一直在变，交给 message 槽跟着重组，不必再套一层自定义内容；
- * 这一步只有「取消」一个动作，而 COUI 弹窗的确认位必填，就把它放在确认位并保持次级样式
- * （不传 style 时库按次级样式绘制），取消位留空。进度还没出来时不传 message，避免留一块空正文。
- */
-@Composable
-private fun CouiUpdateDownloadProgressDialog(
-    progressText: String,
-    onCancel: () -> Unit,
-) {
-    CouiAlertDialog(
-        onDismissRequest = {},
+        confirmLabel = stringResource(R.string.cancel_button),
+        onConfirm = cancelDownload,
         title = stringResource(R.string.downloading),
         message = progressText.ifEmpty { null },
-        confirmAction = CouiDialogAction(
-            text = stringResource(R.string.cancel_button),
-            onClick = onCancel,
-        ),
+        dismissible = false,
     )
 }

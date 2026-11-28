@@ -1,6 +1,5 @@
 package com.luckyzyx.luckytool.ui.compose.scopes.related
 
-import androidx.compose.material3.Text
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -8,19 +7,13 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.itos.coui.layout.CouiPageDefaults
-import com.itos.coui.text.CouiTextKind
-import com.itos.coui.text.Text as CouiText
-import com.itos.coui.theme.CouiTheme
 import com.luckyzyx.luckytool.R
 import com.luckyzyx.luckytool.hook.scopes.android.InstallerRoutingPolicy
 import com.luckyzyx.luckytool.ui.compose.components.AppPickerDialog
-import com.luckyzyx.luckytool.ui.compose.components.AppListItem
-import com.luckyzyx.luckytool.ui.compose.components.AppSwitchItem
+import com.luckyzyx.luckytool.ui.compose.components.PrefRow
 import com.luckyzyx.luckytool.ui.compose.components.PrefRowInset
+import com.luckyzyx.luckytool.ui.compose.components.PrefSwitchRow
 import com.luckyzyx.luckytool.ui.compose.scopes.ScopePageSpec
-import com.luckyzyx.luckytool.ui.theme.LocalUiMode
-import com.luckyzyx.luckytool.ui.theme.UiMode
 import com.luckyzyx.luckytool.utils.A13
 import com.luckyzyx.luckytool.utils.A14
 import com.luckyzyx.luckytool.utils.ModulePrefs
@@ -306,7 +299,7 @@ object ApplicationRelatedPage {
                 ) { slot ->
                     val checked by state.booleanFlow(archivingKey, true).collectAsStateWithLifecycle()
                     PrefRowInset {
-                        AppSwitchItem(
+                        PrefSwitchRow(
                             title = stringResource(R.string.disable_app_archiving),
                             summary = stringResource(R.string.disable_app_archiving_summary),
                             checked = checked,
@@ -345,29 +338,13 @@ object ApplicationRelatedPage {
         custom(key = key, title = title) { slot ->
             var showPicker by remember { mutableStateOf(false) }
             val current = state.getStringSet(key).toString()
+            // 标题与当前白名单都交给行层：两条线的字形与配色由 PrefRow 分派，页面不再判断外观线
             PrefRowInset {
-                AppListItem(
+                PrefRow(
+                    title = title,
+                    summary = current,
                     onClick = { showPicker = true },
-                    supportingContent = {
-                        // 槽位文字由调用方绘制：COUI 线改用 COUI 说明排版与页面配色，Material 线保持 M3 文本
-                        if (LocalUiMode.current == UiMode.Coui) {
-                            CouiText(
-                                text = current,
-                                kind = CouiTextKind.ItemSummary,
-                                color = CouiPageDefaults.themeColors(CouiTheme.isDark).summary,
-                            )
-                        } else {
-                            Text(current)
-                        }
-                    },
                     colors = itemColors(slot),
-                    headlineContent = {
-                        if (LocalUiMode.current == UiMode.Coui) {
-                            CouiText(text = title, kind = CouiTextKind.ItemTitle)
-                        } else {
-                            Text(title)
-                        }
-                    },
                 )
             }
             if (showPicker) {

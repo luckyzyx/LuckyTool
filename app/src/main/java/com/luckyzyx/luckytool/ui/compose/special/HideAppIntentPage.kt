@@ -25,14 +25,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyItemScope
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FilterChip
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.SuggestionChip
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -47,16 +40,9 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.core.graphics.drawable.toBitmap
 import androidx.core.net.toUri
-import com.itos.coui.dialog.CouiDialogAction
-import com.itos.coui.dialog.CouiDialogActionStyle
-import com.itos.coui.dialog.CouiDialogDefaults
-import com.itos.coui.text.CouiTextKind
-import com.itos.coui.text.Text as CouiText
-import com.itos.coui.theme.CouiTheme
 import com.luckyzyx.luckytool.R
 import com.luckyzyx.luckytool.data.AppInfo
 import com.luckyzyx.luckytool.data.AppIntentInfo
@@ -67,19 +53,16 @@ import com.luckyzyx.luckytool.ui.compose.components.AppSearchPlaceholder
 import com.luckyzyx.luckytool.ui.compose.components.ChoiceItem
 import com.luckyzyx.luckytool.ui.compose.components.MultiChoiceDialog
 import com.luckyzyx.luckytool.ui.compose.components.PrefGroup
+import com.luckyzyx.luckytool.ui.compose.components.PrefRowSummary
+import com.luckyzyx.luckytool.ui.compose.components.PrefRowTitle
 import com.luckyzyx.luckytool.ui.compose.components.PrefSwitchRow
 import com.luckyzyx.luckytool.ui.compose.components.AppItem
-import com.luckyzyx.luckytool.ui.compose.components.material.MaterialItemContainer
 import com.luckyzyx.luckytool.ui.compose.components.AppListItem
-import com.luckyzyx.luckytool.ui.compose.components.coui.CouiAlertDialog
-import com.luckyzyx.luckytool.ui.compose.components.coui.CouiFilterChip
-import com.luckyzyx.luckytool.ui.compose.components.coui.CouiSuggestionChip
-import com.luckyzyx.luckytool.ui.compose.components.coui.CouiTextField
+import com.luckyzyx.luckytool.ui.compose.components.currentDialogStyle
+import com.luckyzyx.luckytool.ui.compose.components.currentPrefStyle
 import com.luckyzyx.luckytool.ui.compose.scopes.ScopePageAction
 import com.luckyzyx.luckytool.ui.compose.scopes.ScopePageSpec
 import com.luckyzyx.luckytool.ui.theme.DesignTokens
-import com.luckyzyx.luckytool.ui.theme.LocalUiMode
-import com.luckyzyx.luckytool.ui.theme.UiMode
 import com.luckyzyx.luckytool.utils.IntentPrefs
 import com.luckyzyx.luckytool.utils.IntentUtils
 import com.luckyzyx.luckytool.utils.PackageUtils
@@ -504,26 +487,13 @@ internal fun LazyItemScope.HideAppIntentContent() {
             context.clearPrefs(IntentPrefs)
             scope.launch { reload() }
         }
-        when (LocalUiMode.current) {
-            UiMode.Material -> AlertDialog(
-                onDismissRequest = { showClearDialog = false },
-                confirmButton = {
-                    TextButton(onClick = onConfirm) {
-                        Text(stringResource(android.R.string.ok))
-                    }
-                },
-                dismissButton = {
-                    TextButton(onClick = { showClearDialog = false }) {
-                        Text(stringResource(android.R.string.cancel))
-                    }
-                },
-            )
-
-            UiMode.Coui -> CouiIntentClearDialog(
-                onDismiss = { showClearDialog = false },
-                onConfirm = onConfirm,
-            )
-        }
+        currentDialogStyle().Alert(
+            onDismissRequest = { showClearDialog = false },
+            confirmLabel = stringResource(android.R.string.ok),
+            onConfirm = onConfirm,
+            secondaryLabel = stringResource(android.R.string.cancel),
+            onSecondary = { showClearDialog = false },
+        )
     }
 
     selectDialog?.let { data ->
@@ -554,8 +524,8 @@ internal fun LazyItemScope.HideAppIntentContent() {
             scope.launch { reload() }
         },
         filterContent = {
-            // 弹层本身已分线，但筛选项的标签由调用方提供，必须跟着渲染线换控件：
-            // 两份标签算一遍（状态与回调只建一次），再各按线渲染。
+            // 弹层本身已分线，但筛选项的标签由调用方提供：状态与回调在这里只建一次，
+            // 承载控件按渲染线交给样式位。
             val chips = listOf(
                 FilterChipSpec(
                     label = stringResource(R.string.appinfo_system_app),
@@ -606,25 +576,15 @@ internal fun LazyItemScope.HideAppIntentContent() {
                     },
                 ),
             )
-            when (LocalUiMode.current) {
-                UiMode.Material -> FlowRow {
-                    chips.forEach { chip ->
-                        FilterChip(
-                            selected = chip.selected,
-                            onClick = chip.onClick,
-                            label = { Text(chip.label) },
-                        )
-                    }
-                }
-
-                UiMode.Coui -> FlowRow {
-                    chips.forEach { chip ->
-                        CouiFilterChip(
-                            label = chip.label,
-                            selected = chip.selected,
-                            onClick = chip.onClick,
-                        )
-                    }
+            FlowRow {
+                chips.forEach { chip ->
+                    currentPrefStyle().FilterChip(
+                        label = chip.label,
+                        selected = chip.selected,
+                        onClick = chip.onClick,
+                        modifier = Modifier,
+                        enabled = true,
+                    )
                 }
             }
         },
@@ -635,7 +595,11 @@ internal fun LazyItemScope.HideAppIntentContent() {
 /**
  * 应用行：图标 + 应用名 + 包名 + 四组类型计数按钮。
  * 每组类型 (share/text/open/browser) 各自回调
- * `(packName, 全部条目, 已启用条目, 类型组)`；外层卡片容器由调用点提供（`MaterialItem`）。
+ * `(packName, 全部条目, 已启用条目, 类型组)`。
+ *
+ * 行内文字走行层原语，两条线共用一份排版；卡片载体交给样式位的 Container：COUI 线的卡片底色
+ * 由调用点的 [AppItem] 分段卡片给出，样式位只排纵向内容；material 线的 [AppItem] 只提供形状，
+ * 由样式位补一块卡片表面，否则计数行会露在页面背景上。
  */
 @Composable
 internal fun IntentAppRow(
@@ -647,37 +611,11 @@ internal fun IntentAppRow(
     val intentInfo = allIntentInfos.filter { it.packName == info.packageName }
     val enabledInfo = allEnabledInfos.filter { it.packName == info.packageName }
 
-    when (LocalUiMode.current) {
-        UiMode.Material -> IntentAppRowMaterial(info, intentInfo, enabledInfo, onOpenDialog)
-        UiMode.Coui -> IntentAppRowCoui(info, intentInfo, enabledInfo, onOpenDialog)
-    }
-}
-
-/** Material 线：整行自己套卡片容器，行标题走 M3 文本 */
-@Composable
-private fun IntentAppRowMaterial(
-    info: AppInfo,
-    intentInfo: List<AppIntentInfo>,
-    enabledInfo: List<AppIntentInfo>,
-    onOpenDialog: (String, List<AppIntentInfo>, List<AppIntentInfo>, Array<IntentType>) -> Unit,
-) {
-    MaterialItemContainer {
+    val body: @Composable () -> Unit = {
         Column {
             AppListItem(
-                headlineContent = {
-                    Text(
-                        info.name,
-                        maxLines = 2,
-                        overflow = TextOverflow.Ellipsis,
-                    )
-                },
-                supportingContent = {
-                    Text(
-                        info.packageName,
-                        maxLines = 2,
-                        overflow = TextOverflow.Ellipsis,
-                    )
-                },
+                headlineContent = { PrefRowTitle(info.name) },
+                supportingContent = { PrefRowSummary(info.packageName) },
                 leadingContent = {
                     info.icon?.let { d ->
                         Image(
@@ -698,58 +636,7 @@ private fun IntentAppRowMaterial(
             }
         }
     }
-}
-
-/**
- * COUI 线：卡片本体由外层 [AppItem] 的 COUI 分支绘制，这里再套一层容器会变成双层圆角，
- * 所以只排版「图标行 + 四组计数行」。
- */
-@Composable
-private fun IntentAppRowCoui(
-    info: AppInfo,
-    intentInfo: List<AppIntentInfo>,
-    enabledInfo: List<AppIntentInfo>,
-    onOpenDialog: (String, List<AppIntentInfo>, List<AppIntentInfo>, Array<IntentType>) -> Unit,
-) {
-    Column {
-        AppListItem(
-            headlineContent = {
-                CouiText(
-                    text = info.name,
-                    kind = CouiTextKind.Search,
-                    textAlign = TextAlign.Start,
-                    maxLines = 2,
-                    overflow = TextOverflow.Ellipsis,
-                )
-            },
-            supportingContent = {
-                CouiText(
-                    text = info.packageName,
-                    kind = CouiTextKind.ItemSummary,
-                    color = CouiTheme.colorScheme.onSurfaceVariant,
-                    maxLines = 2,
-                    overflow = TextOverflow.Ellipsis,
-                )
-            },
-            leadingContent = {
-                info.icon?.let { d ->
-                    Image(
-                        remember(info) { d.toBitmap().asImageBitmap() },
-                        contentDescription = null,
-                        contentScale = ContentScale.Crop,
-                        modifier = Modifier.size(48.dp),
-                    )
-                }
-            },
-        )
-        Row(
-            Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 12.dp, vertical = 4.dp),
-        ) {
-            IntentTypeChips(intentInfo, enabledInfo, onOpenDialog, info.packageName)
-        }
-    }
+    currentPrefStyle().Container(Modifier.fillMaxWidth()) { body() }
 }
 
 /** 行内四组类型计数按钮（share/text/open/browser） */
@@ -797,29 +684,14 @@ private fun RowScope.IntentCountChip(
     enabled: List<AppIntentInfo>,
     onClick: () -> Unit,
 ) {
-    // 两条线的计数文案一致，只有承载控件不同
+    // 两条线的计数文案一致，承载控件与字级排版由样式位给，调用点只管内容与回调
     val countText = "${enabled.size}/${allIntent.size}"
-    when (LocalUiMode.current) {
-        UiMode.Material -> SuggestionChip(
-            onClick = onClick,
-            enabled = allIntent.isNotEmpty(),
-            label = {
-                Text(
-                    countText,
-                    style = MaterialTheme.typography.labelMedium,
-                    maxLines = 1,
-                )
-            },
-            modifier = Modifier.weight(1f),
-        )
-
-        UiMode.Coui -> CouiSuggestionChip(
-            label = countText,
-            onClick = onClick,
-            enabled = allIntent.isNotEmpty(),
-            modifier = Modifier.weight(1f),
-        )
-    }
+    currentPrefStyle().SuggestionChip(
+        label = countText,
+        onClick = onClick,
+        modifier = Modifier.weight(1f),
+        enabled = allIntent.isNotEmpty(),
+    )
 }
 
 /**
@@ -884,28 +756,20 @@ private fun AppIntentInfo.choiceKey(): String = "$action|$type|$activity"
 /** 对话框内搜索框：调用点的 header 里只保留这一次调用。 */
 @Composable
 private fun IntentQueryField(query: String, onQueryChange: (String) -> Unit) {
-    when (LocalUiMode.current) {
-        UiMode.Material -> OutlinedTextField(
-            value = query,
-            onValueChange = onQueryChange,
-            singleLine = true,
-            placeholder = { Text(stringResource(R.string.activity_search_hint)) },
-            modifier = Modifier.fillMaxWidth(),
-        )
-
-        UiMode.Coui -> CouiTextField(
-            value = query,
-            onValueChange = onQueryChange,
-            singleLine = true,
-            placeholder = stringResource(R.string.activity_search_hint),
-            modifier = Modifier.fillMaxWidth(),
-        )
-    }
+    currentPrefStyle().TextField(
+        value = query,
+        onValueChange = onQueryChange,
+        placeholder = stringResource(R.string.activity_search_hint),
+        modifier = Modifier.fillMaxWidth(),
+        enabled = true,
+        singleLine = true,
+        leadingIcon = null,
+    )
 }
 
 /**
  * 排序过滤弹层里的一个筛选项：文案在这里算好，选中态与回调由调用方持有，
- * 两条线只按渲染线换承载控件（M3 FilterChip / COUI 胶囊标签）。
+ * 承载控件按渲染线交给样式位的 FilterChip。
  */
 private class FilterChipSpec(
     val label: String,
@@ -913,27 +777,3 @@ private class FilterChipSpec(
     val onClick: () -> Unit,
 )
 
-/**
- * COUI 线的清空确认弹窗：确认走主色位、取消走次级位。
- * 原对话框没有标题与正文，这里同样只画按钮，避免凭空多出一句文案。
- */
-@Composable
-private fun CouiIntentClearDialog(
-    onDismiss: () -> Unit,
-    onConfirm: () -> Unit,
-) {
-    CouiAlertDialog(
-        onDismissRequest = onDismiss,
-        confirmAction = CouiDialogAction(
-            text = stringResource(android.R.string.ok),
-            onClick = onConfirm,
-            style = CouiDialogActionStyle.Primary,
-            // 主色动作必须显式给配色：CouiDialogAction 的 init 会校验，缺了直接抛异常
-            colors = CouiDialogDefaults.primaryActionColors(CouiTheme.colorScheme.accent),
-        ),
-        dismissAction = CouiDialogAction(
-            text = stringResource(android.R.string.cancel),
-            onClick = onDismiss,
-        ),
-    )
-}

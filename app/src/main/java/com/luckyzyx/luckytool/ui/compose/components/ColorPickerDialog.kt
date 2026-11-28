@@ -1,6 +1,5 @@
 package com.luckyzyx.luckytool.ui.compose.components
 
-import android.os.Build
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -14,22 +13,13 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.FilterChip
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
@@ -58,17 +48,10 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.core.graphics.toColorInt
-import com.itos.coui.dialog.CouiDialogAction
-import com.itos.coui.dialog.CouiDialogActionStyle
-import com.itos.coui.dialog.CouiDialogDefaults
-import com.itos.coui.segmentbutton.SegmentedControl
 import com.itos.coui.text.CouiTextKind
 import com.itos.coui.text.Text as CouiText
 import com.itos.coui.theme.CouiTheme
 import com.luckyzyx.luckytool.R
-import com.luckyzyx.luckytool.ui.compose.components.coui.CouiAlertDialog
-import com.luckyzyx.luckytool.ui.compose.components.coui.CouiFilterChip
-import com.luckyzyx.luckytool.ui.compose.components.coui.CouiTextField
 import com.luckyzyx.luckytool.ui.theme.LocalUiMode
 import com.luckyzyx.luckytool.ui.theme.UiMode
 import kotlin.math.roundToInt
@@ -126,14 +109,6 @@ private val HexKeyboardOptions = KeyboardOptions(
  */
 private const val MODE_SV_LABEL = "SV"
 private const val MODE_ARGB_LABEL = "ARGB"
-
-/**
- * 取色模式切换分段选择器的最小宽度。
- *
- * "ARGB" 四个字符按标签自然宽度分配段宽时会恰好不够，被 `TextOverflow.Ellipsis` 截成 "AR…"；
- * 给一个足够大的最小宽度让两段按等宽分配，"ARGB" 就有富余，不会被截断。
- */
-private val PickerModeSwitchMinWidth = 140.dp
 
 /**
  * ARGB 四通道在颜色 int 中的位偏移（与存储格式 `#AARRGGBB` 一致）。
@@ -238,8 +213,9 @@ private fun hsvOf(color: Int): FloatArray =
  * 颜色，切换不影响已选颜色。
  * 回调 onColorSelected(colorInt, hexString)，十六进制格式为 `#AARRGGBB`。
  *
- * 弹层按 [LocalUiMode] 分线：Material 线用 material3 `AlertDialog`，COUI 线用 [CouiAlertDialog]；
- * SV 面板与渐变条都是自绘实现（渐变 + 胶囊圆环滑块），两条线共用同一份绘制与状态。
+ * 弹窗外壳由 [DialogStyle] 决定，正文与状态两条线共用一份；SV 面板与渐变条都是自绘实现
+ * （渐变 + 胶囊圆环滑块）；模式切换与十六进制输入框由样式位画，只有通道数值还按线分叉
+ * （样式位没有带等宽字体与固定宽度的行内数值形态）。
  */
 @Composable
 fun ColorPickerDialog(
@@ -257,84 +233,15 @@ fun ColorPickerDialog(
 
     val state = remember { ColorPickerUiState(initialColor) }
 
-    when (LocalUiMode.current) {
-        UiMode.Material -> MaterialColorPickerDialog(
-            state = state,
-            onDismiss = onDismiss,
-            onColorSelected = onColorSelected,
-        )
-
-        UiMode.Coui -> CouiColorPickerDialog(
-            state = state,
-            onDismiss = onDismiss,
-            onColorSelected = onColorSelected,
-        )
-    }
-}
-
-/** Material 线：material3 `AlertDialog`，确认/取消走对话框按钮槽位 */
-@Composable
-private fun MaterialColorPickerDialog(
-    state: ColorPickerUiState,
-    onDismiss: () -> Unit,
-    onColorSelected: (Int, String) -> Unit,
-) {
-    AlertDialog(
+    currentDialogStyle().Alert(
         onDismissRequest = onDismiss,
-        title = { Text(stringResource(R.string.select_color)) },
-        text = {
-            Column(
-                Modifier
-                    .fillMaxWidth()
-                    .heightIn(max = dialogBodyMaxHeight(chrome = 160.dp))
-                    .verticalScroll(rememberScrollState()),
-            ) {
-                ColorPickerBody(state = state)
-            }
-        },
-        confirmButton = {
-            TextButton(onClick = { onColorSelected(state.colorInt, formatHex(state.colorInt)) }) {
-                Text(stringResource(android.R.string.ok))
-            }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) { Text(stringResource(android.R.string.cancel)) }
-        },
-    )
-}
-
-/**
- * COUI 线：弹窗外观交给 [CouiAlertDialog]，按钮走它的动作槽位。
- *
- * 确认键是主操作，用 Primary 样式时必须显式带上 [CouiDialogDefaults.primaryActionColors] 生成的配色，
- * 否则 [CouiDialogAction] 构造时直接校验失败。取消键放 dismissAction：COUI 的中性位固定按警示色渲染，
- * 与「只是关掉」的语义不符。
- */
-@Composable
-private fun CouiColorPickerDialog(
-    state: ColorPickerUiState,
-    onDismiss: () -> Unit,
-    onColorSelected: (Int, String) -> Unit,
-) {
-    CouiAlertDialog(
-        onDismissRequest = onDismiss,
+        confirmLabel = stringResource(android.R.string.ok),
+        onConfirm = { onColorSelected(state.colorInt, formatHex(state.colorInt)) },
         title = stringResource(R.string.select_color),
-        confirmAction = CouiDialogAction(
-            text = stringResource(android.R.string.ok),
-            onClick = { onColorSelected(state.colorInt, formatHex(state.colorInt)) },
-            style = CouiDialogActionStyle.Primary,
-            colors = CouiDialogDefaults.primaryActionColors(CouiTheme.colorScheme.accent),
-        ),
-        dismissAction = CouiDialogAction(
-            text = stringResource(android.R.string.cancel),
-            onClick = onDismiss,
-        ),
-    ) {
-        // 正文槽没有内边距，左右留白由调用方补，否则自绘的 SV 面板会顶到弹窗边缘
-        Box(Modifier.padding(horizontal = CouiDialogDefaults.contentPadding)) {
-            ColorPickerBody(state = state)
-        }
-    }
+        secondaryLabel = stringResource(android.R.string.cancel),
+        onSecondary = onDismiss,
+        content = { ColorPickerBody(state = state) },
+    )
 }
 
 /**
@@ -378,80 +285,23 @@ private fun ColorPickerBody(
 /**
  * 取色模式切换：SV 面板与 ARGB 四通道滑杆二选一。
  *
- * 两个选项互斥、可反复切换且段数固定，所以 COUI 线用官方分段选择器表达选中态；
- * 模式状态只有 [ColorPickerUiState.mode] 一份，两条线只换控件外观。
+ * 两个选项互斥、可反复切换且段数固定，所以用样式位的分段/页签形态表达选中态；
+ * 模式状态只有 [ColorPickerUiState.mode] 一份，两条线共用同一个下标语义。
  */
 @Composable
 private fun PickerModeSwitch(
     state: ColorPickerUiState,
     modifier: Modifier = Modifier,
 ) {
-    when (LocalUiMode.current) {
-        UiMode.Material -> Row(
-            modifier = modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.Center,
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                PickerMode.entries.forEach { mode ->
-                    val selected = state.mode == mode
-                    val onClick = { state.mode = mode }
-                    val label = if (mode == PickerMode.Sv) MODE_SV_LABEL else MODE_ARGB_LABEL
-
-                    FilterChip(
-                        selected = selected,
-                        onClick = onClick,
-                        label = { Text(label) },
-                    )
-                }
-            }
-        }
-
-        UiMode.Coui -> CouiPickerModeSwitch(state = state, modifier = modifier)
+    val labels = remember {
+        PickerMode.entries.map { mode -> if (mode == PickerMode.Sv) MODE_SV_LABEL else MODE_ARGB_LABEL }
     }
-}
-
-/**
- * COUI 线：API 34 起用官方分段选择器（胶囊容器 + 滑动指示器，可按住拖动切换）。
- *
- * 控件给一个最小宽度（[PickerModeSwitchMinWidth]）让两段等宽，避免 "ARGB" 被截断，外层居中；低版本取不到该控件（[SegmentedControl] 标注 @RequiresApi(34)），
- * 退回同一组互斥的 COUI 筛选标签，选中态同样由 [ColorPickerUiState.mode] 持有。
- */
-@Composable
-private fun CouiPickerModeSwitch(
-    state: ColorPickerUiState,
-    modifier: Modifier = Modifier,
-) {
-    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
-        val labels = remember {
-            PickerMode.entries.map { mode -> if (mode == PickerMode.Sv) MODE_SV_LABEL else MODE_ARGB_LABEL }
-        }
-        Box(modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
-            SegmentedControl(
-                modifier = Modifier.widthIn(min = PickerModeSwitchMinWidth),
-                labels = labels,
-                selectedIndex = state.mode.ordinal,
-                onSelected = { index -> state.mode = PickerMode.entries[index] },
-            )
-        }
-        return
-    }
-
-    Row(
-        modifier = modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.Center,
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            PickerMode.entries.forEach { mode ->
-                CouiFilterChip(
-                    label = if (mode == PickerMode.Sv) MODE_SV_LABEL else MODE_ARGB_LABEL,
-                    selected = state.mode == mode,
-                    onClick = { state.mode = mode },
-                )
-            }
-        }
-    }
+    currentPrefStyle().Tabs(
+        labels = labels,
+        selected = state.mode.ordinal,
+        onSelect = { index -> state.mode = PickerMode.entries[index] },
+        modifier = modifier,
+    )
 }
 
 /** SV 模式：SV 面板（饱和度/明度）+ 色相条 + 透明度条 */
@@ -559,7 +409,11 @@ private fun ChannelBar(
  * 通道字母与数值文本。
  *
  * 宽度由调用方用 modifier 固定，数值从 1 位变到 3 位时滑杆不会被挤动；
- * Material 线额外用等宽字体，让位数变化时的字面宽度也一致。
+ * material 线额外用等宽字体，让位数变化时的字面宽度也一致。
+ *
+ * 这里仍是按线分叉：样式位现有的 Value / Note 都不带等宽字体、单行与固定宽度三项，
+ * 落到它们上会改掉字号与前景色（通道数值要贴着滑杆读，颜色比说明文字更重），
+ * 逐位对齐也会丢；等样式位出现「行内等宽数值」形态再收敛。
  */
 @Composable
 private fun ChannelText(
@@ -611,51 +465,25 @@ private fun CouiChannelText(
  * 十六进制输入框：接受 `#RRGGBB` / `#AARRGGBB`（`#` 可省略，6 位按不透明处理），
  * 输入合法即刻同步颜色，非法时输入框进入错误态；提示文案放输入框的占位位。
  *
- * 两条线的错误态都只改描边颜色（各自配色体系里的错误表达不同），提示方式保持一致。
+ * 控件与错误态由样式位给；等宽字体只经 `textStyle` 作用于 material 线，
+ * COUI 的字体由库统一决定，逐位对齐在那条线上按普通文本呈现。
  */
 @Composable
 private fun HexField(
     state: ColorPickerUiState,
     modifier: Modifier = Modifier,
 ) {
-    when (LocalUiMode.current) {
-        UiMode.Material -> {
-            val hexTextStyle =
-                MaterialTheme.typography.titleMedium.copy(fontFamily = FontFamily.Monospace)
-
-            OutlinedTextField(
-                value = state.hexText,
-                onValueChange = state::onHexInput,
-                singleLine = true,
-                isError = !state.isHexValid,
-                placeholder = { Text(HEX_HINT, style = hexTextStyle) },
-                textStyle = hexTextStyle,
-                keyboardOptions = HexKeyboardOptions,
-                modifier = modifier,
-            )
-        }
-
-        UiMode.Coui -> CouiHexField(state = state, modifier = modifier)
-    }
-}
-
-/**
- * COUI 线：输入框自绘，字号与字体由 [CouiTextField] 统一决定，这里拿不到等宽字体 ——
- * 十六进制逐位对齐只在 Material 线保留，COUI 线按普通文本呈现。
- */
-@Composable
-private fun CouiHexField(
-    state: ColorPickerUiState,
-    modifier: Modifier = Modifier,
-) {
-    CouiTextField(
+    currentPrefStyle().TextField(
         value = state.hexText,
         onValueChange = state::onHexInput,
         modifier = modifier,
+        enabled = true,
+        singleLine = true,
+        leadingIcon = null,
         placeholder = HEX_HINT,
         isError = !state.isHexValid,
-        singleLine = true,
         keyboardOptions = HexKeyboardOptions,
+        textStyle = MaterialTheme.typography.titleMedium.copy(fontFamily = FontFamily.Monospace),
     )
 }
 

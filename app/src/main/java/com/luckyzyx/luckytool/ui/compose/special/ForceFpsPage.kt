@@ -4,8 +4,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Button
-import androidx.compose.material3.Text
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.SideEffect
@@ -20,23 +18,19 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
-import com.itos.coui.layout.CouiPageDefaults
-import com.itos.coui.text.CouiTextKind
-import com.itos.coui.theme.CouiTheme
 import com.luckyzyx.luckytool.IRefreshRateController
 import com.luckyzyx.luckytool.R
 import com.luckyzyx.luckytool.data.DisplayMode
 import com.luckyzyx.luckytool.service.RefreshRateService
-import com.luckyzyx.luckytool.ui.compose.components.AppRadioItem
+import com.luckyzyx.luckytool.ui.compose.components.PrefButton
 import com.luckyzyx.luckytool.ui.compose.components.PrefGroup
+import com.luckyzyx.luckytool.ui.compose.components.PrefNote
+import com.luckyzyx.luckytool.ui.compose.components.PrefSelectRow
 import com.luckyzyx.luckytool.ui.compose.components.PrefSwitchRow
-import com.luckyzyx.luckytool.ui.compose.components.coui.CouiFilledButton
 import com.luckyzyx.luckytool.ui.compose.components.pageInset
 import com.luckyzyx.luckytool.ui.compose.scopes.ScopePageSpec
 import com.luckyzyx.luckytool.ui.compose.special.ForceFpsPage.BIND_TIMEOUT_MS
 import com.luckyzyx.luckytool.ui.compose.special.ForceFpsPage.reloader
-import com.luckyzyx.luckytool.ui.theme.LocalUiMode
-import com.luckyzyx.luckytool.ui.theme.UiMode
 import com.luckyzyx.luckytool.utils.GlobalKeyValue.keyFpsAutoStart
 import com.luckyzyx.luckytool.utils.GlobalKeyValue.keyFpsCur
 import com.luckyzyx.luckytool.utils.SettingsPrefs
@@ -46,7 +40,6 @@ import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
 import kotlin.time.Duration.Companion.milliseconds
-import com.itos.coui.text.Text as CouiText
 
 /**
  * 强制刷新率页：列出 SurfaceFlinger 支持的模式，设置当前刷新率、显示刷新率开关与开机自启。
@@ -87,9 +80,8 @@ import com.itos.coui.text.Text as CouiText
  *
  * 水平内缩：分组卡片的内缩统一由 [PrefGroup] 按外观线给（两条线都是 16dp），
  * 页级 padding 因此只留垂直方向；页面自绘的按钮与提示文字不经分组，自己补 16dp 才能与卡片对齐。
- * 行呈现（`PrefGroup` / `PrefSwitchRow`）与页面自绘的文字、按钮按外观分派
- * （COUI 线用 COUI 语义文字与胶囊按钮，Material 线用 material3 件）；
- * 模式单选项走 `AppRadioItem`，它本身已双线。
+ * 行与页级件都走行层原语（`PrefGroup` / `PrefSwitchRow` / `PrefSelectRow` / `PrefNote` /
+ * `PrefButton`），本页不判外观线；模式单选项用 `PrefSelectRow`，选中态与点击都以列表 index 为准。
  */
 object ForceFpsPage {
 
@@ -109,7 +101,6 @@ object ForceFpsPage {
     ) {
         val c = requireNotNull(context) { "ScopeScreen 未注入 Context" }
         custom(key = "force_fps_body") {
-            val isCoui = LocalUiMode.current == UiMode.Coui
             // 进程级缓存做种子：进入子页不重新绑定，直接用 RefreshRateService 已缓存的存活控制器
             var controller by remember { mutableStateOf(RefreshRateService.getCachedController()) }
             // 每次 load 读一次的 root IPC 快照（不在组合期反复读）
@@ -179,7 +170,7 @@ object ForceFpsPage {
                                     controller?.setRefreshRateMode(index)
                                     state.set(keyFpsCur, index)
                                 }
-                                AppRadioItem(
+                                PrefSelectRow(
                                     title = title,
                                     selected = index == fpsCur,
                                     onClick = onSelect,
@@ -195,27 +186,13 @@ object ForceFpsPage {
                     else -> R.string.fps_no_data
                 }
                 if (hint != null) {
-                    val text = stringResource(hint)
-                    // 空态提示按外观分派：COUI 线取说明色正文，Material 线保持 M3 Text
-                    if (isCoui) {
-                        CouiText(
-                            text = text,
-                            kind = CouiTextKind.Search,
-                            color = CouiPageDefaults.themeColors(CouiTheme.isDark).summary,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(horizontal = 16.dp, vertical = 24.dp),
-                            textAlign = TextAlign.Center,
-                        )
-                    } else {
-                        Text(
-                            text,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(horizontal = 16.dp, vertical = 24.dp),
-                            textAlign = TextAlign.Center,
-                        )
-                    }
+                    PrefNote(
+                        text = stringResource(hint),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp, vertical = 24.dp),
+                        textAlign = TextAlign.Center,
+                    )
                 }
                 // 自启动 + 显示刷新率：设置项合并为一张卡片，位于 FPS 数据卡之下
                 PrefGroup {
@@ -241,49 +218,24 @@ object ForceFpsPage {
                 }
                 // fpsRecover：持久化 -1 + 重置模式；开关可用性随 fpsCur==-1 自动失效
                 // COUI 线是 accent 填充胶囊，Material 线保持 M3 Button
-                if (isCoui) {
-                    CouiFilledButton(
-                        text = stringResource(R.string.restore_default_refresh_rate),
-                        onClick = {
-                            controller?.resetRefreshRateMode()
-                            state.set(keyFpsCur, -1)
-                        },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .pageInset(),
-                        enabled = controller != null,
-                    )
-                } else {
-                    Button(
-                        onClick = {
-                            controller?.resetRefreshRateMode()
-                            state.set(keyFpsCur, -1)
-                        },
-                        enabled = controller != null,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .pageInset(),
-                    ) { Text(stringResource(R.string.restore_default_refresh_rate)) }
-                }
-                if (isCoui) {
-                    CouiText(
-                        text = stringResource(R.string.fps_tips),
-                        kind = CouiTextKind.Search,
-                        color = CouiPageDefaults.themeColors(CouiTheme.isDark).summary,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(start = 16.dp, top = 10.dp, end = 16.dp),
-                        textAlign = TextAlign.Center,
-                    )
-                } else {
-                    Text(
-                        stringResource(R.string.fps_tips),
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(start = 16.dp, top = 10.dp, end = 16.dp),
-                        textAlign = TextAlign.Center,
-                    )
-                }
+                PrefButton(
+                    text = stringResource(R.string.restore_default_refresh_rate),
+                    onClick = {
+                        controller?.resetRefreshRateMode()
+                        state.set(keyFpsCur, -1)
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .pageInset(),
+                    enabled = controller != null,
+                )
+                PrefNote(
+                    text = stringResource(R.string.fps_tips),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(start = 16.dp, top = 10.dp, end = 16.dp),
+                    textAlign = TextAlign.Center,
+                )
             }
         }
     }

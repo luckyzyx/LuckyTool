@@ -1,34 +1,17 @@
 package com.luckyzyx.luckytool.ui.compose.scopes.related
 
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.itos.coui.dialog.CouiDialogAction
-import com.itos.coui.dialog.CouiDialogActionStyle
-import com.itos.coui.dialog.CouiDialogDefaults
-import com.itos.coui.theme.CouiTheme
 import com.luckyzyx.luckytool.R
+import com.luckyzyx.luckytool.ui.compose.components.ConfirmDialog
 import com.luckyzyx.luckytool.ui.compose.components.PrefRowInset
 import com.luckyzyx.luckytool.ui.compose.components.PrefSwitchRow
-import com.luckyzyx.luckytool.ui.compose.components.dialogBodyMaxHeight
-import com.luckyzyx.luckytool.ui.compose.components.coui.CouiAlertDialog
 import com.luckyzyx.luckytool.ui.compose.scopes.ScopePageSpec
-import com.luckyzyx.luckytool.ui.theme.LocalUiMode
-import com.luckyzyx.luckytool.ui.theme.UiMode
 import com.luckyzyx.luckytool.utils.ModulePrefs
 
 /**
@@ -96,39 +79,15 @@ object CorePatchPage {
                     )
                 }
                 if (showWarning) {
-                    when (LocalUiMode.current) {
-                        UiMode.Material -> AlertDialog(
-                            onDismissRequest = { showWarning = false },
-                            title = { Text(stringResource(R.string.use_previous_signatures)) },
-                            text = {
-                                Column(
-                                    Modifier
-                                        .fillMaxWidth()
-                                        .heightIn(max = dialogBodyMaxHeight(chrome = 128.dp))
-                                        .verticalScroll(rememberScrollState()),
-                                ) {
-                                    Text(stringResource(R.string.use_previous_signatures_warning))
-                                }
-                            },
-                            confirmButton = {
-                                TextButton(onClick = { showWarning = false }) {
-                                    Text(stringResource(android.R.string.ok))
-                                }
-                            },
-                        )
-                        // COUI 线：正文交给 COUI 弹窗绘制；主操作是 Primary 样式，必须显式给按钮配色
-                        UiMode.Coui -> CouiAlertDialog(
-                            onDismissRequest = { showWarning = false },
-                            title = stringResource(R.string.use_previous_signatures),
-                            message = stringResource(R.string.use_previous_signatures_warning),
-                            confirmAction = CouiDialogAction(
-                                text = stringResource(android.R.string.ok),
-                                onClick = { showWarning = false },
-                                style = CouiDialogActionStyle.Primary,
-                                colors = CouiDialogDefaults.primaryActionColors(CouiTheme.colorScheme.accent),
-                            ),
-                        )
-                    }
+                    // 两条线的弹窗与按钮样式由 ConfirmDialog 分派；这个提示只有「确定」一个出路，
+                    // 因此不画取消按钮（返回键 / 点外部仍然关掉）
+                    ConfirmDialog(
+                        message = stringResource(R.string.use_previous_signatures_warning),
+                        title = stringResource(R.string.use_previous_signatures),
+                        onConfirm = { showWarning = false },
+                        onDismiss = { showWarning = false },
+                        showDismissButton = false,
+                    )
                 }
             }
             switch(

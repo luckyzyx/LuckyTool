@@ -7,10 +7,7 @@ import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowRight
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -34,7 +31,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.itos.coui.theme.CouiTheme
 import com.luckyzyx.luckytool.R
 import com.luckyzyx.luckytool.ui.compose.FunctionPageData
 import com.luckyzyx.luckytool.ui.compose.pageTitle
@@ -42,13 +38,11 @@ import com.luckyzyx.luckytool.ui.compose.ScopeRoute
 import com.luckyzyx.luckytool.ui.compose.components.LocalScopeListState
 import com.luckyzyx.luckytool.ui.compose.components.LocalScopeTopInset
 import com.luckyzyx.luckytool.ui.compose.components.PageScaffold
-import com.luckyzyx.luckytool.ui.compose.components.pageInset
+import com.luckyzyx.luckytool.ui.compose.components.PrefRowChevron
+import com.luckyzyx.luckytool.ui.compose.components.currentPrefStyle
 import com.luckyzyx.luckytool.ui.compose.components.ScopeScreen
-import com.luckyzyx.luckytool.ui.compose.components.coui.CouiIconButton
 import com.luckyzyx.luckytool.ui.compose.components.material.MaterialTextField
 import com.luckyzyx.luckytool.ui.compose.scopes.ScopePageRegistry
-import com.luckyzyx.luckytool.ui.theme.LocalUiMode
-import com.luckyzyx.luckytool.ui.theme.UiMode
 import com.luckyzyx.luckytool.utils.OtherPrefs
 import com.luckyzyx.luckytool.utils.PrefState
 import com.luckyzyx.luckytool.utils.SettingsPrefs
@@ -179,15 +173,10 @@ fun SearchPage(isCurrentPage: Boolean, onOpen: (ScopeRoute) -> Unit) {
                             }
                     }
 
-                    // COUI 行的 CouiTextRow 自带 16dp 行内缩，裸放本身就是一条搜索框；
-                    // material 行的 MaterialListItem 是一整块分段卡片、自己不带内缩，
-                    // 补 pageInset 才与页面上的分组卡片左右对齐
-                    val fieldInset = when (LocalUiMode.current) {
-                        UiMode.Material -> Modifier.pageInset()
-                        UiMode.Coui -> Modifier
-                    }
+                    // 搜索框的水平内缩由外观线给：COUI 的输入行自带 16dp，material 的分段卡片
+                    // 自己不带内缩，需要补到与页面上的分组卡片左右对齐
                     MaterialTextField(
-                        modifier = fieldInset,
+                        modifier = currentPrefStyle().containerInset(),
                         value = queryNow,
                         onValueChange = { query = it },
                         placeholder = { Text(stringResource(R.string.menu_search)) },
@@ -205,28 +194,16 @@ fun SearchPage(isCurrentPage: Boolean, onOpen: (ScopeRoute) -> Unit) {
                         },
                         trailingContent = if (queryNow.isNotEmpty()) {
                             {
-                                // 清空按钮跟随当前渲染线：搜索框两条线共用同一个入口，
-                                // 里面混进另一种线族的按钮会在 COUI 线上露出 Material 的点击态
-                                when (LocalUiMode.current) {
-                                    UiMode.Material -> IconButton(onClick = { query = "" }) {
-                                        Icon(
-                                            painterResource(R.drawable.ic_baseline_close_24),
-                                            contentDescription = stringResource(R.string.clear),
-                                        )
-                                    }
-
-                                    UiMode.Coui -> CouiIconButton(
-                                        onClick = { query = "" },
-                                        contentDescription = stringResource(R.string.clear),
-                                    ) {
-                                        // 图标语义由按钮统一声明，这里传 null 免得读屏播报两遍
-                                        Icon(
-                                            painterResource(R.drawable.ic_baseline_close_24),
-                                            contentDescription = null,
-                                            tint = CouiTheme.colorScheme.onSurface,
-                                        )
-                                    }
-                                }
+                                // 清空按钮的形态与配色由外观线给；图标语义由按钮统一声明，图标自身不再重复
+                                currentPrefStyle().IconButton(
+                                    onClick = { query = "" },
+                                    contentDescription = stringResource(R.string.clear),
+                                    modifier = Modifier,
+                                    enabled = true,
+                                    icon = null,
+                                    painter = painterResource(R.drawable.ic_baseline_close_24),
+                                    danger = false,
+                                )
                             }
                         } else {
                             null
@@ -242,33 +219,19 @@ fun SearchPage(isCurrentPage: Boolean, onOpen: (ScopeRoute) -> Unit) {
                                 click(
                                     title = term,
                                     trailing = {
-                                        when (LocalUiMode.current) {
-                                            UiMode.Material -> IconButton(
-                                                onClick = {
-                                                    history = history.filterNot { it == term }
-                                                    writeSearchHistory(context, history)
-                                                },
-                                            ) {
-                                                Icon(
-                                                    painterResource(R.drawable.ic_baseline_close_24),
-                                                    contentDescription = stringResource(R.string.clear),
-                                                )
-                                            }
-
-                                            UiMode.Coui -> CouiIconButton(
-                                                onClick = {
-                                                    history = history.filterNot { it == term }
-                                                    writeSearchHistory(context, history)
-                                                },
-                                                contentDescription = stringResource(R.string.clear),
-                                            ) {
-                                                Icon(
-                                                    painterResource(R.drawable.ic_baseline_close_24),
-                                                    contentDescription = null,
-                                                    tint = CouiTheme.colorScheme.onSurfaceVariant,
-                                                )
-                                            }
-                                        }
+                                        // 删除键的形态与配色由外观线给，图标语义由按钮统一声明
+                                        currentPrefStyle().IconButton(
+                                            onClick = {
+                                                history = history.filterNot { it == term }
+                                                writeSearchHistory(context, history)
+                                            },
+                                            contentDescription = stringResource(R.string.clear),
+                                            modifier = Modifier,
+                                            enabled = true,
+                                            icon = null,
+                                            painter = painterResource(R.drawable.ic_baseline_close_24),
+                                            danger = false,
+                                        )
                                     },
                                     onClick = { query = term },
                                 )
@@ -299,12 +262,7 @@ fun SearchPage(isCurrentPage: Boolean, onOpen: (ScopeRoute) -> Unit) {
                                 }
                                 append(entry.pageTitle)
                             },
-                            trailing = {
-                                Icon(
-                                    Icons.AutoMirrored.Rounded.KeyboardArrowRight,
-                                    contentDescription = null,
-                                )
-                            },
+                            trailing = { PrefRowChevron() },
                             onClick = {
                                 recordHistory(entry.item.title ?: entry.item.key)
                                 // page DSL 命中 → 跳目标页；普通偏好命中 → 本页滚动定位

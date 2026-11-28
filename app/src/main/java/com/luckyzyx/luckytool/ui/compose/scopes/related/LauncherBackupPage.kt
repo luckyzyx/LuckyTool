@@ -2,43 +2,23 @@ package com.luckyzyx.luckytool.ui.compose.scopes.related
 
 import android.content.Context
 import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.heightIn
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.itos.coui.dialog.CouiDialogAction
-import com.itos.coui.dialog.CouiDialogActionStyle
-import com.itos.coui.dialog.CouiDialogDefaults
 import com.composables.icons.lucide.R as LucideR
-import com.itos.coui.theme.CouiTheme
 import com.luckyzyx.luckytool.R
-import com.luckyzyx.luckytool.ui.compose.components.coui.CouiAlertDialog
-import com.luckyzyx.luckytool.ui.compose.components.coui.CouiIconButton
-import com.luckyzyx.luckytool.ui.compose.components.dialogBodyMaxHeight
+import com.luckyzyx.luckytool.ui.compose.components.ConfirmDialog
+import com.luckyzyx.luckytool.ui.compose.components.PrefIconButton
 import com.luckyzyx.luckytool.ui.compose.scopes.ScopePageSpec
-import com.luckyzyx.luckytool.ui.theme.LocalUiMode
-import com.luckyzyx.luckytool.ui.theme.UiMode
 import com.luckyzyx.luckytool.utils.LauncherBackupHint
 import com.luckyzyx.luckytool.utils.LauncherBackupPrefs
 import com.luckyzyx.luckytool.utils.LauncherBackupTransfer
@@ -222,10 +202,11 @@ object LauncherBackupPage {
                         // 恢复必须二次确认：会先自动补拍一份 pre_restore，然后整表覆盖布局
                         val target = pendingRestoreState.value
                         if (target != null) {
-                            SnapshotConfirmDialog(
+                            ConfirmDialog(
                                 title = stringResource(R.string.launcher_backup_restore_title),
                                 message = stringResource(R.string.launcher_backup_restore_message, target.fileName),
-                                confirmText = stringResource(R.string.launcher_backup_restore_confirm),
+                                confirmLabel = stringResource(R.string.launcher_backup_restore_confirm),
+                                dismissLabel = stringResource(R.string.launcher_backup_cancel),
                                 onConfirm = {
                                     pendingRestoreState.value = null
                                     coroutineScope.launch { restoreNow(c, target) }
@@ -237,10 +218,11 @@ object LauncherBackupPage {
                         // 删除同样要二次确认：文件删掉就没有回滚点，只能重新备份
                         val deleting = pendingDeleteState.value
                         if (deleting != null) {
-                            SnapshotConfirmDialog(
+                            ConfirmDialog(
                                 title = stringResource(R.string.launcher_backup_delete_title),
                                 message = stringResource(R.string.launcher_backup_delete_message, deleting.fileName),
-                                confirmText = stringResource(R.string.launcher_backup_delete_confirm),
+                                confirmLabel = stringResource(R.string.launcher_backup_delete_confirm),
+                                dismissLabel = stringResource(R.string.launcher_backup_cancel),
                                 onConfirm = {
                                     pendingDeleteState.value = null
                                     deleteNow(c, deleting)
@@ -413,74 +395,12 @@ object LauncherBackupPage {
 /** 快照行尾的删除按钮：危险动作在两条线上都用最强的前景/错误色 */
 @Composable
 private fun SnapshotDeleteAction(enabled: Boolean, onClick: () -> Unit) {
-    when (LocalUiMode.current) {
-        UiMode.Material -> IconButton(onClick = onClick, enabled = enabled) {
-            Icon(
-                imageVector = Icons.Filled.Delete,
-                contentDescription = stringResource(R.string.launcher_backup_delete),
-                tint = MaterialTheme.colorScheme.error,
-            )
-        }
-        // COUI 没有 error 角色：危险动作靠满强度前景色表达，描述挂在按钮点击面上，图标不再重复声明
-        UiMode.Coui -> CouiIconButton(
-            onClick = onClick,
-            contentDescription = stringResource(R.string.launcher_backup_delete),
-            enabled = enabled,
-        ) {
-            Icon(
-                painter = painterResource(LucideR.drawable.lucide_ic_trash_2),
-                contentDescription = null,
-                tint = CouiTheme.colorScheme.onSurface,
-            )
-        }
-    }
-}
-
-/** 二次确认对话框：恢复与删除共用，按外观线分派到 M3 弹窗或 COUI 弹窗 */
-@Composable
-private fun SnapshotConfirmDialog(
-    title: String,
-    message: String,
-    confirmText: String,
-    onConfirm: () -> Unit,
-    onDismiss: () -> Unit,
-) {
-    when (LocalUiMode.current) {
-        UiMode.Material -> AlertDialog(
-            onDismissRequest = onDismiss,
-            title = { Text(title) },
-            text = {
-                Column(
-                    Modifier
-                        .fillMaxWidth()
-                        .heightIn(max = dialogBodyMaxHeight(chrome = 160.dp))
-                        .verticalScroll(rememberScrollState()),
-                ) {
-                    Text(message)
-                }
-            },
-            confirmButton = { TextButton(onClick = onConfirm) { Text(confirmText) } },
-            dismissButton = {
-                TextButton(onClick = onDismiss) {
-                    Text(stringResource(R.string.launcher_backup_cancel))
-                }
-            },
-        )
-        // COUI 线：确认是主操作，Primary 样式必须显式给配色；取消放取消位，不占中性位
-        UiMode.Coui -> CouiAlertDialog(
-            onDismissRequest = onDismiss,
-            title = title,
-            message = message,
-            confirmAction = CouiDialogAction(
-                text = confirmText,
-                onClick = onConfirm,
-                style = CouiDialogActionStyle.Primary,
-                colors = CouiDialogDefaults.primaryActionColors(CouiTheme.colorScheme.accent),
-            ),
-            dismissAction = CouiDialogAction(
-                text = stringResource(R.string.launcher_backup_cancel),
-                onClick = onDismiss,
-            ),
-        )
-    }
+    PrefIconButton(
+        onClick = onClick,
+        contentDescription = stringResource(R.string.launcher_backup_delete),
+        enabled = enabled,
+        icon = Icons.Filled.Delete,
+        painter = painterResource(LucideR.drawable.lucide_ic_trash_2),
+        danger = true,
+    )
 }

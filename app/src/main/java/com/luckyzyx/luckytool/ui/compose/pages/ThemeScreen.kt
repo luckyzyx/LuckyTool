@@ -23,7 +23,6 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.calculateEndPadding
@@ -36,11 +35,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBars
-import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.systemBars
-import androidx.compose.foundation.layout.union
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
@@ -67,9 +63,6 @@ import androidx.compose.material.icons.rounded.Swipe
 import androidx.compose.material.icons.rounded.Wallpaper
 import androidx.compose.material3.ButtonGroupDefaults
 import androidx.compose.material3.Icon
-import androidx.compose.material3.LargeFlexibleTopAppBar
-import androidx.compose.material3.TopAppBarDefaults
-import androidx.compose.material3.rememberTopAppBarState
 import androidx.compose.material3.rememberSliderState
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -88,9 +81,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.graphics.vector.rememberVectorPainter
-import androidx.compose.ui.input.nestedscroll.nestedScroll
-import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
@@ -111,20 +101,19 @@ import com.itos.coui.layout.CouiPageDefaults
 import com.itos.coui.text.CouiTextKind
 import com.itos.coui.text.Text as CouiText
 import com.itos.coui.theme.CouiTheme
-import com.itos.coui.topappbar.CouiTopAppBarDefaults
 import com.luckyzyx.luckytool.R
-import com.luckyzyx.luckytool.ui.compose.components.ChromeInsets
 import com.luckyzyx.luckytool.ui.compose.components.pageInset
-import com.luckyzyx.luckytool.ui.compose.components.coui.CouiPageScaffold
-import com.luckyzyx.luckytool.ui.compose.components.material.MaterialScaffold
+import com.luckyzyx.luckytool.ui.compose.components.PageScaffold
+import com.luckyzyx.luckytool.ui.compose.components.PrefIcon
+import com.luckyzyx.luckytool.ui.compose.components.PrefNote
+import com.luckyzyx.luckytool.ui.compose.components.PrefRowTitle
+import com.luckyzyx.luckytool.ui.compose.components.currentUiStyle
 import com.luckyzyx.luckytool.ui.compose.components.material.MaterialToggleButton
 import com.luckyzyx.luckytool.ui.compose.components.AppGroup
 import com.luckyzyx.luckytool.ui.compose.components.AppDropdownItem
 import com.luckyzyx.luckytool.ui.compose.components.AppSwitchItem
 import com.luckyzyx.luckytool.ui.compose.components.AppCard
 import com.luckyzyx.luckytool.ui.compose.components.AppSlider
-import com.luckyzyx.luckytool.ui.compose.components.material.MaterialTopBarBackButton
-import com.luckyzyx.luckytool.ui.compose.components.material.materialTopAppBarColors
 import com.luckyzyx.luckytool.ui.compose.MainTab
 import com.luckyzyx.luckytool.ui.shell.FloatingBottomBarStyle
 import com.luckyzyx.luckytool.ui.shell.PageScaleMax
@@ -162,13 +151,47 @@ import kotlin.math.roundToInt
  *
  * COUI 与 Material 两种外观共用本页：配色、取色、外壳手势与悬浮底栏都在这里配置。
  * 状态在两条线之外只建一份，外观切换时页内读数与滑条中间态都不回退。
+ *
+ * 页面组成：主题预览卡片 → 主题色选择（跟随系统 + 15 预设）→ 主题模式按钮组
+ * → 调色风格 / 色彩规格下拉 → 动态取色开关 →（COUI 线）跟随 Material 配色开关 → 预测性返回手势。
+ *
+ * 两条外观线共用同一份列表与偏好；COUI 线额外显示「跟随 Material 配色」开关
+ * （coui_dynamic_color，默认关，用 COUI 预设配色），并隐藏本线无意义的悬浮底栏项。
+ *
+ * 偏好键沿用 LuckyTool 既有约定（SettingsPrefs）：
+ * dark_theme（0 跟随系统 / 1 深色 / 2 浅色 / 3 深色 AMOLED）、key_color、
+ * palette_style、color_spec、use_dynamic_color、coui_dynamic_color 与
+ * coui_contour_glow（COUI 线专用）、
+ * enable_predictive_back、enable_swipe_dismiss。
+ * 写入后通过 [ThemePrefs.notifyChanged] 让应用主题即时重算，无需 recreate。
  */
 @Composable
 fun ThemeScreen(onBack: () -> Unit) {
     val state = rememberThemeScreenState()
-    when (LocalUiMode.current) {
-        UiMode.Material -> ThemeScreenMaterial(state = state, onBack = onBack)
-        UiMode.Coui -> ThemeScreenCoui(state = state, onBack = onBack)
+    PageScaffold(
+        title = stringResource(R.string.settings_theme),
+        onBack = onBack,
+        // 主题页不是导航页：顶栏保持收起样式，两条线都不挂折叠滚动连接
+        collapseEnabled = false,
+    ) { padding ->
+        val layoutDirection = LocalLayoutDirection.current
+        // 末尾留白 = 视觉留白 16dp + 外壳没含的底部系统栏高度；外壳已含的部分不能重复叠加
+        val systemBarBottom = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding() +
+            WindowInsets.captionBar.asPaddingValues().calculateBottomPadding()
+        ThemeScreenList(
+            state = state,
+            modifier = Modifier
+                .fillMaxSize()
+                .consumeWindowInsets(padding)
+                .padding(
+                    start = padding.calculateStartPadding(layoutDirection),
+                    end = padding.calculateEndPadding(layoutDirection),
+                    bottom = padding.calculateBottomPadding(),
+                ),
+            topInset = padding.calculateTopPadding(),
+            bottomSpace = 16.dp + (systemBarBottom - padding.calculateBottomPadding())
+                .coerceAtLeast(0.dp),
+        )
     }
 }
 
@@ -284,107 +307,9 @@ private fun rememberThemeScreenState(): ThemeScreenState {
 }
 
 /**
- * 主题与配色页的 Material 实现。
+ * 主题页正文：骨架在 [PageScaffold] 里，列表内容与状态两条线共用这一份。
  *
- * 页面组成：
- * 主题预览卡片 → 主题色选择（跟随系统 + 15 预设）→ 主题模式分段按钮
- * → 调色风格 / 色彩规格下拉 → 动态取色开关 →（COUI 线）跟随 Material 配色开关 → 预测性返回手势。
- *
- * 两条外观线共用同一份列表与偏好；COUI 线额外显示「跟随 Material 配色」开关
- * （coui_dynamic_color，默认关，用 COUI 预设配色），并隐藏本线无意义的悬浮底栏项。
- *
- * 偏好键沿用 LuckyTool 既有约定（SettingsPrefs）：
- * dark_theme（0 跟随系统 / 1 深色 / 2 浅色 / 3 深色 AMOLED）、key_color、
- * palette_style、color_spec、use_dynamic_color、coui_dynamic_color 与
- * coui_contour_glow（COUI 线专用）、
- * enable_predictive_back、enable_swipe_dismiss。
- * 写入后通过 [ThemePrefs.notifyChanged] 让应用主题即时重算，无需 recreate。
- */
-@Composable
-private fun ThemeScreenMaterial(state: ThemeScreenState, onBack: () -> Unit) {
-    val topBarState = rememberTopAppBarState()
-    val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior(topBarState)
-    MaterialScaffold(
-        topBar = {
-            LargeFlexibleTopAppBar(
-                // 主题页不是导航页：顶栏保持收起样式，测量后压到折叠位置
-                modifier = Modifier.onSizeChanged {
-                    val limit = topBarState.heightOffsetLimit
-                    if (limit.isFinite() && limit != -Float.MAX_VALUE) {
-                        topBarState.heightOffset = limit
-                    }
-                },
-                navigationIcon = { MaterialTopBarBackButton(onClick = onBack) },
-                title = { Text(stringResource(R.string.settings_theme)) },
-                colors = materialTopAppBarColors(),
-                scrollBehavior = scrollBehavior,
-                windowInsets = ChromeInsets.only(
-                    WindowInsetsSides.Top + WindowInsetsSides.Horizontal
-                ),
-            )
-        },
-        contentWindowInsets = ChromeInsets.only(
-            WindowInsetsSides.Top + WindowInsetsSides.Horizontal
-        ),
-    ) { paddingValues ->
-        val navBars = WindowInsets.navigationBars.asPaddingValues()
-        val captionBar = WindowInsets.captionBar.asPaddingValues()
-        val layoutDirection = LocalLayoutDirection.current
-        ThemeScreenList(
-            state = state,
-            modifier = Modifier
-                .fillMaxSize()
-                .consumeWindowInsets(paddingValues)
-                .padding(
-                    start = paddingValues.calculateStartPadding(layoutDirection),
-                    end = paddingValues.calculateEndPadding(layoutDirection),
-                    bottom = paddingValues.calculateBottomPadding(),
-                ),
-            topInset = paddingValues.calculateTopPadding(),
-            bottomSpace = 16.dp +
-                navBars.calculateBottomPadding() +
-                captionBar.calculateBottomPadding(),
-        )
-    }
-}
-
-/**
- * 主题与配色页的 COUI 实现。
- *
- * 顶栏保持收起样式：非导航页不允许折叠展开，折叠连接不再挂到正文外层，
- * 正文内边距固定为收起后的顶栏高度。
- */
-@Composable
-private fun ThemeScreenCoui(state: ThemeScreenState, onBack: () -> Unit) {
-    val behavior = CouiTopAppBarDefaults.exitUntilCollapsedScrollBehavior()
-    CouiPageScaffold(
-        title = stringResource(R.string.settings_theme),
-        scrollBehavior = behavior,
-        collapseEnabled = false,
-        onBack = onBack,
-    ) { paddingValues ->
-        val layoutDirection = LocalLayoutDirection.current
-        ThemeScreenList(
-            state = state,
-            modifier = Modifier
-                .fillMaxSize()
-                .consumeWindowInsets(paddingValues)
-                .padding(
-                    start = paddingValues.calculateStartPadding(layoutDirection),
-                    end = paddingValues.calculateEndPadding(layoutDirection),
-                    bottom = paddingValues.calculateBottomPadding(),
-                ),
-            topInset = paddingValues.calculateTopPadding(),
-            // 外壳的系统栏内边距已含在 paddingValues 里，末尾只留视觉留白
-            bottomSpace = 16.dp,
-        )
-    }
-}
-
-/**
- * 主题页正文：两条外观线的外壳不同，列表内容与状态共用这一份。
- *
- * @param modifier 已带上外壳水平/底部内边距（Material 线还带折叠滚动连接）的列表修饰符；
+ * @param modifier 已带上外壳水平/底部内边距的列表修饰符；
  *   顶栏高度单独经 [topInset] 放进 contentPadding
  * @param topInset 顶栏高度：作为列表 contentPadding 的 top，让滚动中的行能进入顶栏下方
  * @param bottomSpace 列表末尾留白；外壳已消费的底部内边距不要在列表里重复叠加
@@ -399,10 +324,12 @@ private fun ThemeScreenList(
     val context = LocalContext.current
     val isDark = state.colorMode.resolveDarkTheme()
     // LazyColumn 的 item 作用域在 lambda 里，外观线的读取在这里取好再传进去。
+    // 本页剩下的外观分叉只有「本线有没有这项功能」（COUI 专属开关、Material 专属底栏项）
+    // 与「按线选图标资源集」；控件外形、配色、内缩一律从样式位取。
     val isCouiLine = LocalUiMode.current == UiMode.Coui
-    // COUI 线的块间留白由库的 Group 自带（无标题组 16dp），列表不再叠加；
-    // 非分组项（取色行、模式选择、缩放卡）在这里补同档间距，Material 线仍靠列表的 13dp。
-    val couiBlockGap = if (isCouiLine) CouiPageDefaults.groupSpacing else 0.dp
+    // 块间留白取样式位的分组间距：COUI 的分组容器已自带这档留白，非分组项（取色行、
+    // 模式选择、缩放卡）要自己补同档间距；Material 线为 0，纵向间距由列表行距统一给
+    val blockGap = currentUiStyle().groupSpacing
     val appSettings = AppSettings(
         colorMode = state.colorMode,
         keyColor = state.keyColor,
@@ -434,7 +361,7 @@ private fun ThemeScreenList(
                 visible = !isCouiLine || state.couiDynamicColor,
                 enter = fadeIn() + expandVertically(),
                 exit = fadeOut() + shrinkVertically(),
-                modifier = Modifier.padding(top = couiBlockGap),
+                modifier = Modifier.padding(top = blockGap),
             ) {
                 LazyRow(
                     modifier = Modifier.fillMaxWidth(),
@@ -476,7 +403,7 @@ private fun ThemeScreenList(
         }
 
         item {
-            Box(modifier = Modifier.padding(top = couiBlockGap)) { ThemeModeSelector(state = state) }
+            Box(modifier = Modifier.padding(top = blockGap)) { ThemeModeSelector(state = state) }
         }
 
         // 调色风格 / 色彩规格两条外观线共用；COUI 未开启「跟随 Material 配色」时整组隐藏。
@@ -706,7 +633,7 @@ private fun ThemeScreenList(
 
         // 界面缩放（page_scale）：拖动只更新页内状态，松手才提交偏好，避免重建全应用密度
         item {
-            Box(modifier = Modifier.padding(top = couiBlockGap)) {
+            Box(modifier = Modifier.padding(top = blockGap)) {
                 ThemeSliderCard(
                     icon = Icons.Rounded.AspectRatio,
                     painter = painterResource(LucideR.drawable.lucide_ic_scaling),
@@ -845,14 +772,8 @@ private fun ThemeSliderCard(
     onValueChange: (Float) -> Unit,
     onValueChangeFinished: () -> Unit,
 ) {
-    // 行首图标与同页开关 / 下拉行同一套取法：Material 线用 Material 矢量图与 onSurface（行首图标取卡片前景色），
-    // COUI 线用 Lucide 图与页面标题色，两条线都不再固定用 onSurfaceVariant 这类淡色
-    val isCoui = LocalUiMode.current == UiMode.Coui
-    val iconTint = when (LocalUiMode.current) {
-        UiMode.Material -> MaterialTheme.colorScheme.onSurface
-        UiMode.Coui -> CouiPageDefaults.themeColors().title
-    }
-    val iconPainter = if (isCoui) painter ?: rememberVectorPainter(icon) else rememberVectorPainter(icon)
+    // 行首图标走样式位：两条线各自优先自己的图标资源集（矢量图 / 绘画），
+    // 着色与尺寸由样式位统一，和同页开关、下拉行保持一致
     AppCard(
         modifier = Modifier
             .fillMaxWidth()
@@ -863,12 +784,7 @@ private fun ThemeSliderCard(
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(
-                    painter = iconPainter,
-                    contentDescription = title,
-                    tint = iconTint,
-                    modifier = if (isCoui) Modifier.size(CouiPageDefaults.iconSize) else Modifier,
-                )
+                PrefIcon(icon = icon, painter = painter)
                 Spacer(modifier = Modifier.width(12.dp))
                 Column(modifier = Modifier.weight(1f)) {
                     ThemeCardTitle(text = title)
@@ -896,43 +812,20 @@ private fun ThemeSliderCard(
     }
 }
 
-/** 卡片标题：Material 取 titleMedium，COUI 取偏好标题的语义字体 */
+/** 卡片标题：走行标题的语义字体与配色 */
 @Composable
-private fun ThemeCardTitle(text: String) {
-    when (LocalUiMode.current) {
-        UiMode.Material -> Text(
-            text = text,
-            style = MaterialTheme.typography.titleMedium,
-            color = MaterialTheme.colorScheme.onSurface,
-        )
+private fun ThemeCardTitle(text: String) = PrefRowTitle(text = text)
 
-        UiMode.Coui -> CouiText(
-            text = text,
-            kind = CouiTextKind.ItemTitle,
-            color = CouiPageDefaults.themeColors().title,
-        )
-    }
-}
-
-/** 卡片说明与当前值：Material 取 bodyMedium，COUI 取偏好说明的语义字体 */
+/** 卡片说明与当前值：走页内说明的语义字体与配色 */
 @Composable
-private fun ThemeCardSummary(text: String) {
-    when (LocalUiMode.current) {
-        UiMode.Material -> Text(
-            text = text,
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
+private fun ThemeCardSummary(text: String) = PrefNote(text = text)
 
-        UiMode.Coui -> CouiText(
-            text = text,
-            kind = CouiTextKind.ItemSummary,
-            color = CouiPageDefaults.themeColors().summary,
-        )
-    }
-}
-
-/** 主题预览卡片：以当前选择实时渲染一块迷你界面 */
+/**
+ * 主题预览卡片：以当前选择实时渲染一块迷你界面。
+ *
+ * 这里按外观线选的是「预览卡自己长什么样」（预览卡画的就是本线页面的样子），
+ * 不是同一个控件的两种外形，所以两份预览各画各的，不套用样式位。
+ */
 @Composable
 private fun ThemePreviewCard(
     appSettings: AppSettings,
@@ -1126,15 +1019,11 @@ private fun CouiPreviewCard(isDark: Boolean) {
                 horizontalArrangement = Arrangement.Center,
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                if (LocalUiMode.current == UiMode.Coui) {
-                    Icon(
-                        painter = painterResource(LucideR.drawable.lucide_ic_house),
-                        contentDescription = null,
-                        tint = colors.accent,
-                    )
-                } else {
-                    Icon(Icons.Filled.Home, null, tint = colors.accent)
-                }
+                Icon(
+                    painter = painterResource(LucideR.drawable.lucide_ic_house),
+                    contentDescription = null,
+                    tint = colors.accent,
+                )
             }
         }
     }

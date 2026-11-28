@@ -6,8 +6,6 @@ import android.content.Context
 import android.content.ContextWrapper
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -27,11 +25,9 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.luckyzyx.luckytool.R
 import com.luckyzyx.luckytool.ui.compose.components.PrefRow
 import com.luckyzyx.luckytool.ui.compose.components.PrefGroup
-import com.luckyzyx.luckytool.ui.compose.components.coui.CouiTextButton
+import com.luckyzyx.luckytool.ui.compose.components.PrefTextButton
 import com.luckyzyx.luckytool.ui.compose.scopes.ScopePageSpec
 import com.luckyzyx.luckytool.ui.service.XposedServiceBridge
-import com.luckyzyx.luckytool.ui.theme.LocalUiMode
-import com.luckyzyx.luckytool.ui.theme.UiMode
 import com.luckyzyx.luckytool.utils.AppPermission
 import com.luckyzyx.luckytool.utils.DeviceUtils
 import com.luckyzyx.luckytool.utils.PermissionUtils
@@ -200,7 +196,7 @@ fun AppPermissionContent(
                     } else {
                         null
                     }
-                item {
+                item(key = kind.name) {
                     PrefRow(
                         title = stringResource(kind.labelRes),
                         summary = stringResource(
@@ -218,18 +214,18 @@ fun AppPermissionContent(
                         } else {
                             {
                                 when {
-                                    granted -> ActionButton(
+                                    granted -> PrefTextButton(
                                         text = stringResource(R.string.app_permission_granted),
                                         enabled = false,
                                         onClick = {},
                                     )
 
-                                    onOpenSettings != null -> ActionButton(
+                                    onOpenSettings != null -> PrefTextButton(
                                         text = stringResource(R.string.app_permission_open_settings),
                                         onClick = onOpenSettings,
                                     )
 
-                                    else -> ActionButton(
+                                    else -> PrefTextButton(
                                         text = stringResource(R.string.app_permission_action_grant),
                                         onClick = onGrant ?: {},
                                     )
@@ -244,7 +240,7 @@ fun AppPermissionContent(
         if (blocking) {
             // 无跳过出口：阻塞态只提供逐项授权与退出应用
             PrefGroup {
-                item {
+                item(key = "exit") {
                     PrefRow(
                         title = stringResource(R.string.app_permission_exit),
                         onClick = onExit,
@@ -252,18 +248,6 @@ fun AppPermissionContent(
                 }
             }
         }
-    }
-}
-
-/**
- * 动作按钮：Material 线用 material3 `TextButton`，COUI 线用 [CouiTextButton]；
- * [enabled] = false 走禁用弱化样式（COUI 侧把文字降到 onSurfaceVariant 低透明度）。
- */
-@Composable
-private fun ActionButton(text: String, onClick: () -> Unit, enabled: Boolean = true) {
-    when (LocalUiMode.current) {
-        UiMode.Material -> TextButton(onClick = onClick, enabled = enabled) { Text(text) }
-        UiMode.Coui -> CouiTextButton(text = text, onClick = onClick, enabled = enabled)
     }
 }
 

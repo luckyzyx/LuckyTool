@@ -11,9 +11,6 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.combinedClickable
-import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -24,7 +21,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyItemScope
@@ -32,15 +28,10 @@ import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowRight
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Icon
 import androidx.compose.material3.ListItemColors
-import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Slider
@@ -67,12 +58,10 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.compositeOver
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.semantics.heading
-import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -80,22 +69,13 @@ import com.itos.coui.dialog.CouiDialogAction
 import com.itos.coui.dialog.CouiDialogActionStyle
 import com.itos.coui.dialog.CouiDialogDefaults
 import com.itos.coui.dialog.InputDialog as CouiInputDialog
-import com.itos.coui.effect.couiButtonFeedback
-import com.luckyzyx.luckytool.ui.compose.components.coui.CouiIconsExt
 import com.itos.coui.layout.CouiPageColors
 import com.itos.coui.layout.CouiPageDefaults
 import com.itos.coui.layout.Divider as CouiDivider
-import com.itos.coui.layout.Footer as CouiFooter
 import com.itos.coui.layout.Item as CouiItem
-import com.itos.coui.menu.CouiMenuItem
-import com.itos.coui.menu.Menu as CouiMenu
-import com.itos.coui.menu.couiMenuAnchor
-import com.itos.coui.menu.rememberCouiMenuAnchor
 import com.itos.coui.scroll.rememberCouiOverscrollEffect
 import com.itos.coui.slider.CouiSliderDefaults
 import com.itos.coui.slider.Slider as CouiSlider
-import com.itos.coui.switch.CouiSwitchDefaults
-import com.itos.coui.switch.Switch as CouiSwitch
 import com.itos.coui.text.CouiTextKind
 import com.itos.coui.text.Text as CouiText
 import com.itos.coui.theme.CouiTheme
@@ -104,8 +84,6 @@ import com.luckyzyx.luckytool.ui.compose.components.AppDropdownItem
 import com.luckyzyx.luckytool.ui.compose.components.AppItem
 import com.luckyzyx.luckytool.ui.compose.components.coui.CouiPullToRefreshBox
 import com.luckyzyx.luckytool.ui.compose.components.material.MaterialItemContainer
-import com.luckyzyx.luckytool.ui.compose.components.AppListItem
-import com.luckyzyx.luckytool.ui.compose.components.AppSwitchItem
 import com.luckyzyx.luckytool.ui.compose.components.material.LocalShellBottomInset
 import com.luckyzyx.luckytool.ui.compose.components.material.materialGroupColors
 import com.luckyzyx.luckytool.ui.compose.scopes.ScopePageRegistry
@@ -310,7 +288,7 @@ internal fun CouiRowsColumn(rows: List<PrefCardRow>) {
  *
  * 卡片内外三段文字各归其位：标题与说明画在卡片上方（标题一行、说明一行，与库 Group 的标题行同档：
  * 12dp 分组上沿、32dp 水平内缩、[CouiTextKind.GroupTitle]，说明用 GroupFooter 样式），
- * [footer] 画在卡片下方（库的 [CouiFooter]，32dp 水平内缩 + 上下 8dp）。
+ * [footer] 画在卡片下方（与标题下方那行说明同版式：32dp 水平内缩 + 上下 8dp）。
  *
  * 分组上沿留白也在这里给：有标题走 [CouiPageDefaults.categoryTopSpacing]，无标题走
  * [CouiPageDefaults.groupSpacing] —— 分组之间的垂直间距只由分组自己给，页面不再自己排（见 [PrefGroup]）。
@@ -333,35 +311,19 @@ internal fun CouiPrefGroup(
     ) {
         if (title.isNullOrEmpty()) {
             // 说明没有标题可挂时单独成行，与标题下方的说明同一版式
-            if (!summary.isNullOrEmpty()) {
-                CouiText(
-                    text = summary,
-                    kind = CouiTextKind.GroupFooter,
-                    color = CouiPageDefaults.themeColors().summary,
-                    textAlign = TextAlign.Start,
-                    modifier = Modifier.fillMaxWidth().padding(start = 32.dp, end = 32.dp, bottom = 8.dp),
-                )
-            }
+            if (!summary.isNullOrEmpty()) PrefGroupFooter(summary)
         } else {
             PrefCategoryHeader(title = title, summary = summary)
         }
         CouiCard(content = content)
-        if (!footer.isNullOrEmpty()) {
-            CouiFooter(text = footer, color = CouiPageDefaults.themeColors().summary)
-        }
+        if (!footer.isNullOrEmpty()) PrefGroupFooter(footer)
     }
 }
 
 /**
  * 分类标题 + 可选说明：**全应用唯一的分组标题版式**，[CouiPrefGroup] 与页面自绘内容
- * （如应用权限页）都走这里，两条外观线各一套：
- *
- * - COUI：对齐 coui demo 底栏设置页 Group 的标题样式（GroupTitle 12sp 字重 500 + colors.summary，
- *   水平 32dp 与分组卡片内行文字对齐、上下 8dp、TextAlign.Start、heading 语义）；
- * - material：titleSmall + primary，说明用 bodySmall + onSurfaceVariant。
- *
- * 说明与标题同组渲染（标题在上、说明在下）：有说明时标题下沿收紧到 4dp、说明底部补 8dp，
- * 有无说明两种情况的块级上下留白都是 8dp。
+ * （如应用权限页）都走这里。版式本身在 [PrefStyle.CategoryHeader] 的两个实现里，本函数只做转发，
+ * 所以新增外观样式时不需要改这里。
  *
  * [materialInset] 只影响 material 线：宿主的列表/行本身没有水平 contentPadding，所以默认自带 16dp；
  * 宿主已经提供过 16dp（例如 `custom()` 里的 [PrefRowInset]）就传 0dp，避免叠成 32dp。
@@ -372,88 +334,45 @@ internal fun PrefCategoryHeader(
     title: String,
     summary: String? = null,
     materialInset: Dp = 16.dp,
+) = currentPrefStyle().CategoryHeader(title = title, summary = summary, materialInset = materialInset)
+
+/** 分组底部说明：画在卡片下方，与标题下方那行说明同一档字号与内缩，版式在 [PrefStyle.GroupFooter] */
+@Composable
+internal fun PrefGroupFooter(text: String) = currentPrefStyle().GroupFooter(text)
+
+/** COUI 行的标题文字（16 号 ItemTitle）：禁用态改用 colors.disabled；[maxLines] 用来限制长标题占用的行数 */
+@Composable
+internal fun CouiRowTitle(
+    text: String,
+    enabled: Boolean,
+    colors: CouiPageColors,
+    maxLines: Int = Int.MAX_VALUE,
+    overflow: TextOverflow = TextOverflow.Ellipsis,
 ) {
-    if (LocalUiMode.current == UiMode.Coui) {
-        val colors = CouiPageDefaults.themeColors()
-        Column(modifier = Modifier.fillMaxWidth()) {
-            CouiText(
-                text = title,
-                kind = CouiTextKind.GroupTitle,
-                color = colors.summary,
-                // GroupTitle 在库内默认水平居中，这里与库内 Group 一样强制起始对齐
-                textAlign = TextAlign.Start,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .semantics { heading() }
-                    .padding(start = 32.dp, end = 32.dp, top = 8.dp, bottom = if (summary == null) 8.dp else 4.dp),
-            )
-            if (summary != null) {
-                CouiText(
-                    text = summary,
-                    kind = CouiTextKind.GroupFooter,
-                    color = colors.summary,
-                    textAlign = TextAlign.Start,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(start = 32.dp, end = 32.dp, bottom = 8.dp),
-                )
-            }
-        }
-    } else {
-        Column(modifier = Modifier.fillMaxWidth()) {
-            Text(
-                text = title,
-                style = MaterialTheme.typography.titleSmall,
-                color = MaterialTheme.colorScheme.primary,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .semantics { heading() }
-                    .padding(horizontal = materialInset)
-                    .padding(top = 8.dp, bottom = if (summary == null) 8.dp else 4.dp),
-            )
-            if (summary != null) {
-                Text(
-                    text = summary,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = materialInset)
-                        .padding(bottom = 8.dp),
-                )
-            }
-        }
-    }
-}
-
-/** material 线的分组底部说明：画在卡片下方，与标题下方那行说明同一档字号与内缩 */
-@Composable
-internal fun PrefGroupFooter(text: String) {
-    Text(
-        text = text,
-        style = MaterialTheme.typography.bodySmall,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
-        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp).padding(top = 4.dp, bottom = 8.dp),
-    )
-}
-
-/** COUI 行的标题文字（16 号 ItemTitle）：禁用态改用 colors.disabled */
-@Composable
-internal fun CouiRowTitle(text: String, enabled: Boolean, colors: CouiPageColors) {
     CouiText(
         text = text,
         kind = CouiTextKind.ItemTitle,
         color = if (enabled) colors.title else colors.disabled,
+        maxLines = maxLines,
+        overflow = overflow,
     )
 }
 
-/** COUI 行的说明文字（13 号 ItemSummary）：禁用态改用 colors.disabled */
+/** COUI 行的说明文字（13 号 ItemSummary）：禁用态改用 colors.disabled；[maxLines] 用来限制长说明占用的行数 */
 @Composable
-internal fun CouiRowSummary(text: String, enabled: Boolean, colors: CouiPageColors) {
+internal fun CouiRowSummary(
+    text: String,
+    enabled: Boolean,
+    colors: CouiPageColors,
+    maxLines: Int = Int.MAX_VALUE,
+    overflow: TextOverflow = TextOverflow.Ellipsis,
+) {
     CouiText(
         text = text,
         kind = CouiTextKind.ItemSummary,
         color = if (enabled) colors.summary else colors.disabled,
+        maxLines = maxLines,
+        overflow = overflow,
     )
 }
 
@@ -532,17 +451,13 @@ class PrefScopeBuilder internal constructor(
         }
     }
 
+    /**
+     * 当前高亮行的容器底色：命中的槽位由 [PrefStyle.highlightContainer] 给出，
+     * COUI 线的高亮由分组块里的行蒙层绘制（见 couiHighlightOverlay），实现对象返回透明。
+     */
     @Composable
-    internal fun highlightColor(slot: Int): Color {
-        // COUI 线的高亮由分组块里的行蒙层绘制（见 couiHighlightOverlay），这里不读 MaterialTheme 取色。
-        // 外部页面的 custom 内容可能在 COUI 下也调用本函数（它们自绘的列表项不由本文件分派），
-        // 因此守卫放在函数入口，而不是依赖调用点。
-        if (LocalUiMode.current == UiMode.Coui) return Color.Transparent
-        val target = highlightSlot.value == slot
-        return animateColorAsState(
-            targetValue = if (target) MaterialTheme.colorScheme.primaryContainer else Color.Transparent,
-        ).value
-    }
+    internal fun highlightColor(slot: Int): Color =
+        currentPrefStyle().highlightContainer(active = highlightSlot.value == slot)
 
     /** 高亮（搜索跳转命中）时把卡片容器换成 primaryContainer */
     @Composable
@@ -747,55 +662,111 @@ class PrefScopeBuilder internal constructor(
         } else {
             ::apply
         }
-        if (LocalUiMode.current == UiMode.Coui) {
-            // COUI 行：整行 toggleable（Role.Switch）承载点击与无障碍语义，
-            // 尾部开关只做视觉与拖拽提交；两者共用一个 interactionSource，避免点击态与拖动态各画一套反馈。
-            val colors = CouiPageDefaults.themeColors()
-            val dark = CouiTheme.isDark
-            val source = remember { MutableInteractionSource() }
-            CouiItem(
-                modifier = Modifier
-                    .couiButtonFeedback(
-                        dark = dark,
-                        interactionSource = source,
-                        enabled = enabled,
-                        list = true,
-                    )
-                    .toggleable(
-                        value = checked,
-                        interactionSource = source,
-                        indication = null,
-                        enabled = enabled,
-                        role = Role.Switch,
-                        onValueChange = onCheckedChange,
-                    ),
-                icon = leading,
-                title = { CouiRowTitle(title, enabled, colors) },
-                summary = summary?.let { text -> { CouiRowSummary(text, enabled, colors) } },
-                trailing = {
-                    CouiSwitch(
-                        modifier = Modifier.padding(start = 16.dp),
-                        checked = checked,
-                        onCheckedChange = null,
-                        dark = dark,
-                        colors = CouiSwitchDefaults.colors(colors.accent, dark),
-                        enabled = enabled,
-                        interactionSource = source,
-                        onDragCheckedChange = onCheckedChange,
-                    )
-                },
+        PrefRowInset {
+            PrefSwitchRow(
+                title = title,
+                checked = checked,
+                summary = summary,
+                enabled = enabled,
+                leading = leading,
+                onCheckedChange = onCheckedChange,
+                colors = itemColors(slot),
             )
-        } else {
-            Box(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
-                AppSwitchItem(
-                    title = title,
-                    summary = summary,
-                    colors = itemColors(slot),
-                    checked = checked,
-                    enabled = enabled,
-                    leading = leading,
-                    onCheckedChange = onCheckedChange,
-                )
+        }
+    }
+
+    /**
+     * 状态驱动的开关：值和可用性都从页面自己的状态取，不读写 prefs。
+     *
+     * 用于真相不在 prefs 的页面（系统 Settings 键、IPC 查询结果等）：[checked]/[enabled]
+     * 在渲染时求值，页面状态一变行就跟着重画；[onChange] 只负责把请求交给页面。
+     * 键值版的开关用上面那个 [switch] 重载。
+     */
+    fun switch(
+        title: String,
+        checked: () -> Boolean,
+        summary: String? = null,
+        enabled: () -> Boolean = { true },
+        leading: (@Composable () -> Unit)? = null,
+        itemKey: String? = null,
+        visible: Boolean = true,
+        onChange: (Boolean) -> Unit,
+    ) = emit(itemKey, null, title, summary, visible = visible) { slot ->
+        PrefRowInset {
+            PrefSwitchRow(
+                title = title,
+                checked = checked(),
+                summary = summary,
+                enabled = enabled(),
+                leading = leading,
+                onCheckedChange = onChange,
+                colors = itemColors(slot),
+            )
+        }
+    }
+
+    /** 复选框（多选项）：整行切换，行尾为复选框；互斥的单个值用 [select]，条目多到该折叠时用 [list] */
+    fun check(
+        key: String,
+        title: String,
+        summary: String? = null,
+        default: Boolean = false,
+        enabled: Boolean = true,
+        notify: Boolean = false,
+        leading: (@Composable () -> Unit)? = null,
+        onChange: ((Boolean) -> Unit)? = null,
+    ) = emit(key, key, title, summary) { slot ->
+        val checked by state.booleanFlow(key, default).collectAsStateWithLifecycle()
+        PrefRowInset {
+            PrefCheckRow(
+                title = title,
+                checked = checked,
+                summary = summary,
+                enabled = enabled,
+                leading = leading,
+                onCheckedChange = { newValue ->
+                    state.set(key, newValue)
+                    if (notify) sendValue(key, newValue)
+                    onChange?.invoke(newValue)
+                },
+                colors = itemColors(slot),
+            )
+        }
+    }
+
+    /**
+     * 单选行组（几个互斥选项平铺成行，选中的那行行首为单选按钮）。
+     *
+     * 存储与 [list] 同一个键、同一套 [entries] / [entryValues]：只有两三个选项、
+     * 直接把候选摆出来比「点开菜单再选」更快时用本函数，条目多就让 [list] 收进菜单。
+     * 每行一个条目，行间分隔线与卡片由所在分组给。
+     */
+    fun select(
+        key: String,
+        entries: Array<String>,
+        entryValues: Array<String>,
+        default: String = "",
+        enabled: Boolean = true,
+        notify: Boolean = false,
+        onChange: ((String) -> Unit)? = null,
+    ) {
+        entries.forEachIndexed { index, label ->
+            val entryValue = entryValues.getOrNull(index) ?: return@forEachIndexed
+            emit("${key}#$entryValue", null, label, null) { slot ->
+                val current by state.stringFlow(key, default).collectAsStateWithLifecycle()
+                PrefRowInset {
+                    PrefSelectRow(
+                        title = label,
+                        selected = current == entryValue,
+                        enabled = enabled,
+                        onClick = {
+                            state.set(key, entryValue)
+                            if (notify) sendValue(key, entryValue)
+                            onChange?.invoke(entryValue)
+                        },
+                        colors = itemColors(slot),
+                    )
+                }
             }
         }
     }
@@ -816,82 +787,22 @@ class PrefScopeBuilder internal constructor(
         val current by state.stringFlow(key, default).collectAsStateWithLifecycle()
         val currentLabel = entries.getOrNull(entryValues.indexOf(current)) ?: current
         val shownSummary = summary?.replace("%s", currentLabel)
-        if (LocalUiMode.current == UiMode.Coui) {
-            // COUI 下拉行：整行点击展开 COUI 菜单，行尾显示当前项文字 + 展开箭头
-            val colors = CouiPageDefaults.themeColors()
-            val dark = CouiTheme.isDark
-            val source = remember { MutableInteractionSource() }
-            val anchor = rememberCouiMenuAnchor()
-            var expanded by remember { mutableStateOf(false) }
-            val selectedIndex = entryValues.indexOf(current)
-            val menuItems = entries.mapIndexed { index, label ->
-                CouiMenuItem(value = index, text = label, selected = index == selectedIndex)
-            }
-            Box {
-                CouiItem(
-                    modifier = Modifier
-                        .couiMenuAnchor(anchor)
-                        .couiButtonFeedback(
-                            dark = dark,
-                            interactionSource = source,
-                            enabled = enabled,
-                            list = true,
-                            // 菜单展开期间保持按压底色，避免行在弹层打开时失去高亮
-                            hoverLocked = expanded,
-                        )
-                        .clickable(
-                            interactionSource = source,
-                            indication = null,
-                            enabled = enabled,
-                            role = Role.Button,
-                        ) { anchor.open { expanded = true } },
-                    icon = leading,
-                    title = { CouiRowTitle(title, enabled, colors) },
-                    summary = shownSummary?.let { text -> { CouiRowSummary(text, enabled, colors) } },
-                    trailing = {
-                        CouiRowValue(text = currentLabel, enabled = enabled, colors = colors)
-                        Icon(
-                            imageVector = CouiIconsExt.Popup,
-                            contentDescription = null,
-                            modifier = Modifier.padding(start = 4.dp).size(width = 14.dp, height = 24.dp),
-                            tint = couiTrailingIconTint(dark),
-                        )
-                    },
-                )
-                CouiMenu(
-                    expanded = expanded,
-                    onDismissRequest = { expanded = false },
-                    items = menuItems,
-                    onItemClick = { item ->
-                        expanded = false
-                        val newValue = entryValues.getOrNull(item.value)
-                        if (newValue != null) {
-                            state.set(key, newValue)
-                            if (notify) sendValue(key, newValue)
-                            onChange?.invoke(newValue)
-                        }
-                    },
-                    anchor = anchor,
-                )
-            }
-        } else {
-            Box(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
-                AppDropdownItem(
-                    title = title,
-                    summary = shownSummary,
-                    items = entries.toList(),
-                    colors = itemColors(slot),
-                    enabled = enabled,
-                    leading = leading,
-                    selectedIndex = entryValues.indexOf(current).coerceAtLeast(0),
-                    onItemSelected = { index ->
-                        val newValue = entryValues.getOrNull(index) ?: return@AppDropdownItem
-                        state.set(key, newValue)
-                        if (notify) sendValue(key, newValue)
-                        onChange?.invoke(newValue)
-                    },
-                )
-            }
+        PrefRowInset {
+            AppDropdownItem(
+                title = title,
+                summary = shownSummary,
+                items = entries.toList(),
+                colors = itemColors(slot),
+                enabled = enabled,
+                leading = leading,
+                selectedIndex = entryValues.indexOf(current).coerceAtLeast(0),
+                onItemSelected = { index ->
+                    val newValue = entryValues.getOrNull(index) ?: return@AppDropdownItem
+                    state.set(key, newValue)
+                    if (notify) sendValue(key, newValue)
+                    onChange?.invoke(newValue)
+                },
+            )
         }
     }
 
@@ -913,117 +824,70 @@ class PrefScopeBuilder internal constructor(
         onChange: ((Int) -> Unit)? = null,
     ) = emit(key, key, title, summary) { slot ->
         val stored by state.intFlow(key, default ?: valueRange.first).collectAsStateWithLifecycle()
-        if (LocalUiMode.current == UiMode.Coui) {
-            val colors = CouiPageDefaults.themeColors()
-            val dark = CouiTheme.isDark
-            val min = valueRange.first
-            val max = valueRange.last
-            var dragging by remember { mutableStateOf(false) }
-            var dragValue by remember { mutableFloatStateOf(0f) }
-            val storedValue = stored.coerceIn(min, max).toFloat()
-            val shown = if (dragging) dragValue else storedValue
-            // 拖动结束才落盘，并按 step 取整：COUI 滑条按像素连续取值，不吸附刻度
-            fun persist(value: Float) {
-                dragging = false
-                val stepped = (((value - min) / step).roundToInt() * step + min).coerceIn(min, max)
-                dragValue = stepped.toFloat()
+        PrefRowInset {
+            PrefSliderRow(
+                title = title,
+                value = stored,
+                valueRange = valueRange,
+                summary = summary,
+                step = step,
+                valueLabel = valueLabel,
+                enabled = enabled,
+            ) { stepped ->
                 state.set(key, stepped)
                 if (notify) sendValue(key, stepped)
                 onChange?.invoke(stepped)
             }
-            Column(modifier = Modifier.fillMaxWidth()) {
-                // 标题行：标题 + 当前值，行高与开关行一致
-                CouiItem(
-                    title = { CouiRowTitle(title, enabled, colors) },
-                    summary = summary?.let { text -> { CouiRowSummary(text, enabled, colors) } },
-                    trailing = {
-                        CouiRowValue(
-                            text = valueLabel?.invoke(shown.roundToInt())
-                                ?: shown.roundToInt().toString(),
-                            enabled = enabled,
-                            colors = colors,
-                        )
-                    },
-                )
-                // 滑条独立占一行，左右内缩与行内容对齐
-                CouiSlider(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(
-                            start = CouiPageDefaults.rowPadding,
-                            end = CouiPageDefaults.rowPadding,
-                            bottom = 8.dp,
-                        ),
-                    value = shown,
-                    onValueChange = {
-                        dragging = true
-                        dragValue = it
-                    },
-                    colors = CouiSliderDefaults.colors(colors.accent, dark, enabled),
-                    dark = dark,
-                    valueRange = min.toFloat()..max.toFloat(),
-                    steps = ((max - min) / step - 1).coerceAtLeast(0),
-                    enabled = enabled,
-                    onValueChangeFinished = { persist(dragValue) },
-                )
-            }
-        } else {
-            // Material 线专用：COUI 已在上面早返回自己的滑条实现，本块不会被 COUI 执行。
-            val sliderState = rememberSliderState(
-                value = stored.coerceIn(valueRange.first, valueRange.last).toFloat(),
-                steps = ((valueRange.last - valueRange.first) / step - 1).coerceAtLeast(0),
-                trackRange = valueRange.first.toFloat()..valueRange.last.toFloat(),
-            )
-            // 外部值变化同步：拖动期间 stored 不变，因此不会覆盖用户手势
-            LaunchedEffect(stored) {
-                sliderState.value = stored.coerceIn(valueRange.first, valueRange.last).toFloat()
-            }
-            val current = sliderState.value.roundToInt()
-            Box(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
-                MaterialItemContainer(modifier = Modifier.fillMaxWidth()) {
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 16.dp, vertical = 12.dp),
-                        verticalArrangement = Arrangement.spacedBy(4.dp),
-                    ) {
-                        Row(
-                            Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically,
-                        ) {
-                            Text(title, style = MaterialTheme.typography.titleMedium)
-                            Text(
-                                valueLabel?.invoke(current) ?: current.toString(),
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.primary,
-                            )
-                        }
-                        summary?.let {
-                            Text(
-                                it,
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            )
-                        }
-                        Slider(
-                            state = sliderState,
-                            onValueChange = { sliderState.value = it },
-                            onValueChangeFinished = {
-                                val min = valueRange.first
-                                val stepped = (((sliderState.value - min) / step).roundToInt() * step + min)
-                                    .coerceIn(valueRange.first, valueRange.last)
-                                sliderState.value = stepped.toFloat()
-                                state.set(key, stepped)
-                                if (notify) sendValue(key, stepped)
-                                onChange?.invoke(stepped)
-                            },
-                            enabled = enabled,
-                        )
-                    }
-                }
-            }
         }
+    }
+
+    /**
+     * 状态驱动的整数滑条：值从页面状态取，拖动结束经 [onChange] 交回页面。
+     *
+     * 与 [slider] 的区别只在数据源：键值版自己读写 prefs，本重载不做任何落盘，
+     * 页码、IPC 读回来的档位这类「真相在别处」的滑条用它。
+     */
+    fun slider(
+        title: String,
+        value: () -> Int,
+        valueRange: IntRange,
+        step: Int = 1,
+        summary: String? = null,
+        valueLabel: ((Int) -> String)? = null,
+        enabled: () -> Boolean = { true },
+        itemKey: String? = null,
+        visible: Boolean = true,
+        onChange: (Int) -> Unit,
+    ) = emit(itemKey, null, title, summary, visible = visible) { slot ->
+        PrefRowInset {
+            PrefSliderRow(
+                title = title,
+                value = value(),
+                valueRange = valueRange,
+                summary = summary,
+                step = step,
+                valueLabel = valueLabel,
+                enabled = enabled(),
+                onCommit = onChange,
+            )
+        }
+    }
+
+    /**
+     * 卡片之外的说明文字：不属于任何分组，因此不参与行间分隔线，也不进卡片。
+     *
+     * 用它代替页面里手写的 `if (外观线) CouiText else Text`：字号与配色由 [PrefNote] 统一，
+     * 左右内缩与卡片边界对齐（[PageInset]），上下只留 4dp，紧邻的分组卡片自带间距。
+     */
+    fun note(
+        text: String,
+        visible: Boolean = true,
+        itemKey: String? = null,
+    ) = emit(itemKey, null, null, null, groupable = false, visible = visible) {
+        PrefNote(
+            text = text,
+            modifier = Modifier.fillMaxWidth().padding(horizontal = PageInset, vertical = 4.dp),
+        )
     }
 
     /** 文本输入（对应 EditTextPreference，M3 对话框 + OutlinedTextField） */
@@ -1042,129 +906,38 @@ class PrefScopeBuilder internal constructor(
     ) = emit(key, key, title, summary) { slot ->
         val current by state.stringFlow(key, default).collectAsStateWithLifecycle()
         var showDialog by remember { mutableStateOf(false) }
-        if (LocalUiMode.current == UiMode.Coui) {
-            // COUI 输入行：点击弹 COUI 输入对话框（对话框内固定单行输入，多行内容需在输入框内整体编辑）
-            val colors = CouiPageDefaults.themeColors()
-            val dark = CouiTheme.isDark
-            val source = remember { MutableInteractionSource() }
-            CouiItem(
-                modifier = Modifier
-                    .couiButtonFeedback(
-                        dark = dark,
-                        interactionSource = source,
-                        enabled = enabled,
-                        list = true,
-                    )
-                    .clickable(
-                        interactionSource = source,
-                        indication = null,
-                        enabled = enabled,
-                        role = Role.Button,
-                    ) { showDialog = true },
-                title = { CouiRowTitle(title, enabled, colors) },
-                summary = { CouiRowSummary(current.ifBlank { summary ?: "" }, enabled, colors) },
-                trailing = {
-                    Icon(
-                        imageVector = CouiIconsExt.Next,
-                        contentDescription = null,
-                        modifier = Modifier.size(width = 12.dp, height = 24.dp),
-                        tint = couiTrailingIconTint(dark),
-                    )
-                },
+        PrefRowInset {
+            PrefRow(
+                title = title,
+                summary = current.ifBlank { summary ?: "" }.takeIf { it.isNotEmpty() },
+                onClick = { showDialog = true },
+                enabled = enabled,
+                trailing = { PrefRowChevron() },
+                colors = itemColors(slot),
             )
-            if (showDialog) {
-                var text by remember { mutableStateOf(TextFieldValue(current)) }
-                CouiInputDialog(
-                    value = text,
-                    onValueChange = { text = it },
-                    onDismissRequest = { showDialog = false },
-                    confirmAction = CouiDialogAction(
-                        text = stringResource(android.R.string.ok),
-                        onClick = {
-                            showDialog = false
-                            val newValue = text.text
-                            state.set(key, newValue)
-                            if (notify) sendValue(key, newValue)
-                            onChange?.invoke(newValue)
-                        },
-                        style = CouiDialogActionStyle.Primary,
-                        colors = CouiDialogDefaults.primaryActionColors(colors.accent),
-                    ),
-                    clearContentDescription = stringResource(R.string.clear),
-                    title = title,
-                    message = dialogMessage,
-                    placeholder = hint,
-                    dismissAction = CouiDialogAction(
-                        text = stringResource(android.R.string.cancel),
-                        onClick = { showDialog = false },
-                    ),
-                    dark = dark,
-                    accent = colors.accent,
-                )
-            }
-        } else {
-            Box(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
-                AppListItem(
-                    onClick = { showDialog = true },
-                    enabled = enabled,
-                    colors = itemColors(slot),
-                    headlineContent = { Text(title) },
-                    supportingContent = { Text(current.ifBlank { summary ?: "" }) },
-                )
-            }
-            // Material 线专用：COUI 的输入弹窗在上面分支里已独立实现，本块不会被 COUI 执行。
-            if (showDialog) {
-                var text by remember { mutableStateOf(current) }
-                AlertDialog(
-                    onDismissRequest = { showDialog = false },
-                    title = { Text(title) },
-                    text = {
-                        // 长说明放进「可滚动 + 只吃剩余高度」区域，先测量输入框，
-                        // 避免说明把输入框挤出对话框
-                        Column {
-                            dialogMessage?.takeIf { it.isNotEmpty() }?.let {
-                                Box(
-                                    modifier = Modifier
-                                        .weight(1f, fill = false)
-                                        .fillMaxWidth()
-                                        .heightIn(max = dialogBodyMaxHeight(chrome = 200.dp))
-                                        .verticalScroll(rememberScrollState()),
-                                ) {
-                                    Text(
-                                        it,
-                                        style = MaterialTheme.typography.bodySmall,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                    )
-                                }
-                            }
-                            OutlinedTextField(
-                                value = text,
-                                onValueChange = { text = it },
-                                placeholder = hint?.let { { Text(it) } },
-                                singleLine = maxLines == 1,
-                                maxLines = maxLines,
-                                keyboardOptions = KeyboardOptions(keyboardType = keyboardType),
-                                modifier = Modifier.fillMaxWidth(),
-                            )
-                        }
-                    },
-                    confirmButton = {
-                        TextButton(
-                            onClick = {
-                                showDialog = false
-                                state.set(key, text)
-                                if (notify) sendValue(key, text)
-                                onChange?.invoke(text)
-                            },
-                        ) { Text(stringResource(android.R.string.ok)) }
-                    },
-                    dismissButton = {
-                        TextButton(onClick = {
-                            showDialog = false
-                        }) { Text(stringResource(android.R.string.cancel)) }
-                    },
-                )
-            }
+        }
+        if (showDialog) {
+            // 弹窗外壳、留白与单行/多行差异都由弹窗样式位给；值在弹窗里先本地编辑，确认时才落盘
+            var dialogText by remember { mutableStateOf(current) }
+            currentDialogStyle().Input(
+                title = title,
+                value = dialogText,
+                onValueChange = { dialogText = it },
+                onDismissRequest = { showDialog = false },
+                confirmLabel = stringResource(android.R.string.ok),
+                onConfirm = {
+                    showDialog = false
+                    state.set(key, dialogText)
+                    if (notify) sendValue(key, dialogText)
+                    onChange?.invoke(dialogText)
+                },
+                message = dialogMessage,
+                hint = hint,
+                clearContentDescription = stringResource(R.string.clear),
+                dismissLabel = stringResource(android.R.string.cancel),
+                keyboardType = keyboardType,
+                maxLines = maxLines,
+            )
         }
     }
 
@@ -1184,59 +957,25 @@ class PrefScopeBuilder internal constructor(
             return
         }
         emit("page:$target", "page:$target", title, summary, pageTarget = target) { slot ->
-            if (LocalUiMode.current == UiMode.Coui) {
-                // COUI 页面入口行：行尾为前进箭头，整行点击跳转
-                val colors = CouiPageDefaults.themeColors()
-                val dark = CouiTheme.isDark
-                val source = remember { MutableInteractionSource() }
-                CouiItem(
-                    modifier = Modifier
-                        .couiButtonFeedback(
-                            dark = dark,
-                            interactionSource = source,
-                            enabled = enabled,
-                            list = true,
-                        )
-                        .clickable(
-                            interactionSource = source,
-                            indication = null,
-                            enabled = enabled,
-                            role = Role.Button,
-                        ) { navigate?.invoke(target, title) },
-                    title = { CouiRowTitle(title, enabled, colors) },
-                    summary = summary?.let { text -> { CouiRowSummary(text, enabled, colors) } },
-                    trailing = {
-                        Icon(
-                            imageVector = CouiIconsExt.Next,
-                            contentDescription = null,
-                            modifier = Modifier.size(width = 12.dp, height = 24.dp),
-                            tint = couiTrailingIconTint(dark),
-                        )
-                    },
+            PrefRowInset {
+                PrefRow(
+                    title = title,
+                    summary = summary,
+                    onClick = { navigate?.invoke(target, title) },
+                    enabled = enabled,
+                    trailing = { PrefRowChevron() },
+                    colors = itemColors(slot),
                 )
-            } else {
-                Box(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
-                    AppListItem(
-                        onClick = { navigate?.invoke(target, title) },
-                        enabled = enabled,
-                        colors = itemColors(slot),
-                        headlineContent = { Text(title) },
-                        supportingContent = summary?.let { { Text(it) } },
-                        // Material 线专用：COUI 分支的行尾箭头用 couiTrailingIconTint 自绘，不经过这里。
-                        trailingContent = {
-                            Icon(
-                                Icons.AutoMirrored.Rounded.KeyboardArrowRight,
-                                contentDescription = null,
-                                tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                            )
-                        },
-                    )
-                }
             }
         }
     }
 
-    /** 纯点击入口（跳转外部 Activity / 设置 / shell 命令等，非作用域页导航、无值/开关）：分组卡片内的一行 */
+    /**
+     * 纯点击入口（跳转外部 Activity / 设置 / shell 命令等，非作用域页导航、无值/开关）：分组卡片内的一行。
+     *
+     * 点击回调是最后一个参数，所以 `click(title) { … }` 可以直接写尾随 lambda；这也让条件行写成
+     * `click(title, visible = 条件) { … }` 而不必再包一层本地函数。
+     */
     fun click(
         title: String,
         summary: String? = null,
@@ -1244,8 +983,6 @@ class PrefScopeBuilder internal constructor(
         leading: (@Composable () -> Unit)? = null,
         value: String? = null,
         trailing: (@Composable () -> Unit)? = null,
-        onLongClick: (() -> Unit)? = null,
-        onClick: (() -> Unit)? = null,
         /**
          * 稳定的列表项 key（默认按槽位编号）：同一业务行在相邻行增删时槽位会漂移，
          * 需要「删掉的就是这一行」的动画时传业务键。
@@ -1258,69 +995,20 @@ class PrefScopeBuilder internal constructor(
          * 条件行用它代替 `if (条件) { click(…) }`，并配一个稳定的 [itemKey]。
          */
         visible: Boolean = true,
+        onLongClick: (() -> Unit)? = null,
+        onClick: (() -> Unit)? = null,
     ) = emit(itemKey, null, title, summary, animate = animate, visible = visible) { slot ->
-        if (LocalUiMode.current == UiMode.Coui) {
-            val colors = CouiPageDefaults.themeColors()
-            val dark = CouiTheme.isDark
-            val source = remember { MutableInteractionSource() }
-            // 需要长按的行由修饰符自己接管手势（COUI 的 onClick 只表达单击），
-            // 无长按的行交给 Item 自带的点击与按压反馈
-            val gesture: Modifier = if (onLongClick != null) {
-                Modifier
-                    .couiButtonFeedback(
-                        dark = dark,
-                        interactionSource = source,
-                        enabled = enabled,
-                        list = true,
-                    )
-                    .combinedClickable(
-                        interactionSource = source,
-                        indication = null,
-                        enabled = enabled,
-                        role = Role.Button,
-                        onLongClick = onLongClick,
-                        onClick = { onClick?.invoke() },
-                    )
-            } else {
-                Modifier
-            }
-            CouiItem(
-                modifier = gesture,
-                icon = leading,
-                onClick = if (onLongClick != null) null else onClick,
+        PrefRowInset {
+            PrefRow(
+                title = title,
+                summary = summary,
+                onClick = onClick,
+                onLongClick = onLongClick,
                 enabled = enabled,
-                title = { CouiRowTitle(title, enabled, colors) },
-                summary = summary?.let { text -> { CouiRowSummary(text, enabled, colors) } },
-                trailing = {
-                    if (trailing != null) {
-                        trailing()
-                    } else if (value != null) {
-                        CouiRowValue(text = value, enabled = enabled, colors = colors)
-                    }
-                },
+                leading = leading,
+                trailing = trailing ?: value?.let { text -> { PrefRowValue(text, enabled) } },
+                colors = itemColors(slot),
             )
-        } else {
-            Box(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
-                AppListItem(
-                    onClick = onClick,
-                    onLongClick = onLongClick,
-                    enabled = enabled,
-                    colors = itemColors(slot),
-                    headlineContent = { Text(title) },
-                    supportingContent = summary?.let { { Text(it) } },
-                    leadingContent = leading,
-                    // Material 线专用：COUI 分支的当前值用 CouiRowValue 绘制，不经过这里。
-                    trailingContent = trailing ?: value?.let { v ->
-                        {
-                            Text(
-                                text = v,
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.primary,
-                            )
-                        }
-                    },
-                )
-            }
         }
     }
 
@@ -1527,38 +1215,26 @@ fun ScopeScreen(
     // （行内主线程解码见 PrefImageRow.kt 的 previewImage，那才是滑到 OTA 卡片时的停顿来源。）
     val listItems: LazyListScope.() -> Unit = remember(builder, fullContent) { buildEntries }
 
-    // COUI 的跟手回弹只在 COUI 线挂载；Material 线留空走平台默认的拉伸效果。
-    val couiOverscroll = if (LocalUiMode.current == UiMode.Coui) rememberCouiOverscrollEffect() else null
+    val uiStyle = currentUiStyle()
+    // 跟手回弹由外观线决定：COUI 线挂库的回弹效果，material 线给 null 走平台默认的拉伸效果
+    val overscroll = uiStyle.overscrollEffect()
 
     // 悬浮胶囊底栏盖在正文之上：列表底部额外留出底栏高度，最后一条才不会被永久遮住。
     // COUI 底栏在标签外壳的栏位里，正文已经排到它上方，这里取到 0。
     val listBottomPadding = 8.dp + LocalShellBottomInset.current
+    // 列表参数两条线一致（卡片横向内缩与分组前后留白都在卡片身上），差别只有回弹效果，
+    // 所以这里只有一份 LazyColumn，外观差异不再分叉成两个分支
     val list: @Composable (Modifier) -> Unit = { listModifier ->
-        if (LocalUiMode.current == UiMode.Coui) {
-            // COUI 线：卡片自带 16dp 横向内缩，分组前后留白也由 Group 自己给，
-            // 列表层只补顶栏高度，否则首块会离顶栏多出一组间距。
-            LazyColumn(
-                modifier = listModifier,
-                state = listState,
-                contentPadding = PaddingValues(
-                    top = LocalScopeTopInset.current,
-                    bottom = listBottomPadding,
-                ),
-                overscrollEffect = couiOverscroll,
-                content = listItems,
-            )
-        } else {
-            // Material 线：首行贴着顶栏起排（与 FunctionList 一致），只留底部间距
-            LazyColumn(
-                modifier = listModifier,
-                state = listState,
-                contentPadding = PaddingValues(
-                    top = LocalScopeTopInset.current,
-                    bottom = listBottomPadding,
-                ),
-                content = listItems,
-            )
-        }
+        LazyColumn(
+            modifier = listModifier,
+            state = listState,
+            contentPadding = PaddingValues(
+                top = LocalScopeTopInset.current,
+                bottom = listBottomPadding,
+            ),
+            overscrollEffect = overscroll,
+            content = listItems,
+        )
     }
     // 列表状态下发到页面内容：LazyColumn 的 item 内容是本 provider 的后代，因此页面里的
     // 自定义内容（如排序列表）也能拿到它，用于「拖到列表边缘自动滚动」这类主动滚动交互。
@@ -1578,20 +1254,12 @@ fun ScopeScreen(
                     }
                 }
             }
-            if (LocalUiMode.current == UiMode.Coui) {
-                CouiPullToRefreshBox(
-                    isRefreshing = refreshing,
-                    onRefresh = triggerRefresh,
-                    modifier = modifier,
-                ) { list(Modifier.fillMaxSize()) }
-            } else {
-                PullToRefreshBox(
-                    isRefreshing = refreshing,
-                    onRefresh = triggerRefresh,
-                    modifier = modifier,
-                    enabled = LocalTopBarCollapsedFraction.current <= 0f,
-                ) { list(Modifier.fillMaxSize()) }
-            }
+            uiStyle.RefreshBox(
+                isRefreshing = refreshing,
+                onRefresh = triggerRefresh,
+                enabled = LocalTopBarCollapsedFraction.current <= 0f,
+                modifier = modifier,
+            ) { list(Modifier.fillMaxSize()) }
         } else {
             list(modifier)
         }

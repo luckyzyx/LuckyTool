@@ -4,8 +4,6 @@ import android.annotation.SuppressLint
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Button
-import androidx.compose.material3.Text
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -17,15 +15,10 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.core.database.getStringOrNull
-import com.itos.coui.layout.CouiPageDefaults
-import com.itos.coui.text.CouiTextKind
-import com.itos.coui.text.Text as CouiText
-import com.itos.coui.theme.CouiTheme
 import com.luckyzyx.luckytool.R
-import com.luckyzyx.luckytool.ui.compose.components.coui.CouiFilledButton
+import com.luckyzyx.luckytool.ui.compose.components.PrefButton
+import com.luckyzyx.luckytool.ui.compose.components.PrefNote
 import com.luckyzyx.luckytool.ui.compose.scopes.ScopePageSpec
-import com.luckyzyx.luckytool.ui.theme.LocalUiMode
-import com.luckyzyx.luckytool.ui.theme.UiMode
 import com.luckyzyx.luckytool.utils.AESCrypt
 import com.luckyzyx.luckytool.utils.CommandUtils
 import com.luckyzyx.luckytool.utils.DeviceUtils
@@ -49,7 +42,7 @@ import kotlinx.coroutines.withContext
  * ExtractOTA 页：读出系统 OTA 数据库（ota.db 的 pkgList 表）里各应用包的 OTA 信息并列出。
  * 无 Xposed 作用域（packName="" / scopes=arrayOf()），数据仅本地读取展示。
  * 下拉刷新（onRefresh）重跑加载流程。
- * 页内文字与按钮按外观分派：COUI 线用 COUI 语义文字与胶囊按钮，Material 线用 material3 的 `Text` / `Button`。
+ * 页内文字与按钮交给行层的 [PrefNote] / [PrefButton]，两条外观线各自取对应的字号、配色与按钮形态。
  */
 @SuppressLint("SdCardPath")
 object ExtractOTAPage {
@@ -67,7 +60,6 @@ object ExtractOTAPage {
     ) {
         val c = requireNotNull(context) { "ScopeScreen 未注入 Context" }
         custom(key = "extract_ota_body") {
-            val isCoui = LocalUiMode.current == UiMode.Coui
             var dataList by remember { mutableStateOf<List<String>>(emptyList()) }
 
             suspend fun load(): List<String> = withContext(Dispatchers.IO) {
@@ -140,71 +132,34 @@ object ExtractOTAPage {
             val fullText = if (dataList.isNotEmpty()) formatStringAuto(dataList, "\n") else ""
 
             Column(Modifier.fillMaxWidth().padding(16.dp)) {
-                // 页内文字按外观分派：COUI 线取 COUI 正文字号与页面配色，Material 线保持 M3 Text
+                // 页内文字统一走 PrefNote：字号、配色按外观线分派，这里只声明对齐与留白
                 if (tipsText.isNotBlank()) {
-                    if (isCoui) {
-                        CouiText(
-                            text = tipsText,
-                            kind = CouiTextKind.Search,
-                            color = CouiPageDefaults.themeColors(CouiTheme.isDark).summary,
-                            modifier = Modifier.fillMaxWidth(),
-                            textAlign = TextAlign.Center,
-                        )
-                    } else {
-                        Text(
-                            tipsText,
-                            modifier = Modifier.fillMaxWidth(),
-                            textAlign = TextAlign.Center,
-                        )
-                    }
+                    PrefNote(
+                        text = tipsText,
+                        modifier = Modifier.fillMaxWidth(),
+                        textAlign = TextAlign.Center,
+                    )
                 }
                 if (fullText.isNotBlank()) {
-                    if (isCoui) {
-                        CouiText(
-                            text = fullText,
-                            kind = CouiTextKind.Search,
-                            textAlign = TextAlign.Start,
-                            color = CouiTheme.colorScheme.onSurface,
-                            modifier = Modifier.fillMaxWidth().padding(vertical = 16.dp),
-                        )
-                    } else {
-                        Text(
-                            fullText,
-                            modifier = Modifier.fillMaxWidth().padding(vertical = 16.dp),
-                        )
-                    }
-                } else {
-                    if (isCoui) {
-                        CouiText(
-                            text = noDataText,
-                            kind = CouiTextKind.Search,
-                            color = CouiPageDefaults.themeColors(CouiTheme.isDark).summary,
-                            modifier = Modifier.fillMaxWidth().padding(vertical = 24.dp),
-                            textAlign = TextAlign.Center,
-                        )
-                    } else {
-                        Text(
-                            noDataText,
-                            modifier = Modifier.fillMaxWidth().padding(vertical = 24.dp),
-                            textAlign = TextAlign.Center,
-                        )
-                    }
-                }
-                // 复制动作：COUI 线是 accent 填充胶囊，Material 线保持 M3 Button
-                if (isCoui) {
-                    CouiFilledButton(
-                        text = copyText,
-                        onClick = { c.copyStr(fullText) },
-                        modifier = Modifier.fillMaxWidth(),
-                        enabled = fullText.isNotBlank(),
+                    PrefNote(
+                        text = fullText,
+                        modifier = Modifier.fillMaxWidth().padding(vertical = 16.dp),
+                        textAlign = TextAlign.Start,
                     )
                 } else {
-                    Button(
-                        onClick = { c.copyStr(fullText) },
-                        enabled = fullText.isNotBlank(),
-                        modifier = Modifier.fillMaxWidth(),
-                    ) { Text(copyText) }
+                    PrefNote(
+                        text = noDataText,
+                        modifier = Modifier.fillMaxWidth().padding(vertical = 24.dp),
+                        textAlign = TextAlign.Center,
+                    )
                 }
+                // 复制动作是页面级主操作，交给 PrefButton：COUI 线 accent 胶囊，material 线 M3 填充按钮
+                PrefButton(
+                    text = copyText,
+                    onClick = { c.copyStr(fullText) },
+                    modifier = Modifier.fillMaxWidth(),
+                    enabled = fullText.isNotBlank(),
+                )
             }
         }
     }

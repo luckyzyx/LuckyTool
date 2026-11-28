@@ -21,12 +21,14 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.Icon
 import androidx.compose.material3.ListItemColors
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderState
 import androidx.compose.material3.Switch
+import androidx.compose.material3.Text
 import androidx.compose.material3.contentColorFor
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -47,6 +49,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import com.itos.coui.checkbox.Checkbox as CouiCheckbox
 import com.itos.coui.effect.couiButtonFeedback
 import com.luckyzyx.luckytool.ui.compose.components.coui.CouiIconsExt
 import com.itos.coui.layout.CouiPageDefaults
@@ -391,12 +394,64 @@ fun AppSwitchItem(
             summary = summary?.let { text -> { CouiRowSummary(text, enabled, pageColors) } },
             trailing = {
                 CouiSwitch(
+                    modifier = Modifier.padding(start = CouiPageDefaults.iconSpacing),
                     checked = checked,
                     enabled = enabled,
                     onCheckedChange = null,
                     interactionSource = source,
                     onDragCheckedChange = { onCheckedChange(it) },
                     dark = dark,
+                )
+            },
+        )
+    }
+}
+
+/** 复选框行：点击整行切换，行尾为复选框 */
+@Composable
+fun AppCheckItem(
+    title: String,
+    summary: String? = null,
+    colors: ListItemColors = materialGroupColors(),
+    checked: Boolean,
+    enabled: Boolean = true,
+    leading: (@Composable () -> Unit)? = null,
+    onCheckedChange: (Boolean) -> Unit,
+) {
+    if (!isCouiAppearance) {
+        MaterialListItem(
+            onClick = { onCheckedChange(!checked) },
+            enabled = enabled,
+            colors = colors,
+            headlineContent = { Text(title) },
+            supportingContent = summary?.let { { Text(it) } },
+            leadingContent = leading,
+            trailingContent = {
+                Checkbox(checked = checked, onCheckedChange = null, enabled = enabled)
+            },
+        )
+        return
+    }
+    val pageColors = CouiPageDefaults.themeColors()
+    val source = remember { MutableInteractionSource() }
+    CouiRowFrame {
+        CouiItem(
+            modifier = Modifier.toggleable(
+                value = checked,
+                interactionSource = source,
+                indication = null,
+                enabled = enabled,
+                role = Role.Checkbox,
+                onValueChange = onCheckedChange,
+            ),
+            icon = leading,
+            title = { CouiRowTitle(title, enabled, pageColors) },
+            summary = summary?.let { text -> { CouiRowSummary(text, enabled, pageColors) } },
+            trailing = {
+                CouiCheckbox(
+                    modifier = Modifier.padding(start = CouiPageDefaults.iconSpacing),
+                    checked = checked,
+                    enabled = enabled,
                 )
             },
         )
@@ -626,20 +681,28 @@ private fun CouiIcon(
         modifier = modifier.size(size),
     )
 }
-/** 开关：外观分派，COUI 外观下用 COUI 开关的轨道与把手 */
+/**
+ * 开关：外观分派，COUI 外观下用 COUI 开关的轨道与把手。
+ *
+ * [interactionSource] 给整行共用时传行自己的那一个：按压反馈、悬停高光会与整行同步；
+ * 不传则开关自己新建一个。
+ */
 @Composable
 fun AppSwitch(
     checked: Boolean,
     onCheckedChange: ((Boolean) -> Unit)?,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
+    interactionSource: MutableInteractionSource? = null,
 ) {
+    val source = interactionSource ?: remember { MutableInteractionSource() }
     if (!isCouiAppearance) {
         Switch(
             checked = checked,
             onCheckedChange = onCheckedChange,
             modifier = modifier,
             enabled = enabled,
+            interactionSource = source,
         )
         return
     }
@@ -648,6 +711,7 @@ fun AppSwitch(
         checked = checked,
         onCheckedChange = onCheckedChange,
         enabled = enabled,
+        interactionSource = source,
     )
 }
 

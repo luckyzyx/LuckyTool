@@ -16,8 +16,8 @@ import androidx.compose.ui.unit.Density
 import com.itos.coui.effect.CouiFloatingRenderer
 import com.luckyzyx.luckytool.ui.compose.components.PageScaffold
 import com.luckyzyx.luckytool.ui.compose.components.RootScaffold
-import com.luckyzyx.luckytool.ui.compose.components.TabsScaffold
 import com.luckyzyx.luckytool.ui.compose.components.ScopeScreen
+import com.luckyzyx.luckytool.ui.compose.components.currentUiStyle
 import com.luckyzyx.luckytool.ui.theme.ColorMode
 import com.luckyzyx.luckytool.ui.theme.AppTheme
 import com.luckyzyx.luckytool.ui.theme.ThemeController
@@ -146,7 +146,12 @@ class ThemeSwitchCrashTest {
             CompositionLocalProvider(LocalDensity provides Density(2f)) {
                 AppTheme {
                     RootScaffold { _ ->
-                        TabsScaffold(bottomBar = { Text("底栏") }) { tabPadding ->
+                        // 一级标签外壳由外观样式提供，底栏形态由样式自己决定
+                        currentUiStyle().TabsShell(
+                            selectedIndex = MainTab.Home.ordinal,
+                            onSelect = {},
+                            modifier = Modifier,
+                        ) { tabPadding, _ ->
                             PageScaffold(title = "设置") { pagePadding ->
                                 Box(
                                     Modifier
