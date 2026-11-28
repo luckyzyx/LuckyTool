@@ -51,7 +51,7 @@ import com.luckyzyx.luckytool.ui.compose.components.currentDialogStyle
 import com.luckyzyx.luckytool.ui.compose.components.currentPrefStyle
 import com.luckyzyx.luckytool.ui.compose.scopes.ScopePageAction
 import com.luckyzyx.luckytool.ui.compose.scopes.ScopePageSpec
-import com.luckyzyx.luckytool.ui.theme.DesignTokens
+import com.luckyzyx.luckytool.ui.compose.components.currentUiStyle
 import com.luckyzyx.luckytool.utils.CommandUtils
 import com.luckyzyx.luckytool.utils.FileUtils
 import com.luckyzyx.luckytool.utils.GlobalKeyValue
@@ -462,7 +462,7 @@ internal fun MemcPackagePanel(
             LazyColumn(
                 modifier = Modifier.weight(1f),
                 contentPadding = PaddingValues(start = 16.dp, end = 16.dp, bottom = 16.dp),
-                verticalArrangement = Arrangement.spacedBy(DesignTokens.ItemGap),
+                verticalArrangement = Arrangement.spacedBy(currentUiStyle().listRowSpacing),
             ) {
                 itemsIndexed(
                     state.pkgFilter,
@@ -530,7 +530,7 @@ internal fun MemcActivityPanel(
             LazyColumn(
                 modifier = Modifier.weight(1f),
                 contentPadding = PaddingValues(start = 16.dp, end = 16.dp, bottom = 16.dp),
-                verticalArrangement = Arrangement.spacedBy(DesignTokens.ItemGap),
+                verticalArrangement = Arrangement.spacedBy(currentUiStyle().listRowSpacing),
             ) {
                 itemsIndexed(
                     state.actFilter,

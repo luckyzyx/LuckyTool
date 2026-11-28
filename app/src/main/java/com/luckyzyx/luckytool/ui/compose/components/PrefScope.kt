@@ -134,8 +134,8 @@ data class PrefIndexItem(
 /**
  * 渲染单元：一个 LazyColumn item 槽位。
  *
- * [segIndex]/[segCount] 用于把相邻条目合并成同一张分组卡片（首条上端 16dp 外圆角、尾条下端 16dp 外圆角、
- * 组内条目不设内圆角与间距，见 [com.luckyzyx.luckytool.ui.theme.DesignTokens]）；
+ * [segIndex]/[segCount] 用于同一分组的条目之间保持组内间距（每条各自一张 16dp 圆角卡片，
+ * 组与组之间用 [com.luckyzyx.luckytool.ui.theme.DesignTokens.GroupGap] 拉开层级）；
  * [groupable] = false 的条目独占一张卡片（[PrefScopeBuilder.group] 的起止标记、`custom(raw = true)` 的页面级 body）。
  * [raw] = true 的条目完全裸渲染，不套任何卡片容器。
  * [groupStart]/[groupBreak] 是 [PrefScopeBuilder.group] 发出的分组起止标记：只参与分块计算，
@@ -1174,14 +1174,14 @@ fun ScopeScreen(
                             } else if (entry.groupStart) {
                                 // 分组起始标记：material 线由它画分类标题（COUI 线由 CouiPrefGroup 画）
                                 if (entry.sectionTitle != null || entry.sectionSummary != null) {
-                                    val topGap = if (entry.slot == 0) 0.dp else 8.dp
+                                    val topGap = if (entry.slot == 0) 0.dp else DesignTokens.GroupGap
                                     Box(modifier = animModifier.padding(top = topGap)) {
                                         entry.render(entry.slot)
                                     }
                                 }
                             } else if (entry.raw) {
                                 // 裸条目：不套卡片，裸渲染在分组卡片之上。
-                                val topGap = if (entry.slot == 0) 0.dp else 8.dp
+                                val topGap = if (entry.slot == 0) 0.dp else DesignTokens.GroupGap
                                 Box(modifier = animModifier.padding(top = topGap)) {
                                     entry.render(entry.slot)
                                 }
@@ -1191,9 +1191,9 @@ fun ScopeScreen(
                                         modifier = animModifier.padding(
                                             top = when {
                                                 entry.slot == 0 -> 0.dp
-                                                entry.segIndex == 0 -> 8.dp
-                                                // 组内条目：0dp，同一分组拼成一张连续卡片
-                                                else -> DesignTokens.ItemGap
+                                                entry.segIndex == 0 -> DesignTokens.GroupGap
+                                                // 组内条目：按当前外观线的行间距分开（material 靠间距分段，不画分隔线）
+                                                else -> currentUiStyle().listRowSpacing
                                             }
                                         )
                                     ) {
@@ -1213,7 +1213,11 @@ fun ScopeScreen(
     // LazyListIntervalContent 会失效，所有可见条目的内容 lambda 一起换新实例 —— 每帧重组 +
     // 重测量全部可见行。记住后页面重组只影响 ScopeScreen 自身，列表内容不再跟着重建。
     // （行内主线程解码见 PrefImageRow.kt 的 previewImage，那才是滑到 OTA 卡片时的停顿来源。）
-    val listItems: LazyListScope.() -> Unit = remember(builder, fullContent) { buildEntries }
+    // 键里必须带上外观线判定（coui）：buildEntries 闭包捕获了它来选列表分支（COUI 整块 / material 逐行），
+    // 而运行时切主题只改 LocalUiMode，builder 与 fullContent 都不变。漏掉这个键就永远复用首次组合的
+    // 那一支：COUI 切 Material 后仍走整块分支（material 分组内缩叠上行内缩 = 两侧 32dp），
+    // Material 切 COUI 后仍走逐行分支（行的内缩归零 = 贴边），只有重启应用才恢复。
+    val listItems: LazyListScope.() -> Unit = remember(builder, fullContent, coui) { buildEntries }
 
     val uiStyle = currentUiStyle()
     // 跟手回弹由外观线决定：COUI 线挂库的回弹效果，material 线给 null 走平台默认的拉伸效果

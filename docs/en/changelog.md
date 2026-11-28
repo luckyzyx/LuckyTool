@@ -92,6 +92,7 @@ Entries for versions before `1.3.5_beta` are currently only available in the
 - Fixed "Remove startup animation" not removing the game start popup animation V10.43
 - Fixed the app permission page being skipped on a device without root, which went straight to the home page and showed the no-root dialog
 - Fixed "Enable docker background" and "Force docker background blur" doing nothing on C17
+- Fixed rows keeping the previous style's horizontal inset after switching the ui mode at runtime (wider when going COUI to Material, flush when going Material to COUI; only a restart restored it)
 
 #### Adapted
 

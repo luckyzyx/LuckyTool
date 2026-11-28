@@ -31,7 +31,7 @@ import com.luckyzyx.luckytool.ui.compose.components.AppItem
 import com.luckyzyx.luckytool.ui.compose.scopes.ScopePageAction
 import com.luckyzyx.luckytool.ui.compose.scopes.ScopePageSpec
 import com.luckyzyx.luckytool.ui.compose.components.PrefScopeBuilder
-import com.luckyzyx.luckytool.ui.theme.DesignTokens
+import com.luckyzyx.luckytool.ui.compose.components.currentUiStyle
 import com.luckyzyx.luckytool.utils.IntentUtils
 import com.luckyzyx.luckytool.utils.ModulePrefs
 import com.luckyzyx.luckytool.utils.PackageUtils
@@ -209,7 +209,7 @@ internal fun LazyItemScope.MultiAppContent(builder: PrefScopeBuilder) {
             LazyColumn(
                 modifier = Modifier.weight(1f),
                 contentPadding = PaddingValues(start = 16.dp, end = 16.dp, bottom = 16.dp),
-                verticalArrangement = Arrangement.spacedBy(DesignTokens.ItemGap),
+                verticalArrangement = Arrangement.spacedBy(currentUiStyle().listRowSpacing),
             ) { listItems() }
         }
     }

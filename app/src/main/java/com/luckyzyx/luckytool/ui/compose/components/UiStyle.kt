@@ -183,7 +183,8 @@ internal interface UiStyle {
     /**
      * 列表里相邻两段之间的间距。
      *
-     * COUI 的一行本身就是一张分段卡片，段间留白会把卡片切断，因此为 0；material 仍是 2dp。
+     * COUI 的一行本身就是一张分段卡片、行间另有细分隔线，段间留白会把卡片切断，因此为 0；
+     * material 不画分隔线，靠这段间距把行分开（组间层级由 [groupSpacing] 与 DesignTokens.GroupGap 承载）。
      */
     val listRowSpacing: Dp
 
@@ -336,9 +337,10 @@ private object MaterialUiStyle : UiStyle {
     @Composable
     override fun background(): Color = MaterialTheme.colorScheme.surfaceContainer
 
-    // material 的分段卡片自带段间留白，列表不需要额外的分组上沿留白
+    // material 的分组之间由组内首条承载 GroupGap，列表不需要额外的分组上沿留白
     override val groupSpacing: Dp = 0.dp
 
+    // 组内行之间只留 2dp 间距（不画分隔线），分组整体仍是一张卡
     override val listRowSpacing: Dp = 2.dp
 
     @Composable

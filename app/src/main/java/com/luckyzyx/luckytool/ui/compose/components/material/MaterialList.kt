@@ -76,6 +76,7 @@ import com.itos.coui.layout.CouiPageDefaults
 import com.itos.coui.text.CouiTextKind
 import com.itos.coui.text.Text as CouiText
 import com.itos.coui.theme.CouiTheme
+import com.luckyzyx.luckytool.ui.compose.components.currentUiStyle
 import com.luckyzyx.luckytool.ui.compose.components.coui.CouiTextField
 import com.luckyzyx.luckytool.ui.theme.DesignTokens
 import com.luckyzyx.luckytool.ui.theme.LocalUiMode
@@ -84,8 +85,9 @@ import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
 
 val LocalListItemShapes = compositionLocalOf<ListItemShapes?> { null }
-private val SegmentedOuterRadius = DesignTokens.CardRadius
-private val SegmentedInnerRadius = DesignTokens.ItemInnerRadius
+
+/** 分段行圆角：每行各自是一张卡片，四角统一 */
+private val SegmentedRadius = DesignTokens.CardRadius
 private const val SegmentedSpringStiffness = 800f
 private const val SegmentedSpringDamping = 0.9f
 
@@ -93,14 +95,14 @@ private const val SegmentedSpringDamping = 0.9f
  * 把形状包成非 [androidx.compose.foundation.shape.CornerBasedShape]，让 material3 的 ListItem 不对它做形状动画。
  *
  * material3 1.5.0-beta01 内部的 AnimatedShapeState 用 Interpolatable.lerp 插值圆角、且完全不钳制：
- * 阻尼比 0.9 的 FastSpatial 弹簧在「按压形状 16dp → 我们的分段形状（内边 [SegmentedInnerRadius] = 0dp）」
- * 之间过渡时会过冲，把圆角插成负值（16dp→0dp 过冲约 2.45% = -0.39dp，@3x 即 -1.1742859px），
+ * 阻尼比 0.9 的 FastSpatial 弹簧在按压形状与分段行形状之间过渡时会过冲、把圆角插成负值，
  * BackgroundNode 取 outline 时抛 "Corner size in Px can't be negative"。
+ * 曾出现过的实测：分段行内边还是 0dp 时，16dp→0dp 的过冲约 2.45% = -0.39dp（@3x 即 -1.1742859px）。
  * 条目短按后会立刻导航/销毁，长按则留在组合里，所以长按更容易命中这个过冲帧。
  *
  * ListItemDefaults.shapeForInteraction 只在六个变体全是 RoundedCornerShape / CornerBasedShape 时才调
  * rememberAnimatedShape，因此这里把六个变体统一换成非 CornerBasedShape 的包装形状：M3 会直接使用它、
- * 完全不做插值；圆角动画仍由本文件自己的 animateDpAsState + 钳制负责。
+ * 完全不做插值。
  */
 internal class StaticShape(private val delegate: Shape) : Shape {
     override fun createOutline(size: Size, layoutDirection: LayoutDirection, density: Density): Outline =
@@ -145,25 +147,21 @@ fun materialGroupColors(
 )
 
 /**
- * 分组内条目形状：单条卡片保持原有整块圆角；分组内相邻边取 [SegmentedInnerRadius]（0dp），
- * 使同一分组的条目拼成一张连续卡片，而不是各自成卡。
+ * 分段行形状：一个分组整体仍是一张卡片——首行留上圆角、尾行留下圆角，中间行四角为直角
+ * （组内行之间只有很小的间距，不各自成卡）。
  *
- * 六个状态统一为该形状、不走 material3 的形状动画（见 [StaticShape]）：内边 0dp 与 M3 的按压形状
- * （16dp）之间做过冲插值会算出负圆角并崩溃。
+ * 六个状态统一为该形状、不走 material3 的形状动画（见 [StaticShape]）：内边直角（0dp）与 M3 的
+ * 按压形状之间做过冲插值会算出负圆角并崩溃。
  */
 @Composable
-private fun defaultSingleSegmentedShape(index: Int, count: Int): ListItemShapes {
+private fun defaultSegmentedShape(index: Int, count: Int): ListItemShapes {
     val base = ListItemDefaults.segmentedShapes(index, count)
-    val shape = if (count <= 1) {
-        MaterialTheme.shapes.large
-    } else {
-        RoundedCornerShape(
-            topStart = if (index <= 0) SegmentedOuterRadius else SegmentedInnerRadius,
-            topEnd = if (index <= 0) SegmentedOuterRadius else SegmentedInnerRadius,
-            bottomStart = if (index >= count - 1) SegmentedOuterRadius else SegmentedInnerRadius,
-            bottomEnd = if (index >= count - 1) SegmentedOuterRadius else SegmentedInnerRadius,
-        )
-    }
+    val shape = RoundedCornerShape(
+        topStart = if (index <= 0) SegmentedRadius else 0.dp,
+        topEnd = if (index <= 0) SegmentedRadius else 0.dp,
+        bottomStart = if (index >= count - 1) SegmentedRadius else 0.dp,
+        bottomEnd = if (index >= count - 1) SegmentedRadius else 0.dp,
+    )
     return base.withoutShapeAnimation(shape)
 }
 
@@ -221,6 +219,7 @@ fun MaterialGroup(
 
         val firstVisible = entries.indexOfFirst { it.visible }
         val lastVisible = entries.indexOfLast { it.visible }
+        val rowGap = currentUiStyle().listRowSpacing
 
         Layout(
             content = {
@@ -230,19 +229,20 @@ fun MaterialGroup(
                         val isLast = if (lastVisible == -1) index == entries.lastIndex else index == lastVisible
 
                         val topRadius by animateDpAsState(
-                            if (isFirst) SegmentedOuterRadius else SegmentedInnerRadius,
+                            if (isFirst) SegmentedRadius else 0.dp,
                             dpSpring, label = "SegmentedTopRadius",
                         )
                         val bottomRadius by animateDpAsState(
-                            if (isLast) SegmentedOuterRadius else SegmentedInnerRadius,
+                            if (isLast) SegmentedRadius else 0.dp,
                             dpSpring, label = "SegmentedBottomRadius",
                         )
+                        // 首行紧贴分组上沿，其后的行按当前外观线的行间距分开（靠间距区分行，不画分隔线）
                         val gap by animateDpAsState(
-                            if (isFirst) 0.dp else DesignTokens.ItemGap,
+                            if (isFirst) 0.dp else rowGap,
                             dpSpring, label = "SegmentedGap",
                         )
 
-                        // 阻尼比 0.9 < 1 的弹簧会冲过头：16dp→0dp 的过程中 radius 可短暂为负，
+                        // 阻尼比 0.9 < 1 的弹簧会冲过头：圆角在 16dp→0dp 之间可能短暂为负，
                         // 负圆角会触发 RoundedCornerShape 的「Corner size in Px can't be negative」崩溃
                         val shape = RoundedCornerShape(
                             topStart = topRadius.coerceAtLeast(0.dp),
@@ -295,6 +295,7 @@ fun MaterialGroup(
     }
 }
 
+/** 列表里的一段：按自己在组内的位置给形状（首行上圆角、尾行下圆角、中间行直角） */
 @Composable
 fun MaterialItem(
     index: Int,
@@ -302,7 +303,7 @@ fun MaterialItem(
     content: @Composable () -> Unit,
 ) {
     CompositionLocalProvider(
-        LocalListItemShapes provides defaultSingleSegmentedShape(index, count),
+        LocalListItemShapes provides defaultSegmentedShape(index, count),
     ) {
         content()
     }
