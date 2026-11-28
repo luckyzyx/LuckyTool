@@ -54,6 +54,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.luckyzyx.luckytool.ui.compose.components.AppItem
 import com.luckyzyx.luckytool.ui.compose.components.PrefCardEntry
 import com.luckyzyx.luckytool.ui.compose.components.PageInset
@@ -74,6 +75,29 @@ import kotlin.math.roundToInt
  * [MaterialPreferenceGroup]（内部就是 MaterialGroup 的分段圆角）+ 自己画的标题与 footer。
  */
 internal object MaterialPrefStyle : PrefStyle {
+
+    /**
+     * 分类标题、说明与底部说明相对卡片边缘再多缩进的一档行内缩。
+     *
+     * COUI 线把这三处文字放在 32dp（[PageInset] 的 16dp 卡边 + 16dp 行内缩），与卡片里行的
+     * 文字起点齐平；material 线同样按这个位置对齐，不再贴着卡片边缘。
+     */
+    private val CategoryTextRowInset = 16.dp
+
+    /**
+     * 分组标题排版：与 COUI 的 GroupTitle 一致（12sp、Medium），并去掉 M3 标签样式自带的 0.5sp 字距。
+     *
+     * 行高沿用 labelMedium 的 16sp，标题行总高因此是 16 + 8 + 8 = 32dp，与 COUI 那条
+     * 8dp 竖padding + 16dp 最小高的标题行等高，分组上下的留白节奏不会因为换字号而变。
+     */
+    @Composable
+    private fun categoryTitleStyle(): TextStyle =
+        MaterialTheme.typography.labelMedium.copy(letterSpacing = 0.sp)
+
+    /** 分组说明与底部说明排版：与 COUI 的 GroupFooter 一致（12sp、Regular，无字距）。 */
+    @Composable
+    private fun groupBodyStyle(): TextStyle =
+        MaterialTheme.typography.bodySmall.copy(letterSpacing = 0.sp)
 
     @Composable
     override fun Title(text: String, enabled: Boolean, maxLines: Int, overflow: TextOverflow) {
@@ -264,22 +288,23 @@ internal object MaterialPrefStyle : PrefStyle {
         Column(modifier = Modifier.fillMaxWidth()) {
             Text(
                 text = title,
-                style = MaterialTheme.typography.titleSmall,
-                color = MaterialTheme.colorScheme.primary,
+                style = categoryTitleStyle(),
+                // COUI 线标题取说明色（GroupTitle 用 colors.summary），这里同样用 onSurfaceVariant
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier
                     .fillMaxWidth()
                     .semantics { heading() }
-                    .padding(horizontal = materialInset)
+                    .padding(horizontal = materialInset + CategoryTextRowInset)
                     .padding(top = 8.dp, bottom = if (summary == null) 8.dp else 4.dp),
             )
             if (summary != null) {
                 Text(
                     text = summary,
-                    style = MaterialTheme.typography.bodySmall,
+                    style = groupBodyStyle(),
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = materialInset)
+                        .padding(horizontal = materialInset + CategoryTextRowInset)
                         .padding(bottom = 8.dp),
                 )
             }
@@ -290,9 +315,11 @@ internal object MaterialPrefStyle : PrefStyle {
     override fun GroupFooter(text: String) {
         Text(
             text = text,
-            style = MaterialTheme.typography.bodySmall,
+            style = groupBodyStyle(),
             color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp).padding(top = 4.dp, bottom = 8.dp),
+            modifier = Modifier.fillMaxWidth()
+                .padding(horizontal = PageInset + CategoryTextRowInset)
+                .padding(top = 4.dp, bottom = 8.dp),
         )
     }
 
