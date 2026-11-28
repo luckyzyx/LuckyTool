@@ -3,8 +3,8 @@ package com.luckyzyx.luckytool.ui.compose.scopes.statusbar
 import android.content.Context
 import android.content.pm.PackageInfo
 import androidx.test.core.app.ApplicationProvider
-import com.luckyzyx.luckytool.ui.compose.components.PrefScopeBuilder
-import com.luckyzyx.luckytool.ui.compose.scopes.ScopePageRegistry
+import com.luckyzyx.luckytool.ui.compose.components.PrefPageBuilder
+import com.luckyzyx.luckytool.ui.compose.PageRegistry
 import com.luckyzyx.luckytool.utils.ModulePrefs
 import com.luckyzyx.luckytool.utils.PrefState
 import org.junit.Assert.assertEquals
@@ -236,7 +236,7 @@ class StatusBarIconOrderTest {
     /**
      * 排序列表独立成页：功能页只留入口行，排序页自己带开关与列表。
      * `com.android.systemui` 是排序页的唯一作用域，Robolectric 下未安装时入口行会被可达性判断拦掉，
-     * 因此先装一个包信息（与 `ScopePageReachabilityTest` 同一手法）。
+     * 因此先装一个包信息（与 `PageReachabilityTest` 同一手法）。
      */
     @Test
     fun `the icon page links to the dedicated order page`() {
@@ -244,17 +244,17 @@ class StatusBarIconOrderTest {
             PackageInfo().apply { packageName = "com.android.systemui" },
         )
 
-        val spec = ScopePageRegistry[StatusBarIconOrderPage.PAGE_KEY]
+        val spec = PageRegistry[StatusBarIconOrderPage.PAGE_KEY]
         assertNotNull("排序页应已注册", spec)
         assertEquals("statusbar_icon_order", StatusBarIconOrderPage.PAGE_KEY)
         assertTrue(
             "排序页必须有可见条目（开关无条件发射），否则入口行会被误隐藏",
-            ScopePageRegistry.hasVisibleContent(context, spec!!),
+            PageRegistry.hasVisibleContent(context, spec!!),
         )
 
         val raw = context.getSharedPreferences(ModulePrefs, Context.MODE_PRIVATE)
         raw.edit().clear().commit()
-        val builder = PrefScopeBuilder(PrefState.ofProvider { raw })
+        val builder = PrefPageBuilder(PrefState.ofProvider { raw })
         builder.context = context
         builder.beginBuild()
         StatusBarIconPage.spec.content(builder)

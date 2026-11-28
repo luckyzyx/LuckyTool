@@ -30,7 +30,7 @@ import androidx.compose.ui.unit.dp
 import com.luckyzyx.luckytool.R
 import com.itos.coui.icons.CouiIcons
 import com.luckyzyx.luckytool.ui.activity.MainActivity
-import com.luckyzyx.luckytool.ui.activity.SecondaryActivity
+import com.luckyzyx.luckytool.ui.activity.PageActivity
 import com.luckyzyx.luckytool.ui.compose.components.GateDialog
 import com.luckyzyx.luckytool.ui.compose.components.RootScaffold
 import com.luckyzyx.luckytool.ui.compose.components.currentUiStyle
@@ -44,7 +44,7 @@ import com.luckyzyx.luckytool.ui.compose.pages.SettingPage
 import com.luckyzyx.luckytool.ui.compose.special.AppPermissionContent
 import kotlin.system.exitProcess
 
-/** 跨标签页打开作用域页时保留来源标签。 */
+/** 跨标签页打开功能页时保留来源标签。 */
 data class FunctionRequest(val pageKey: String, val title: String?)
 
 internal enum class MainTab(val labelRes: Int) {
@@ -99,7 +99,7 @@ fun MainShell(activity: MainActivity) {
         activity.functionNavRequests.collect { request ->
             if (request != null) {
                 activity.functionNavRequests.value = null
-                SecondaryActivity.openScope(activity, request.pageKey, request.title.orEmpty())
+                PageActivity.openPage(activity, request.pageKey, request.title.orEmpty())
             }
         }
     }
@@ -135,14 +135,14 @@ fun MainShell(activity: MainActivity) {
                     MainTab.Other -> OtherPage(activity, isCurrentPage)
                     MainTab.Function -> FunctionPage(
                         activity = activity,
-                        onOpenPage = { key, title -> SecondaryActivity.openScope(activity, key, title) },
+                        onOpenPage = { key, title -> PageActivity.openPage(activity, key, title) },
                     )
                     MainTab.Search -> SearchPage(
                         isCurrentPage = isCurrentPage,
-                        onOpen = { route -> SecondaryActivity.openScope(activity, route) },
+                        onOpen = { route -> PageActivity.openPage(activity, route) },
                     )
                     MainTab.Setting -> SettingPage(activity) {
-                        SecondaryActivity.openTheme(activity)
+                        PageActivity.openTheme(activity)
                     }
                 }
             }

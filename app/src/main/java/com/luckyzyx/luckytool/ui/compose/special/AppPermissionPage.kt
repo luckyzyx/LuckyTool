@@ -26,7 +26,7 @@ import com.luckyzyx.luckytool.R
 import com.luckyzyx.luckytool.ui.compose.components.PrefRow
 import com.luckyzyx.luckytool.ui.compose.components.PrefGroup
 import com.luckyzyx.luckytool.ui.compose.components.PrefTextButton
-import com.luckyzyx.luckytool.ui.compose.scopes.ScopePageSpec
+import com.luckyzyx.luckytool.ui.compose.PageSpec
 import com.luckyzyx.luckytool.ui.service.XposedServiceBridge
 import com.luckyzyx.luckytool.utils.AppPermission
 import com.luckyzyx.luckytool.utils.DeviceUtils
@@ -39,14 +39,14 @@ import kotlinx.coroutines.withContext
  * 应用权限页（pageKey = `app_permission`）。
  *
  * 同一份内容 [AppPermissionContent] 有两个消费方，各自的宿主 Activity 不同：
- * - 设置页入口（本 [spec]）：二级页由 SecondaryActivity 承载，正常态、可返回；
+ * - 设置页入口（本 [spec]）：二级页由 PageActivity 承载，正常态、可返回；
  * - 冷启动阻塞门（MainShell 内提前渲染，宿主为 MainActivity）：阻塞态，无底栏/抽屉、返回键无效、无跳过出口。
  *
  * 因此内容侧只要求「任意 Activity」，不能把人限定成 MainActivity。
  */
 object AppPermissionPage {
 
-    val spec = ScopePageSpec(
+    val spec = PageSpec(
         pageKey = "app_permission",
         prefsName = SettingsPrefs,
         packName = "",
@@ -82,7 +82,7 @@ private data class RootInfo(
  * 行级水平内缩由分组容器 [PrefGroup] 按外观线给，宿主（设置页列表 / 阻塞态整屏）都不再补，
  * 因此本页在两种宿主下排版一致。
  *
- * [activity] 是宿主 Activity（阻塞态为 MainActivity，设置页入口为 SecondaryActivity），
+ * [activity] 是宿主 Activity（阻塞态为 MainActivity，设置页入口为 PageActivity），
  * 取不到时只展示权限名称、不给任何授权入口 —— 因此解析要认「任意 Activity」而不是某一种宿主。
  */
 @SuppressLint("ReplaceWithLifecycleExtension")

@@ -1,4 +1,4 @@
-package com.luckyzyx.luckytool.ui.compose.scopes
+package com.luckyzyx.luckytool.ui.compose
 
 import android.content.Context
 import androidx.annotation.DrawableRes
@@ -23,8 +23,8 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.luckyzyx.luckytool.R
 import com.luckyzyx.luckytool.ui.compose.components.LocalTopBarCollapsedFraction
 import com.luckyzyx.luckytool.ui.compose.components.PrefIndexItem
-import com.luckyzyx.luckytool.ui.compose.components.PrefScopeBuilder
-import com.luckyzyx.luckytool.ui.compose.components.ScopeScreen
+import com.luckyzyx.luckytool.ui.compose.components.PrefPageBuilder
+import com.luckyzyx.luckytool.ui.compose.components.PageScreen
 import com.luckyzyx.luckytool.ui.compose.components.ScrollTarget
 import com.luckyzyx.luckytool.ui.compose.components.currentUiStyle
 import com.luckyzyx.luckytool.ui.compose.scopes.apps.OplusAlarmClockPage
@@ -115,18 +115,18 @@ import kotlinx.coroutines.launch
 import kotlin.time.Duration.Companion.milliseconds
 
 /**
- * 页面顶栏动作：页面自己声明的菜单项，由 [ScopePageSpec.topActions] 声明、页面宿主渲染。
+ * 页面顶栏动作：页面自己声明的菜单项，由 [PageSpec.topActions] 声明、页面宿主渲染。
  *
  * 这些动作是对整页数据的一次性操作（打开系统设置、按 Intent 类型全选、清空、导入…），
  * 放在顶栏而不平铺成页面里的偏好卡片/选项行：混在正文里会与"页面选项"的视觉层级分不清，
  * 让人看不出哪个是设置项、哪个是动作。
  *
- * @param key           动作标识，页面在 [ScopePageSpec.actionHandler] 里据此分派
+ * @param key           动作标识，页面在 [PageSpec.actionHandler] 里据此分派
  * @param labelRes      动作标题（溢出菜单文本 / 图标按钮的 contentDescription）
  * @param icon          图标资源；0 = 无图标，只能进溢出菜单
  * @param showAsAction  true 且有图标时直接显示为顶栏图标按钮（空间足够就显示，不够则收进溢出菜单）
  */
-class ScopePageAction(
+class PageAction(
     val key: String,
     @StringRes val labelRes: Int,
     @DrawableRes val icon: Int = 0,
@@ -134,10 +134,10 @@ class ScopePageAction(
 )
 
 /**
- * 一个 Compose 作用域页的声明：页面注册键、prefs 文件名、宿主包名与显示包名、作用域包名列表、
+ * 一个 Compose 功能页的声明：页面注册键、prefs 文件名、宿主包名与显示包名、作用域包名列表、
  * 「重启作用域」菜单开关、页面级可见性、下拉刷新回调，以及页面内容 DSL（或自带的两线呈现槽位）。
  *
- * @param pageKey        页面注册键（如 statusbar_clock），[ScopePageRegistry] 以它为查表键
+ * @param pageKey        页面注册键（如 statusbar_clock），[PageRegistry] 以它为查表键
  * @param prefsName      SharedPreferences 文件名（ModulePrefs 等）
  * @param packName       宿主包名（sendPrefsValue 通知目标）
  * @param displayPackName 功能树标题/图标来源包名（默认 = packName；通知目标与显示 App 不同时单独指定）
@@ -146,14 +146,14 @@ class ScopePageAction(
  * @param isVisible      页面级可见性：false 时功能树、搜索与子页入口均不出现此页
  * @param onRefresh      下拉刷新回调（null = 无下拉刷新；如 OTA 提取、捐赠数据页）
  * @param content        页面内容 DSL（每次重组重跑，条件可见性写 Kotlin if）
- * @param contentMaterial 页面自带的整页呈现（null = 走共享渲染层 [ScopeScreen]）
+ * @param contentMaterial 页面自带的整页呈现（null = 走共享渲染层 [PageScreen]）
  *
  * 页面需要自带主题布局时，提供**槽位** [contentMaterial]：
- * 槽位非空时由页面自有布局渲染整页内容（见 [ScopePageContent]），共享层只负责状态、动作与搜索跳转。
+ * 槽位非空时由页面自有布局渲染整页内容（见 [PageContent]），共享层只负责状态、动作与搜索跳转。
  * 行清单仍只写一份 —— 放在 [content] 里；槽位布局遍历已构建好的 `builder.entries` 渲染
  * （共享层已跑过 [content]，**不要**在槽位里再 `apply` 一次，否则条目翻倍）。
  */
-class ScopePageSpec(
+class PageSpec(
     val pageKey: String,
     val prefsName: String,
     val packName: String,
@@ -182,33 +182,33 @@ class ScopePageSpec(
      */
     val onLoad: (suspend (Context) -> Unit)? = null,
     val onRefresh: (suspend () -> Unit)? = null,
-    val fullContent: (@Composable LazyItemScope.(PrefScopeBuilder) -> Unit)? = null,
+    val fullContent: (@Composable LazyItemScope.(PrefPageBuilder) -> Unit)? = null,
     /**
-     * 顶栏动作清单：有图标且 [ScopePageAction.showAsAction] 的直接显示为
+     * 顶栏动作清单：有图标且 [PageAction.showAsAction] 的直接显示为
      * 图标按钮，其余收进顶栏溢出菜单。动作处理函数由页面在组合期登记到 [actionHandler]。
      */
-    val topActions: List<ScopePageAction> = emptyList(),
-    val contentMaterial: (@Composable ScopeContentScope.(PrefScopeBuilder) -> Unit)? = null,
+    val topActions: List<PageAction> = emptyList(),
+    val contentMaterial: (@Composable PageContentScope.(PrefPageBuilder) -> Unit)? = null,
     /**
      * 共享行声明。72 个既有页面用尾随 lambda 传入，因此**必须保持最后一个参数**；
-     * 无槽位时由 [ScopeScreen] 渲染，有槽位时由页面布局渲染同一批条目。
+     * 无槽位时由 [PageScreen] 渲染，有槽位时由页面布局渲染同一批条目。
      */
-    val content: PrefScopeBuilder.() -> Unit,
+    val content: PrefPageBuilder.() -> Unit,
 ) {
     /**
      * 顶栏动作处理函数：页面内容在组合期登记（范式同 `refresh`，事件期读取），
-     * 顶栏点击时以 [ScopePageAction.key] 调用。用普通 var 而非快照状态，避免只读回调触发重组。
+     * 顶栏点击时以 [PageAction.key] 调用。用普通 var 而非快照状态，避免只读回调触发重组。
      */
     var actionHandler: ((String) -> Unit)? = null
 }
 
 /**
- * 页面级内容作用域（中性）：页面自带布局（[ScopePageSpec.contentMaterial]）
+ * 页面级内容作用域（中性）：页面自带布局（[PageSpec.contentMaterial]）
  * 通过它拿到只读能力与动作入口，**不含任何具体主题类型** —— 页面代码只依赖本接口与
- * [PrefScopeBuilder] 公共 API。
+ * [PrefPageBuilder] 公共 API。
  */
-interface ScopeContentScope {
-    /** 宿主应用 Context（与共享层注入 [PrefScopeBuilder] 的同一个 applicationContext） */
+interface PageContentScope {
+    /** 宿主应用 Context（与共享层注入 [PrefPageBuilder] 的同一个 applicationContext） */
     val context: Context
 
     /** 本页偏好状态（与共享层同一实例，条件可见性判断用它） */
@@ -233,8 +233,8 @@ interface ScopeContentScope {
     suspend fun refresh()
 }
 
-/** [ScopeContentScope] 的唯一委托体：两条主题线的实现类都委托到它，行为单点、不复制共享层逻辑。 */
-private class ScopeContentScopeImpl(
+/** [PageContentScope] 的唯一委托体：两条主题线的实现类都委托到它，行为单点、不复制共享层逻辑。 */
+private class PageContentScopeImpl(
     override val context: Context,
     override val state: PrefState,
     override val listState: LazyListState,
@@ -243,7 +243,7 @@ private class ScopeContentScopeImpl(
     private val onSendValue: (key: String, value: Any) -> Unit,
     private val onNavigate: ((target: String, title: String?) -> Unit)?,
     private val onRefresh: (suspend () -> Unit)?,
-) : ScopeContentScope {
+) : PageContentScope {
     override val highlightedSlot: Int? get() = highlighted()
     override val scrollTarget: ScrollTarget? get() = target()
     override fun sendValue(key: String, value: Any) = onSendValue(key, value)
@@ -257,22 +257,22 @@ private class ScopeContentScopeImpl(
 }
 
 /** 页面作用域实现：对页面隐藏宿主内部实现，只暴露约定的成员。 */
-internal class MaterialScopeContentScope(delegate: ScopeContentScope) :
-    ScopeContentScope by delegate
+internal class MaterialPageContentScope(delegate: PageContentScope) :
+    PageContentScope by delegate
 
 /**
- * 页面内容的中性宿主与**唯一分派点**（[ScopeScreen] 的调用处）。
+ * 页面内容的中性宿主与**唯一分派点**（[PageScreen] 的调用处）。
  *
- * - 页面自带布局（[ScopePageSpec.contentMaterial]）时，整页内容由页面自有布局渲染；共享层只做与
- *   [ScopeScreen] 同语义的三件事：订阅 revision、构建 [PrefScopeBuilder]（行声明与条件可见性只写一份）、
+ * - 页面自带布局（[PageSpec.contentMaterial]）时，整页内容由页面自有布局渲染；共享层只做与
+ *   [PageScreen] 同语义的三件事：订阅 revision、构建 [PrefPageBuilder]（行声明与条件可见性只写一份）、
  *   执行搜索跳转/高亮，并沿用下拉刷新包装。
- * - 未提供槽位时（72 个既有页面），逐字回落到今天的 [ScopeScreen] 路径。
+ * - 未提供槽位时（72 个既有页面），逐字回落到今天的 [PageScreen] 路径。
  *
  * [modifier] 由调用方的页面骨架给出，是骨架算好的整块 innerPadding。
  */
 @Composable
-internal fun ScopePageContent(
-    spec: ScopePageSpec,
+internal fun PageContent(
+    spec: PageSpec,
     state: PrefState,
     modifier: Modifier,
     sendValue: (key: String, value: Any) -> Unit,
@@ -285,7 +285,7 @@ internal fun ScopePageContent(
     val contentSlot = spec.contentMaterial
     if (contentSlot == null) {
         // 未提供槽位：与今天逐字一致的共享渲染层路径
-        ScopeScreen(
+        PageScreen(
             state = state,
             modifier = modifier,
             sendValue = sendValue,
@@ -303,7 +303,7 @@ internal fun ScopePageContent(
     // 必须读取 .value：仅调用 collectAsStateWithLifecycle() 并丢弃返回值，快照订阅不会建立
     state.revision.collectAsStateWithLifecycle().value
 
-    val builder = remember(state) { PrefScopeBuilder(state) }
+    val builder = remember(state) { PrefPageBuilder(state) }
     builder.sendValue = sendValue
     builder.navigate = onNavigate
     builder.context = LocalContext.current.applicationContext
@@ -326,7 +326,7 @@ internal fun ScopePageContent(
         if (builder.highlightSlot.value == targetSlot) builder.highlightSlot.value = null
     }
 
-    val scopeImpl = ScopeContentScopeImpl(
+    val scopeImpl = PageContentScopeImpl(
         context = LocalContext.current.applicationContext,
         state = state,
         listState = listState,
@@ -336,7 +336,7 @@ internal fun ScopePageContent(
         onNavigate = onNavigate,
         onRefresh = spec.onRefresh,
     )
-    val scope: ScopeContentScope = MaterialScopeContentScope(scopeImpl)
+    val scope: PageContentScope = MaterialPageContentScope(scopeImpl)
 
     val page: @Composable (Modifier) -> Unit = { pageModifier ->
         Box(pageModifier) { contentSlot(scope, builder) }
@@ -380,27 +380,27 @@ private fun PageLoadEffect(onLoad: (suspend (Context) -> Unit)?) {
     LifecycleEventEffect(Lifecycle.Event.ON_RESUME) { scope.launch { onLoad(context) } }
 }
 
-/** Compose 页注册表：ComposeScopeFragment 按 page_key 查表渲染 */
-object ScopePageRegistry {
-    private val pages = LinkedHashMap<String, ScopePageSpec>()
+/** Compose 页注册表：二级页宿主与主界面按 pageKey 查表渲染 */
+object PageRegistry {
+    private val pages = LinkedHashMap<String, PageSpec>()
 
-    fun register(spec: ScopePageSpec) {
+    fun register(spec: PageSpec) {
         pages[spec.pageKey] = spec
     }
 
-    operator fun get(key: String): ScopePageSpec? = pages[key]
+    operator fun get(key: String): PageSpec? = pages[key]
 
     /** 全部已注册页（搜索索引用） */
-    fun all(): List<ScopePageSpec> = pages.values.toList()
+    fun all(): List<PageSpec> = pages.values.toList()
 
     /**
      * headless 构建一页的搜索索引（条件可见性由 DSL 的 Kotlin if 或行的 `visible` 承担）。
      * 构建是纯记录（emit 不渲染），可在任意线程运行；功能树、全屏搜索与 DSL page() 子页入口可达性判断共用。
      * 注意：空索引**不等于**该页不可见——见 [hasVisibleContent]。
      */
-    fun buildIndex(context: Context, spec: ScopePageSpec): List<PrefIndexItem> = try {
+    fun buildIndex(context: Context, spec: PageSpec): List<PrefIndexItem> = try {
         val state = PrefState.of(context.applicationContext, spec.prefsName)
-        val builder = PrefScopeBuilder(state)
+        val builder = PrefPageBuilder(state)
         builder.context = context.applicationContext
         builder.beginBuild()
         spec.content(builder)
@@ -415,7 +415,7 @@ object ScopePageRegistry {
      * 单 App 作用域存在性检查：
      * 恰有一个作用域且不是 system、且该包未安装 → 整页不可见（功能树/搜索/子页入口共用）。
      */
-    fun isScopeAppPresent(context: Context, spec: ScopePageSpec): Boolean {
+    fun isScopeAppPresent(context: Context, spec: PageSpec): Boolean {
         val scopes = spec.scopes
         return !(scopes.size == 1 && scopes.first() != "system") || context.checkPackName(scopes.first())
     }
@@ -427,19 +427,19 @@ object ScopePageRegistry {
     /**
      * 一页是否有可见内容（判据：可见子条目数 <= 0 时隐藏该页入口）。
      *
-     * [ScopePageSpec.selfRendered] 的特殊页（暗色模式列表 / 意图 / 自定义浮窗 / 应用分身 / MEMC 等）
+     * [PageSpec.selfRendered] 的特殊页（暗色模式列表 / 意图 / 自定义浮窗 / 应用分身 / MEMC 等）
      * 自带整页渲染、行清单画在自己的布局里，DSL content 恒为空、索引恒为空；它们的可见性**只看
-     * [ScopePageSpec.isVisible] 与作用域**，这里不再碰索引，否则父页入口整行会被误隐藏。
+     * [PageSpec.isVisible] 与作用域**，这里不再碰索引，否则父页入口整行会被误隐藏。
      * 普通页仍按空索引判不可见（条件可见性把行全关掉时不该留下一个空页入口）。
      */
-    fun hasVisibleContent(context: Context, spec: ScopePageSpec): Boolean =
+    fun hasVisibleContent(context: Context, spec: PageSpec): Boolean =
         spec.selfRendered || buildIndex(context, spec).isNotEmpty()
 
     /**
      * 一页是否可进入（下面三级判断集中在此，供 DSL page() 子页入口使用）：
      * spec.isVisible（作用域判断通常也写在这里面）&& 单 App 作用域已安装
      * && 存在可见条目（可见子条目数 <= 0 时隐藏）。
-     * [ScopePageSpec.selfRendered] 的特殊页到第三步直接为真——它们只靠 isVisible + 作用域，不看索引。
+     * [PageSpec.selfRendered] 的特殊页到第三步直接为真——它们只靠 isVisible + 作用域，不看索引。
      * 目标页不可达时父页不发射入口行。未注册的 pageKey 视为可达（不拦截未知目标）。
      */
     fun isPageReachable(context: Context, pageKey: String): Boolean {

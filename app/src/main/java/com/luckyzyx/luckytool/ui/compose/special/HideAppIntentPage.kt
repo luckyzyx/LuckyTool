@@ -60,8 +60,8 @@ import com.luckyzyx.luckytool.ui.compose.components.AppItem
 import com.luckyzyx.luckytool.ui.compose.components.AppListItem
 import com.luckyzyx.luckytool.ui.compose.components.currentDialogStyle
 import com.luckyzyx.luckytool.ui.compose.components.currentPrefStyle
-import com.luckyzyx.luckytool.ui.compose.scopes.ScopePageAction
-import com.luckyzyx.luckytool.ui.compose.scopes.ScopePageSpec
+import com.luckyzyx.luckytool.ui.compose.PageAction
+import com.luckyzyx.luckytool.ui.compose.PageSpec
 import com.luckyzyx.luckytool.ui.compose.components.currentUiStyle
 import com.luckyzyx.luckytool.utils.IntentPrefs
 import com.luckyzyx.luckytool.utils.IntentUtils
@@ -81,12 +81,12 @@ import kotlinx.serialization.json.Json
 
 /**
  * P4 特殊页：隐藏应用 Intent。
- * 使用 ScopeScreen 的 fullContent 全屏自定义渲染 + onRefresh 下拉刷新。
+ * 使用 PageScreen 的 fullContent 全屏自定义渲染 + onRefresh 下拉刷新。
  *
  * 单文件承载：状态/加载/写值逻辑只有一份，渲染集中在 [HideAppIntentContent]——开关独占一张卡
  * （[PrefGroup] 内 [PrefSwitchRow]）、搜索框复用 [AppSearchField]、
  * 应用行 [IntentAppRow] 与多选对话框 [IntentInfoSelectDialog]。
- * 批量操作（按 Intent 类型分别全选、清空全部）声明为 [ScopePageAction] 进顶栏溢出菜单：
+ * 批量操作（按 Intent 类型分别全选、清空全部）声明为 [PageAction] 进顶栏溢出菜单：
  * 它们作用于整份数据而非某一项，放进正文选项行会与单个开关混排。
  */
 object HideAppIntentPage {
@@ -98,7 +98,7 @@ object HideAppIntentPage {
     const val ACTION_SELECT_BROWSER = "select_all_browser_intent"
     const val ACTION_CLEAR_ALL = "clear_all_data"
 
-    val spec = ScopePageSpec(
+    val spec = PageSpec(
         pageKey = "hide_app_intent",
         prefsName = IntentPrefs,
         packName = "",
@@ -110,11 +110,11 @@ object HideAppIntentPage {
         fullContent = { _ -> HideAppIntentContent() },
         // 这 5 项都不设图标、不显示为顶栏按钮，只出现在溢出菜单里
         topActions = listOf(
-            ScopePageAction(ACTION_SELECT_SHARE, R.string.select_all_share_intent),
-            ScopePageAction(ACTION_SELECT_TEXT, R.string.select_all_text_intent),
-            ScopePageAction(ACTION_SELECT_OPEN, R.string.select_all_open_intent),
-            ScopePageAction(ACTION_SELECT_BROWSER, R.string.select_all_browser_intent),
-            ScopePageAction(ACTION_CLEAR_ALL, R.string.clear_all_data),
+            PageAction(ACTION_SELECT_SHARE, R.string.select_all_share_intent),
+            PageAction(ACTION_SELECT_TEXT, R.string.select_all_text_intent),
+            PageAction(ACTION_SELECT_OPEN, R.string.select_all_open_intent),
+            PageAction(ACTION_SELECT_BROWSER, R.string.select_all_browser_intent),
+            PageAction(ACTION_CLEAR_ALL, R.string.clear_all_data),
         ),
     ) { }
 }

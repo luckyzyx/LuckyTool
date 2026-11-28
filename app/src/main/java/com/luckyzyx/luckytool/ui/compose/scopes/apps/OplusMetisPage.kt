@@ -5,7 +5,7 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
 import com.luckyzyx.luckytool.R
-import com.luckyzyx.luckytool.ui.compose.scopes.ScopePageSpec
+import com.luckyzyx.luckytool.ui.compose.PageSpec
 import com.luckyzyx.luckytool.utils.AppUtils
 import com.luckyzyx.luckytool.utils.ModulePrefs
 import com.luckyzyx.luckytool.utils.PackageUtils
@@ -26,7 +26,7 @@ private const val KEY_RULE_BROWSER_CARD = "metis_rule_browser_card"
  */
 object OplusMetisPage {
 
-    val spec = ScopePageSpec(
+    val spec = PageSpec(
         pageKey = "oplus_metis",
         prefsName = ModulePrefs,
         packName = "com.oplus.metis",
@@ -34,7 +34,7 @@ object OplusMetisPage {
         restartEnabled = true,
         isVisible = { checkPackName("com.oplus.metis") },
     ) {
-        val c = requireNotNull(context) { "ScopeScreen 未注入 Context" }
+        val c = requireNotNull(context) { "PageScreen 未注入 Context" }
 
         // 卡片重定向
         group(title = c.getString(R.string.metis_category_redirect)) {

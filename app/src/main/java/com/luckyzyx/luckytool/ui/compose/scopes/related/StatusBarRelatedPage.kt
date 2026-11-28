@@ -10,7 +10,7 @@ import com.luckyzyx.luckytool.R
 import com.luckyzyx.luckytool.ui.compose.components.AppPickerDialog
 import com.luckyzyx.luckytool.ui.compose.components.PrefRow
 import com.luckyzyx.luckytool.ui.compose.components.PrefRowInset
-import com.luckyzyx.luckytool.ui.compose.scopes.ScopePageSpec
+import com.luckyzyx.luckytool.ui.compose.PageSpec
 import com.luckyzyx.luckytool.utils.A13
 import com.luckyzyx.luckytool.utils.ModulePrefs
 import com.luckyzyx.luckytool.utils.SDK
@@ -24,7 +24,7 @@ import com.luckyzyx.luckytool.utils.sendPrefsValue
  */
 object StatusBarRelatedPage {
 
-    val spec = ScopePageSpec(
+    val spec = PageSpec(
         pageKey = "statusbar",
         prefsName = ModulePrefs,
         packName = "com.android.systemui",
@@ -37,7 +37,7 @@ object StatusBarRelatedPage {
         ),
         restartEnabled = true,
     ) {
-        val c = requireNotNull(context) { "ScopeScreen 未注入 Context" }
+        val c = requireNotNull(context) { "PageScreen 未注入 Context" }
 
         page(c.getString(R.string.StatusBarClock), "statusBarClock")
         page(c.getString(R.string.StatusBarNetWorkSpeed), "statusBarNetWorkSpeed")

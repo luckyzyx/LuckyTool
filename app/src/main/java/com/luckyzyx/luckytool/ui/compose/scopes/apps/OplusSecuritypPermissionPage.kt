@@ -10,7 +10,7 @@ import com.luckyzyx.luckytool.ui.compose.components.ChoiceItem
 import com.luckyzyx.luckytool.ui.compose.components.PrefRow
 import com.luckyzyx.luckytool.ui.compose.components.PrefRowInset
 import com.luckyzyx.luckytool.ui.compose.components.SingleChoiceDialog
-import com.luckyzyx.luckytool.ui.compose.scopes.ScopePageSpec
+import com.luckyzyx.luckytool.ui.compose.PageSpec
 import com.luckyzyx.luckytool.utils.ModulePrefs
 import com.luckyzyx.luckytool.utils.getOSVersionCode
 import com.luckyzyx.luckytool.utils.sendPrefsValue
@@ -31,14 +31,14 @@ object OplusSecuritypPermissionPage {
         val allUserIds: List<Int>,
     )
 
-    val spec = ScopePageSpec(
+    val spec = PageSpec(
         pageKey = "oplus_securityp_permission",
         prefsName = ModulePrefs,
         packName = "com.oplus.securitypermission",
         scopes = arrayOf("com.oplus.securitypermission"),
         restartEnabled = true,
     ) {
-        val c = requireNotNull(context) { "ScopeScreen 未注入 Context" }
+        val c = requireNotNull(context) { "PageScreen 未注入 Context" }
 
         group {
             if (getOSVersionCode >= 38) {

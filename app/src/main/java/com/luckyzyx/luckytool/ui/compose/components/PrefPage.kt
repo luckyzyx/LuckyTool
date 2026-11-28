@@ -86,7 +86,7 @@ import com.luckyzyx.luckytool.ui.compose.components.coui.CouiPullToRefreshBox
 import com.luckyzyx.luckytool.ui.compose.components.material.MaterialItemContainer
 import com.luckyzyx.luckytool.ui.compose.components.material.LocalShellBottomInset
 import com.luckyzyx.luckytool.ui.compose.components.material.materialGroupColors
-import com.luckyzyx.luckytool.ui.compose.scopes.ScopePageRegistry
+import com.luckyzyx.luckytool.ui.compose.PageRegistry
 import com.luckyzyx.luckytool.ui.theme.DesignTokens
 import com.luckyzyx.luckytool.ui.theme.LocalUiMode
 import com.luckyzyx.luckytool.ui.theme.UiMode
@@ -105,21 +105,21 @@ import kotlin.time.Duration.Companion.milliseconds
  * 并把外置 padding 的 top 置 0）；本文件只声明，不 provide。
  * 除本机制外不要再补任何 padding 去解决首行遮挡（会与它叠加）。
  */
-internal val LocalScopeTopInset = compositionLocalOf { 0.dp }
+internal val LocalPageTopInset = compositionLocalOf { 0.dp }
 
 /**
- * 页面列表的 [LazyListState]（[ScopeScreen] 里那个 LazyColumn 的状态）。
+ * 页面列表的 [LazyListState]（[PageScreen] 里那个 LazyColumn 的状态）。
  *
- * 由 [ScopeScreen] provide；页面内容可用它实现需要主动滚动的交互（例如拖拽排序时
+ * 由 [PageScreen] provide；页面内容可用它实现需要主动滚动的交互（例如拖拽排序时
  * 「拖到列表上下边缘自动滚动」）。不在页面列表内时为 null，调用点必须做空值回落。
  */
-internal val LocalScopeListState = compositionLocalOf<LazyListState?> { null }
+internal val LocalPageListState = compositionLocalOf<LazyListState?> { null }
 
 /** 搜索跳转目标：position 为 LazyColumn 槽位（与 [PrefIndexItem.slot] 对应） */
 data class ScrollTarget(val key: String, val position: Int)
 
 /**
- * 单个偏好项的搜索索引条目（Function 页全局搜索由 [PrefScopeBuilder.snapshotIndex] 收集，
+ * 单个偏好项的搜索索引条目（Function 页全局搜索由 [PrefPageBuilder.snapshotIndex] 收集，
  * key/title/summary 参与过滤，pageTarget 非空则命中即导航）。
  */
 data class PrefIndexItem(
@@ -136,9 +136,9 @@ data class PrefIndexItem(
  *
  * [segIndex]/[segCount] 用于同一分组的条目之间保持组内间距（每条各自一张 16dp 圆角卡片，
  * 组与组之间用 [com.luckyzyx.luckytool.ui.theme.DesignTokens.GroupGap] 拉开层级）；
- * [groupable] = false 的条目独占一张卡片（[PrefScopeBuilder.group] 的起止标记、`custom(raw = true)` 的页面级 body）。
+ * [groupable] = false 的条目独占一张卡片（[PrefPageBuilder.group] 的起止标记、`custom(raw = true)` 的页面级 body）。
  * [raw] = true 的条目完全裸渲染，不套任何卡片容器。
- * [groupStart]/[groupBreak] 是 [PrefScopeBuilder.group] 发出的分组起止标记：只参与分块计算，
+ * [groupStart]/[groupBreak] 是 [PrefPageBuilder.group] 发出的分组起止标记：只参与分块计算，
  * 两个线上都不占高度（material 线借结束标记的 [sectionFooter] 画卡片下方那行说明）。
  */
 internal class PrefEntry(
@@ -151,7 +151,7 @@ internal class PrefEntry(
     val groupable: Boolean,
     /** 自身永不进卡片：页面级整页内容、组内不参与卡片体的 body，按顺序裸渲染 */
     val raw: Boolean,
-    /** [PrefScopeBuilder.custom] 的任意内容槽：组内当普通行，组外裸渲染 */
+    /** [PrefPageBuilder.custom] 的任意内容槽：组内当普通行，组外裸渲染 */
     val custom: Boolean = false,
     val groupBreak: Boolean = false,
     /** 分组起始标记：先切块，再把自己当成块的标题（标题与说明都为空时不作标题） */
@@ -170,7 +170,7 @@ internal class PrefEntry(
     /**
      * 该行是否显示（默认显示）。false 时行原地收起、true 时原地展开，两条线都是行级动画。
      *
-     * 条件行用 [PrefScopeBuilder.click] 的 `visible` 表达，不要再用 `if (条件) { click(…) }` 包起来：
+     * 条件行用 [PrefPageBuilder.click] 的 `visible` 表达，不要再用 `if (条件) { click(…) }` 包起来：
      * 那样条目会整块增删，COUI 线的行并在一张卡片里，只有整块卡片能跟着动。
      */
     val visible: Boolean,
@@ -183,10 +183,10 @@ internal class PrefEntry(
 /**
  * COUI 线的分组块：一个 LazyColumn item 承载 [CouiPrefGroup] 画出的整张卡片。
  *
- * [head] 是块首的分组起始标记或裸条目（[PrefScopeBuilder.group]、`custom(raw = true)`、组外的 [PrefScopeBuilder.custom]）：
+ * [head] 是块首的分组起始标记或裸条目（[PrefPageBuilder.group]、`custom(raw = true)`、组外的 [PrefPageBuilder.custom]）：
  * 有 [rows] 时它是卡片的标题，没有 [rows] 时它自己裸渲染在卡片之外。
  * [rows] 是块内成组的选项行，行间由 [CouiDivider] 切分。
- * [footer] 是卡片下方那行说明（[PrefScopeBuilder.group] 的 footer）。
+ * [footer] 是卡片下方那行说明（[PrefPageBuilder.group] 的 footer）。
  */
 internal class PrefBlock(
     val itemKey: String,
@@ -243,7 +243,7 @@ internal class PrefCardRow(
 /**
  * COUI 卡片内的行序列：按可见顺序画分隔线，行级显隐原地展开/收起。
  *
- * **COUI 线唯一的分行实现**：DSL 分组块（[ScopeScreen]）与页面自绘分组（[PrefGroup]）
+ * **COUI 线唯一的分行实现**：DSL 分组块（[PageScreen]）与页面自绘分组（[PrefGroup]）
  * 都交给它，分隔线位置、显隐动画与跳转高亮因此不会各写一份。
  * 卡片本身（内缩、圆角、底色）由外层 [CouiPrefGroup] / [CouiCard] 提供。
  */
@@ -284,7 +284,7 @@ internal fun CouiRowsColumn(rows: List<PrefCardRow>) {
 }
 
 /**
- * COUI 分组卡片：[PrefScopeBuilder.group] 的容器实现。
+ * COUI 分组卡片：[PrefPageBuilder.group] 的容器实现。
  *
  * 卡片内外三段文字各归其位：标题与说明画在卡片上方（标题一行、说明一行，与库 Group 的标题行同档：
  * 12dp 分组上沿、32dp 水平内缩、[CouiTextKind.GroupTitle]，说明用 GroupFooter 样式），
@@ -400,7 +400,7 @@ internal fun couiTrailingIconTint(dark: Boolean): Color =
  *
  * 用法：
  * ```
- * ScopeScreen(state, sendValue = { k, v -> context.sendPrefsValue(pack, k, v) }) {
+ * PageScreen(state, sendValue = { k, v -> context.sendPrefsValue(pack, k, v) }) {
  *     group(title = "基础", summary = "整组说明", footer = "整组脚注") {
  *         switch("key1", "标题", "摘要")
  *         if (state.getBoolean("master", false)) {   // 条件可见性：任意偏好变更自动重求值
@@ -418,7 +418,7 @@ internal fun couiTrailingIconTint(dark: Boolean): Color =
  * 写值语义：`state.set(key, value)` 先落 SharedPreferences（host 进程 hook 经
  * remote prefs 同源可见），再经 [sendValue] 触发 `Context.sendPrefsValue(packName, key, value)`。
  */
-class PrefScopeBuilder internal constructor(
+class PrefPageBuilder internal constructor(
     internal val state: PrefState,
 ) {
     internal var sendValue: (key: String, value: Any) -> Unit = { _, _ -> }
@@ -431,7 +431,7 @@ class PrefScopeBuilder internal constructor(
     /** COUI 线的分组块（[computeSegments] 里随条目一起算好），material 线不使用 */
     internal var blocks: List<PrefBlock> = emptyList()
 
-    /** 每次重建前清空（ScopeScreen 每次重组前调用；外部索引收集同样先调用） */
+    /** 每次重建前清空（PageScreen 每次重组前调用；外部索引收集同样先调用） */
     fun beginBuild() {
         entries.clear()
     }
@@ -541,7 +541,7 @@ class PrefScopeBuilder internal constructor(
     /**
      * 按块切开 COUI 线的条目：[group] 的起始标记开一块、结束标记收尾，标记之间的行就是这块的卡片内容。
      *
-     * [PrefScopeBuilder.custom] 在组内是普通行，在组外裸渲染（不与相邻条目拼卡，也不套卡片）；
+     * [PrefPageBuilder.custom] 在组内是普通行，在组外裸渲染（不与相邻条目拼卡，也不套卡片）；
      * 声明了 [PrefEntry.raw] 的条目与没有行的分组标题各自独占一块。
      */
     private fun computeBlocks() {
@@ -612,7 +612,7 @@ class PrefScopeBuilder internal constructor(
         title: String? = null,
         summary: String? = null,
         footer: String? = null,
-        content: PrefScopeBuilder.() -> Unit,
+        content: PrefPageBuilder.() -> Unit,
     ) {
         emit(
             null, null, null, null,
@@ -942,9 +942,9 @@ class PrefScopeBuilder internal constructor(
     }
 
     /**
-     * 页面入口（跳转其他作用域页；同时登记搜索索引）。
+     * 页面入口（跳转其他功能页；同时登记搜索索引）。
      * 目标页不可达（spec.isVisible false / 单 App 作用域未安装 / 目标页无可见条目）时不发射入口，
-     * 入口可见性沿用「选项=0 → 入口消失」规则（判断集中在 [ScopePageRegistry.isPageReachable]）。
+     * 入口可见性沿用「选项=0 → 入口消失」规则（判断集中在 [PageRegistry.isPageReachable]）。
      */
     fun page(
         title: String,
@@ -953,7 +953,7 @@ class PrefScopeBuilder internal constructor(
         enabled: Boolean = true,
     ) {
         val ctx = context
-        if (ctx != null && !ScopePageRegistry.isPageReachable(ctx, ScopePageRegistry.pageTargetMap[target] ?: target)) {
+        if (ctx != null && !PageRegistry.isPageReachable(ctx, PageRegistry.pageTargetMap[target] ?: target)) {
             return
         }
         emit("page:$target", "page:$target", title, summary, pageTarget = target) { slot ->
@@ -971,7 +971,7 @@ class PrefScopeBuilder internal constructor(
     }
 
     /**
-     * 纯点击入口（跳转外部 Activity / 设置 / shell 命令等，非作用域页导航、无值/开关）：分组卡片内的一行。
+     * 纯点击入口（跳转外部 Activity / 设置 / shell 命令等，非功能页导航、无值/开关）：分组卡片内的一行。
      *
      * 点击回调是最后一个参数，所以 `click(title) { … }` 可以直接写尾随 lambda；这也让条件行写成
      * `click(title, visible = 条件) { … }` 而不必再包一层本地函数。
@@ -1026,7 +1026,7 @@ class PrefScopeBuilder internal constructor(
         title: String? = null,
         summary: String? = null,
         raw: Boolean = false,
-        content: @Composable PrefScopeBuilder.(slot: Int) -> Unit,
+        content: @Composable PrefPageBuilder.(slot: Int) -> Unit,
     ) = emit(
         key, key, title, summary,
         groupable = !raw,
@@ -1037,7 +1037,7 @@ class PrefScopeBuilder internal constructor(
 }
 
 /**
- * 作用域偏好页主体（无 Scaffold，标题栏由页面宿主提供）。
+ * 页面偏好主体（无 Scaffold，标题栏由页面宿主提供）。
  *
  * 行为约定：
  * - [sendValue] 对应 `Context.sendPrefsValue(packName, key, value)`（dataChannel 通知宿主）
@@ -1045,15 +1045,15 @@ class PrefScopeBuilder internal constructor(
  * - [onNavigate] 对应页面入口跳转（page DSL 项）
  */
 @Composable
-fun ScopeScreen(
+fun PageScreen(
     state: PrefState,
     modifier: Modifier = Modifier,
     sendValue: (key: String, value: Any) -> Unit = { _, _ -> },
     scrollTarget: ScrollTarget? = null,
     onNavigate: ((target: String, title: String?) -> Unit)? = null,
     onRefresh: (suspend () -> Unit)? = null,
-    fullContent: (@Composable LazyItemScope.(PrefScopeBuilder) -> Unit)? = null,
-    content: PrefScopeBuilder.() -> Unit,
+    fullContent: (@Composable LazyItemScope.(PrefPageBuilder) -> Unit)? = null,
+    content: PrefPageBuilder.() -> Unit,
 ) {
     // 订阅 revision：任何偏好写入都会重组本页 → 构建 lambda 重跑 → 条件可见性自动重求值。
     // 必须读取 .value：仅调用 collectAsStateWithLifecycle() 并丢弃返回值，快照订阅不会建立，
@@ -1063,7 +1063,7 @@ fun ScopeScreen(
     val revisionState = state.revision.collectAsStateWithLifecycle()
     revisionState.value
 
-    val builder = remember(state) { PrefScopeBuilder(state) }
+    val builder = remember(state) { PrefPageBuilder(state) }
     builder.sendValue = sendValue
     builder.navigate = onNavigate
     builder.context = LocalContext.current.applicationContext
@@ -1101,13 +1101,13 @@ fun ScopeScreen(
 
     // 唯一的 LazyColumn item 缝：条目描述（槽位/分段/元数据）只构建一次，主题差异只在这里分派
     val buildEntries: LazyListScope.() -> Unit = {
-        // 条目重建必须在 LazyColumn 的 content lambda 内执行（而不是 ScopeScreen 函数体）：
+        // 条目重建必须在 LazyColumn 的 content lambda 内执行（而不是 PageScreen 函数体）：
         // 本 lambda 由 LazyList 的 derivedStateOf 包裹，builder.content() 里对页面级状态
         // （systemInfo / rows / entries / filtered 等 mutableStateOf）的读取因此进入快照订阅，
         // 任一变化都会让条目重算、列表刷新。放在函数体里这些读取不参与列表追踪：
         // 功能树 rows 由空变满不刷新（白屏）、搜索结果不出现、SYSTEMINFO 切页后才显示。
         //
-        // revision 也必须在 lambda 内部读一次：偏好写入只让 ScopeScreen 重组（函数体里那次
+        // revision 也必须在 lambda 内部读一次：偏好写入只让 PageScreen 重组（函数体里那次
         // beginBuild/content 会用新值重建 entries），列表内容本身不重算就不会去用新的 entries，
         // 行声明里的 if (state.getString(...)) 条件分支不重求值，条件条目永远不出现
         //（实测：不读 revision 时写入偏好后只有函数体重建、条目内容不重组）。
@@ -1209,9 +1209,9 @@ fun ScopeScreen(
     }
 
     // 条目 lambda 必须记住：页面骨架的大标题折叠会把 innerPadding 每帧换一遍，
-    // ScopeScreen 因此随滚动每帧重组；若列表内容 lambda 也跟着每帧新建，LazyList 的
+    // PageScreen 因此随滚动每帧重组；若列表内容 lambda 也跟着每帧新建，LazyList 的
     // LazyListIntervalContent 会失效，所有可见条目的内容 lambda 一起换新实例 —— 每帧重组 +
-    // 重测量全部可见行。记住后页面重组只影响 ScopeScreen 自身，列表内容不再跟着重建。
+    // 重测量全部可见行。记住后页面重组只影响 PageScreen 自身，列表内容不再跟着重建。
     // （行内主线程解码见 PrefImageRow.kt 的 previewImage，那才是滑到 OTA 卡片时的停顿来源。）
     // 键里必须带上外观线判定（coui）：buildEntries 闭包捕获了它来选列表分支（COUI 整块 / material 逐行），
     // 而运行时切主题只改 LocalUiMode，builder 与 fullContent 都不变。漏掉这个键就永远复用首次组合的
@@ -1233,7 +1233,7 @@ fun ScopeScreen(
             modifier = listModifier,
             state = listState,
             contentPadding = PaddingValues(
-                top = LocalScopeTopInset.current,
+                top = LocalPageTopInset.current,
                 bottom = listBottomPadding,
             ),
             overscrollEffect = overscroll,
@@ -1242,7 +1242,7 @@ fun ScopeScreen(
     }
     // 列表状态下发到页面内容：LazyColumn 的 item 内容是本 provider 的后代，因此页面里的
     // 自定义内容（如排序列表）也能拿到它，用于「拖到列表边缘自动滚动」这类主动滚动交互。
-    CompositionLocalProvider(LocalScopeListState provides listState) {
+    CompositionLocalProvider(LocalPageListState provides listState) {
         if (onRefresh != null) {
             var refreshing by remember { mutableStateOf(false) }
             val scope = rememberCoroutineScope()

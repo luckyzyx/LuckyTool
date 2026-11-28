@@ -17,7 +17,7 @@ import com.luckyzyx.luckytool.ui.compose.components.ColorPickerDialog
 import com.luckyzyx.luckytool.ui.compose.components.PrefColorPreview
 import com.luckyzyx.luckytool.ui.compose.components.PrefRow
 import com.luckyzyx.luckytool.ui.compose.components.PrefRowInset
-import com.luckyzyx.luckytool.ui.compose.scopes.ScopePageSpec
+import com.luckyzyx.luckytool.ui.compose.PageSpec
 import com.luckyzyx.luckytool.utils.A13
 import com.luckyzyx.luckytool.utils.A16
 import com.luckyzyx.luckytool.utils.ModulePrefs
@@ -37,14 +37,14 @@ object StatusBarControlCenterPage {
 
     private const val PROGRESS_COLOR_KEY = "custom_control_center_progress_percent_color"
 
-    val spec = ScopePageSpec(
+    val spec = PageSpec(
         pageKey = "statusbar_control_center",
         prefsName = ModulePrefs,
         packName = "com.android.systemui",
         scopes = arrayOf("com.android.systemui"),
         restartEnabled = true,
     ) {
-        val c = requireNotNull(context) { "ScopeScreen 未注入 Context" }
+        val c = requireNotNull(context) { "PageScreen 未注入 Context" }
         val osCode = getOSVersionCode
         // 时钟相关
         group(title = c.getString(R.string.ControlCenter_Clock_Related)) {

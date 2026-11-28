@@ -1,7 +1,7 @@
 package com.luckyzyx.luckytool.ui.compose.scopes.apps
 
 import com.luckyzyx.luckytool.R
-import com.luckyzyx.luckytool.ui.compose.scopes.ScopePageSpec
+import com.luckyzyx.luckytool.ui.compose.PageSpec
 import com.luckyzyx.luckytool.utils.ModulePrefs
 
 /**
@@ -9,14 +9,14 @@ import com.luckyzyx.luckytool.utils.ModulePrefs
  */
 object OplusThemeStorePage {
 
-    val spec = ScopePageSpec(
+    val spec = PageSpec(
         pageKey = "theme_store",
         prefsName = ModulePrefs,
         packName = "com.heytap.themestore",
         scopes = arrayOf("com.heytap.themestore"),
         restartEnabled = true,
     ) {
-        val c = requireNotNull(context) { "ScopeScreen 未注入 Context" }
+        val c = requireNotNull(context) { "PageScreen 未注入 Context" }
         switch(
             key = "unlock_themestore_vip",
             title = c.getString(R.string.unlock_themestore_vip),

@@ -92,17 +92,21 @@ import com.luckyzyx.luckytool.ui.compose.components.coui.CouiBadge
 import com.luckyzyx.luckytool.ui.compose.components.coui.CouiBadgedBox
 import com.luckyzyx.luckytool.ui.compose.components.coui.CouiPageScaffold
 import com.luckyzyx.luckytool.ui.compose.components.coui.CouiPullToRefreshBox
+import com.luckyzyx.luckytool.ui.compose.components.liquid.LiquidGlassBottomBar
+import com.luckyzyx.luckytool.ui.compose.components.liquid.LiquidGlassItem
 import com.luckyzyx.luckytool.ui.compose.components.material.LocalBottomBarPresent
 import com.luckyzyx.luckytool.ui.compose.components.material.MaterialScaffold
 import com.luckyzyx.luckytool.ui.compose.components.material.MaterialFloatingBottomBar
 import com.luckyzyx.luckytool.ui.compose.components.material.MaterialTopBarBackButton
 import com.luckyzyx.luckytool.ui.compose.components.material.materialTopAppBarColors
 import com.luckyzyx.luckytool.ui.theme.LocalUiMode
+import com.luckyzyx.luckytool.ui.shell.FloatingBottomBarStyle
 import com.luckyzyx.luckytool.ui.shell.LocalEnableBlur
 import com.luckyzyx.luckytool.ui.shell.LocalEnableFloatingBottomBar
 import com.luckyzyx.luckytool.ui.shell.LocalEnableNavigationBadge
 import com.luckyzyx.luckytool.ui.shell.LocalFloatingBottomBarStyle
 import com.luckyzyx.luckytool.ui.shell.ShellBadgeState
+import top.yukonga.miuix.kmp.blur.isRuntimeShaderSupported
 import top.yukonga.miuix.kmp.blur.layerBackdrop
 import top.yukonga.miuix.kmp.blur.rememberLayerBackdrop
 import com.luckyzyx.luckytool.ui.theme.UiMode
@@ -354,6 +358,13 @@ private object MaterialUiStyle : UiStyle {
         val floatingStyle = LocalFloatingBottomBarStyle.current
         val showUpdateBadge = LocalEnableNavigationBadge.current && ShellBadgeState.updateAvailable
         val density = LocalDensity.current
+        // 两种悬浮形态共用同一颗角标，交给各自栏体决定挂在哪
+        val updateBadge: @Composable () -> Unit = {
+            Badge(
+                containerColor = MaterialTheme.colorScheme.primary,
+                contentColor = MaterialTheme.colorScheme.onPrimary,
+            ) { Text("1") }
+        }
         var capsuleHeight by remember(floatingStyle, density) { mutableStateOf(76.dp) }
         // 悬浮胶囊要采样正文才能透出下层 UI：采样源只套正文，胶囊必须画在采样层之外。
         val backdropSurface = MaterialTheme.colorScheme.surfaceContainer
@@ -430,16 +441,38 @@ private object MaterialUiStyle : UiStyle {
                     )
                 }
                 if (floating) {
-                    MaterialFloatingBottomBar(
-                        selectedIndex = selectedIndex,
-                        onSelected = onSelect,
-                        showUpdateBadge = showUpdateBadge,
-                        modifier = Modifier
-                            .align(Alignment.BottomCenter)
-                            .onSizeChanged { capsuleHeight = with(density) { it.height.toDp() } },
-                        backdrop = backdrop,
-                        floatingStyle = floatingStyle,
-                    )
+                    val barModifier = Modifier
+                        .align(Alignment.BottomCenter)
+                        .onSizeChanged { capsuleHeight = with(density) { it.height.toDp() } }
+                    // 液态玻璃靠 runtimeShader 折射采样下层，没有该能力的设备退回纯尺寸形态，避免只剩一块不透明底
+                    if (floatingStyle == FloatingBottomBarStyle.LiquidGlass && isRuntimeShaderSupported()) {
+                        LiquidGlassBottomBar(
+                            items = MainTab.entries.map { tab ->
+                                LiquidGlassItem(label = stringResource(tab.labelRes), icon = tab.icon())
+                            },
+                            selectedIndex = selectedIndex,
+                            onSelected = onSelect,
+                            backdrop = backdrop,
+                            isBlurActive = backdrop != null,
+                            badge = { index ->
+                                if (showUpdateBadge && MainTab.entries[index] == MainTab.Home) {
+                                    updateBadge
+                                } else {
+                                    null
+                                }
+                            },
+                            modifier = barModifier,
+                        )
+                    } else {
+                        MaterialFloatingBottomBar(
+                            selectedIndex = selectedIndex,
+                            onSelected = onSelect,
+                            showUpdateBadge = showUpdateBadge,
+                            modifier = barModifier,
+                            backdrop = backdrop,
+                            floatingStyle = floatingStyle,
+                        )
+                    }
                 }
             }
         }

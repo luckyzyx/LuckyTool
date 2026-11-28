@@ -198,7 +198,7 @@ class HomeDashboardTest {
                     LocalLayoutDirection provides if (rtl) LayoutDirection.Rtl else LayoutDirection.Ltr,
                     LocalUiMode provides this.mode,
                     LocalEnableFloatingBottomBar provides (this.mode == UiMode.Material),
-                    LocalFloatingBottomBarStyle provides FloatingBottomBarStyle.IosLike,
+                    LocalFloatingBottomBarStyle provides FloatingBottomBarStyle.LiquidGlass,
                 ) {
                     AppTheme(AppSettings(colorMode = color, dynamicColor = false), uiMode = this.mode) {
                         val pager = rememberMainPagerState(rememberPagerState(initialPage = 2) { 5 })

@@ -1,7 +1,7 @@
 package com.luckyzyx.luckytool.ui.compose.scopes.statusbar
 
 import com.luckyzyx.luckytool.R
-import com.luckyzyx.luckytool.ui.compose.scopes.ScopePageSpec
+import com.luckyzyx.luckytool.ui.compose.PageSpec
 import com.luckyzyx.luckytool.utils.A13
 import com.luckyzyx.luckytool.utils.ModulePrefs
 import com.luckyzyx.luckytool.utils.SDK
@@ -15,14 +15,14 @@ import com.luckyzyx.luckytool.utils.getOSVersionCode
  */
 object StatusBarIconPage {
 
-    val spec = ScopePageSpec(
+    val spec = PageSpec(
         pageKey = "statusbar_icon",
         prefsName = ModulePrefs,
         packName = "com.android.systemui",
         scopes = arrayOf("com.android.systemui"),
         restartEnabled = true,
     ) {
-        val c = requireNotNull(context) { "ScopeScreen 未注入 Context" }
+        val c = requireNotNull(context) { "PageScreen 未注入 Context" }
         val osCode = getOSVersionCode
         // 图标位置排序：拖拽列表有 50 项，单独成页（开关与列表都在该页），这里只留入口行
         group(title = c.getString(R.string.statusbar_icon_order)) {

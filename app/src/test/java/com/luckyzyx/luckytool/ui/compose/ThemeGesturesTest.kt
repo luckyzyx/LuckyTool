@@ -72,9 +72,9 @@ class ThemeGesturesTest {
             h.ui.advance()
             h.scrollTo("悬浮底栏样式")
             for ((style, label) in listOf(
-                FloatingBottomBarStyle.IosLike to "iOS 风格（液态玻璃）",
+                FloatingBottomBarStyle.LiquidGlass to "液态玻璃",
                 FloatingBottomBarStyle.Classic to "经典",
-                FloatingBottomBarStyle.IosLike to "iOS 风格（液态玻璃）",
+                FloatingBottomBarStyle.LiquidGlass to "液态玻璃",
             )) {
                 h.ui.clickText("悬浮底栏样式")
                 h.ui.advance()
@@ -88,12 +88,12 @@ class ThemeGesturesTest {
             h.ui.clickText("模糊")
             h.ui.advance()
             assertTrue(h.blur)
-            assertEquals(FloatingBottomBarStyle.IosLike, h.floatingStyle)
+            assertEquals(FloatingBottomBarStyle.LiquidGlass, h.floatingStyle)
             h.ui.snapshot("theme-floating-style-selected")
             saved = h.ui.saveAndClose()
         }
         ThemeHost(UiMode.Material, ColorMode.LIGHT, saved).use { h ->
-            assertEquals(FloatingBottomBarStyle.IosLike, h.floatingStyle)
+            assertEquals(FloatingBottomBarStyle.LiquidGlass, h.floatingStyle)
             assertTrue(h.blur)
             assertTrue(ShellSettingsController.get(h.ui.activity).enableFloatingBottomBar)
         }

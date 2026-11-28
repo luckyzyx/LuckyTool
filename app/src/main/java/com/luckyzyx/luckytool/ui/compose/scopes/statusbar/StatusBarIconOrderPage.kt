@@ -3,11 +3,11 @@ package com.luckyzyx.luckytool.ui.compose.scopes.statusbar
 import androidx.compose.runtime.getValue
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.luckyzyx.luckytool.R
-import com.luckyzyx.luckytool.ui.compose.scopes.ScopePageSpec
+import com.luckyzyx.luckytool.ui.compose.PageSpec
 import com.luckyzyx.luckytool.utils.ModulePrefs
 
 /**
- * 状态栏图标排序页（独立作用域页）。
+ * 状态栏图标排序页（独立功能页）。
  *
  * 排序列表有 50 项（49 个宿主槽位 + 时钟伪条目），拖拽换行需要整屏高度，因此单独成页，
  * 由「状态栏图标」页的入口行进入（`StatusBarIconPage` 里的 `page(...)` 项）。
@@ -15,17 +15,17 @@ import com.luckyzyx.luckytool.utils.ModulePrefs
  */
 object StatusBarIconOrderPage {
 
-    /** 页面注册键（[com.luckyzyx.luckytool.ui.compose.scopes.ScopePageRegistry] 与 pageTargetMap） */
+    /** 页面注册键（[com.luckyzyx.luckytool.ui.compose.PageRegistry] 与 pageTargetMap） */
     const val PAGE_KEY = "statusbar_icon_order"
 
-    val spec = ScopePageSpec(
+    val spec = PageSpec(
         pageKey = PAGE_KEY,
         prefsName = ModulePrefs,
         packName = "com.android.systemui",
         scopes = arrayOf("com.android.systemui"),
         restartEnabled = true,
     ) {
-        val c = requireNotNull(context) { "ScopeScreen 未注入 Context" }
+        val c = requireNotNull(context) { "PageScreen 未注入 Context" }
         // 开关
         group(title = c.getString(R.string.statusbar_icon_order_category_switch)) {
             // 总开关：hooker 只在开启时装载（onHook 里判断），因此关→开、开→关都需要重载宿主作用域才生效。

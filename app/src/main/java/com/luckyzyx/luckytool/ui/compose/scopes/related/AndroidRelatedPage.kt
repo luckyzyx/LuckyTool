@@ -1,7 +1,7 @@
 package com.luckyzyx.luckytool.ui.compose.scopes.related
 
 import com.luckyzyx.luckytool.R
-import com.luckyzyx.luckytool.ui.compose.scopes.ScopePageSpec
+import com.luckyzyx.luckytool.ui.compose.PageSpec
 import com.luckyzyx.luckytool.utils.A12
 import com.luckyzyx.luckytool.utils.ModulePrefs
 import com.luckyzyx.luckytool.utils.SDK
@@ -14,7 +14,7 @@ import com.luckyzyx.luckytool.utils.arraySummaryLine
  */
 object AndroidRelatedPage {
 
-    val spec = ScopePageSpec(
+    val spec = PageSpec(
         pageKey = "android_related",
         prefsName = ModulePrefs,
         packName = "system",
@@ -22,7 +22,7 @@ object AndroidRelatedPage {
         scopes = arrayOf("system"),
         restartEnabled = true,
     ) {
-        val c = requireNotNull(context) { "ScopeScreen 未注入 Context" }
+        val c = requireNotNull(context) { "PageScreen 未注入 Context" }
         switch(
             key = "remove_gms_usage_restrictions",
             title = c.getString(R.string.remove_gms_usage_restrictions),

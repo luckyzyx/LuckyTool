@@ -1,7 +1,7 @@
 package com.luckyzyx.luckytool.ui.compose.scopes.statusbar
 
 import com.luckyzyx.luckytool.R
-import com.luckyzyx.luckytool.ui.compose.scopes.ScopePageSpec
+import com.luckyzyx.luckytool.ui.compose.PageSpec
 import com.luckyzyx.luckytool.utils.ModulePrefs
 import com.luckyzyx.luckytool.utils.arraySummaryLine
 import com.luckyzyx.luckytool.utils.getOSVersionCode
@@ -14,14 +14,14 @@ import com.luckyzyx.luckytool.utils.getOSVersionCode
  */
 object StatusBarNotifyRemovalPage {
 
-    val spec = ScopePageSpec(
+    val spec = PageSpec(
         pageKey = "statusbar_notify_removal",
         prefsName = ModulePrefs,
         packName = "com.android.systemui",
         scopes = arrayOf("com.android.systemui", "com.oplus.battery", "com.coloros.phonemanager"),
         restartEnabled = true,
     ) {
-        val c = requireNotNull(context) { "ScopeScreen 未注入 Context" }
+        val c = requireNotNull(context) { "PageScreen 未注入 Context" }
         val osCode = getOSVersionCode
         switch(
             key = "remove_statusbar_top_notification",

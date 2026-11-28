@@ -18,19 +18,22 @@ const val PageScaleMax = 1.1f
 
 /** 悬浮底栏样式及其持久化值。 */
 enum class FloatingBottomBarStyle(val value: String) {
-    /** 贴底胶囊：底栏横向铺满、圆角较小。 */
+    /** 经典：居中胶囊，固定宽度、不透明表面。 */
     Classic("classic"),
 
-    /** iOS 风格液态玻璃：悬浮胶囊 + 玻璃材质。 */
-    IosLike("ios_like");
+    /** 液态玻璃：贴边满宽，玻璃材质折射下层内容。 */
+    LiquidGlass("liquid_glass");
 
     companion object {
         /** 历史值 `miuix` 指向 [Classic]：改名前的偏好原样延续，不需要迁移写入。 */
         private const val LEGACY_CLASSIC_VALUE = "miuix"
 
+        /** 历史值 `ios_like` 指向 [LiquidGlass]：外观改名后旧的偏好值仍然有效。 */
+        private const val LEGACY_LIQUID_VALUE = "ios_like"
+
         fun fromValue(value: String): FloatingBottomBarStyle = when (value) {
             Classic.value, LEGACY_CLASSIC_VALUE -> Classic
-            IosLike.value -> IosLike
+            LiquidGlass.value, LEGACY_LIQUID_VALUE -> LiquidGlass
             else -> Classic
         }
     }
@@ -92,7 +95,7 @@ object ShellSettingsController {
             return FloatingBottomBarStyle.fromValue(stored)
         }
         return if (context.getBoolean(SettingsPrefs, KEY_FLOATING_BOTTOM_BAR_BLUR, false)) {
-            FloatingBottomBarStyle.IosLike
+            FloatingBottomBarStyle.LiquidGlass
         } else {
             FloatingBottomBarStyle.Classic
         }

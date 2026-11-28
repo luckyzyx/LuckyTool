@@ -9,7 +9,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Density
 import com.luckyzyx.luckytool.ui.compose.components.PageScaffold
-import com.luckyzyx.luckytool.ui.compose.components.ScopeScreen
+import com.luckyzyx.luckytool.ui.compose.components.PageScreen
 import com.luckyzyx.luckytool.ui.theme.AppTheme
 import com.luckyzyx.luckytool.ui.theme.ColorMode
 import com.luckyzyx.luckytool.ui.theme.ThemeController
@@ -38,7 +38,7 @@ import org.robolectric.annotation.GraphicsMode
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [35], application = Application::class, qualifiers = "zh-rCN-w411dp-h880dp-xhdpi")
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
-class ScopeThemeSwitchInsetTest {
+class PageThemeSwitchInsetTest {
 
     private companion object {
         /** 被测行的标题文本：行容器的横向内缩全落在这段文本的左边距上。 */
@@ -60,7 +60,7 @@ class ScopeThemeSwitchInsetTest {
                     // 免得缓存实例把 provider 绑在上一个用例的 prefs 文件上。
                     val settings = remember { PrefState.ofProvider { host.activity.appPrefs(SettingsPrefs) } }
                     PageScaffold(title = "设置") { padding ->
-                        ScopeScreen(
+                        PageScreen(
                             state = settings,
                             modifier = Modifier.fillMaxSize().padding(padding),
                         ) {

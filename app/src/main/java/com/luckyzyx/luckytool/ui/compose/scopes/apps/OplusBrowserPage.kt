@@ -2,7 +2,7 @@ package com.luckyzyx.luckytool.ui.compose.scopes.apps
 
 import android.content.Intent
 import com.luckyzyx.luckytool.R
-import com.luckyzyx.luckytool.ui.compose.scopes.ScopePageSpec
+import com.luckyzyx.luckytool.ui.compose.PageSpec
 import com.luckyzyx.luckytool.utils.ModulePrefs
 import com.luckyzyx.luckytool.utils.checkPackName
 import com.luckyzyx.luckytool.utils.showToast
@@ -13,14 +13,14 @@ import com.luckyzyx.luckytool.utils.showToast
  */
 object OplusBrowserPage {
 
-    val spec = ScopePageSpec(
+    val spec = PageSpec(
         pageKey = "oplus_browser",
         prefsName = ModulePrefs,
         packName = "com.heytap.browser",
         scopes = arrayOf("com.heytap.browser"),
         restartEnabled = true,
     ) {
-        val c = requireNotNull(context) { "ScopeScreen 未注入 Context" }
+        val c = requireNotNull(context) { "PageScreen 未注入 Context" }
         if (c.checkPackName("com.heytap.browser")) {
             group {
                 click(

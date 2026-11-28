@@ -34,15 +34,15 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.luckyzyx.luckytool.R
 import com.luckyzyx.luckytool.ui.compose.FunctionPageData
 import com.luckyzyx.luckytool.ui.compose.pageTitle
-import com.luckyzyx.luckytool.ui.compose.ScopeRoute
-import com.luckyzyx.luckytool.ui.compose.components.LocalScopeListState
-import com.luckyzyx.luckytool.ui.compose.components.LocalScopeTopInset
+import com.luckyzyx.luckytool.ui.compose.PageRoute
+import com.luckyzyx.luckytool.ui.compose.components.LocalPageListState
+import com.luckyzyx.luckytool.ui.compose.components.LocalPageTopInset
 import com.luckyzyx.luckytool.ui.compose.components.PageScaffold
 import com.luckyzyx.luckytool.ui.compose.components.PrefRowChevron
 import com.luckyzyx.luckytool.ui.compose.components.currentPrefStyle
-import com.luckyzyx.luckytool.ui.compose.components.ScopeScreen
+import com.luckyzyx.luckytool.ui.compose.components.PageScreen
 import com.luckyzyx.luckytool.ui.compose.components.material.MaterialTextField
-import com.luckyzyx.luckytool.ui.compose.scopes.ScopePageRegistry
+import com.luckyzyx.luckytool.ui.compose.PageRegistry
 import com.luckyzyx.luckytool.utils.OtherPrefs
 import com.luckyzyx.luckytool.utils.PrefState
 import com.luckyzyx.luckytool.utils.SettingsPrefs
@@ -78,7 +78,7 @@ private fun writeSearchHistory(context: Context, terms: List<String>) {
  * 输入为空时展示最近搜索历史（点击即填入），命中结果点击后跳转目标页或在本页定位。
  */
 @Composable
-fun SearchPage(isCurrentPage: Boolean, onOpen: (ScopeRoute) -> Unit) {
+fun SearchPage(isCurrentPage: Boolean, onOpen: (PageRoute) -> Unit) {
     val context = LocalContext.current
     var query by rememberSaveable { mutableStateOf("") }
     var history by remember { mutableStateOf(readSearchHistory(context)) }
@@ -128,7 +128,7 @@ fun SearchPage(isCurrentPage: Boolean, onOpen: (ScopeRoute) -> Unit) {
     PageScaffold(title = stringResource(R.string.menu_search)) { padding ->
         val settings = remember { PrefState.of(context, SettingsPrefs) }
         val layoutDirection = LocalLayoutDirection.current
-        // 顶栏高度经 LocalScopeTopInset 放进列表 contentPadding：视口铺满整屏，
+        // 顶栏高度经 LocalPageTopInset 放进列表 contentPadding：视口铺满整屏，
         // 滚动中的行才能进入顶栏下方；水平/底部内边距仍留在视口外。
         val scopeModifier = Modifier
             .fillMaxSize()
@@ -140,7 +140,7 @@ fun SearchPage(isCurrentPage: Boolean, onOpen: (ScopeRoute) -> Unit) {
             )
         val topInset = padding.calculateTopPadding()
         val scopeContent: @Composable () -> Unit = {
-            // 页面级状态在 @Composable 作用域内先读取：只在 ScopeScreen 的 content lambda 内
+            // 页面级状态在 @Composable 作用域内先读取：只在 PageScreen 的 content lambda 内
             // 读取不会被列表追踪，后果是搜索结果不随输入刷新
             val queryNow = query
             val entriesNow = entries
@@ -151,14 +151,14 @@ fun SearchPage(isCurrentPage: Boolean, onOpen: (ScopeRoute) -> Unit) {
             val searchNoResultsText = stringResource(R.string.search_no_results)
             val historyTitleText = stringResource(R.string.search_history)
             val historyClearText = stringResource(R.string.search_history_clear)
-            CompositionLocalProvider(LocalScopeTopInset provides topInset) {
-                ScopeScreen(state = settings, modifier = scopeModifier) {
+            CompositionLocalProvider(LocalPageTopInset provides topInset) {
+                PageScreen(state = settings, modifier = scopeModifier) {
                 // 搜索框不套分组卡片：搜索条直接铺在页面上（coui demo 的 SearchBar 也是裸放），
                 // 再套一层卡片只是在输入框外多画一圈底色与圆角。
                 custom(key = "search_field", raw = true) {
                     // 顶栏折叠/展开由列表滚动驱动：滚动一开始就清掉搜索框焦点并收键盘，
                     // 否则仍聚焦的字段会在布局变化时被平台恢复输入法。
-                    val scopeListState = LocalScopeListState.current
+                    val scopeListState = LocalPageListState.current
                     val focusManager = LocalFocusManager.current
                     LaunchedEffect(scopeListState, focusManager, keyboardController) {
                         if (scopeListState == null) return@LaunchedEffect
@@ -267,18 +267,18 @@ fun SearchPage(isCurrentPage: Boolean, onOpen: (ScopeRoute) -> Unit) {
                                 recordHistory(entry.item.title ?: entry.item.key)
                                 // page DSL 命中 → 跳目标页；普通偏好命中 → 本页滚动定位
                                 val targetSpec = entry.item.pageTarget
-                                    ?.let { ScopePageRegistry.pageTargetMap[it] }
-                                    ?.let { ScopePageRegistry[it] }
+                                    ?.let { PageRegistry.pageTargetMap[it] }
+                                    ?.let { PageRegistry[it] }
                                 if (targetSpec != null) {
                                     onOpen(
-                                        ScopeRoute(
+                                        PageRoute(
                                             targetSpec.pageKey,
                                             pageTitle(context, targetSpec)
                                         )
                                     )
                                 } else {
                                     onOpen(
-                                        ScopeRoute(
+                                        PageRoute(
                                             entry.pageKey,
                                             entry.pageTitle,
                                             entry.item.key,

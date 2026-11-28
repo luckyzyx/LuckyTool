@@ -49,7 +49,7 @@ class PrefState private constructor(
     private val refreshers = ConcurrentHashMap<String, MutableList<() -> Unit>>()
     private var registered: SharedPreferences? = null
 
-    /** 每次落盘/外部写入递增；ScopeScreen 订阅它以在“条件可见性”依赖的键变化时重建条目 */
+    /** 每次落盘/外部写入递增；PageScreen 订阅它以在“条件可见性”依赖的键变化时重建条目 */
     val revision = MutableStateFlow(0L)
 
     private fun bump() {

@@ -1,7 +1,7 @@
 package com.luckyzyx.luckytool.ui.compose.scopes.statusbar
 
 import com.luckyzyx.luckytool.R
-import com.luckyzyx.luckytool.ui.compose.scopes.ScopePageSpec
+import com.luckyzyx.luckytool.ui.compose.PageSpec
 import com.luckyzyx.luckytool.utils.A13
 import com.luckyzyx.luckytool.utils.A14
 import com.luckyzyx.luckytool.utils.ModulePrefs
@@ -16,14 +16,14 @@ import com.luckyzyx.luckytool.utils.getOSVersionCode
  */
 object StatusBarTilesPage {
 
-    val spec = ScopePageSpec(
+    val spec = PageSpec(
         pageKey = "statusbar_tiles",
         prefsName = ModulePrefs,
         packName = "com.android.systemui",
         scopes = arrayOf("com.android.systemui"),
         restartEnabled = true,
     ) {
-        val c = requireNotNull(context) { "ScopeScreen 未注入 Context" }
+        val c = requireNotNull(context) { "PageScreen 未注入 Context" }
         val osCode = getOSVersionCode
         // 自定义 NFC 延时关闭
         switch(

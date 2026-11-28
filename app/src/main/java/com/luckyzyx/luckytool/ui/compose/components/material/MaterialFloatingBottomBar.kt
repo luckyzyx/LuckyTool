@@ -91,7 +91,7 @@ internal fun MaterialFloatingBottomBar(
     backdrop: LayerBackdrop? = null,
     floatingStyle: FloatingBottomBarStyle = FloatingBottomBarStyle.Classic,
 ) {
-    val iosLayout = floatingStyle == FloatingBottomBarStyle.IosLike
+    val iosLayout = floatingStyle == FloatingBottomBarStyle.LiquidGlass
     val containerHeight = if (iosLayout) 56.dp else 52.dp
     val itemHeight = 48.dp
     val iconSize = if (iosLayout) 24.dp else 22.dp

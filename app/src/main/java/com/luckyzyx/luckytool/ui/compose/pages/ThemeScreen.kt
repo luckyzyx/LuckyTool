@@ -572,7 +572,7 @@ private fun ThemeScreenList(
                                 title = stringResource(R.string.settings_floating_bottom_bar_style),
                                 items = listOf(
                                     stringResource(R.string.settings_floating_style_classic),
-                                    stringResource(R.string.settings_floating_style_ios),
+                                    stringResource(R.string.settings_floating_style_liquid_glass),
                                 ),
                                 selectedIndex = state.floatingBottomBarStyle.ordinal,
                                 onItemSelected = { index ->

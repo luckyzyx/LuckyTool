@@ -1,7 +1,7 @@
 package com.luckyzyx.luckytool.ui.compose.scopes.apps
 
 import com.luckyzyx.luckytool.R
-import com.luckyzyx.luckytool.ui.compose.scopes.ScopePageSpec
+import com.luckyzyx.luckytool.ui.compose.PageSpec
 import com.luckyzyx.luckytool.utils.ModulePrefs
 import com.luckyzyx.luckytool.utils.arraySummaryLine
 import com.luckyzyx.luckytool.utils.checkPackName
@@ -12,7 +12,7 @@ import com.luckyzyx.luckytool.utils.checkPackName
  */
 object OplusRiderModePage {
 
-    val spec = ScopePageSpec(
+    val spec = PageSpec(
         pageKey = "oplus_rider_mode",
         prefsName = ModulePrefs,
         packName = "system",
@@ -21,7 +21,7 @@ object OplusRiderModePage {
         restartEnabled = true,
         isVisible = { checkPackName("com.oplus.riderMode") },
     ) {
-        val c = requireNotNull(context) { "ScopeScreen 未注入 Context" }
+        val c = requireNotNull(context) { "PageScreen 未注入 Context" }
 
         switch(
             key = "remove_rider_mode_whitelist",

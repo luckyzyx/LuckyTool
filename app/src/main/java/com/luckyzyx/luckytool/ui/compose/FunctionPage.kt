@@ -48,8 +48,8 @@ import com.itos.coui.theme.CouiTheme
 import com.luckyzyx.luckytool.R
 import com.luckyzyx.luckytool.ui.activity.MainActivity
 import com.luckyzyx.luckytool.ui.compose.components.FunctionTopBarActions
-import com.luckyzyx.luckytool.ui.compose.components.LocalScopeTopInset
-import com.luckyzyx.luckytool.ui.compose.components.ScopeScreen
+import com.luckyzyx.luckytool.ui.compose.components.LocalPageTopInset
+import com.luckyzyx.luckytool.ui.compose.components.PageScreen
 import com.luckyzyx.luckytool.ui.compose.components.ScrollTarget
 import com.luckyzyx.luckytool.ui.compose.components.TopBarActionButton
 import com.luckyzyx.luckytool.ui.compose.components.TopBarOverflowItem
@@ -60,8 +60,6 @@ import com.luckyzyx.luckytool.ui.compose.components.NoteTone
 import com.luckyzyx.luckytool.ui.compose.components.PrefNote
 import com.luckyzyx.luckytool.ui.compose.components.currentDialogStyle
 import com.luckyzyx.luckytool.ui.compose.components.material.MaterialTextField
-import com.luckyzyx.luckytool.ui.compose.scopes.ScopePageContent
-import com.luckyzyx.luckytool.ui.compose.scopes.ScopePageRegistry
 import com.luckyzyx.luckytool.ui.theme.LocalUiMode
 import com.luckyzyx.luckytool.ui.theme.UiMode
 import com.luckyzyx.luckytool.utils.AppUtils
@@ -75,7 +73,7 @@ import io.noties.markwon.Markwon
 import io.noties.markwon.ext.tables.TablePlugin
 import java.util.Arrays
 
-/** 功能标签页只展示功能树；搜索是独立的一级标签页，作用域页由同一个导航栈管理。 */
+/** 功能标签页只展示功能树；搜索是独立的一级标签页，功能页由二级页宿主 PageActivity 承载。 */
 @Composable
 fun FunctionPage(
     activity: MainActivity,
@@ -99,7 +97,7 @@ fun FunctionPage(
     )
 }
 
-/** 功能树：50 页固定顺序（ScopePageRegistry.treeOrder），spec 手动不可见、单 App 作用域未安装或空索引页隐藏（selfRendered 特殊页除外） */
+/** 功能树：50 页固定顺序（PageRegistry.treeOrder），spec 手动不可见、单 App 作用域未安装或空索引页隐藏（selfRendered 特殊页除外） */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun FunctionTreeScreen(
@@ -135,16 +133,16 @@ private fun FunctionTreeScreen(
     }
 }
 
-/** 作用域页宿主：类型安全 ScopeRoute → 任意已注册 ScopePageSpec（MainShell 跨 tab 全屏直达也复用） */
+/** 功能页宿主：类型安全 PageRoute → 任意已注册 PageSpec（MainShell 跨 tab 全屏直达也复用） */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-internal fun ScopePageHost(
-    route: ScopeRoute,
+internal fun PageHost(
+    route: PageRoute,
     onBack: () -> Unit,
     onNavigate: (pageKey: String, title: String?) -> Unit,
 ) {
     val context = LocalContext.current
-    val spec = ScopePageRegistry[route.pageKey]
+    val spec = PageRegistry[route.pageKey]
     var showRestartScope by remember { mutableStateOf(false) }
 
     // 有图标且声明 showAsAction 的直接显示为图标按钮，其余收进溢出菜单
@@ -215,18 +213,18 @@ internal fun ScopePageHost(
                 null
             }
             val navigatePage: (target: String, title: String?) -> Unit = { target, title ->
-                ScopePageRegistry.pageTargetMap[target]?.let { onNavigate(it, title) }
+                PageRegistry.pageTargetMap[target]?.let { onNavigate(it, title) }
             }
-            // 作用域页的刷新由 PrefState.revision + per-key flow 覆盖（写入 → bump → 构建 lambda 重跑），
+            // 功能页的刷新由 PrefState.revision + per-key flow 覆盖（写入 → bump → 构建 lambda 重跑），
             // 不再向页面注入 onRestart，也不再重建 Activity；需要重启作用域时用顶栏菜单。
             //
-            // 页面内容分派（唯一分派点见 ScopePageContent）：
+            // 页面内容分派（唯一分派点见 PageContent）：
             // 页面为当前主题线提供了内容槽位时由页面自有布局渲染整页，
-            // 否则逐字回落到共享渲染层 ScopeScreen —— ScopeScreen 自带 LazyColumn 并渲染全部条目，
+            // 否则逐字回落到共享渲染层 PageScreen —— PageScreen 自带 LazyColumn 并渲染全部条目，
             // 直接作为页面内容：不能再包一层 ExpressiveList（同向嵌套 LazyColumn 会以无限高度约束测量而崩溃）。
             // 水平内边距此处不叠加（由作用域内容自带）。
             //
-            // 骨架内边距传递：顶栏高度（padding 的 top）经 LocalScopeTopInset 交给作用域列表的
+            // 骨架内边距传递：顶栏高度（padding 的 top）经 LocalPageTopInset 交给作用域列表的
             // contentPadding，列表视口铺满整屏、滚动中的行才能进入顶栏下方；水平与底部内边距
             // 仍留在视口外。默认折叠行为由页面骨架统一连接，内容不重复接入同一条滚动连接。
             val layoutDirection = LocalLayoutDirection.current
@@ -240,8 +238,8 @@ internal fun ScopePageHost(
                 )
             val topInset = padding.calculateTopPadding()
             val pageContent: @Composable () -> Unit = {
-                CompositionLocalProvider(LocalScopeTopInset provides topInset) {
-                    ScopePageContent(
+                CompositionLocalProvider(LocalPageTopInset provides topInset) {
+                    PageContent(
                         spec = spec,
                         state = state,
                         modifier = pageContentModifier,

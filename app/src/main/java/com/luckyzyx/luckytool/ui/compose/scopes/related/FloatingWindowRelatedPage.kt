@@ -1,7 +1,7 @@
 package com.luckyzyx.luckytool.ui.compose.scopes.related
 
 import com.luckyzyx.luckytool.R
-import com.luckyzyx.luckytool.ui.compose.scopes.ScopePageSpec
+import com.luckyzyx.luckytool.ui.compose.PageSpec
 import com.luckyzyx.luckytool.utils.ModulePrefs
 import com.luckyzyx.luckytool.utils.getOSVersionCode
 import com.luckyzyx.luckytool.utils.sendPrefsValue
@@ -13,14 +13,14 @@ import com.topjohnwu.superuser.ShellUtils
  */
 object FloatingWindowRelatedPage {
 
-    val spec = ScopePageSpec(
+    val spec = PageSpec(
         pageKey = "floating_window",
         prefsName = ModulePrefs,
         packName = "system",
         scopes = arrayOf("system"),
         restartEnabled = true,
     ) {
-        val c = requireNotNull(context) { "ScopeScreen 未注入 Context" }
+        val c = requireNotNull(context) { "PageScreen 未注入 Context" }
         val osCode = getOSVersionCode
         // 浮窗
         group(title = c.getString(R.string.FloatingWindow)) {

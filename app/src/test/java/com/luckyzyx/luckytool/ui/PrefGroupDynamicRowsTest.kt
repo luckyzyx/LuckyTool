@@ -11,7 +11,7 @@ import androidx.compose.runtime.snapshots.Snapshot
 import androidx.compose.ui.platform.ComposeView
 import androidx.test.core.app.ApplicationProvider
 import com.luckyzyx.luckytool.ui.compose.components.PrefGroup
-import com.luckyzyx.luckytool.ui.compose.components.ScopeScreen
+import com.luckyzyx.luckytool.ui.compose.components.PageScreen
 import com.luckyzyx.luckytool.utils.PrefState
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -59,7 +59,7 @@ class PrefGroupDynamicRowsTest {
         activity.setContentView(composeView)
         composeView.setContent {
             MaterialTheme {
-                ScopeScreen(state = state) {
+                PageScreen(state = state) {
                     custom(key = "body") { _ ->
                         PrefGroup {
                             if (show.value) {

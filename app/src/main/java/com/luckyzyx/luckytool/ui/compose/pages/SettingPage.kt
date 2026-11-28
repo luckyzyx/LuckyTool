@@ -57,8 +57,8 @@ import com.luckyzyx.luckytool.ui.compose.components.ActionListDialog
 import com.luckyzyx.luckytool.ui.compose.components.ChoiceItem
 import com.luckyzyx.luckytool.ui.compose.components.ConfirmDialog
 import com.luckyzyx.luckytool.ui.compose.components.DataResultDialog
-import com.luckyzyx.luckytool.ui.compose.components.LocalScopeTopInset
-import com.luckyzyx.luckytool.ui.compose.components.ScopeScreen
+import com.luckyzyx.luckytool.ui.compose.components.LocalPageTopInset
+import com.luckyzyx.luckytool.ui.compose.components.PageScreen
 import com.luckyzyx.luckytool.ui.compose.components.PrefIcon
 import com.luckyzyx.luckytool.ui.compose.components.PrefRowChevron
 import com.luckyzyx.luckytool.ui.compose.components.coui.CouiAlertDialog
@@ -143,7 +143,7 @@ fun SettingPage(activity: MainActivity, onOpenTheme: () -> Unit = {}) {
     PageScaffold(
         title = stringResource(R.string.nav_setting),
     ) { padding ->
-        // 顶栏高度经 LocalScopeTopInset 放进列表 contentPadding：视口铺满整屏，
+        // 顶栏高度经 LocalPageTopInset 放进列表 contentPadding：视口铺满整屏，
         // 滚动中的行才能进入顶栏下方；水平/底部内边距仍留在视口外。
         val layoutDirection = LocalLayoutDirection.current
         val scopeModifier = Modifier
@@ -182,8 +182,8 @@ fun SettingPage(activity: MainActivity, onOpenTheme: () -> Unit = {}) {
                 stringResource(R.string.participate_translation_summary)
             val appPermissionTitle = stringResource(R.string.app_permission)
             val appPermissionSummary = stringResource(R.string.app_permission_summary)
-            CompositionLocalProvider(LocalScopeTopInset provides topInset) {
-                ScopeScreen(
+            CompositionLocalProvider(LocalPageTopInset provides topInset) {
+                PageScreen(
                     state = settings,
                     modifier = scopeModifier,
                 ) {

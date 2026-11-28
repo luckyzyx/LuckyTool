@@ -1,7 +1,7 @@
 package com.luckyzyx.luckytool.ui.compose.scopes.apps
 
 import com.luckyzyx.luckytool.R
-import com.luckyzyx.luckytool.ui.compose.scopes.ScopePageSpec
+import com.luckyzyx.luckytool.ui.compose.PageSpec
 import com.luckyzyx.luckytool.utils.ModulePrefs
 
 /**
@@ -9,14 +9,14 @@ import com.luckyzyx.luckytool.utils.ModulePrefs
  */
 object OplusMarketPage {
 
-    val spec = ScopePageSpec(
+    val spec = PageSpec(
         pageKey = "oplus_market",
         prefsName = ModulePrefs,
         packName = "com.heytap.market",
         scopes = arrayOf("com.heytap.market"),
         restartEnabled = true,
     ) {
-        val c = requireNotNull(context) { "ScopeScreen 未注入 Context" }
+        val c = requireNotNull(context) { "PageScreen 未注入 Context" }
         switch(
             key = "remove_market_splash_page_app_recommend",
             title = c.getString(R.string.remove_market_splash_page_app_recommend),

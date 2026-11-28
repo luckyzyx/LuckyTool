@@ -1,7 +1,7 @@
 package com.luckyzyx.luckytool.ui.compose.scopes.others
 
 import com.luckyzyx.luckytool.R
-import com.luckyzyx.luckytool.ui.compose.scopes.ScopePageSpec
+import com.luckyzyx.luckytool.ui.compose.PageSpec
 import com.luckyzyx.luckytool.utils.ModulePrefs
 
 /**
@@ -9,14 +9,14 @@ import com.luckyzyx.luckytool.utils.ModulePrefs
  */
 object ADMPage {
 
-    val spec = ScopePageSpec(
+    val spec = PageSpec(
         pageKey = "adm",
         prefsName = ModulePrefs,
         packName = "com.dv.adm",
         scopes = arrayOf("com.dv.adm"),
         restartEnabled = true,
     ) {
-        val c = requireNotNull(context) { "ScopeScreen 未注入 Context" }
+        val c = requireNotNull(context) { "PageScreen 未注入 Context" }
         switch(
             key = "adm_unlock_pro",
             title = c.getString(R.string.adm_unlock_pro),

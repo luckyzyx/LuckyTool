@@ -5,7 +5,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.luckyzyx.luckytool.ui.compose.components.PrefNote
-import com.luckyzyx.luckytool.ui.compose.scopes.ScopePageSpec
+import com.luckyzyx.luckytool.ui.compose.PageSpec
 import com.luckyzyx.luckytool.utils.SettingsPrefs
 
 /**
@@ -22,7 +22,7 @@ import com.luckyzyx.luckytool.utils.SettingsPrefs
  */
 object BatteryInfoPage {
 
-    val spec = ScopePageSpec(
+    val spec = PageSpec(
         pageKey = "battery_info",
         prefsName = SettingsPrefs,
         packName = "",

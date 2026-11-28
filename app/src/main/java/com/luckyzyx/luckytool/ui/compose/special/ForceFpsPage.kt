@@ -28,7 +28,7 @@ import com.luckyzyx.luckytool.ui.compose.components.PrefNote
 import com.luckyzyx.luckytool.ui.compose.components.PrefSelectRow
 import com.luckyzyx.luckytool.ui.compose.components.PrefSwitchRow
 import com.luckyzyx.luckytool.ui.compose.components.pageInset
-import com.luckyzyx.luckytool.ui.compose.scopes.ScopePageSpec
+import com.luckyzyx.luckytool.ui.compose.PageSpec
 import com.luckyzyx.luckytool.ui.compose.special.ForceFpsPage.BIND_TIMEOUT_MS
 import com.luckyzyx.luckytool.ui.compose.special.ForceFpsPage.reloader
 import com.luckyzyx.luckytool.utils.GlobalKeyValue.keyFpsAutoStart
@@ -67,7 +67,7 @@ import kotlin.time.Duration.Companion.milliseconds
  * 也能被 `getCachedController()` 捞回来），只有「拉不到且旧的已死」才真正清空。
  *
  * ## Context 要求
- * 共享层注入的是 applicationContext（ScopePageRegistry）。RootService 绑定只用一个 Context
+ * 共享层注入的是 applicationContext（PageRegistry）。RootService 绑定只用一个 Context
  * 构造 Intent，libsu 内部自取 application 做 bindService，**不需要 Activity**：
  * 不要再沿 ContextWrapper 向上找 Activity，否则 findActivity() 恒为 null，
  * 每次拉取都直接返回 null，页面永远「无数据」。
@@ -91,7 +91,7 @@ object ForceFpsPage {
     /** 由内容组合时注册的加载器驱动 onRefresh */
     private var reloader: (suspend () -> Unit)? = null
 
-    val spec = ScopePageSpec(
+    val spec = PageSpec(
         pageKey = "force_fps",
         prefsName = SettingsPrefs,
         packName = "",
@@ -99,7 +99,7 @@ object ForceFpsPage {
         restartEnabled = false,
         onRefresh = { reloader?.invoke() },
     ) {
-        val c = requireNotNull(context) { "ScopeScreen 未注入 Context" }
+        val c = requireNotNull(context) { "PageScreen 未注入 Context" }
         custom(key = "force_fps_body") {
             // 进程级缓存做种子：进入子页不重新绑定，直接用 RefreshRateService 已缓存的存活控制器
             var controller by remember { mutableStateOf(RefreshRateService.getCachedController()) }

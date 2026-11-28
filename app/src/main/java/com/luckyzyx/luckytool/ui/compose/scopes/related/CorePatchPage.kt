@@ -11,7 +11,7 @@ import com.luckyzyx.luckytool.R
 import com.luckyzyx.luckytool.ui.compose.components.ConfirmDialog
 import com.luckyzyx.luckytool.ui.compose.components.PrefRowInset
 import com.luckyzyx.luckytool.ui.compose.components.PrefSwitchRow
-import com.luckyzyx.luckytool.ui.compose.scopes.ScopePageSpec
+import com.luckyzyx.luckytool.ui.compose.PageSpec
 import com.luckyzyx.luckytool.utils.ModulePrefs
 
 /**
@@ -20,14 +20,14 @@ import com.luckyzyx.luckytool.utils.ModulePrefs
  */
 object CorePatchPage {
 
-    val spec = ScopePageSpec(
+    val spec = PageSpec(
         pageKey = "core_patch",
         prefsName = ModulePrefs,
         packName = "",
         scopes = arrayOf(),
         restartEnabled = false,
     ) {
-        val c = requireNotNull(context) { "ScopeScreen 未注入 Context" }
+        val c = requireNotNull(context) { "PageScreen 未注入 Context" }
         // 提示不再单独占一张卡：并进分组标题下方那行说明，标题与说明同一版式（PrefCategoryHeader）
         group(
             title = c.getString(R.string.corepatch),

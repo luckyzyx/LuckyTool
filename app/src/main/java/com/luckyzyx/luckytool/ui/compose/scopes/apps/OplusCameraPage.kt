@@ -16,7 +16,7 @@ import com.luckyzyx.luckytool.ui.compose.components.ChoiceItem
 import com.luckyzyx.luckytool.ui.compose.components.MultiChoiceDialog
 import com.luckyzyx.luckytool.ui.compose.components.PrefRow
 import com.luckyzyx.luckytool.ui.compose.components.PrefRowInset
-import com.luckyzyx.luckytool.ui.compose.scopes.ScopePageSpec
+import com.luckyzyx.luckytool.ui.compose.PageSpec
 import com.luckyzyx.luckytool.utils.A13
 import com.luckyzyx.luckytool.utils.CameraUtils
 import com.luckyzyx.luckytool.utils.ModulePrefs
@@ -35,7 +35,7 @@ import com.luckyzyx.luckytool.utils.getOSVersionCode
  */
 object OplusCameraPage {
 
-    val spec = ScopePageSpec(
+    val spec = PageSpec(
         pageKey = "oplus_camera",
         prefsName = ModulePrefs,
         packName = "com.oplus.camera",
@@ -43,7 +43,7 @@ object OplusCameraPage {
         restartEnabled = true,
         isVisible = { checkPackName("com.oneplus.camera") || checkPackName("com.oplus.camera") },
     ) {
-        val c = requireNotNull(context) { "ScopeScreen 未注入 Context" }
+        val c = requireNotNull(context) { "PageScreen 未注入 Context" }
 
         // 调试 UI 选项
         group {

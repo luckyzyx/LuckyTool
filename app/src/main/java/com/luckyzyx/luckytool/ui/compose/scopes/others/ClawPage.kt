@@ -1,7 +1,7 @@
 package com.luckyzyx.luckytool.ui.compose.scopes.others
 
 import com.luckyzyx.luckytool.R
-import com.luckyzyx.luckytool.ui.compose.scopes.ScopePageSpec
+import com.luckyzyx.luckytool.ui.compose.PageSpec
 import com.luckyzyx.luckytool.utils.ModulePrefs
 
 /**
@@ -9,14 +9,14 @@ import com.luckyzyx.luckytool.utils.ModulePrefs
  */
 object ClawPage {
 
-    val spec = ScopePageSpec(
+    val spec = PageSpec(
         pageKey = "claw",
         prefsName = ModulePrefs,
         packName = "com.oplus.claw",
         scopes = arrayOf("com.oplus.claw"),
         restartEnabled = true,
     ) {
-        val c = requireNotNull(context) { "ScopeScreen 未注入 Context" }
+        val c = requireNotNull(context) { "PageScreen 未注入 Context" }
         switch(
             key = "remove_root_detection",
             title = c.getString(R.string.remove_root_detection),

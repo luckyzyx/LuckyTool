@@ -28,9 +28,9 @@ import com.luckyzyx.luckytool.ui.compose.components.AppSearchPlaceholder
 import com.luckyzyx.luckytool.ui.compose.components.pageInset
 import com.luckyzyx.luckytool.ui.compose.components.AppSearchBar
 import com.luckyzyx.luckytool.ui.compose.components.AppItem
-import com.luckyzyx.luckytool.ui.compose.scopes.ScopePageAction
-import com.luckyzyx.luckytool.ui.compose.scopes.ScopePageSpec
-import com.luckyzyx.luckytool.ui.compose.components.PrefScopeBuilder
+import com.luckyzyx.luckytool.ui.compose.PageAction
+import com.luckyzyx.luckytool.ui.compose.PageSpec
+import com.luckyzyx.luckytool.ui.compose.components.PrefPageBuilder
 import com.luckyzyx.luckytool.ui.compose.components.currentUiStyle
 import com.luckyzyx.luckytool.utils.IntentUtils
 import com.luckyzyx.luckytool.utils.ModulePrefs
@@ -48,7 +48,7 @@ import kotlinx.coroutines.withContext
  * 状态与数据加载逻辑只有一份，渲染统一走 material 件
  * （搜索框 [AppSearchField]、LazyColumn 骨架、条目容器 [MaterialItem]、应用行 [AppToggleRow]）。
  *
- * 「打开应用分身」是对整页数据的一次性动作，故声明为 [ScopePageAction] 并设
+ * 「打开应用分身」是对整页数据的一次性动作，故声明为 [PageAction] 并设
  * `showAsAction = true`，由页面宿主渲染进顶栏图标位，不占页面正文的卡片。
  */
 object MultiAppPage {
@@ -60,7 +60,7 @@ object MultiAppPage {
 
     internal var refresh: (suspend () -> Unit)? = null
 
-    val spec = ScopePageSpec(
+    val spec = PageSpec(
         pageKey = "multi_app",
         prefsName = ModulePrefs,
         packName = "",
@@ -71,7 +71,7 @@ object MultiAppPage {
         onRefresh = { refresh?.invoke() },
         fullContent = { builder -> MultiAppContent(builder) },
         topActions = listOf(
-            ScopePageAction(
+            PageAction(
                 key = ACTION_OPEN,
                 labelRes = R.string.open,
                 icon = R.drawable.baseline_open_in_new_24,
@@ -82,7 +82,7 @@ object MultiAppPage {
 }
 
 @Composable
-internal fun LazyItemScope.MultiAppContent(builder: PrefScopeBuilder) {
+internal fun LazyItemScope.MultiAppContent(builder: PrefPageBuilder) {
     val context = LocalContext.current
     val packageUtils = remember { PackageUtils(context.packageManager) }
     val scope = rememberCoroutineScope()

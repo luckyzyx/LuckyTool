@@ -18,7 +18,7 @@ import com.composables.icons.lucide.R as LucideR
 import com.luckyzyx.luckytool.R
 import com.luckyzyx.luckytool.ui.compose.components.ConfirmDialog
 import com.luckyzyx.luckytool.ui.compose.components.PrefIconButton
-import com.luckyzyx.luckytool.ui.compose.scopes.ScopePageSpec
+import com.luckyzyx.luckytool.ui.compose.PageSpec
 import com.luckyzyx.luckytool.utils.LauncherBackupHint
 import com.luckyzyx.luckytool.utils.LauncherBackupPrefs
 import com.luckyzyx.luckytool.utils.LauncherBackupTransfer
@@ -48,7 +48,7 @@ import java.util.Locale
  *
  * 页面拆三个分类：「备份设置」（自动备份开关与周期，走 prefs 键）、「操作」（状态/立即备份/导入/目录）、
  * 「快照历史」（一行一个快照，点击进恢复二次确认、行尾垃圾桶与长按进删除二次确认）。快照来自文件系统而非 prefs，所以列表、忙碌态、
- * 结果提示都是对象级 Compose 状态：DSL 行在页面内容组合期读这些状态（读入 ScopeScreen 的快照订阅，
+ * 结果提示都是对象级 Compose 状态：DSL 行在页面内容组合期读这些状态（读入 PageScreen 的快照订阅，
  * 写入即重建行），写入发生在点击行与宿主协程里。
  */
 object LauncherBackupPage {
@@ -68,7 +68,7 @@ object LauncherBackupPage {
     private val pendingRestoreState = mutableStateOf<LauncherSnapshot?>(null)
     private val pendingDeleteState = mutableStateOf<LauncherSnapshot?>(null)
 
-    val spec = ScopePageSpec(
+    val spec = PageSpec(
         pageKey = "launcher_backup",
         prefsName = ModulePrefs,
         packName = "",
@@ -79,7 +79,7 @@ object LauncherBackupPage {
         // 不开下拉刷新：这一页靠「状态」「备份目录」两行与各操作完成后的重列刷新，
         // PullToRefreshBox 会给列表再套一层竖向手势，和长列表滑动打架
     ) {
-        val c = requireNotNull(context) { "ScopeScreen 未注入 Context" }
+        val c = requireNotNull(context) { "PageScreen 未注入 Context" }
         val busy = busyState.value
         val hint = busyHintState.value
         val notice = noticeState.value

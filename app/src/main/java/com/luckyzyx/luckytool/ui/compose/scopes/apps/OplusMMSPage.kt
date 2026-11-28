@@ -1,7 +1,7 @@
 package com.luckyzyx.luckytool.ui.compose.scopes.apps
 
 import com.luckyzyx.luckytool.R
-import com.luckyzyx.luckytool.ui.compose.scopes.ScopePageSpec
+import com.luckyzyx.luckytool.ui.compose.PageSpec
 import com.luckyzyx.luckytool.utils.A13
 import com.luckyzyx.luckytool.utils.ModulePrefs
 import com.luckyzyx.luckytool.utils.SDK
@@ -13,7 +13,7 @@ import com.luckyzyx.luckytool.utils.checkPackName
  */
 object OplusMMSPage {
 
-    val spec = ScopePageSpec(
+    val spec = PageSpec(
         pageKey = "oplus_mms",
         prefsName = ModulePrefs,
         packName = "com.android.mms",
@@ -21,7 +21,7 @@ object OplusMMSPage {
         restartEnabled = true,
         isVisible = { SDK >= A13 && checkPackName("com.android.mms") },
     ) {
-        val c = requireNotNull(context) { "ScopeScreen 未注入 Context" }
+        val c = requireNotNull(context) { "PageScreen 未注入 Context" }
         if (SDK >= A13) {
             switch(
                 key = "remove_verification_code_floating_window",

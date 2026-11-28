@@ -1449,7 +1449,7 @@
     <string name="launcher_backup_tag_pre_restore">恢复前</string>
     <string name="settings_floating_bottom_bar_style">悬浮底栏样式</string>
     <string name="settings_floating_style_classic">经典</string>
-    <string name="settings_floating_style_ios">iOS 风格（液态玻璃）</string>
+    <string name="settings_floating_style_liquid_glass">液态玻璃</string>
     <string name="home_device_details_show">更多设备信息</string>
     <string name="home_device_details_hide">收起详细信息</string>
     <string name="home_device_info_copied">已复制设备 OTA 数据</string>

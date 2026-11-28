@@ -18,7 +18,7 @@ import androidx.core.database.getStringOrNull
 import com.luckyzyx.luckytool.R
 import com.luckyzyx.luckytool.ui.compose.components.PrefButton
 import com.luckyzyx.luckytool.ui.compose.components.PrefNote
-import com.luckyzyx.luckytool.ui.compose.scopes.ScopePageSpec
+import com.luckyzyx.luckytool.ui.compose.PageSpec
 import com.luckyzyx.luckytool.utils.AESCrypt
 import com.luckyzyx.luckytool.utils.CommandUtils
 import com.luckyzyx.luckytool.utils.DeviceUtils
@@ -50,7 +50,7 @@ object ExtractOTAPage {
     /** 由内容组合时注册的加载器驱动 onRefresh（suspend 回调在内容重组时重绑定） */
     private var reloader: (suspend () -> Unit)? = null
 
-    val spec = ScopePageSpec(
+    val spec = PageSpec(
         pageKey = "extract_ota",
         prefsName = SettingsPrefs,
         packName = "",
@@ -58,7 +58,7 @@ object ExtractOTAPage {
         restartEnabled = false,
         onRefresh = { reloader?.invoke() },
     ) {
-        val c = requireNotNull(context) { "ScopeScreen 未注入 Context" }
+        val c = requireNotNull(context) { "PageScreen 未注入 Context" }
         custom(key = "extract_ota_body") {
             var dataList by remember { mutableStateOf<List<String>>(emptyList()) }
 

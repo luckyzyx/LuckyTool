@@ -14,8 +14,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import com.composables.icons.lucide.R as LucideR
 import com.luckyzyx.luckytool.ui.compose.components.PrefIndexItem
-import com.luckyzyx.luckytool.ui.compose.scopes.ScopePageRegistry
-import com.luckyzyx.luckytool.ui.compose.scopes.ScopePageSpec
+import com.luckyzyx.luckytool.ui.compose.PageRegistry
+import com.luckyzyx.luckytool.ui.compose.PageSpec
 import com.luckyzyx.luckytool.utils.AppIconCache
 import com.luckyzyx.luckytool.utils.AppUtils
 import com.luckyzyx.luckytool.utils.LogUtils
@@ -48,7 +48,7 @@ internal data class CategoryBadge(val icon: ImageVector, val color: Color, val l
  * `displayPackName ?: packName` 的应用原图。功能树列表与启动预取共用这一个判据，
  * 避免两边各写一份（拆开写过一次，结果「应用相关」拿到了电池 App 的图标）。
  */
-internal fun rowIconPackName(pageKey: String, spec: ScopePageSpec): String? =
+internal fun rowIconPackName(pageKey: String, spec: PageSpec): String? =
     if (pageKey in categoryBadges) null else (spec.displayPackName ?: spec.packName)
 
 /**
@@ -70,8 +70,8 @@ internal val categoryBadges: Map<String, CategoryBadge> = mapOf(
 )
 
 /** 页标题：登记在覆盖表的页取固定字符串资源，其余取宿主 App 标签（android_related 取 "android" 的标签） */
-internal fun pageTitle(context: Context, spec: ScopePageSpec): String {
-    ScopePageRegistry.treeTitleRes[spec.pageKey]?.let { return context.getString(it) }
+internal fun pageTitle(context: Context, spec: PageSpec): String {
+    PageRegistry.treeTitleRes[spec.pageKey]?.let { return context.getString(it) }
     val pack = spec.displayPackName ?: if (spec.pageKey == "android_related") "android" else spec.packName
     return AppUtils(context).getAppLabel(pack).toString()
 }
@@ -79,7 +79,7 @@ internal fun pageTitle(context: Context, spec: ScopePageSpec): String {
 /**
  * 功能页两类数据的快照：功能树行 + 全屏搜索索引。
  *
- * 两者共用同一轮 [ScopePageRegistry.buildIndex] 结果（每页只跑一次偏好 DSL），
+ * 两者共用同一轮 [PageRegistry.buildIndex] 结果（每页只跑一次偏好 DSL），
  * 因此「启动期把搜索索引也一起预取」不会让构建成本再翻一倍。
  * data class 是为了让结构相同的重算结果不触发重新组合（[FunctionPageData] 用它去重）。
  */
@@ -140,24 +140,24 @@ internal object FunctionPageData {
         }
     }
 
-    /** 单轮构建：功能树行 + 全屏搜索索引（每页只跑一次 [ScopePageRegistry.buildIndex]） */
+    /** 单轮构建：功能树行 + 全屏搜索索引（每页只跑一次 [PageRegistry.buildIndex]） */
     internal fun buildSnapshot(context: Context): FunctionPageSnapshot {
-        val specs = ScopePageRegistry.all()
+        val specs = PageRegistry.all()
         val indexed = LinkedHashMap<String, IndexedPage>(specs.size)
         specs.forEach { spec ->
             // 手动隐藏 / 单 App 作用域未安装的页不入索引：功能树与全屏搜索用的是同一个判据
             runCatching {
                 if (!spec.isVisible(context)) return@runCatching
-                if (!ScopePageRegistry.isScopeAppPresent(context, spec)) return@runCatching
+                if (!PageRegistry.isScopeAppPresent(context, spec)) return@runCatching
                 indexed[spec.pageKey] =
-                    IndexedPage(pageTitle(context, spec), ScopePageRegistry.buildIndex(context, spec))
+                    IndexedPage(pageTitle(context, spec), PageRegistry.buildIndex(context, spec))
             }.onFailure { LogUtils.e("FunctionPageData", "index $" + "{spec.pageKey}", it.toString(), true) }
         }
-        val rows = ScopePageRegistry.treeOrder.mapNotNull { key ->
-            val spec = ScopePageRegistry[key] ?: return@mapNotNull null
+        val rows = PageRegistry.treeOrder.mapNotNull { key ->
+            val spec = PageRegistry[key] ?: return@mapNotNull null
             val page = indexed[key] ?: return@mapNotNull null
             // 自带整页渲染的特殊页（暗色模式列表/意图/自定义浮窗等）不声明共享行、索引恒空，
-            // 空索引不代表不可见；判据与 ScopePageRegistry.hasVisibleContent 一致
+            // 空索引不代表不可见；判据与 PageRegistry.hasVisibleContent 一致
             if (page.index.isEmpty() && !spec.selfRendered) return@mapNotNull null
             val summary = rowSummary(page.index)
             val packName = rowIconPackName(key, spec)

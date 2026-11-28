@@ -1,7 +1,7 @@
 package com.luckyzyx.luckytool.ui.compose.scopes.related
 
 import com.luckyzyx.luckytool.R
-import com.luckyzyx.luckytool.ui.compose.scopes.ScopePageSpec
+import com.luckyzyx.luckytool.ui.compose.PageSpec
 import com.luckyzyx.luckytool.utils.A13
 import com.luckyzyx.luckytool.utils.ModulePrefs
 import com.luckyzyx.luckytool.utils.SDK
@@ -13,14 +13,14 @@ import com.luckyzyx.luckytool.utils.getOSVersionCode
  */
 object DialogRelatedPage {
 
-    val spec = ScopePageSpec(
+    val spec = PageSpec(
         pageKey = "dialog_related",
         prefsName = ModulePrefs,
         packName = "com.android.systemui",
         scopes = arrayOf("com.android.systemui", "com.oplus.exsystemservice"),
         restartEnabled = true,
     ) {
-        val c = requireNotNull(context) { "ScopeScreen 未注入 Context" }
+        val c = requireNotNull(context) { "PageScreen 未注入 Context" }
         if (getOSVersionCode >= 26) {
             switch(
                 key = "disable_duplicate_floating_window",

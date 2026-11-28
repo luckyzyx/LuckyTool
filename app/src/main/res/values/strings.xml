@@ -1631,7 +1631,7 @@
     <string name="launcher_backup_tag_pre_restore">Before restore</string>
     <string name="settings_floating_bottom_bar_style">Floating bottom bar style</string>
     <string name="settings_floating_style_classic">Classic</string>
-    <string name="settings_floating_style_ios">iOS style (Liquid Glass)</string>
+    <string name="settings_floating_style_liquid_glass">Liquid Glass</string>
     <string name="home_device_details_show">More device information</string>
     <string name="home_device_details_hide">Less device information</string>
     <string name="home_device_info_copied">Device OTA data copied</string>

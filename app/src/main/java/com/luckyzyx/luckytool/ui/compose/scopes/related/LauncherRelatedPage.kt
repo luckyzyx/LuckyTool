@@ -1,7 +1,7 @@
 package com.luckyzyx.luckytool.ui.compose.scopes.related
 
 import com.luckyzyx.luckytool.R
-import com.luckyzyx.luckytool.ui.compose.scopes.ScopePageSpec
+import com.luckyzyx.luckytool.ui.compose.PageSpec
 import com.luckyzyx.luckytool.utils.A13
 import com.luckyzyx.luckytool.utils.ModulePrefs
 import com.luckyzyx.luckytool.utils.SDK
@@ -19,7 +19,7 @@ import com.topjohnwu.superuser.ShellUtils
  */
 object LauncherRelatedPage {
 
-    val spec = ScopePageSpec(
+    val spec = PageSpec(
         pageKey = "launcher",
         prefsName = ModulePrefs,
         packName = "com.android.launcher",
@@ -27,7 +27,7 @@ object LauncherRelatedPage {
         restartEnabled = true,
         isVisible = { checkPackName("com.android.launcher") },
     ) {
-        val c = requireNotNull(context) { "ScopeScreen 未注入 Context" }
+        val c = requireNotNull(context) { "PageScreen 未注入 Context" }
         val osCode = getOSVersionCode
         // 小组件
         if (osCode >= 26) {

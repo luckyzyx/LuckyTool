@@ -8,7 +8,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.snapshots.Snapshot
 import androidx.compose.ui.platform.ComposeView
 import androidx.test.core.app.ApplicationProvider
-import com.luckyzyx.luckytool.ui.compose.components.ScopeScreen
+import com.luckyzyx.luckytool.ui.compose.components.PageScreen
 import com.luckyzyx.luckytool.utils.PrefState
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -26,7 +26,7 @@ import org.robolectric.annotation.Config
  * `remove_wlan_sla_blacklist` 与两个白名单条目不出现（此前靠 `restart?.invoke()` 重建
  * Activity 才显示，去掉重启后缺陷暴露）。
  *
- * 根因：`ScopeScreen` 的重组只重建函数体里的 `builder.entries`；`LazyColumn` 的条目内容
+ * 根因：`PageScreen` 的重组只重建函数体里的 `builder.entries`；`LazyColumn` 的条目内容
  * lambda 只订阅 systemInfo / rows / 搜索结果等状态，不依赖 revision，列表不会拿新条目
  * 重算——函数体重建的结果没人用，条件条目因此一直不出现。修复：把 revision 的 State
  * 提出来后，在 `listItems` 内部也读一次，让列表内容直接依赖它。
@@ -35,11 +35,11 @@ import org.robolectric.annotation.Config
  * 里可以直接观察到——写入偏好后无条件条目必须被**重新渲染**（列表内容重算 → 条目内容
  * lambda 换新 → 已有条目重组）。实测未修复时该计数停在 1（列表从未重算），修复后变为 2。
  * 至于新条目最终被组合出来，依赖 Robolectric 下子组合的时序，观测不稳定，故不作为断言；
- * 「条件条目会进入 entries」本身由 `ScopeConditionalVisibilityTest` 在同一条构建链上覆盖。
+ * 「条件条目会进入 entries」本身由 `PageConditionalVisibilityTest` 在同一条构建链上覆盖。
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [34])
-class ScopeScreenConditionalRefreshTest {
+class PageScreenConditionalRefreshTest {
 
     private companion object {
         const val PREFS_NAME = "scope_conditional_refresh_test"
@@ -64,7 +64,7 @@ class ScopeScreenConditionalRefreshTest {
         activity.setContentView(composeView)
         composeView.setContent {
             MaterialTheme {
-                ScopeScreen(state = state) {
+                PageScreen(state = state) {
                     custom(key = "always", title = "always") { _ -> alwaysRendered++ }
                     if (state.getString("mode", "0") == "1") {
                         custom(key = "conditional", title = "conditional") { _ -> conditionalRendered++ }

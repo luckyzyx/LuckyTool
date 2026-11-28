@@ -1,7 +1,7 @@
 package com.luckyzyx.luckytool.ui.compose.scopes.apps
 
 import com.luckyzyx.luckytool.R
-import com.luckyzyx.luckytool.ui.compose.scopes.ScopePageSpec
+import com.luckyzyx.luckytool.ui.compose.PageSpec
 import com.luckyzyx.luckytool.utils.ModulePrefs
 
 /**
@@ -9,14 +9,14 @@ import com.luckyzyx.luckytool.utils.ModulePrefs
  */
 object OplusMcsPage {
 
-    val spec = ScopePageSpec(
+    val spec = PageSpec(
         pageKey = "oplus_mcs",
         prefsName = ModulePrefs,
         packName = "com.heytap.mcs",
         scopes = arrayOf("com.heytap.mcs"),
         restartEnabled = true,
     ) {
-        val c = requireNotNull(context) { "ScopeScreen 未注入 Context" }
+        val c = requireNotNull(context) { "PageScreen 未注入 Context" }
         list(
             key = "custom_system_message_region_defaults",
             title = c.getString(R.string.custom_system_message_region_defaults),

@@ -57,7 +57,7 @@ import com.itos.coui.text.CouiTextKind
 import com.itos.coui.text.Text as CouiText
 import com.itos.coui.theme.CouiTheme
 import com.luckyzyx.luckytool.R
-import com.luckyzyx.luckytool.ui.compose.components.LocalScopeListState
+import com.luckyzyx.luckytool.ui.compose.components.LocalPageListState
 import com.luckyzyx.luckytool.ui.compose.components.PrefIcon
 import com.luckyzyx.luckytool.ui.compose.components.PrefRowSummary
 import com.luckyzyx.luckytool.ui.compose.components.PrefRowTitle
@@ -434,7 +434,7 @@ fun StatusBarIconOrderZones(
     val step = with(density) { OrderItemHeight.toPx() }
 
     // 页面列表状态（拖到边缘时要主动滚动它）与自动滚动的几何参数
-    val pageListState = LocalScopeListState.current
+    val pageListState = LocalPageListState.current
     val viewportHeight = LocalWindowInfo.current.containerSize.height.toFloat()
     val autoScrollEdge = with(density) { AutoScrollEdge.toPx() }
     val autoScrollSpeed = with(density) { AutoScrollMaxSpeed.toPx() }

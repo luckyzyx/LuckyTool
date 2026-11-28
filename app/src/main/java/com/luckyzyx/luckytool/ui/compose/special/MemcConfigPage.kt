@@ -49,8 +49,8 @@ import com.luckyzyx.luckytool.ui.compose.components.AppItem
 import com.luckyzyx.luckytool.ui.compose.components.AppListItem
 import com.luckyzyx.luckytool.ui.compose.components.currentDialogStyle
 import com.luckyzyx.luckytool.ui.compose.components.currentPrefStyle
-import com.luckyzyx.luckytool.ui.compose.scopes.ScopePageAction
-import com.luckyzyx.luckytool.ui.compose.scopes.ScopePageSpec
+import com.luckyzyx.luckytool.ui.compose.PageAction
+import com.luckyzyx.luckytool.ui.compose.PageSpec
 import com.luckyzyx.luckytool.ui.compose.components.currentUiStyle
 import com.luckyzyx.luckytool.utils.CommandUtils
 import com.luckyzyx.luckytool.utils.FileUtils
@@ -76,7 +76,7 @@ private const val CONFIG_ACTIVITY_LIST = GlobalKeyValue.memcConfigActivityList
  * 双 Tab（Packages/Activitys）+ 搜索 + 下拉刷新 + Import Xml / Reset。
  *
  * 单文件承载：状态与写值逻辑只有一份 [MemcConfigState]，渲染集中在 [MemcConfigContent]——Import Xml / Reset
- * 通过 [ScopePageAction] 进顶栏溢出菜单（不设 `showAsAction`，只出现在溢出菜单里、不占页面空间），
+ * 通过 [PageAction] 进顶栏溢出菜单（不设 `showAsAction`，只出现在溢出菜单里、不占页面空间），
  * 正文是双面板与四个弹层。
  */
 object MemcConfigPage {
@@ -85,7 +85,7 @@ object MemcConfigPage {
     const val ACTION_IMPORT_XML = "import_xml"
     const val ACTION_RESET = "reset"
 
-    val spec = ScopePageSpec(
+    val spec = PageSpec(
         pageKey = "memc_config",
         prefsName = ModulePrefs,
         packName = "",
@@ -97,8 +97,8 @@ object MemcConfigPage {
         fullContent = { _ -> MemcConfigContent() },
         // 这两项都不设图标、不显示为顶栏按钮，只出现在溢出菜单里
         topActions = listOf(
-            ScopePageAction(ACTION_IMPORT_XML, R.string.menu_import_xml),
-            ScopePageAction(ACTION_RESET, R.string.reset),
+            PageAction(ACTION_IMPORT_XML, R.string.menu_import_xml),
+            PageAction(ACTION_RESET, R.string.reset),
         ),
     ) { }
 }
@@ -247,7 +247,7 @@ internal class MemcConfigState(private val context: Context) {
 /**
  * 页面渲染体：状态/加载逻辑唯一一份。
  *
- * LazyItemScope 扩展：[ScopePageSpec.fullContent] 挂在 LazyColumn 的 item 内，item 的高度约束无界，
+ * LazyItemScope 扩展：[PageSpec.fullContent] 挂在 LazyColumn 的 item 内，item 的高度约束无界，
  * 根容器必须用 `fillParentMaxHeight()` 取列表视口高度，否则整列高度为 0（子项 weight 分不到空间）→ 白屏。
  */
 @Composable

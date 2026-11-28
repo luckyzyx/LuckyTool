@@ -18,8 +18,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Density
-import com.luckyzyx.luckytool.ui.compose.components.LocalScopeTopInset
-import com.luckyzyx.luckytool.ui.compose.components.ScopeScreen
+import com.luckyzyx.luckytool.ui.compose.components.LocalPageTopInset
+import com.luckyzyx.luckytool.ui.compose.components.PageScreen
 import com.luckyzyx.luckytool.ui.compose.components.PageScaffold
 import com.luckyzyx.luckytool.ui.theme.AppSettings
 import com.luckyzyx.luckytool.ui.theme.ColorMode
@@ -84,13 +84,13 @@ class PageTopAppBarTest {
                             val top = padding.calculateTopPadding().value
                             SideEffect { topInset = top }
                             if (scopeList) {
-                                CompositionLocalProvider(LocalScopeTopInset provides padding.calculateTopPadding()) {
+                                CompositionLocalProvider(LocalPageTopInset provides padding.calculateTopPadding()) {
                                     val listModifier = if (mode == UiMode.Coui) {
                                         Modifier.fillMaxSize()
                                     } else {
                                         Modifier.fillMaxSize().padding(padding)
                                     }
-                                    ScopeScreen(state = prefs, modifier = listModifier) {
+                                    PageScreen(state = prefs, modifier = listModifier) {
                                         repeat(40) { index ->
                                             click(title = "设置 ${index + 1}", summary = "系统功能设置", onClick = {})
                                         }

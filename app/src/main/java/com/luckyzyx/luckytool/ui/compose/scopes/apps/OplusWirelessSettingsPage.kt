@@ -1,7 +1,7 @@
 package com.luckyzyx.luckytool.ui.compose.scopes.apps
 
 import com.luckyzyx.luckytool.R
-import com.luckyzyx.luckytool.ui.compose.scopes.ScopePageSpec
+import com.luckyzyx.luckytool.ui.compose.PageSpec
 import com.luckyzyx.luckytool.utils.ModulePrefs
 
 /**
@@ -9,13 +9,13 @@ import com.luckyzyx.luckytool.utils.ModulePrefs
  */
 object OplusWirelessSettingsPage {
 
-    val spec = ScopePageSpec(
+    val spec = PageSpec(
         pageKey = "oplus_wireless_settings",
         prefsName = ModulePrefs,
         packName = "com.oplus.wirelesssettings",
         scopes = arrayOf("com.oplus.wirelesssettings"),
     ) {
-        val c = requireNotNull(context) { "ScopeScreen 未注入 Context" }
+        val c = requireNotNull(context) { "PageScreen 未注入 Context" }
         switch(
             key = "enable_wifi_details_display_gateway",
             title = c.getString(R.string.enable_wifi_details_display_gateway),

@@ -1,7 +1,7 @@
 package com.luckyzyx.luckytool.ui.compose.scopes.apps
 
 import com.luckyzyx.luckytool.R
-import com.luckyzyx.luckytool.ui.compose.scopes.ScopePageSpec
+import com.luckyzyx.luckytool.ui.compose.PageSpec
 import com.luckyzyx.luckytool.utils.A13
 import com.luckyzyx.luckytool.utils.A14
 import com.luckyzyx.luckytool.utils.ModulePrefs
@@ -15,14 +15,14 @@ import com.luckyzyx.luckytool.utils.checkPackName
  */
 object OplusTeleServicePage {
 
-    val spec = ScopePageSpec(
+    val spec = PageSpec(
         pageKey = "oplus_tele_service",
         prefsName = ModulePrefs,
         packName = "com.android.phone",
         scopes = arrayOf("com.android.phone", "com.android.incallui"),
         isVisible = { SDK >= A13 && checkPackName("com.android.phone") },
     ) {
-        val c = requireNotNull(context) { "ScopeScreen 未注入 Context" }
+        val c = requireNotNull(context) { "PageScreen 未注入 Context" }
         if (SDK >= A13) {
             switch(
                 key = "force_display_five_g_switch",

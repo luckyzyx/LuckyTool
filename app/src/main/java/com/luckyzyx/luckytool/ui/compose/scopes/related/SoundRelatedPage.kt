@@ -17,7 +17,7 @@ import com.luckyzyx.luckytool.ui.compose.components.ColorPickerDialog
 import com.luckyzyx.luckytool.ui.compose.components.PrefColorPreview
 import com.luckyzyx.luckytool.ui.compose.components.PrefRow
 import com.luckyzyx.luckytool.ui.compose.components.PrefRowInset
-import com.luckyzyx.luckytool.ui.compose.scopes.ScopePageSpec
+import com.luckyzyx.luckytool.ui.compose.PageSpec
 import com.luckyzyx.luckytool.utils.A12
 import com.luckyzyx.luckytool.utils.A13
 import com.luckyzyx.luckytool.utils.ModulePrefs
@@ -36,14 +36,14 @@ object SoundRelatedPage {
 
     private const val PERCENT_COLOR_KEY = "custom_volume_bar_percent_color"
 
-    val spec = ScopePageSpec(
+    val spec = PageSpec(
         pageKey = "sound_related",
         prefsName = ModulePrefs,
         packName = "com.android.systemui",
         scopes = arrayOf("com.android.systemui", "com.android.settings"),
         restartEnabled = true,
     ) {
-        val c = requireNotNull(context) { "ScopeScreen 未注入 Context" }
+        val c = requireNotNull(context) { "PageScreen 未注入 Context" }
         val osCode = getOSVersionCode
         group {
             switch(

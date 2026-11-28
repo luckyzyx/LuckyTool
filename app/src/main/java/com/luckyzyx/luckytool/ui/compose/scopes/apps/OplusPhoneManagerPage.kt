@@ -1,7 +1,7 @@
 package com.luckyzyx.luckytool.ui.compose.scopes.apps
 
 import com.luckyzyx.luckytool.R
-import com.luckyzyx.luckytool.ui.compose.scopes.ScopePageSpec
+import com.luckyzyx.luckytool.ui.compose.PageSpec
 import com.luckyzyx.luckytool.utils.ModulePrefs
 
 /**
@@ -9,13 +9,13 @@ import com.luckyzyx.luckytool.utils.ModulePrefs
  */
 object OplusPhoneManagerPage {
 
-    val spec = ScopePageSpec(
+    val spec = PageSpec(
         pageKey = "oplus_phone_manager",
         prefsName = ModulePrefs,
         packName = "com.coloros.phonemanager",
         scopes = arrayOf("com.coloros.phonemanager"),
     ) {
-        val c = requireNotNull(context) { "ScopeScreen 未注入 Context" }
+        val c = requireNotNull(context) { "PageScreen 未注入 Context" }
         switch(
             key = "remove_virus_risk_notification_in_phone_manager",
             title = c.getString(R.string.remove_virus_risk_notification_in_phone_manager),

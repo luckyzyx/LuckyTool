@@ -38,11 +38,11 @@ import com.luckyzyx.luckytool.ui.compose.components.AppSearchBar
 import com.luckyzyx.luckytool.ui.compose.components.AppSlider
 import com.luckyzyx.luckytool.ui.compose.components.PrefGroup
 import com.luckyzyx.luckytool.ui.compose.components.PrefRowValue
-import com.luckyzyx.luckytool.ui.compose.components.PrefScopeBuilder
+import com.luckyzyx.luckytool.ui.compose.components.PrefPageBuilder
 import com.luckyzyx.luckytool.ui.compose.components.PrefSwitchRow
 import com.luckyzyx.luckytool.ui.compose.components.AppItem
-import com.luckyzyx.luckytool.ui.compose.scopes.ScopePageAction
-import com.luckyzyx.luckytool.ui.compose.scopes.ScopePageSpec
+import com.luckyzyx.luckytool.ui.compose.PageAction
+import com.luckyzyx.luckytool.ui.compose.PageSpec
 import com.luckyzyx.luckytool.ui.compose.components.currentUiStyle
 import com.luckyzyx.luckytool.utils.IntentUtils
 import com.luckyzyx.luckytool.utils.ModulePrefs
@@ -61,12 +61,12 @@ import kotlinx.serialization.json.Json
 
 /**
  * P4 特殊页：暗色模式应用列表。
- * 使用 ScopeScreen 的 fullContent 全屏自定义渲染 + onRefresh 下拉刷新。
+ * 使用 PageScreen 的 fullContent 全屏自定义渲染 + onRefresh 下拉刷新。
  *
  * 单文件承载：状态/加载/写值逻辑只有一份，列表容器由 [DarkModeContent] 渲染、单行由
  * [DarkModeAppRow] 渲染，两处统一使用 Material 组件。
  *
- * 「打开暗色模式设置」是对整页数据的一次性动作，声明为 [ScopePageAction] 由页面宿主渲染进顶栏
+ * 「打开暗色模式设置」是对整页数据的一次性动作，声明为 [PageAction] 由页面宿主渲染进顶栏
  * （不占页面正文的卡片）；「重启作用域」由 `restartEnabled` 提供。
  */
 object DarkModePage {
@@ -79,7 +79,7 @@ object DarkModePage {
 
     internal var refresh: (suspend () -> Unit)? = null
 
-    val spec = ScopePageSpec(
+    val spec = PageSpec(
         pageKey = "dark_mode",
         prefsName = ModulePrefs,
         packName = "",
@@ -90,7 +90,7 @@ object DarkModePage {
         onRefresh = { refresh?.invoke() },
         fullContent = { builder -> DarkModeContent(builder) },
         topActions = listOf(
-            ScopePageAction(
+            PageAction(
                 key = ACTION_OPEN,
                 labelRes = R.string.open,
                 icon = R.drawable.baseline_open_in_new_24,
@@ -101,7 +101,7 @@ object DarkModePage {
 }
 
 @Composable
-internal fun LazyItemScope.DarkModeContent(builder: PrefScopeBuilder) {
+internal fun LazyItemScope.DarkModeContent(builder: PrefPageBuilder) {
     val context = LocalContext.current
     val packageUtils = remember { PackageUtils(context.packageManager) }
     val scope = rememberCoroutineScope()

@@ -3,7 +3,7 @@ package com.luckyzyx.luckytool.ui
 import android.content.Context
 import android.content.SharedPreferences
 import androidx.test.core.app.ApplicationProvider
-import com.luckyzyx.luckytool.ui.compose.components.PrefScopeBuilder
+import com.luckyzyx.luckytool.ui.compose.components.PrefPageBuilder
 import com.luckyzyx.luckytool.ui.compose.scopes.related.ApplicationRelatedPage
 import com.luckyzyx.luckytool.utils.PrefState
 import org.junit.Assert.assertFalse
@@ -17,9 +17,9 @@ import org.robolectric.annotation.Config
 /**
  * 冻结「条件条目随偏好写入自动重算」这一语义（不再依赖 Activity recreate）。
  *
- * [PrefScopeBuilder] 的构建 lambda 是普通（非 Composable）函数，由 `ScopeScreen` 每次重组重跑；
+ * [PrefPageBuilder] 的构建 lambda 是普通（非 Composable）函数，由 `PageScreen` 每次重组重跑；
  * 而 `list(...)` 的 onItemSelected 与 `switch(...)` 的 apply 内部**先 `state.set`**
- * （PrefScope.kt:404 / PrefScope.kt:346）→ [PrefState.revision] 前进 → 页面重组 → 构建 lambda 重跑。
+ * （PrefPage.kt:404 / PrefPage.kt:346）→ [PrefState.revision] 前进 → 页面重组 → 构建 lambda 重跑。
  * 因此「按偏好值决定是否显示的行」会自己出现/消失。
  *
  * 正因如此，ApplicationRelatedPage / AodRelatedPage 已删除对应的 `restart?.invoke()`
@@ -28,7 +28,7 @@ import org.robolectric.annotation.Config
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [34])
-class ScopeConditionalVisibilityTest {
+class PageConditionalVisibilityTest {
 
     private lateinit var context: Context
     private lateinit var raw: SharedPreferences
@@ -42,9 +42,9 @@ class ScopeConditionalVisibilityTest {
         state = PrefState.ofProvider { raw }
     }
 
-    /** 复刻 ScopeScreen 的构建流程：beginBuild → content → computeSegments，返回本轮条目 key 集合 */
+    /** 复刻 PageScreen 的构建流程：beginBuild → content → computeSegments，返回本轮条目 key 集合 */
     private fun buildApplicationPage(): Set<String> {
-        val builder = PrefScopeBuilder(state)
+        val builder = PrefPageBuilder(state)
         builder.context = context
         builder.beginBuild()
         ApplicationRelatedPage.spec.content(builder)
@@ -66,7 +66,7 @@ class ScopeConditionalVisibilityTest {
         val before = state.revision.value
         assertTrue(state.set("set_wlan_sla_whitelist_mode", "1"))
         assertTrue(
-            "state.set 必须让 revision 前进（ScopeScreen 据此重组重跑构建 lambda）",
+            "state.set 必须让 revision 前进（PageScreen 据此重组重跑构建 lambda）",
             state.revision.value > before,
         )
 

@@ -1,7 +1,7 @@
 package com.luckyzyx.luckytool.ui.compose.scopes.apps
 
 import com.luckyzyx.luckytool.R
-import com.luckyzyx.luckytool.ui.compose.scopes.ScopePageSpec
+import com.luckyzyx.luckytool.ui.compose.PageSpec
 import com.luckyzyx.luckytool.utils.ModulePrefs
 import com.luckyzyx.luckytool.utils.getOSVersionCode
 
@@ -11,13 +11,13 @@ import com.luckyzyx.luckytool.utils.getOSVersionCode
  */
 object OplusLinkerPage {
 
-    val spec = ScopePageSpec(
+    val spec = PageSpec(
         pageKey = "oplus_linker",
         prefsName = ModulePrefs,
         packName = "com.oplus.linker",
         scopes = arrayOf("com.oplus.linker", "com.android.contacts", "com.android.bluetooth"),
     ) {
-        val c = requireNotNull(context) { "ScopeScreen 未注入 Context" }
+        val c = requireNotNull(context) { "PageScreen 未注入 Context" }
         if (getOSVersionCode >= 37) {
             switch(
                 key = "force_enable_iphone_shared_support",

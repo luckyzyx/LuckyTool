@@ -13,7 +13,7 @@ import com.luckyzyx.luckytool.ui.compose.components.AppPickerDialog
 import com.luckyzyx.luckytool.ui.compose.components.PrefRow
 import com.luckyzyx.luckytool.ui.compose.components.PrefRowInset
 import com.luckyzyx.luckytool.ui.compose.components.PrefSwitchRow
-import com.luckyzyx.luckytool.ui.compose.scopes.ScopePageSpec
+import com.luckyzyx.luckytool.ui.compose.PageSpec
 import com.luckyzyx.luckytool.utils.A13
 import com.luckyzyx.luckytool.utils.A14
 import com.luckyzyx.luckytool.utils.ModulePrefs
@@ -32,7 +32,7 @@ object ApplicationRelatedPage {
 
     private const val MULTI_APP = "com.oplus.multiapp"
 
-    val spec = ScopePageSpec(
+    val spec = PageSpec(
         pageKey = "application",
         prefsName = ModulePrefs,
         packName = "com.oplus.battery",
@@ -46,7 +46,7 @@ object ApplicationRelatedPage {
         ),
         restartEnabled = true,
     ) {
-        val c = requireNotNull(context) { "ScopeScreen 未注入 Context" }
+        val c = requireNotNull(context) { "PageScreen 未注入 Context" }
         // 应用启动
         if (SDK >= A13) {
             group(title = c.getString(R.string.AppStartupRelated)) {
@@ -92,7 +92,7 @@ object ApplicationRelatedPage {
                     c.getString(R.string.set_multi_app_support_mode_tips),
                 ),
                 // 条件可见性由 state.revision 驱动（list 内部先 state.set → revision 前进 →
-                // ScopeScreen 重组重跑构建 lambda），因此无需 recreate 刷新页面
+                // PageScreen 重组重跑构建 lambda），因此无需 recreate 刷新页面
                 onChange = { value ->
                     c.sendPrefsValue("system", "set_multi_app_support_mode", value)
                     c.sendPrefsValue(MULTI_APP, "set_multi_app_support_mode", value)
@@ -327,7 +327,7 @@ object ApplicationRelatedPage {
         }
     }
 
-    private fun com.luckyzyx.luckytool.ui.compose.components.PrefScopeBuilder.wlanWhitelist(
+    private fun com.luckyzyx.luckytool.ui.compose.components.PrefPageBuilder.wlanWhitelist(
         c: android.content.Context,
         key: String,
     ) {

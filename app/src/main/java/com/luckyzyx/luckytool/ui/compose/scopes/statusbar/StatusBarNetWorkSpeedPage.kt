@@ -1,7 +1,7 @@
 package com.luckyzyx.luckytool.ui.compose.scopes.statusbar
 
 import com.luckyzyx.luckytool.R
-import com.luckyzyx.luckytool.ui.compose.scopes.ScopePageSpec
+import com.luckyzyx.luckytool.ui.compose.PageSpec
 import com.luckyzyx.luckytool.utils.ModulePrefs
 
 /**
@@ -11,14 +11,14 @@ import com.luckyzyx.luckytool.utils.ModulePrefs
  */
 object StatusBarNetWorkSpeedPage {
 
-    val spec = ScopePageSpec(
+    val spec = PageSpec(
         pageKey = "statusbar_network_speed",
         prefsName = ModulePrefs,
         packName = "com.android.systemui",
         scopes = arrayOf("com.android.systemui"),
         restartEnabled = true,
     ) {
-        val c = requireNotNull(context) { "ScopeScreen 未注入 Context" }
+        val c = requireNotNull(context) { "PageScreen 未注入 Context" }
         // 值为 0.1 秒为单位的整数：-1 不开启，0 由 hook 按下限 0.1 秒执行
         // 旧版 set_network_speed 开关开启时回落为 1.0 秒，避免升级后悄悄关闭
         val legacyEnable = state.getBoolean("set_network_speed", false)

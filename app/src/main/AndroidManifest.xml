@@ -96,7 +96,7 @@
                 android:theme="@style/Theme.Luckyzyx.NoActionBar" />
 
         <activity
-                android:name=".ui.activity.SecondaryActivity"
+                android:name=".ui.activity.PageActivity"
                 android:exported="false"
                 android:theme="@style/Theme.Luckyzyx.NoActionBar" />
         

@@ -1,7 +1,7 @@
 package com.luckyzyx.luckytool.ui.compose.scopes.related
 
 import com.luckyzyx.luckytool.R
-import com.luckyzyx.luckytool.ui.compose.scopes.ScopePageSpec
+import com.luckyzyx.luckytool.ui.compose.PageSpec
 import com.luckyzyx.luckytool.utils.A12
 import com.luckyzyx.luckytool.utils.A13
 import com.luckyzyx.luckytool.utils.A14
@@ -17,7 +17,7 @@ import com.luckyzyx.luckytool.utils.getOSVersionCode
  */
 object MiscellaneousPage {
 
-    val spec = ScopePageSpec(
+    val spec = PageSpec(
         pageKey = "miscellaneous",
         prefsName = ModulePrefs,
         packName = "com.android.systemui",
@@ -28,7 +28,7 @@ object MiscellaneousPage {
         ),
         restartEnabled = true,
     ) {
-        val c = requireNotNull(context) { "ScopeScreen 未注入 Context" }
+        val c = requireNotNull(context) { "PageScreen 未注入 Context" }
         page(
             title = c.getString(R.string.FloatingWindowDialogRelated),
             target = "dialogRelated",

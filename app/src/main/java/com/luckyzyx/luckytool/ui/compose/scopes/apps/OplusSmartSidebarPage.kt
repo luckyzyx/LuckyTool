@@ -1,7 +1,7 @@
 package com.luckyzyx.luckytool.ui.compose.scopes.apps
 
 import com.luckyzyx.luckytool.R
-import com.luckyzyx.luckytool.ui.compose.scopes.ScopePageSpec
+import com.luckyzyx.luckytool.ui.compose.PageSpec
 import com.luckyzyx.luckytool.utils.A12
 import com.luckyzyx.luckytool.utils.A13
 import com.luckyzyx.luckytool.utils.ModulePrefs
@@ -15,14 +15,14 @@ import com.luckyzyx.luckytool.utils.getOSVersionCode
  */
 object OplusSmartSidebarPage {
 
-    val spec = ScopePageSpec(
+    val spec = PageSpec(
         pageKey = "oplus_smart_sidebar",
         prefsName = ModulePrefs,
         packName = "com.coloros.smartsidebar",
         scopes = arrayOf("com.coloros.smartsidebar"),
         isVisible = { SDK >= A12 && checkPackName("com.coloros.smartsidebar") },
     ) {
-        val c = requireNotNull(context) { "ScopeScreen 未注入 Context" }
+        val c = requireNotNull(context) { "PageScreen 未注入 Context" }
         val osCode = getOSVersionCode
         if (SDK == A12) {
             switch(

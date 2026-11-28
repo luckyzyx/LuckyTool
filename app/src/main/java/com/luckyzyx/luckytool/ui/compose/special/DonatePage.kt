@@ -32,8 +32,8 @@ import com.luckyzyx.luckytool.data.DonateInfo
 import com.luckyzyx.luckytool.ui.compose.components.AppSearchBar
 import com.luckyzyx.luckytool.ui.compose.components.currentPrefStyle
 import com.luckyzyx.luckytool.ui.compose.components.pageInset
-import com.luckyzyx.luckytool.ui.compose.components.PrefScopeBuilder
-import com.luckyzyx.luckytool.ui.compose.scopes.ScopePageSpec
+import com.luckyzyx.luckytool.ui.compose.components.PrefPageBuilder
+import com.luckyzyx.luckytool.ui.compose.PageSpec
 import com.luckyzyx.luckytool.utils.AESCrypt
 import com.luckyzyx.luckytool.utils.LogUtils
 import com.luckyzyx.luckytool.utils.SettingsPrefs
@@ -103,7 +103,7 @@ internal var donateReloader: (suspend () -> Unit)? = null
 
 object DonatePage {
 
-    val spec = ScopePageSpec(
+    val spec = PageSpec(
         pageKey = "donate",
         prefsName = SettingsPrefs,
         packName = "",
@@ -111,7 +111,7 @@ object DonatePage {
         restartEnabled = false,
         onRefresh = { donateReloader?.invoke() },
     ) {
-        val c = requireNotNull(context) { "ScopeScreen 未注入 Context" }
+        val c = requireNotNull(context) { "PageScreen 未注入 Context" }
         custom(key = "donate_body") { DonateBody(c) }
     }
 }
@@ -253,7 +253,7 @@ internal fun formatUserDetailInfo(
  * [DonateSortSheet]，外壳与控件由样式位提供。
  */
 @Composable
-internal fun PrefScopeBuilder.DonateBody(c: Context) {
+internal fun PrefPageBuilder.DonateBody(c: Context) {
     val appContext = LocalContext.current.applicationContext
     // 资源文本提到 composable 顶层，避免在普通函数里经 LocalContext 取串
     val decodeErrorText = stringResource(R.string.donate_data_decode_error)

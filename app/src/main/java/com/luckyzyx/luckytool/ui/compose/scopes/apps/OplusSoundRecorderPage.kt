@@ -1,7 +1,7 @@
 package com.luckyzyx.luckytool.ui.compose.scopes.apps
 
 import com.luckyzyx.luckytool.R
-import com.luckyzyx.luckytool.ui.compose.scopes.ScopePageSpec
+import com.luckyzyx.luckytool.ui.compose.PageSpec
 import com.luckyzyx.luckytool.utils.ModulePrefs
 import com.luckyzyx.luckytool.utils.arraySummaryLine
 import com.luckyzyx.luckytool.utils.checkPackName
@@ -14,7 +14,7 @@ import com.luckyzyx.luckytool.utils.isZh
  */
 object OplusSoundRecorderPage {
 
-    val spec = ScopePageSpec(
+    val spec = PageSpec(
         pageKey = "oplus_sound_recorder",
         prefsName = ModulePrefs,
         packName = "com.coloros.soundrecorder",
@@ -26,7 +26,7 @@ object OplusSoundRecorderPage {
         ),
         isVisible = { getOSVersionCode >= 30 && checkPackName("com.coloros.soundrecorder") },
     ) {
-        val c = requireNotNull(context) { "ScopeScreen 未注入 Context" }
+        val c = requireNotNull(context) { "PageScreen 未注入 Context" }
         val osCode = getOSVersionCode
         if (osCode == 30 && isZh(c)) {
             switch(

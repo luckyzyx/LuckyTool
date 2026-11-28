@@ -85,7 +85,7 @@ class AppUtils(val context: Context) {
             if (save) {
                 val encoded = safeOfNull { Json.encodeToString(appVerInfo) } ?: ""
                 // 值没变就不写：SharedPreferences 的变化回调不做值比较（remote prefs 更是每写必通知），
-                // 而作用域页的构建 lambda 每次重组都会重跑 —— 重复写入同一个值会让 PrefState.revision
+                // 而功能页的构建 lambda 每次重组都会重跑 —— 重复写入同一个值会让 PrefState.revision
                 // 自增并触发下一次重组，形成「写 → 重组 → 再写」的死循环（页面点进去就卡死）。
                 if (context.getStringSet(ModulePrefs, packName) != setOf(encoded)) {
                     context.putStringSet(ModulePrefs, packName, setOf(encoded))

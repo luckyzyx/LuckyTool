@@ -8,7 +8,7 @@ import android.content.pm.PackageInfo
 import android.os.Bundle
 import android.os.Looper
 import androidx.test.core.app.ApplicationProvider
-import com.luckyzyx.luckytool.ui.compose.components.PrefScopeBuilder
+import com.luckyzyx.luckytool.ui.compose.components.PrefPageBuilder
 import com.luckyzyx.luckytool.ui.compose.scopes.apps.OplusGamesPage
 import com.luckyzyx.luckytool.utils.ModulePrefs
 import com.luckyzyx.luckytool.utils.PrefState
@@ -25,7 +25,7 @@ import java.util.concurrent.CopyOnWriteArrayList
 /**
  * 冻结「DSL 构建 lambda 不得写入 prefs」这一语义（游戏助手页点进去卡死的根因）。
  *
- * ScopeScreen 每次重组都会重跑构建（`builder.content()`），并且订阅 `PrefState.revision`；
+ * PageScreen 每次重组都会重跑构建（`builder.content()`），并且订阅 `PrefState.revision`；
  * 而 remote prefs（libxposed RemotePreferences）的变化回调不做值比较 —— 只要发生一次 commit，
  * 每个被写入的键都会通知监听者，revision 随 +1，重组再跑一次构建。游戏助手页在构建里调用
  * `AppUtils.getAppVerInfo()`（`save` 默认 true）把版本信息写回 SP：写 → revision 自增 → 重组 → 再写，
@@ -65,9 +65,9 @@ class OplusGamesPageBuildRevisionTest {
         )
     }
 
-    /** 复刻 ScopeScreen 的构建流程，返回本轮结束后的 revision */
+    /** 复刻 PageScreen 的构建流程，返回本轮结束后的 revision */
     private fun buildOnce(state: PrefState): Long {
-        val builder = PrefScopeBuilder(state)
+        val builder = PrefPageBuilder(state)
         builder.context = pageContext
         builder.beginBuild()
         OplusGamesPage.spec.content(builder)

@@ -23,7 +23,7 @@ import com.luckyzyx.luckytool.ui.compose.components.material.materialGroupColors
  *
  * 版式归属：行只画正文与行尾，卡片（圆角、底色、行间分隔线）归分组（group() / [PrefGroup]）。
  * 行的水平内缩由所属外观线给——COUI 的 Item 自带，material 列表行不带，
- * 所以在 ScopeScreen 的 LazyColumn 槽位里要用 [PrefRowInset] 补；分组内（[PrefGroup]）不要再补。
+ * 所以在 PageScreen 的 LazyColumn 槽位里要用 [PrefRowInset] 补；分组内（[PrefGroup]）不要再补。
  */
 
 /**
@@ -162,7 +162,7 @@ fun PrefCheckRow(
  *
  * 值不在 prefs 里（控制器状态、系统键）的页面直接用它，DSL 的 slider() 也是同一份实现；
  * 两条线共用的取整与落盘时机：拖动结束才回调 [onCommit]，并按 [step] 吸附到刻度。
- * 内缩与行同一套规矩：分组内不补（分组已给），ScopeScreen 的 LazyColumn 槽位用 [PrefRowInset] 补。
+ * 内缩与行同一套规矩：分组内不补（分组已给），PageScreen 的 LazyColumn 槽位用 [PrefRowInset] 补。
  */
 @Composable
 fun PrefSliderRow(

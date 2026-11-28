@@ -28,8 +28,8 @@ import com.luckyzyx.luckytool.ui.compose.components.AppSearchPlaceholder
 import com.luckyzyx.luckytool.ui.compose.components.pageInset
 import com.luckyzyx.luckytool.ui.compose.components.AppSearchBar
 import com.luckyzyx.luckytool.ui.compose.components.AppItem
-import com.luckyzyx.luckytool.ui.compose.scopes.ScopePageSpec
-import com.luckyzyx.luckytool.ui.compose.components.PrefScopeBuilder
+import com.luckyzyx.luckytool.ui.compose.PageSpec
+import com.luckyzyx.luckytool.ui.compose.components.PrefPageBuilder
 import com.luckyzyx.luckytool.ui.compose.components.currentUiStyle
 import com.luckyzyx.luckytool.utils.ModulePrefs
 import com.luckyzyx.luckytool.utils.PackageUtils
@@ -52,7 +52,7 @@ object ZoomWindowPage {
 
     internal var refresh: (suspend () -> Unit)? = null
 
-    val spec = ScopePageSpec(
+    val spec = PageSpec(
         pageKey = "zoom_window",
         prefsName = ModulePrefs,
         packName = "",
@@ -66,7 +66,7 @@ object ZoomWindowPage {
 }
 
 @Composable
-internal fun LazyItemScope.ZoomWindowContent(builder: PrefScopeBuilder) {
+internal fun LazyItemScope.ZoomWindowContent(builder: PrefPageBuilder) {
     val context = LocalContext.current
     val packageUtils = remember { PackageUtils(context.packageManager) }
     val scope = rememberCoroutineScope()

@@ -3,7 +3,7 @@ package com.luckyzyx.luckytool.ui.compose.special
 import android.content.Context
 import androidx.compose.runtime.mutableStateOf
 import com.luckyzyx.luckytool.R
-import com.luckyzyx.luckytool.ui.compose.scopes.ScopePageSpec
+import com.luckyzyx.luckytool.ui.compose.PageSpec
 import com.luckyzyx.luckytool.utils.ExtraDimUtils
 import com.luckyzyx.luckytool.utils.IntentUtils
 import com.luckyzyx.luckytool.utils.SettingsPrefs
@@ -32,8 +32,8 @@ import kotlinx.coroutines.withContext
  * 页面禁用 + [ExtraDimUtils.writeActivated] 内部再挡一次，UI 无法绕过。
  *
  * ## 加载时机
- * 1. 进入页面与回到前台：[ScopePageSpec.onLoad]（系统设置或磁贴可能改过同样的键）；
- * 2. 下拉刷新：[ScopePageSpec.onRefresh]，复用 [onLoad] 存下的 application context。
+ * 1. 进入页面与回到前台：[PageSpec.onLoad]（系统设置或磁贴可能改过同样的键）；
+ * 2. 下拉刷新：[PageSpec.onRefresh]，复用 [onLoad] 存下的 application context。
  *
  * ## 写法
  * 整页都是 DSL 行（分组卡片、开关、滑条、说明、跳转），不再手写 Composable 或卡片：
@@ -83,7 +83,7 @@ object ExtraDimPage {
         load(c)
     }
 
-    val spec = ScopePageSpec(
+    val spec = PageSpec(
         pageKey = "extra_dim",
         prefsName = SettingsPrefs,
         packName = "",
@@ -95,7 +95,7 @@ object ExtraDimPage {
         },
         onRefresh = { appContext?.let { load(it) } },
     ) {
-        val c = requireNotNull(context) { "ScopeScreen 未注入 Context" }
+        val c = requireNotNull(context) { "PageScreen 未注入 Context" }
 
         group {
             switch(

@@ -16,7 +16,7 @@ import androidx.compose.ui.unit.Density
 import com.itos.coui.effect.CouiFloatingRenderer
 import com.luckyzyx.luckytool.ui.compose.components.PageScaffold
 import com.luckyzyx.luckytool.ui.compose.components.RootScaffold
-import com.luckyzyx.luckytool.ui.compose.components.ScopeScreen
+import com.luckyzyx.luckytool.ui.compose.components.PageScreen
 import com.luckyzyx.luckytool.ui.compose.components.currentUiStyle
 import com.luckyzyx.luckytool.ui.theme.ColorMode
 import com.luckyzyx.luckytool.ui.theme.AppTheme
@@ -52,7 +52,7 @@ class ThemeSwitchCrashTest {
                     val context = LocalContext.current
                     val settings = remember { PrefState.of(context, SettingsPrefs) }
                     PageScaffold(title = "设置") { padding ->
-                        ScopeScreen(
+                        PageScreen(
                             state = settings,
                             modifier = Modifier.fillMaxSize().padding(padding),
                         ) {

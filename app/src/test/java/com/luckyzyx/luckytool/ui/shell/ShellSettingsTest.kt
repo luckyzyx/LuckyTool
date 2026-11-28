@@ -25,10 +25,10 @@ class ShellSettingsTest {
     }
 
     @Test
-    fun `new installs use the classic bar and legacy glass selects iOS without changing global blur`() {
+    fun `new installs use the classic bar and legacy glass selects liquid glass without changing global blur`() {
         assertEquals(FloatingBottomBarStyle.Classic, ShellSettingsController.get(context).floatingBottomBarStyle)
         prefs.edit().putBoolean(ShellSettingsController.KEY_FLOATING_BOTTOM_BAR_BLUR, true).commit()
-        assertEquals(FloatingBottomBarStyle.IosLike, ShellSettingsController.get(context).floatingBottomBarStyle)
+        assertEquals(FloatingBottomBarStyle.LiquidGlass, ShellSettingsController.get(context).floatingBottomBarStyle)
         assertFalse(ShellSettingsController.get(context).enableBlur)
         prefs.edit().putBoolean(ShellSettingsController.KEY_ENABLE_BLUR, true).commit()
         assertTrue(ShellSettingsController.get(context).enableBlur)
@@ -42,7 +42,7 @@ class ShellSettingsTest {
         assertEquals(FloatingBottomBarStyle.Classic, ShellSettingsController.get(context).floatingBottomBarStyle)
         prefs.edit().putBoolean(ShellSettingsController.KEY_FLOATING_BOTTOM_BAR_BLUR, false)
             .putString(ShellSettingsController.KEY_FLOATING_BOTTOM_BAR_STYLE, "ios_like").commit()
-        assertEquals(FloatingBottomBarStyle.IosLike, ShellSettingsController.get(context).floatingBottomBarStyle)
+        assertEquals(FloatingBottomBarStyle.LiquidGlass, ShellSettingsController.get(context).floatingBottomBarStyle)
     }
 
     @Test

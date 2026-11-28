@@ -1,7 +1,7 @@
 package com.luckyzyx.luckytool.ui.compose.scopes.apps
 
 import com.luckyzyx.luckytool.R
-import com.luckyzyx.luckytool.ui.compose.scopes.ScopePageSpec
+import com.luckyzyx.luckytool.ui.compose.PageSpec
 import com.luckyzyx.luckytool.utils.ModulePrefs
 import com.luckyzyx.luckytool.utils.getOSVersionCode
 
@@ -10,13 +10,13 @@ import com.luckyzyx.luckytool.utils.getOSVersionCode
  */
 object OplusWeatherPage {
 
-    val spec = ScopePageSpec(
+    val spec = PageSpec(
         pageKey = "oplus_weather",
         prefsName = ModulePrefs,
         packName = "com.coloros.weather2",
         scopes = arrayOf("com.coloros.weather2"),
     ) {
-        val c = requireNotNull(context) { "ScopeScreen 未注入 Context" }
+        val c = requireNotNull(context) { "PageScreen 未注入 Context" }
         switch(
             key = "remove_weather_some_page_bottom_ads",
             title = c.getString(R.string.remove_weather_some_page_bottom_ads),

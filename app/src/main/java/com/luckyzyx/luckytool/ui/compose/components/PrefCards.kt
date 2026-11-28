@@ -19,8 +19,8 @@ import androidx.compose.ui.unit.dp
 /**
  * 卡片行 / 卡原语，支持分段卡片与独立卡片。
  *
- * **「设置区块」的唯一 API 是 PrefScope DSL**（group() / switch() / click() / list() /
- * custom()，见 ui/compose/components/PrefScope.kt）—— 所有标准设置页与作用域页都走它。
+ * **「设置区块」的唯一 API 是 PrefPage DSL**（group() / switch() / click() / list() /
+ * custom()，见 ui/compose/components/PrefPage.kt）—— 所有标准设置页与功能页都走它。
  * 走不了 DSL 的页面（custom() 里的自定义内容）用 [PrefGroup]：它与 DSL 的 group() 共用同一份
  * 标题 / 卡片 / 行分隔线实现，页面因此不必再自判内缩、自画标题。
  * 本文件其余部分是 custom() 逃生舱里的卡原语：[PrefCard] + [PrefSwitchCard]
@@ -46,8 +46,8 @@ import androidx.compose.ui.unit.dp
 /**
  * 设置区块：页面自绘的行 + 一套统一的分组版式（内缩 / 标题 / 说明 / 卡片 / 行间分隔线）。
  *
- * 一份实现、两个作者面：DSL 页面在 PrefScopeBuilder 作用域写 group(title, summary) { ... }
- *（见 PrefScope.kt），走不了 DSL 的页面（custom() / fullContent 里的组合式内容、应用权限页）
+ * 一份实现、两个作者面：DSL 页面在 PrefPageBuilder 作用域写 group(title, summary) { ... }
+ *（见 PrefPage.kt），走不了 DSL 的页面（custom() / fullContent 里的组合式内容、应用权限页）
  * 写本函数。两者最后都落到 [PrefSectionRows]，所以标题、卡片、行间分隔线、行级显隐只有一份，
  * 页面不必再自己画分组标题、判断外观线内缩、或用 Spacer 分隔分组：
  *

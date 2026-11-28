@@ -1,7 +1,7 @@
 package com.luckyzyx.luckytool.ui.compose.scopes.statusbar
 
 import com.luckyzyx.luckytool.R
-import com.luckyzyx.luckytool.ui.compose.scopes.ScopePageSpec
+import com.luckyzyx.luckytool.ui.compose.PageSpec
 import com.luckyzyx.luckytool.utils.A13
 import com.luckyzyx.luckytool.utils.ModulePrefs
 import com.luckyzyx.luckytool.utils.SDK
@@ -12,7 +12,7 @@ import com.luckyzyx.luckytool.utils.SDK
  */
 object StatusBarLayoutPage {
 
-    val spec = ScopePageSpec(
+    val spec = PageSpec(
         pageKey = "statusbar_layout",
         prefsName = ModulePrefs,
         packName = "com.android.systemui",
@@ -20,9 +20,9 @@ object StatusBarLayoutPage {
         restartEnabled = true,
         isVisible = { SDK == A13 },
     ) {
-        val c = requireNotNull(context) { "ScopeScreen 未注入 Context" }
+        val c = requireNotNull(context) { "PageScreen 未注入 Context" }
         // 整页可见性由 spec.isVisible（SDK == A13）判定，这里提前 return 与该条件保持一致
-        if (SDK != A13) return@ScopePageSpec
+        if (SDK != A13) return@PageSpec
         list(
             key = "statusbar_layout_mode",
             title = c.getString(R.string.statusbar_layout_mode),

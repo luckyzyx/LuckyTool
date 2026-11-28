@@ -5,7 +5,7 @@ import android.content.pm.PackageInfo
 import androidx.test.core.app.ApplicationProvider
 import com.luckyzyx.luckytool.ui.compose.FunctionPageData
 import com.luckyzyx.luckytool.ui.compose.categoryBadges
-import com.luckyzyx.luckytool.ui.compose.scopes.ScopePageRegistry
+import com.luckyzyx.luckytool.ui.compose.PageRegistry
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertTrue
@@ -44,7 +44,7 @@ class FunctionPageDataTest {
     fun `rows keep treeOrder and category pages carry no packName`() {
         val rows = FunctionPageData.buildSnapshot(context).rows
         assertTrue("功能树不应为空", rows.isNotEmpty())
-        val positions = rows.map { ScopePageRegistry.treeOrder.indexOf(it.pageKey) }
+        val positions = rows.map { PageRegistry.treeOrder.indexOf(it.pageKey) }
         assertTrue("行必须是已注册的 treeOrder 页：$positions", positions.none { it < 0 })
         assertEquals("行顺序必须与 treeOrder 一致", positions.sorted(), positions)
         rows.forEach { row ->
@@ -70,11 +70,11 @@ class FunctionPageDataTest {
     @Test
     fun `an empty index hides a page unless it renders itself`() {
         FunctionPageData.buildSnapshot(context).rows.forEach { row ->
-            val spec = ScopePageRegistry[row.pageKey] ?: return@forEach
+            val spec = PageRegistry[row.pageKey] ?: return@forEach
             if (spec.selfRendered) return@forEach
             assertTrue(
                 "空索引且未声明 selfRendered 的页不得入树：${row.pageKey}",
-                ScopePageRegistry.buildIndex(context, spec).isNotEmpty(),
+                PageRegistry.buildIndex(context, spec).isNotEmpty(),
             )
         }
     }
@@ -84,14 +84,14 @@ class FunctionPageDataTest {
         val snapshot = FunctionPageData.buildSnapshot(context)
         val indexedPageKeys = snapshot.searchEntries.map { it.pageKey }.toSet()
         snapshot.rows.forEach { row ->
-            val spec = ScopePageRegistry[row.pageKey] ?: return@forEach
-            if (ScopePageRegistry.buildIndex(context, spec).isEmpty()) return@forEach
+            val spec = PageRegistry[row.pageKey] ?: return@forEach
+            if (PageRegistry.buildIndex(context, spec).isEmpty()) return@forEach
             assertTrue(
                 "有索引的功能树页必须同样出现在搜索索引里：${row.pageKey}",
                 row.pageKey in indexedPageKeys,
             )
         }
-        val registered = ScopePageRegistry.all().map { it.pageKey }.toSet()
+        val registered = PageRegistry.all().map { it.pageKey }.toSet()
         assertTrue("搜索索引只能来自已注册页", registered.containsAll(indexedPageKeys))
     }
 

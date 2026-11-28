@@ -1,7 +1,7 @@
 package com.luckyzyx.luckytool.ui.compose.scopes.apps
 
 import com.luckyzyx.luckytool.R
-import com.luckyzyx.luckytool.ui.compose.scopes.ScopePageSpec
+import com.luckyzyx.luckytool.ui.compose.PageSpec
 import com.luckyzyx.luckytool.utils.ModulePrefs
 import com.luckyzyx.luckytool.utils.getOSVersionCode
 
@@ -11,14 +11,14 @@ import com.luckyzyx.luckytool.utils.getOSVersionCode
  */
 object OplusPermissionControllerPage {
 
-    val spec = ScopePageSpec(
+    val spec = PageSpec(
         pageKey = "oplus_permission_controller",
         prefsName = ModulePrefs,
         packName = "com.android.permissioncontroller",
         scopes = arrayOf("com.android.permissioncontroller"),
         restartEnabled = true,
     ) {
-        val c = requireNotNull(context) { "ScopeScreen 未注入 Context" }
+        val c = requireNotNull(context) { "PageScreen 未注入 Context" }
         switch(
             key = "unlock_default_desktop_limit",
             title = c.getString(R.string.unlock_default_desktop_limit),

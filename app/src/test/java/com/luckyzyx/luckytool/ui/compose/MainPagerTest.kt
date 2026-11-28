@@ -65,10 +65,10 @@ class MainPagerTest {
         for ((mode, floating, style) in listOf(
             Triple(UiMode.Material, false, FloatingBottomBarStyle.Classic),
             Triple(UiMode.Material, true, FloatingBottomBarStyle.Classic),
-            Triple(UiMode.Material, true, FloatingBottomBarStyle.IosLike),
+            Triple(UiMode.Material, true, FloatingBottomBarStyle.LiquidGlass),
             Triple(UiMode.Coui, false, FloatingBottomBarStyle.Classic),
             Triple(UiMode.Coui, true, FloatingBottomBarStyle.Classic),
-            Triple(UiMode.Coui, true, FloatingBottomBarStyle.IosLike),
+            Triple(UiMode.Coui, true, FloatingBottomBarStyle.LiquidGlass),
         )) {
             PagerHost(mode, floating, floatingStyle = style).use { h ->
                 assertEquals(2, h.state.pagerState.settledPage)
@@ -106,7 +106,7 @@ class MainPagerTest {
     @Test
     @Config(sdk = [35])
     fun `liquid glass bottom bar shares the same pager navigation`() {
-        PagerHost(UiMode.Coui, floating = true, floatingStyle = FloatingBottomBarStyle.IosLike, blur = true).use { h ->
+        PagerHost(UiMode.Coui, floating = true, floatingStyle = FloatingBottomBarStyle.LiquidGlass, blur = true).use { h ->
             h.ui.clickLabel("其他")
             h.ui.advance()
             h.assertSettled(0)
@@ -260,9 +260,9 @@ class MainPagerTest {
     fun `floating bars keep five accessible targets at maximum scale on narrow screens`() {
         for ((appearance, style) in listOf(
             UiMode.Material to FloatingBottomBarStyle.Classic,
-            UiMode.Material to FloatingBottomBarStyle.IosLike,
+            UiMode.Material to FloatingBottomBarStyle.LiquidGlass,
             UiMode.Coui to FloatingBottomBarStyle.Classic,
-            UiMode.Coui to FloatingBottomBarStyle.IosLike,
+            UiMode.Coui to FloatingBottomBarStyle.LiquidGlass,
         )) {
             for (direction in LayoutDirection.entries) {
                 for (color in listOf(ColorMode.LIGHT, ColorMode.DARK)) {
@@ -346,6 +346,9 @@ class MainPagerTest {
         }
     }
 
+    /** 两种悬浮形态各自的高亮块测试标签：材质版叫 materialFloatingIndicator，液态玻璃叫 floatingBarIndicator。 */
+    private val floatingIndicatorTags = setOf("materialFloatingIndicator", "floatingBarIndicator")
+
     /** 高亮必须落在 [tab] 上：选中语义在它的标签上，滑块中心与它的图标中心对齐。 */
     private fun assertHighlight(ui: ComposeGestureHost, tab: MainTab) {
         val label = ui.activity.getString(tab.labelRes)
@@ -365,7 +368,7 @@ class MainPagerTest {
             "滑块中心必须与 $label 所在标签对齐",
             selected.boundsInRoot.center.x,
             ui.nodes().first {
-                it.config.getOrNull(SemanticsProperties.TestTag) == "materialFloatingIndicator"
+                it.config.getOrNull(SemanticsProperties.TestTag) in floatingIndicatorTags
             }.boundsInRoot.center.x,
             1f,
         )
@@ -378,7 +381,7 @@ class MainPagerTest {
             h.ui.advance()
             h.assertSettled(4)
             assertHighlight(h.ui, MainTab.Setting)
-            h.floatingStyle = FloatingBottomBarStyle.IosLike
+            h.floatingStyle = FloatingBottomBarStyle.LiquidGlass
             h.ui.advance()
             h.assertSettled(4)
             assertHighlight(h.ui, MainTab.Setting)
@@ -407,7 +410,7 @@ class MainPagerTest {
             // 主题页在独立 Activity 里写字，主壳此时已 stop：恢复后必须按新样式重画，
             // 且选中态仍在切样式前那个标签上，之后点标签高亮要继续跟手。
             h.ui.controller.pause().stop()
-            h.floatingStyle = FloatingBottomBarStyle.IosLike
+            h.floatingStyle = FloatingBottomBarStyle.LiquidGlass
             h.ui.controller.start().resume()
             h.ui.advance()
             h.assertSettled(4)
@@ -436,7 +439,7 @@ class MainPagerTest {
             tap("设置")
             h.assertSettled(4)
             assertHighlight(h.ui, MainTab.Setting)
-            for (style in listOf(FloatingBottomBarStyle.IosLike, FloatingBottomBarStyle.Classic)) {
+            for (style in listOf(FloatingBottomBarStyle.LiquidGlass, FloatingBottomBarStyle.Classic)) {
                 h.floatingStyle = style
                 h.ui.advance()
                 h.assertSettled(4)
@@ -456,12 +459,12 @@ class MainPagerTest {
 
     @Test
     @Config(sdk = [31, 32, 35])
-    fun `floating pointer taps and iOS drag selection work across effect support levels`() {
+    fun `floating pointer taps and drag selection work across effect support levels`() {
         for ((mode, style) in listOf(
             UiMode.Material to FloatingBottomBarStyle.Classic,
-            UiMode.Material to FloatingBottomBarStyle.IosLike,
+            UiMode.Material to FloatingBottomBarStyle.LiquidGlass,
             UiMode.Coui to FloatingBottomBarStyle.Classic,
-            UiMode.Coui to FloatingBottomBarStyle.IosLike,
+            UiMode.Coui to FloatingBottomBarStyle.LiquidGlass,
         )) {
             PagerHost(mode, floating = true, floatingStyle = style, blur = true).use { h ->
                 // COUI 页签只有标题文字，Material 悬浮底栏只有图标描述；页面上方的同名标题也要排除。
@@ -490,7 +493,7 @@ class MainPagerTest {
         for (direction in LayoutDirection.entries) {
             PagerHost(floating = true, direction = direction).use { h ->
                 fun sliderX() = h.ui.nodes().first {
-                    it.config.getOrNull(SemanticsProperties.TestTag) == "materialFloatingIndicator"
+                    it.config.getOrNull(SemanticsProperties.TestTag) in floatingIndicatorTags
                 }.boundsInRoot.center.x
                 fun tabCenter(label: String) = h.ui.nodes().first {
                     it.config.getOrNull(SemanticsProperties.ContentDescription)?.contains(label) == true &&

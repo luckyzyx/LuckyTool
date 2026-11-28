@@ -42,7 +42,7 @@ import com.luckyzyx.luckytool.ui.compose.components.ActionListDialog
 import com.luckyzyx.luckytool.ui.compose.components.AdbDebugDialog
 import com.luckyzyx.luckytool.ui.compose.components.AppPickerDialog
 import com.luckyzyx.luckytool.ui.compose.components.ChoiceItem
-import com.luckyzyx.luckytool.ui.compose.components.LocalScopeTopInset
+import com.luckyzyx.luckytool.ui.compose.components.LocalPageTopInset
 import com.luckyzyx.luckytool.ui.compose.components.MainPageActivationEffect
 import com.luckyzyx.luckytool.ui.compose.components.MultiChoiceDialog
 import com.luckyzyx.luckytool.ui.compose.components.OtherTopBarActions
@@ -50,7 +50,7 @@ import com.luckyzyx.luckytool.ui.compose.components.PageScaffold
 import com.luckyzyx.luckytool.ui.compose.components.PrefIcon
 import com.luckyzyx.luckytool.ui.compose.components.PrefIconButton
 import com.luckyzyx.luckytool.ui.compose.components.PrefRowChevron
-import com.luckyzyx.luckytool.ui.compose.components.ScopeScreen
+import com.luckyzyx.luckytool.ui.compose.components.PageScreen
 import com.luckyzyx.luckytool.ui.compose.components.SingleChoiceDialog
 import com.luckyzyx.luckytool.utils.A13
 import com.luckyzyx.luckytool.utils.GlobalKeyValue.keyTouchSamplingRateLevel
@@ -98,7 +98,7 @@ fun OtherPage(activity: MainActivity, isCurrentPage: Boolean = true) {
             OtherTopBarActions(onOptimize = { showOptimizePicker = true })
         },
     ) { padding ->
-        // 顶栏高度经 LocalScopeTopInset 放进列表 contentPadding：视口铺满整屏，
+        // 顶栏高度经 LocalPageTopInset 放进列表 contentPadding：视口铺满整屏，
         // 滚动中的行才能进入顶栏下方；水平/底部内边距仍留在视口外。
         val layoutDirection = LocalLayoutDirection.current
         val scopeModifier = Modifier
@@ -130,8 +130,8 @@ fun OtherPage(activity: MainActivity, isCurrentPage: Boolean = true) {
                 stringResource(R.string.set_touch_sampling_rate_tile_level_summary)
             val remoteAdbTitle = stringResource(R.string.remote_adb_debug_title)
             val remoteAdbSummary = stringResource(R.string.remote_adb_debug_summary)
-            CompositionLocalProvider(LocalScopeTopInset provides topInset) {
-                ScopeScreen(
+            CompositionLocalProvider(LocalPageTopInset provides topInset) {
+                PageScreen(
                     state = settings,
                     modifier = scopeModifier,
                 ) {

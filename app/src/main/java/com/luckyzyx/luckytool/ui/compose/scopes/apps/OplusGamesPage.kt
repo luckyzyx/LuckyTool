@@ -11,7 +11,7 @@ import com.luckyzyx.luckytool.R
 import com.luckyzyx.luckytool.ui.compose.components.AppPickerDialog
 import com.luckyzyx.luckytool.ui.compose.components.PrefRow
 import com.luckyzyx.luckytool.ui.compose.components.PrefRowInset
-import com.luckyzyx.luckytool.ui.compose.scopes.ScopePageSpec
+import com.luckyzyx.luckytool.ui.compose.PageSpec
 import com.luckyzyx.luckytool.utils.A14
 import com.luckyzyx.luckytool.utils.AppUtils
 import com.luckyzyx.luckytool.utils.ModulePrefs
@@ -28,7 +28,7 @@ import com.topjohnwu.superuser.ShellUtils
  */
 object OplusGamesPage {
 
-    val spec = ScopePageSpec(
+    val spec = PageSpec(
         pageKey = "oplus_games",
         prefsName = ModulePrefs,
         packName = "com.oplus.games",
@@ -36,7 +36,7 @@ object OplusGamesPage {
         restartEnabled = true,
         isVisible = { checkPackName("com.oplus.games") },
     ) {
-        val c = requireNotNull(context) { "ScopeScreen 未注入 Context" }
+        val c = requireNotNull(context) { "PageScreen 未注入 Context" }
         val appUtils = AppUtils(c)
         val appVerInfo = appUtils.getAppVerInfo("com.oplus.games")
         val isNew = (AppUtils(c).getAppVersionName("com.oplus.games")

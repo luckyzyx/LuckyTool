@@ -6,7 +6,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import com.luckyzyx.luckytool.R
 import com.luckyzyx.luckytool.ui.compose.components.PrefRow
 import com.luckyzyx.luckytool.ui.compose.components.PrefRowInset
-import com.luckyzyx.luckytool.ui.compose.scopes.ScopePageSpec
+import com.luckyzyx.luckytool.ui.compose.PageSpec
 import com.luckyzyx.luckytool.utils.A13
 import com.luckyzyx.luckytool.utils.FileUtils
 import com.luckyzyx.luckytool.utils.ModulePrefs
@@ -28,7 +28,7 @@ import com.luckyzyx.luckytool.utils.getOSVersionCode
  */
 object AodRelatedPage {
 
-    val spec = ScopePageSpec(
+    val spec = PageSpec(
         pageKey = "aod",
         prefsName = ModulePrefs,
         packName = "com.android.systemui",
@@ -37,7 +37,7 @@ object AodRelatedPage {
         restartEnabled = true,
         isVisible = { SDK >= A13 && checkPackName("com.oplus.aod") },
     ) {
-        val c = requireNotNull(context) { "ScopeScreen 未注入 Context" }
+        val c = requireNotNull(context) { "PageScreen 未注入 Context" }
         val osCode = getOSVersionCode
         // 息屏相关
         group(title = c.getString(R.string.AodRelated)) {

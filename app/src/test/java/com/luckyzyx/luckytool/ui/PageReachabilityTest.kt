@@ -4,9 +4,9 @@ import android.content.Context
 import android.content.SharedPreferences
 import android.content.pm.PackageInfo
 import androidx.test.core.app.ApplicationProvider
-import com.luckyzyx.luckytool.ui.compose.components.PrefScopeBuilder
-import com.luckyzyx.luckytool.ui.compose.scopes.ScopePageRegistry
-import com.luckyzyx.luckytool.ui.compose.scopes.ScopePageSpec
+import com.luckyzyx.luckytool.ui.compose.components.PrefPageBuilder
+import com.luckyzyx.luckytool.ui.compose.PageRegistry
+import com.luckyzyx.luckytool.ui.compose.PageSpec
 import com.luckyzyx.luckytool.ui.compose.scopes.related.ApplicationRelatedPage
 import com.luckyzyx.luckytool.ui.compose.scopes.related.FloatingWindowRelatedPage
 import com.luckyzyx.luckytool.ui.compose.scopes.related.LauncherRelatedPage
@@ -26,7 +26,7 @@ import org.robolectric.annotation.Config
  *
  * P4 批次的五个特殊页把 `content` 留成空 `{ }`，整页内容画在 `fullContent` 里（不走共享行渲染），
  * 它们自己声明 `selfRendered = true`：入口可见性只看 `isVisible` + 作用域，**不看** DSL 行索引。
- * 旧判据「空索引 = 该页不可见」会让 `PrefScope.page()` 直接不发射父页入口行 —— 症状就是这些页
+ * 旧判据「空索引 = 该页不可见」会让 `PrefPage.page()` 直接不发射父页入口行 —— 症状就是这些页
  * 在界面上「无法显示」（暗色模式列表 / 意图 / 自定义浮窗 / 应用分身 / MEMC）。
  *
  * 若哪天有人把 `hasVisibleContent` 改回裸 `buildIndex(...).isNotEmpty()`，
@@ -34,7 +34,7 @@ import org.robolectric.annotation.Config
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [34])
-class ScopePageReachabilityTest {
+class PageReachabilityTest {
 
     private val context: Context = ApplicationProvider.getApplicationContext()
 
@@ -45,7 +45,7 @@ class ScopePageReachabilityTest {
     @Test
     fun `special pages declare selfRendered so an empty index cannot hide them`() {
         fullContentPageKeys.forEach { key ->
-            val spec = ScopePageRegistry[key]
+            val spec = PageRegistry[key]
             assertNotNull("$key 应已注册", spec)
             assertNotNull("$key 应自带整页渲染", spec!!.fullContent)
             // 判据来自页面自己的声明，不是「fullContent 非空」之类的结构特征反推
@@ -55,11 +55,11 @@ class ScopePageReachabilityTest {
             )
             assertTrue(
                 "$key 的 DSL 索引确实为空（行清单画在页面自己的布局里）",
-                ScopePageRegistry.buildIndex(context, spec).isEmpty(),
+                PageRegistry.buildIndex(context, spec).isEmpty(),
             )
             assertTrue(
                 "空索引不得作为不可见依据，否则入口行被误隐藏：$key",
-                ScopePageRegistry.hasVisibleContent(context, spec),
+                PageRegistry.hasVisibleContent(context, spec),
             )
         }
     }
@@ -70,13 +70,13 @@ class ScopePageReachabilityTest {
         val settings = PackageInfo().apply { packageName = "com.android.settings" }
         Shadows.shadowOf(context.packageManager).installPackage(settings)
         fullContentPageKeys.forEach { key ->
-            assertTrue("父页入口行必须发射：$key", ScopePageRegistry.isPageReachable(context, key))
+            assertTrue("父页入口行必须发射：$key", PageRegistry.isPageReachable(context, key))
         }
     }
 
     @Test
     fun `a page with neither DSL rows nor the selfRendered flag is not visible`() {
-        val empty = ScopePageSpec(
+        val empty = PageSpec(
             pageKey = "test_empty_spec",
             prefsName = ModulePrefs,
             packName = "",
@@ -85,14 +85,14 @@ class ScopePageReachabilityTest {
         ) { }
         assertFalse(
             "既无 DSL 行也没声明自渲染的页仍应按空索引隐藏",
-            ScopePageRegistry.hasVisibleContent(context, empty),
+            PageRegistry.hasVisibleContent(context, empty),
         )
     }
 
     @Test
     fun `the selfRendered flag alone makes an empty page visible`() {
         // 特殊页的判据只有 isVisible + 作用域：声明了自渲染就不再看索引（哪怕一行都没有）
-        val special = ScopePageSpec(
+        val special = PageSpec(
             pageKey = "test_self_rendered_spec",
             prefsName = ModulePrefs,
             packName = "",
@@ -100,10 +100,10 @@ class ScopePageReachabilityTest {
             restartEnabled = false,
             selfRendered = true,
         ) { }
-        assertTrue(ScopePageRegistry.buildIndex(context, special).isEmpty())
+        assertTrue(PageRegistry.buildIndex(context, special).isEmpty())
         assertTrue(
             "声明自渲染的页不应被空索引判为不可见",
-            ScopePageRegistry.hasVisibleContent(context, special),
+            PageRegistry.hasVisibleContent(context, special),
         )
     }
 
@@ -111,7 +111,7 @@ class ScopePageReachabilityTest {
     fun `unregistered page keys stay reachable`() {
         assertTrue(
             "未注册目标不拦截（保持旧行为）",
-            ScopePageRegistry.isPageReachable(context, "not_registered_page"),
+            PageRegistry.isPageReachable(context, "not_registered_page"),
         )
     }
 
@@ -148,14 +148,14 @@ class ScopePageReachabilityTest {
         // 整段（含该开关本身）都不会发射；memc_config 本身的可达性由上面的 isPageReachable 用例覆盖。
     }
 
-    /** 复刻 ScopeScreen 的构建流程，返回本轮条目的索引键集合（page 项 = "page:$target"） */
+    /** 复刻 PageScreen 的构建流程，返回本轮条目的索引键集合（page 项 = "page:$target"） */
     private fun buildIndexKeys(
-        spec: ScopePageSpec,
+        spec: PageSpec,
         write: SharedPreferences.Editor.() -> Unit = {},
     ): Set<String> {
         val raw = context.getSharedPreferences(spec.prefsName, Context.MODE_PRIVATE)
         raw.edit().clear().apply(write).commit()
-        val builder = PrefScopeBuilder(PrefState.ofProvider { raw })
+        val builder = PrefPageBuilder(PrefState.ofProvider { raw })
         builder.context = context
         builder.beginBuild()
         spec.content(builder)

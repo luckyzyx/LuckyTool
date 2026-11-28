@@ -13,10 +13,10 @@ import org.robolectric.annotation.Config
  * 记录 Compose 快照读取追踪的一个关键行为：**`derivedStateOf` 会追踪其计算块内
  * 「普通（非 @Composable）lambda」对状态对象的读取**。
  *
- * `ScopeScreen` 的条目重建依赖同一机制：只有把 `builder.content()` 放进
+ * `PageScreen` 的条目重建依赖同一机制：只有把 `builder.content()` 放进
  * LazyColumn 的 content lambda（由 LazyList 的 derivedStateOf 包裹），
  * 其中对页面级 `mutableStateOf`（systemInfo / rows / filtered 等）的读取才会进入
- * 快照订阅；放在 `ScopeScreen` 函数体里则不会刷新列表
+ * 快照订阅；放在 `PageScreen` 函数体里则不会刷新列表
  * （旧症状：功能树白屏、搜索结果不出现、SYSTEMINFO 切页后才显示）。
  */
 @RunWith(RobolectricTestRunner::class)

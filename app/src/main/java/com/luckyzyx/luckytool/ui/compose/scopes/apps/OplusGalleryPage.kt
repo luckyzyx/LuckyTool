@@ -1,7 +1,7 @@
 package com.luckyzyx.luckytool.ui.compose.scopes.apps
 
 import com.luckyzyx.luckytool.R
-import com.luckyzyx.luckytool.ui.compose.scopes.ScopePageSpec
+import com.luckyzyx.luckytool.ui.compose.PageSpec
 import com.luckyzyx.luckytool.utils.A15
 import com.luckyzyx.luckytool.utils.ModulePrefs
 import com.luckyzyx.luckytool.utils.SDK
@@ -16,7 +16,7 @@ import com.luckyzyx.luckytool.utils.isZh
  */
 object OplusGalleryPage {
 
-    val spec = ScopePageSpec(
+    val spec = PageSpec(
         pageKey = "oplus_gallery",
         prefsName = ModulePrefs,
         packName = "com.coloros.gallery3d",
@@ -24,8 +24,8 @@ object OplusGalleryPage {
         restartEnabled = true,
         isVisible = { getOSVersionCode >= 27 && checkPackName("com.coloros.gallery3d") },
     ) {
-        val c = requireNotNull(context) { "ScopeScreen 未注入 Context" }
-        if (getOSVersionCode < 27) return@ScopePageSpec
+        val c = requireNotNull(context) { "PageScreen 未注入 Context" }
+        if (getOSVersionCode < 27) return@PageSpec
         // 水印
         group(title = c.getString(R.string.GalleryWaterMark)) {
             switch(

@@ -13,7 +13,7 @@ import com.drake.net.utils.withDefault
 import com.luckyzyx.luckytool.R
 import com.luckyzyx.luckytool.ui.compose.components.PrefRow
 import com.luckyzyx.luckytool.ui.compose.components.PrefRowInset
-import com.luckyzyx.luckytool.ui.compose.scopes.ScopePageSpec
+import com.luckyzyx.luckytool.ui.compose.PageSpec
 import com.luckyzyx.luckytool.utils.CommandUtils
 import com.luckyzyx.luckytool.utils.ModulePrefs
 import com.luckyzyx.luckytool.utils.formatStringAuto
@@ -26,14 +26,14 @@ import com.topjohnwu.superuser.ShellUtils
  */
 object OplusOTAPage {
 
-    val spec = ScopePageSpec(
+    val spec = PageSpec(
         pageKey = "oplus_ota",
         prefsName = ModulePrefs,
         packName = "com.oplus.ota",
         scopes = arrayOf("com.oplus.ota"),
         restartEnabled = true,
     ) {
-        val c = requireNotNull(context) { "ScopeScreen 未注入 Context" }
+        val c = requireNotNull(context) { "PageScreen 未注入 Context" }
         val osCode = getOSVersionCode
         switch(
             key = "remove_ota_notify_install_success",

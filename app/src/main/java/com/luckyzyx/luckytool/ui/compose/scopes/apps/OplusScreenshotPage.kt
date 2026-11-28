@@ -1,7 +1,7 @@
 package com.luckyzyx.luckytool.ui.compose.scopes.apps
 
 import com.luckyzyx.luckytool.R
-import com.luckyzyx.luckytool.ui.compose.scopes.ScopePageSpec
+import com.luckyzyx.luckytool.ui.compose.PageSpec
 import com.luckyzyx.luckytool.utils.ModulePrefs
 
 /**
@@ -10,13 +10,13 @@ import com.luckyzyx.luckytool.utils.ModulePrefs
  */
 object OplusScreenshotPage {
 
-    val spec = ScopePageSpec(
+    val spec = PageSpec(
         pageKey = "oplus_screenshot",
         prefsName = ModulePrefs,
         packName = "com.oplus.screenshot",
         scopes = arrayOf("com.oplus.screenshot"),
     ) {
-        val c = requireNotNull(context) { "ScopeScreen 未注入 Context" }
+        val c = requireNotNull(context) { "PageScreen 未注入 Context" }
         switch(
             key = "remove_page_limit_for_long_screenshots",
             title = c.getString(R.string.remove_page_limit_for_long_screenshots),
